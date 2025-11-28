@@ -11,7 +11,7 @@ set(PROJECT_PREFIX "DecentralisedArtServerInstallPackageTests")
 project("${PROJECT_NAME}"   
     VERSION "0.0.1"
     DESCRIPTION "Decentralised Art Server tests"
-    HOMEPAGE_URL "https://github.com/hypermusic-ai/hypermusic-server"
+    HOMEPAGE_URL "https://github.com/hypermusic-ai/dcn-server"
     LANGUAGES CXX
 )
 

@@ -4,9 +4,9 @@
 
 </br>
 
-[![Docs](https://img.shields.io/badge/docs-online-blue)](https://hypermusic-ai.github.io/hypermusic-server/)
+[![Docs](https://img.shields.io/badge/docs-online-blue)](https://hypermusic-ai.github.io/dcn-server/)
 
-[View Doxygen API Docs](https://hypermusic-ai.github.io/hypermusic-server/)
+[View Doxygen API Docs](https://hypermusic-ai.github.io/dcn-server/)
 
 </br>
 
