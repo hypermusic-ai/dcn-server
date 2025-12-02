@@ -143,6 +143,15 @@ namespace dcn
     asio::awaitable<http::Response> GET_accountInfo(const http::Request &, std::vector<RouteArg>, QueryArgsList, Registry & registry);
 
     /**
+     * Handles HEAD requests for the feature endpoint.
+     *
+     * @param request The incoming HTTP request
+     * @param routeArgs Route arguments
+     * @param registry Registry instance for retrieving features
+     * @return An HTTP response with CORS headers
+    */
+    asio::awaitable<http::Response> HEAD_feature(const http::Request &, std::vector<RouteArg>, QueryArgsList, Registry & registry);
+    /**
      * Handles OPTIONS requests by returning a response with CORS headers.
      *
      * @param request The incoming HTTP request (not used in this implementation)
@@ -182,6 +191,17 @@ namespace dcn
      * Where `<name>` is the name of the feature and `<version>` is the hash of the feature.
      */
     asio::awaitable<http::Response> POST_feature(const http::Request &, std::vector<RouteArg>, QueryArgsList, AuthManager & auth_manager, Registry & registry, EVM & evm);
+
+
+    /**
+     * Handles HEAD requests for the transformation endpoint.
+     *
+     * @param request The incoming HTTP request
+     * @param routeArgs Route arguments
+     * @param registry Registry instance for retrieving transformations
+     * @return An HTTP response with CORS headers for the transformation endpoint
+     */
+    asio::awaitable<http::Response> HEAD_transformation(const http::Request &, std::vector<RouteArg>, QueryArgsList, Registry & registry);
 
     /**
      * Handles OPTIONS requests for the transformation endpoint by returning a response with CORS headers.

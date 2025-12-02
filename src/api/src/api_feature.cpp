@@ -2,6 +2,75 @@
 
 namespace dcn
 {
+
+    asio::awaitable<http::Response> HEAD_feature(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, Registry & registry)
+    {
+        http::Response response;
+        response.setVersion("HTTP/1.1");
+
+        setCORSHeaders(request, response);
+
+        // Validate path: /feature/<name> or /feature/<name>/<address>
+        if (args.size() > 2 || args.size() == 0) {
+            response.setCode(http::Code::BadRequest);
+            response.setHeader(http::Header::ContentType, "application/json");
+            // For HEAD: no body, just headers
+            response.setHeader(http::Header::ContentLength, "0");
+            co_return response;
+        }
+
+        auto feature_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
+        if (!feature_name_result) {
+            response.setCode(http::Code::BadRequest);
+            response.setHeader(http::Header::ContentType, "application/json");
+            response.setHeader(http::Header::ContentLength, "0");
+            co_return response;
+        }
+        const auto & feature_name = feature_name_result.value();
+
+        std::optional<Feature> feature_res;
+
+        if (args.size() == 2) {
+            // /feature/<name>/<address>
+            const auto feature_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
+            if (!feature_address_arg) {
+                response.setCode(http::Code::BadRequest);
+                response.setHeader(http::Header::ContentType, "application/json");
+                response.setHeader(http::Header::ContentLength, "0");
+                co_return response;
+            }
+
+            const auto feature_address_result = evmc::from_hex<evmc::address>(feature_address_arg.value());
+
+            if (!feature_address_result) {
+                response.setCode(http::Code::BadRequest);
+                response.setHeader(http::Header::ContentType, "application/json");
+                response.setHeader(http::Header::ContentLength, "0");
+                co_return response;
+            }
+
+            feature_res = co_await registry.getFeature(feature_name, feature_address_result.value());
+        } else {
+            // /feature/<name>
+            feature_res = co_await registry.getNewestFeature(feature_name);
+        }
+
+        if (!feature_res) {
+            // Feature not found
+            response.setCode(http::Code::NotFound);
+            response.setHeader(http::Header::ContentType, "application/json");
+            response.setHeader(http::Header::ContentLength, "0");
+            co_return response;
+        }
+
+        // Feature exists
+        response.setCode(http::Code::OK);
+        response.setHeader(http::Header::Connection, "close");
+        response.setHeader(http::Header::ContentType, "application/json");
+        response.setHeader(http::Header::ContentLength, "0");
+        co_return response;
+    }
+
     asio::awaitable<http::Response> OPTIONS_feature(const http::Request & request, std::vector<RouteArg>, QueryArgsList)
     {
         http::Response response;
@@ -9,7 +78,7 @@ namespace dcn
 
         setCORSHeaders(request, response);
 
-        response.setHeader(http::Header::AccessControlAllowMethods, "GET, POST, OPTIONS");
+        response.setHeader(http::Header::AccessControlAllowMethods, "HEAD, GET, POST, OPTIONS");
         response.setHeader(http::Header::AccessControlAllowHeaders, "authorization, content-type");
         response.setHeader(http::Header::Connection, "close");
         response.setHeader(http::Header::ContentType, "text/plain");

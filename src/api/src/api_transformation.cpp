@@ -2,6 +2,82 @@
 
 namespace dcn
 {
+
+    asio::awaitable<http::Response> HEAD_transformation(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, Registry & registry)
+    {
+        http::Response response;
+        response.setVersion("HTTP/1.1");
+        response.setHeader(http::Header::Connection, "close");
+
+        setCORSHeaders(request, response);
+
+        // Expect /transformation/<name> or /transformation/<name>/<address>
+        if (args.size() > 2 || args.size() == 0) {
+            response.setCode(http::Code::BadRequest);
+            response.setHeader(http::Header::ContentType, "application/json");
+            response.setHeader(http::Header::ContentLength, "0");
+            co_return response;
+        }
+
+        auto transformation_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
+
+        if (!transformation_name_result) {
+            response.setCode(http::Code::BadRequest);
+            response.setHeader(http::Header::ContentType, "application/json");
+            response.setHeader(http::Header::ContentLength, "0");
+            co_return response;
+        }
+
+        const auto & transformation_name = transformation_name_result.value();
+
+        std::optional<Transformation> transformation_res;
+
+        if (args.size() == 2) {
+            // /transformation/<name>/<address>
+            const auto transformation_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
+
+            if (!transformation_address_arg) {
+                response.setCode(http::Code::BadRequest);
+                response.setHeader(http::Header::ContentType, "application/json");
+                response.setHeader(http::Header::ContentLength, "0");
+                co_return response;
+            }
+
+            const auto transformation_address_result = evmc::from_hex<evmc::address>(*transformation_address_arg);
+
+            if (!transformation_address_result) {
+                response.setCode(http::Code::BadRequest);
+                response.setHeader(http::Header::ContentType, "application/json");
+                response.setHeader(http::Header::ContentLength, "0");
+                co_return response;
+            }
+
+            transformation_res = co_await registry.getTransformation(
+                transformation_name,
+                transformation_address_result.value()
+            );
+        } else {
+            // /transformation/<name>
+            transformation_res = co_await registry.getNewestTransformation(
+                transformation_name
+            );
+        }
+
+        if (!transformation_res) {
+            // Transformation not found
+            response.setCode(http::Code::NotFound);
+            response.setHeader(http::Header::ContentType, "application/json");
+            response.setHeader(http::Header::ContentLength, "0");
+            co_return response;
+        }
+
+        // Transformation exists
+        response.setCode(http::Code::OK);
+        response.setHeader(http::Header::ContentType, "application/json");
+        response.setHeader(http::Header::ContentLength, "0");
+        co_return response;
+    }
+
     asio::awaitable<http::Response> OPTIONS_transformation(const http::Request & request, std::vector<RouteArg>, QueryArgsList)
     {
         http::Response response;
@@ -9,7 +85,7 @@ namespace dcn
 
         setCORSHeaders(request, response);
 
-        response.setHeader(http::Header::AccessControlAllowMethods, "GET, POST, OPTIONS");
+        response.setHeader(http::Header::AccessControlAllowMethods, "HEAD, GET, POST, OPTIONS");
         response.setHeader(http::Header::AccessControlAllowHeaders, "authorization, content-type");
         response.setHeader(http::Header::Connection, "close");
         response.setHeader(http::Header::ContentType, "text/plain");

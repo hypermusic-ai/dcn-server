@@ -100,51 +100,54 @@ int main(int argc, char* argv[])
 
     if(simple_form && simple_form_js && simple_form_css)
     {
-        server.addRoute({dcn::http::Method::HEAD, "/"},          dcn::HEAD_ServeFile);
-        server.addRoute({dcn::http::Method::OPTIONS, "/"},       dcn::OPTIONS_ServeFile);
-        server.addRoute({dcn::http::Method::GET, "/"},           dcn::GET_ServeFile, "text/html; charset=utf-8", std::cref(simple_form.value()));
+        server.addRoute({dcn::http::Method::HEAD, "/"},     dcn::HEAD_ServeFile);
+        server.addRoute({dcn::http::Method::OPTIONS, "/"},  dcn::OPTIONS_ServeFile);
+        server.addRoute({dcn::http::Method::GET, "/"},      dcn::GET_ServeFile, "text/html; charset=utf-8", std::cref(simple_form.value()));
 
-        server.addRoute({dcn::http::Method::HEAD, "/js/simple_form.js"},          dcn::HEAD_ServeFile);
-        server.addRoute({dcn::http::Method::OPTIONS, "/js/simple_form.js"},       dcn::OPTIONS_ServeFile);
-        server.addRoute({dcn::http::Method::GET, "/js/simple_form.js"},           dcn::GET_ServeFile, "text/javascript; charset=utf-8", std::cref(simple_form_js.value()));
+        server.addRoute({dcn::http::Method::HEAD, "/js/simple_form.js"},    dcn::HEAD_ServeFile);
+        server.addRoute({dcn::http::Method::OPTIONS, "/js/simple_form.js"}, dcn::OPTIONS_ServeFile);
+        server.addRoute({dcn::http::Method::GET, "/js/simple_form.js"},     dcn::GET_ServeFile, "text/javascript; charset=utf-8", std::cref(simple_form_js.value()));
     
-        server.addRoute({dcn::http::Method::HEAD, "/styles/simple_form.css"},          dcn::HEAD_ServeFile);
-        server.addRoute({dcn::http::Method::OPTIONS, "/styles/simple_form.css"},       dcn::OPTIONS_ServeFile);
-        server.addRoute({dcn::http::Method::GET, "/styles/simple_form.css"},           dcn::GET_ServeFile, "text/css; charset=utf-8", std::cref(simple_form_css.value()));
+        server.addRoute({dcn::http::Method::HEAD, "/styles/simple_form.css"},       dcn::HEAD_ServeFile);
+        server.addRoute({dcn::http::Method::OPTIONS, "/styles/simple_form.css"},    dcn::OPTIONS_ServeFile);
+        server.addRoute({dcn::http::Method::GET, "/styles/simple_form.css"},        dcn::GET_ServeFile, "text/css; charset=utf-8", std::cref(simple_form_css.value()));
     }
 
     if(ico)
     {
-        server.addRoute({dcn::http::Method::HEAD, "/favicon.ico"},          dcn::HEAD_ServeFile);
-        server.addRoute({dcn::http::Method::OPTIONS, "/favicon.ico"},       dcn::OPTIONS_ServeFile);
-        server.addRoute({dcn::http::Method::GET, "/favicon.ico"},           dcn::GET_ServeBinaryFile, "image/x-icon", std::cref(ico.value()));
+        server.addRoute({dcn::http::Method::HEAD, "/favicon.ico"},      dcn::HEAD_ServeFile);
+        server.addRoute({dcn::http::Method::OPTIONS, "/favicon.ico"},   dcn::OPTIONS_ServeFile);
+        server.addRoute({dcn::http::Method::GET, "/favicon.ico"},       dcn::GET_ServeBinaryFile, "image/x-icon", std::cref(ico.value()));
     }
     
-    server.addRoute({dcn::http::Method::GET, "/version"},       dcn::GET_version, std::cref(build_timestamp));
+    server.addRoute({dcn::http::Method::GET, "/version"},   dcn::GET_version, std::cref(build_timestamp));
 
-    server.addRoute({dcn::http::Method::GET, "/nonce/<string>"},       dcn::GET_nonce, std::ref(auth_manager));
+    server.addRoute({dcn::http::Method::GET, "/nonce/<string>"},    dcn::GET_nonce, std::ref(auth_manager));
 
-    server.addRoute({dcn::http::Method::OPTIONS, "/auth"},             dcn::OPTIONS_auth);
-    server.addRoute({dcn::http::Method::POST, "/auth"},                dcn::POST_auth, std::ref(auth_manager));
+    server.addRoute({dcn::http::Method::OPTIONS, "/auth"},  dcn::OPTIONS_auth);
+    server.addRoute({dcn::http::Method::POST, "/auth"},     dcn::POST_auth, std::ref(auth_manager));
 
-    server.addRoute({dcn::http::Method::OPTIONS, "/refresh"},             dcn::OPTIONS_refresh);
-    server.addRoute({dcn::http::Method::POST, "/refresh"},             dcn::POST_refresh, std::ref(auth_manager));
+    server.addRoute({dcn::http::Method::OPTIONS, "/refresh"},   dcn::OPTIONS_refresh);
+    server.addRoute({dcn::http::Method::POST, "/refresh"},      dcn::POST_refresh, std::ref(auth_manager));
 
-    server.addRoute({dcn::http::Method::OPTIONS, "/account/<string>?limit=<uint>&page=<uint>"},             dcn::OPTIONS_accountInfo);
-    server.addRoute({dcn::http::Method::GET,    "/account/<string>?limit=<uint>&page=<uint>"},   dcn::GET_accountInfo, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/account/<string>?limit=<uint>&page=<uint>"}, dcn::OPTIONS_accountInfo);
+    server.addRoute({dcn::http::Method::GET,    "/account/<string>?limit=<uint>&page=<uint>"},  dcn::GET_accountInfo, std::ref(registry));
 
-    server.addRoute({dcn::http::Method::OPTIONS, "/feature/<string>/<~string>"},                    dcn::OPTIONS_feature);
-    server.addRoute({dcn::http::Method::GET,     "/feature/<string>/<~string>"},   dcn::GET_feature, std::ref(registry), std::ref(evm));
-    server.addRoute({dcn::http::Method::POST,    "/feature"},                    dcn::POST_feature, std::ref(auth_manager), std::ref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::HEAD, "/feature/<string>/<~string>"},       dcn::HEAD_feature, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/feature/<string>/<~string>"},    dcn::OPTIONS_feature);
+    server.addRoute({dcn::http::Method::GET,     "/feature/<string>/<~string>"},    dcn::GET_feature, std::ref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::POST,    "/feature"},                       dcn::POST_feature, std::ref(auth_manager), std::ref(registry), std::ref(evm));
 
-    server.addRoute({dcn::http::Method::OPTIONS, "/transformation/<string>/<~string>"},                     dcn::OPTIONS_transformation);
-    server.addRoute({dcn::http::Method::GET,     "/transformation/<string>/<~string>"},    dcn::GET_transformation, std::ref(registry), std::ref(evm));
-    server.addRoute({dcn::http::Method::POST,    "/transformation"},                     dcn::POST_transformation, std::ref(auth_manager), std::ref(registry), std::ref(evm));
+
+    server.addRoute({dcn::http::Method::HEAD, "/transformation/<string>/<~string>"},    dcn::HEAD_transformation, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/transformation/<string>/<~string>"}, dcn::OPTIONS_transformation);
+    server.addRoute({dcn::http::Method::GET,     "/transformation/<string>/<~string>"}, dcn::GET_transformation, std::ref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::POST,    "/transformation"},                    dcn::POST_transformation, std::ref(auth_manager), std::ref(registry), std::ref(evm));
 
     //server.addRoute({dcn::http::Method::GET, "/condition"},                          dcn::GET_condition);
     //server.addRoute({dcn::http::Method::POST, "/condition"},                         dcn::POST_condition);
-    server.addRoute({dcn::http::Method::OPTIONS, "/execute/<string>/<uint>/<~[<(<uint>;<uint>)>]>"},                dcn::OPTIONS_execute);
-    server.addRoute({dcn::http::Method::GET, "/execute/<string>/<uint>/<~[<(<uint>;<uint>)>]>"},                dcn::GET_execute, std::cref(auth_manager), std::cref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::OPTIONS, "/execute/<string>/<uint>/<~[<(<uint>;<uint>)>]>"},    dcn::OPTIONS_execute);
+    server.addRoute({dcn::http::Method::GET, "/execute/<string>/<uint>/<~[<(<uint>;<uint>)>]>"},        dcn::GET_execute, std::cref(auth_manager), std::cref(registry), std::ref(evm));
 
     asio::co_spawn(io_context, dcn::loadStoredTransformations(evm, registry), 
         [&io_context, &registry, &evm, &server](std::exception_ptr, bool){
