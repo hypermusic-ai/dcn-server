@@ -1,7 +1,7 @@
 var searchData=
 [
   ['name_0',['name',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a7b193d80a76eccb5c293dabfd8576c2c',1,'dcn::cmd::CommandLineArgDef']]],
-  ['nargs_1',['nargs',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a1a2cfc4898bb654d19e82ac3ad9394ad',1,'dcn::cmd::CommandLineArgDef::nargs'],['../structdcn_1_1cmd_1_1CommandLineArgDef.html#aa8872b2d70d5da3949c0e1accdd29b95',1,'dcn::cmd::CommandLineArgDef::NArgs']]],
+  ['nargs_1',['nargs',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#aa8872b2d70d5da3949c0e1accdd29b95',1,'dcn::cmd::CommandLineArgDef::NArgs'],['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a1a2cfc4898bb654d19e82ac3ad9394ad',1,'dcn::cmd::CommandLineArgDef::nargs']]],
   ['native_2eh_2',['native.h',['../native_8h.html',1,'']]],
   ['node_3',['Node',['../structdcn_1_1Registry_1_1Node.html',1,'dcn::Registry']]],
   ['nominmax_4',['NOMINMAX',['../windows_8h.html#a9f918755b601cf4bffca775992e6fb90',1,'windows.h']]],
