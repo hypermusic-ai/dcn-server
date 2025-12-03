@@ -222,8 +222,8 @@ namespace dcn
         size_t padding = (32 - (transformation_name.size() % 32)) % 32;
         input_data.insert(input_data.end(), padding, 0);
 
-        co_await evm.setGas(evm.getRegistryAddress(), 1000000000);
-        const auto exec_result = co_await evm.execute(evm.getRegistryAddress(), evm.getRegistryAddress(), input_data, 1000000000, 0);
+        co_await evm.setGas(evm.getRegistryAddress(), DEFAULT_GAS_LIMIT);
+        const auto exec_result = co_await evm.execute(evm.getRegistryAddress(), evm.getRegistryAddress(), input_data, DEFAULT_GAS_LIMIT, 0);
 
         // check execution status
         if(!exec_result)
@@ -317,7 +317,6 @@ namespace dcn
         const Transformation & transformation = *transformation_res;
 
         TransformationRecord transformation_record;
-        transformation_record.set_code_path((getResourcesPath() / "contracts" / "transformations" / (transformation.name() + ".sol")).string());
         transformation_record.set_owner(evmc::hex(address));
         *transformation_record.mutable_transformation() = std::move(transformation);
 

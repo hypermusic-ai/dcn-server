@@ -18,7 +18,7 @@ jobs:
     - name: Configure and build
       run: |
         cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install
-        cmake --build build --config Debug --target install
+        cmake --build build --config Debug --target install -j 4
 
     - name: Pack install directory into tarball
       run: |

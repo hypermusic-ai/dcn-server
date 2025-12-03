@@ -263,6 +263,7 @@ namespace dcn
 
     asio::awaitable<std::expected<std::vector<std::uint8_t>, evmc_status_code>> fetchOwner(EVM & evm, const evmc::address & address)
     {
+        spdlog::debug(std::format("Fetching contract owner: {}", address));
         std::vector<uint8_t> input_data;
         const auto selector = constructFunctionSelector("getOwner()");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
@@ -285,12 +286,12 @@ namespace dcn
 
         // Initialize the genesis account
         std::memcpy(_genesis_address.bytes + (20 - 7), "genesis", 7);
-        addAccount(_genesis_address, 1000000000000000000);
+        addAccount(_genesis_address, DEFAULT_GAS_LIMIT);
         spdlog::info(std::format("Genesis address: {}", _genesis_address));
 
         // Initialize console log account
         std::memcpy(_console_log_address.bytes + (20 - 11), "console.log", 11);
-        addAccount(_console_log_address, 1000000000000000000);
+        addAccount(_console_log_address, DEFAULT_GAS_LIMIT);
 
         co_spawn(io_context, loadPT(), asio::detached);
     }
@@ -451,12 +452,12 @@ namespace dcn
 
         if (result.status_code != EVMC_SUCCESS)
         {
-            spdlog::error(std::format("Failed to deploy contract: {}", result.status_code));
+            spdlog::error("Failed to deploy contract: {}", evmc_status_code_to_string(result.status_code));
             co_return std::unexpected<evmc_status_code>(result.status_code);
         }
 
         // Display result
-        spdlog::info("EVM deployment status: {}", static_cast<int>(result.status_code));
+        spdlog::info("EVM deployment status: {}", evmc_status_code_to_string(result.status_code));
         spdlog::info("Gas left: {}", result.gas_left);
 
         if (result.output_data){
@@ -517,12 +518,12 @@ namespace dcn
         
         if (result.status_code != EVMC_SUCCESS)
         {
-            spdlog::error(std::format("Failed to execute contract: {}", evmc_status_code_to_string(result.status_code)));
+            spdlog::error("Failed to execute contract: {}", evmc_status_code_to_string(result.status_code));
             co_return std::unexpected<evmc_status_code>(result.status_code);
         }
 
         // Display result
-        spdlog::info("EVM execution status: {}", static_cast<int>(result.status_code));
+        spdlog::info("EVM execution status: {}", evmc_status_code_to_string(result.status_code));
         spdlog::info("Gas left: {}", result.gas_left);
 
         if (result.output_data){
@@ -551,7 +552,7 @@ namespace dcn
                     out_dir / "registry" / "RegistryBase.bin", 
                     _genesis_address,
                     {}, 
-                    1000000, 
+                    DEFAULT_GAS_LIMIT, 
                     0);
 
             if(!registry_address_res.has_value())
@@ -567,12 +568,13 @@ namespace dcn
                     out_dir, 
                     contracts_dir, 
                     node_modules);
-        
+            
+            spdlog::debug("Deploy runner");
             const auto runner_address_res = co_await deploy(
                     out_dir / "Runner.bin", 
                     _genesis_address,
                     encodeAsArg(_registry_address), 
-                    1000000, 
+                    DEFAULT_GAS_LIMIT, 
                     0);
 
             if(!runner_address_res.has_value())

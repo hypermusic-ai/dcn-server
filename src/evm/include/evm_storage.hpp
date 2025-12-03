@@ -31,6 +31,8 @@
 
 namespace dcn
 {
+    const std::uint64_t DEFAULT_GAS_LIMIT = 100'000'000;
+
     class EVMStorage : public evmc::Host
     {
     public:

@@ -26,5 +26,4 @@ message FeatureRecord
 {
   Feature feature = 1;
   string owner = 2;
-  string code_path = 3;
 }

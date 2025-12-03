@@ -42,7 +42,6 @@ namespace dcn
 
     std::size_t EVMStorage::get_code_size(const evmc::address& addr) const noexcept
     {
-        spdlog::debug(std::format("get_code_size : Account {}", addr));
         return _accounts.at(to_key(addr)).code.size();
     }
 
@@ -149,7 +148,7 @@ namespace dcn
             }
 
             add_account(new_address);
-            set_balance(new_address, 10000000000000000000);
+            set_balance(new_address, DEFAULT_GAS_LIMIT);
 
             // at this point constructor does not have any address - so any operation - for example store ect 
             // will use default 0x0 address, therefore we use dummy ctor account, 
@@ -197,7 +196,7 @@ namespace dcn
                 std::chrono::system_clock::now().time_since_epoch()
             ).count()
         );
-        ctx.block_gas_limit = 30'000'000;          // Reasonable gas limit
+        ctx.block_gas_limit = DEFAULT_GAS_LIMIT;   // gas limit
         ctx.block_prev_randao = {};                // Randomness (EIP-4399)
         
         ctx.block_base_fee = {};

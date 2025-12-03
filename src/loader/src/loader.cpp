@@ -3,11 +3,9 @@
 namespace dcn
 {
     template<class T>
-    static absl::flat_hash_map<std::string, T> _loadJSONRecords(std::filesystem::path subdir)
+    static absl::flat_hash_map<std::string, T> _loadJSONRecords(std::filesystem::path dir)
     {
         std::ifstream file;
-
-        static const auto storage_dir = getStoragePath() / subdir;
 
         absl::flat_hash_map<std::string, T> loaded_data;
         std::optional<T> loaded_result;
@@ -15,7 +13,7 @@ namespace dcn
         bool success = true;
 
         try {
-            for (const auto& entry : std::filesystem::directory_iterator(storage_dir)) 
+            for (const auto& entry : std::filesystem::directory_iterator(dir)) 
             {
                 if (!entry.is_regular_file() || entry.path().extension() != ".json") continue;
                 
@@ -68,30 +66,6 @@ namespace dcn
             co_return false;
         }
 
-        const std::filesystem::path code_path = feature_record.code_path();
-        static const std::filesystem::path out_dir = getResourcesPath() / "contracts" / "features" / "build";
-
-        std::filesystem::create_directories(code_path.parent_path());
-        std::filesystem::create_directories(out_dir);
-
-        // create code file
-        std::ofstream out_file(code_path); 
-        if(!out_file.is_open())
-        {
-            spdlog::error("Failed to create file");
-            co_return false;
-        }
-
-        out_file << constructFeatureSolidityCode(feature_record.feature());
-        out_file.close();
-
-        // compile code
-        if(!co_await evm.compile(code_path, out_dir, getPTPath()/ "contracts", getPTPath() / "node_modules"))
-        {
-            spdlog::error("Failed to compile code");
-            co_return false;
-        }
-        
         const auto address_result = evmc::from_hex<evmc::address>(feature_record.owner());
         if(!address_result)
         {
@@ -100,19 +74,55 @@ namespace dcn
         }
         const auto & address = *address_result;
 
-        co_await evm.addAccount(address, 1000000000);
-        co_await evm.setGas(address, 1000000000);
+        static const std::filesystem::path out_dir = getStoragePath() / "features" / "build";
+
+        if(std::filesystem::exists(out_dir) == false)
+        {
+            spdlog::error("Directory {} does not exists", out_dir.string());
+            co_return false;
+        }
+
+        // if binary file does not exist
+        if(std::filesystem::exists(out_dir / (feature_record.feature().name() + ".bin")) == false)
+        {
+            // there is a need for compile code
+            const std::filesystem::path code_path = out_dir / (feature_record.feature().name() + ".sol");
+
+            // create code file
+            std::ofstream out_file(code_path); 
+            if(!out_file.is_open())
+            {
+                spdlog::error("Failed to create file");
+                co_return false;
+            }
+
+            out_file << constructFeatureSolidityCode(feature_record.feature());
+            out_file.close();
+
+            // compile code
+            if(!co_await evm.compile(code_path, out_dir, getPTPath()/ "contracts", getPTPath() / "node_modules"))
+            {
+                spdlog::error("Failed to compile code");
+                co_return false;
+            }
+
+            // remove code file
+            std::filesystem::remove(code_path);
+        }
+
+        co_await evm.addAccount(address, DEFAULT_GAS_LIMIT);
+        co_await evm.setGas(address, DEFAULT_GAS_LIMIT);
         
         auto deploy_res = co_await evm.deploy(
             out_dir / (feature_record.feature().name() + ".bin"), 
             address, 
             encodeAsArg(evm.getRegistryAddress()),
-            1000000000, 
+            DEFAULT_GAS_LIMIT, 
             0);
 
         if(!deploy_res)
         {
-            spdlog::error("Failed to deploy code : {}", deploy_res.error());
+            spdlog::error(std::format("Failed to deploy code : {}", deploy_res.error()));
             co_return false;
         }
 
@@ -127,13 +137,20 @@ namespace dcn
 
         const auto owner_address = decodeReturnedValue<evmc::address>(owner_result.value());
 
-        if(!co_await registry.addFeature(deploy_res.value(), feature_record.feature(), owner_address, code_path)) 
+        if(owner_address != address)
         {
-            spdlog::error("Failed to add feature");
+            spdlog::error("Owner address mismatch");
             co_return false;
         }
 
-        spdlog::debug("feature '{}' added", feature_record.feature().name());
+        const std::string name = feature_record.feature().name();
+        if(!co_await registry.addFeature(deploy_res.value(), std::move(feature_record)))
+        {
+            spdlog::error("Failed to add feature '{}'", name);
+            co_return false;
+        }
+
+        spdlog::debug("feature '{}' added", name);
         co_return true;
     }
 
@@ -145,30 +162,6 @@ namespace dcn
             co_return false;
         }
 
-        const std::filesystem::path code_path = transformation_record.code_path();
-        static const std::filesystem::path out_dir = getResourcesPath() / "contracts" / "transformations" / "build";
-
-        std::filesystem::create_directories(code_path.parent_path());
-        std::filesystem::create_directories(out_dir);
-
-        // create code file
-        std::ofstream out_file(code_path); 
-        if(!out_file.is_open())
-        {
-            spdlog::error("Failed to create file");
-            co_return false;
-        }
-
-        out_file << constructTransformationSolidityCode(transformation_record.transformation());
-        out_file.close();
-
-        // compile code
-        if(!co_await evm.compile(code_path, out_dir, getPTPath()/ "contracts", getPTPath() / "node_modules"))
-        {
-            spdlog::error("Failed to compile code");
-            co_return false;
-        }
-
         const auto address_result = evmc::from_hex<evmc::address>(transformation_record.owner());
         if(!address_result)
         {
@@ -177,21 +170,58 @@ namespace dcn
         }
         const auto & address = *address_result;
 
-        co_await evm.addAccount(address, 1000000000);
-        co_await evm.setGas(address, 1000000000);
+        static const std::filesystem::path out_dir = getStoragePath() / "transformations" / "build";
+
+        if(std::filesystem::exists(out_dir) == false)
+        {
+            spdlog::error("Directory {} does not exists", out_dir.string());
+            co_return false;
+        }
+
+        // if binary file does not exist
+        if(std::filesystem::exists(out_dir / (transformation_record.transformation().name() + ".bin")) == false)
+        {
+            // there is a need for compile code
+            const std::filesystem::path code_path = out_dir / (transformation_record.transformation().name() + ".sol");
+
+            // create code file
+            std::ofstream out_file(code_path); 
+            if(!out_file.is_open())
+            {
+                spdlog::error("Failed to create file");
+                co_return false;
+            }
+
+            out_file << constructTransformationSolidityCode(transformation_record.transformation());
+            out_file.close();
+
+            // compile code
+            if(!co_await evm.compile(code_path, out_dir, getPTPath()/ "contracts", getPTPath() / "node_modules"))
+            {
+                spdlog::error("Failed to compile code");
+                co_return false;
+            }
+
+            // remove code file
+            std::filesystem::remove(code_path);
+        }
+
+        co_await evm.addAccount(address, DEFAULT_GAS_LIMIT);
+        co_await evm.setGas(address, DEFAULT_GAS_LIMIT);
 
         auto deploy_res = co_await evm.deploy(  
             out_dir / (transformation_record.transformation().name() + ".bin"), 
             address, 
             encodeAsArg(evm.getRegistryAddress()), 
-            1000000, 
+            DEFAULT_GAS_LIMIT, 
             0);
         
         if(!deploy_res)
         {
-            spdlog::error("Failed to deploy code");
+            spdlog::error(std::format("Failed to deploy code {}", deploy_res.error()));
             co_return false;
         }
+
         const auto owner_result = co_await fetchOwner(evm, deploy_res.value());
 
         // check execution status
@@ -202,13 +232,20 @@ namespace dcn
         }
         const auto owner_address = decodeReturnedValue<evmc::address>(owner_result.value());
 
-        if(!co_await registry.addTransformation(deploy_res.value(), transformation_record.transformation(), owner_address, code_path)) 
+        if(owner_address != address)
         {
-            spdlog::error("Failed to add transformation to registry");
+            spdlog::error("Owner address mismatch");
             co_return false;
         }
 
-        spdlog::debug("transformation '{}' added", transformation_record.transformation().name());
+        const std::string name = transformation_record.transformation().name();
+        if(!co_await registry.addTransformation(deploy_res.value(), std::move(transformation_record))) 
+        {
+            spdlog::error("Failed to add transformation '{}'", name);
+            co_return false;
+        }
+
+        spdlog::debug("transformation '{}' added", name);
         co_return true;
     }
 
@@ -216,7 +253,7 @@ namespace dcn
     {
         spdlog::info("Loading stored features...");
 
-        auto loaded_features = _loadJSONRecords<FeatureRecord>("features");
+        auto loaded_features = _loadJSONRecords<FeatureRecord>(getStoragePath() / "features");
         if(loaded_features.empty())
         {
             co_return false;
@@ -229,6 +266,10 @@ namespace dcn
             );
 
         bool success = true;
+        std::size_t i = 0;
+        const std::size_t batch_size = (sorted_features.size() / 100) + 1;
+        assert(batch_size > 0);
+        
         for(const auto & name : sorted_features)
         {
             if(!co_await deployFeature(evm, registry, std::move(loaded_features.at(name))))
@@ -236,6 +277,8 @@ namespace dcn
                 spdlog::error("Failed to deploy feature `{}`", name);
                 success = false;
             }
+
+            if(++i % batch_size == 0) {spdlog::debug("{}/{} features loaded", i, loaded_features.size());}
         }
 
         co_return success;
@@ -245,13 +288,17 @@ namespace dcn
     {
         spdlog::info("Loading stored transformations...");
 
-        auto loaded_transformations = _loadJSONRecords<TransformationRecord>("transformations");
+        auto loaded_transformations = _loadJSONRecords<TransformationRecord>(getStoragePath() / "transformations");
         if(loaded_transformations.empty())
         {
             co_return false;
         }
 
         bool success = true;
+        std::size_t i = 0;
+        const std::size_t batch_size = (loaded_transformations.size() / 100) + 1;
+        assert(batch_size > 0);
+
         for(auto & [name, transformation] : loaded_transformations)
         {
             if(!co_await deployTransformation(evm, registry, std::move(transformation)))
@@ -259,6 +306,8 @@ namespace dcn
                 spdlog::error("Failed to deploy transformation `{}`", name);
                 success = false;
             }
+
+            if(++i % batch_size == 0) {spdlog::debug("{}/{} transformations loaded", i, loaded_transformations.size());}
         }
 
         co_return success;

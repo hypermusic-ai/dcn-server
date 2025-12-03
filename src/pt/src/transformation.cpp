@@ -128,7 +128,6 @@ namespace dcn::parse
         json json_obj = json::object();
         json_obj["transformation"] = parseToJson(transformation_record.transformation(), use_json);
         json_obj["owner"] = transformation_record.owner();
-        json_obj["code_path"] = transformation_record.code_path();
         return json_obj;
     }
 
@@ -166,11 +165,6 @@ namespace dcn::parse
         
         transformation_record.set_owner(json_obj["owner"].get<std::string>());
 
-        if (json_obj.contains("code_path") == false)
-            return std::nullopt;
-        
-        transformation_record.set_code_path(json_obj["code_path"].get<std::string>());
-
         return transformation_record;
     }
 
@@ -178,6 +172,7 @@ namespace dcn::parse
     std::optional<TransformationRecord> parseFromJson(std::string json_str, use_protobuf_t)
     {
         google::protobuf::util::JsonParseOptions options;
+        options.ignore_unknown_fields = true;
 
         TransformationRecord transformation_record;
 

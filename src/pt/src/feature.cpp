@@ -259,7 +259,6 @@ namespace dcn::parse
         json json_obj = json::object();
         json_obj["feature"] = parseToJson(feature.feature(), use_json);
         json_obj["owner"] = feature.owner();
-        json_obj["code_path"] = feature.code_path();
         return json_obj;
     }
 
@@ -298,11 +297,6 @@ namespace dcn::parse
         
         feature_record.set_owner(json_obj["owner"].get<std::string>());
 
-        if (json_obj.contains("code_path") == false)
-            return std::nullopt;
-        
-        feature_record.set_code_path(json_obj["code_path"].get<std::string>());
-
         return feature_record;
     }
     
@@ -310,6 +304,7 @@ namespace dcn::parse
     std::optional<FeatureRecord> parseFromJson(std::string json_str, use_protobuf_t)
     {
         google::protobuf::util::JsonParseOptions options;
+        options.ignore_unknown_fields = true;
 
         FeatureRecord feature_record;
 

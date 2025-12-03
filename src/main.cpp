@@ -149,6 +149,13 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::OPTIONS, "/execute/<string>/<uint>/<~[<(<uint>;<uint>)>]>"},    dcn::OPTIONS_execute);
     server.addRoute({dcn::http::Method::GET, "/execute/<string>/<uint>/<~[<(<uint>;<uint>)>]>"},        dcn::GET_execute, std::cref(auth_manager), std::cref(registry), std::ref(evm));
 
+    // create directories
+    std::filesystem::create_directory(dcn::getStoragePath());
+    std::filesystem::create_directory(dcn::getStoragePath() / "features");
+    std::filesystem::create_directory(dcn::getStoragePath() / "features" / "build");
+    std::filesystem::create_directory(dcn::getStoragePath() / "transformations");
+    std::filesystem::create_directory(dcn::getStoragePath() / "transformations" / "build");
+
     asio::co_spawn(io_context, dcn::loadStoredTransformations(evm, registry), 
         [&io_context, &registry, &evm, &server](std::exception_ptr, bool){
                 asio::co_spawn(io_context, dcn::loadStoredFeatures(evm, registry), 

@@ -70,9 +70,9 @@ namespace dcn
     }
 
 
-    asio::awaitable<bool> Registry::addFeature(evmc::address address, Feature feature, evmc::address owner, std::filesystem::path source)
+    asio::awaitable<bool> Registry::addFeature(evmc::address address, FeatureRecord record)
     {
-        if(feature.name().empty())
+        if(record.feature().name().empty())
         {
             spdlog::error("Feature name is empty");
             co_return false;
@@ -80,64 +80,71 @@ namespace dcn
 
         co_await utils::ensureOnStrand(_strand);
 
-        if(co_await checkIfSubFeaturesExist(feature) == false)
+        if(co_await checkIfSubFeaturesExist(record.feature()) == false)
         {
-            spdlog::error("Cannot find subfeatures for feature `{}`", feature.name());
+            spdlog::error("Cannot find subfeatures for feature `{}`", record.feature().name());
             co_return false;
         }
 
-        if(! co_await containsFeatureBucket(feature.name()))
+        if(! co_await containsFeatureBucket(record.feature().name()))
         {
-            spdlog::debug("Feature bucket `{}` does not exists, creating new one ... ", feature.name());
-            _features.try_emplace(feature.name(), absl::flat_hash_map<evmc::address, FeatureRecord>());
+            spdlog::debug("Feature bucket `{}` does not exists, creating new one ... ", record.feature().name());
+            _features.try_emplace(record.feature().name(), absl::flat_hash_map<evmc::address, FeatureRecord>());
         }       
 
-        if(_features.at(feature.name()).contains(address))
+        if(_features.at(record.feature().name()).contains(address))
         {
-            spdlog::error("Feature `{}` of this signature already exists", feature.name());
+            spdlog::error("Feature `{}` of this signature already exists", record.feature().name());
             co_return false;
         }
 
         // check if transformations exists
-        for(const Dimension & dimension : feature.dimensions())
+        for(const Dimension & dimension : record.feature().dimensions())
         {
             for(const auto & transformation : dimension.transformations())
             {
                 if(! co_await containsTransformationBucket(transformation.name()))
                 {
-                    spdlog::error("Cannot find transformation `{}` used in feature `{}`", transformation.name(), feature.name());
+                    spdlog::error("Cannot find transformation `{}` used in feature `{}`", transformation.name(), record.feature().name());
                     co_return false;
                 }
                 if(co_await isTransformationBucketEmpty(transformation.name()))
                 {
-                    spdlog::error("Cannot find transformation `{}` used in feature `{}`", transformation.name(), feature.name());
+                    spdlog::error("Cannot find transformation `{}` used in feature `{}`", transformation.name(), record.feature().name());
                     co_return false;
                 }
             }
         }
 
-        FeatureRecord feature_record;
-        *feature_record.mutable_feature() = std::move(feature);
-        feature_record.set_owner(evmc::hex(owner));
-        feature_record.set_code_path(source.string());
+        static const std::filesystem::path out_dir = getStoragePath() / "features";
+        if(std::filesystem::exists(out_dir) == false)
+        {
+            spdlog::error("Directory {} does not exists", out_dir.string());
+            co_return false;
+        }
 
-        std::filesystem::create_directories(getStoragePath() / "features");
-        std::ofstream output_file(getStoragePath()/ "features" / (feature_record.feature().name() + ".json"), std::ios::out | std::ios::trunc);
-        const auto parsing_result = parse::parseToJson(feature_record, parse::use_protobuf);
+        std::ofstream output_file(out_dir / (record.feature().name() + ".json"), std::ios::out | std::ios::trunc);
+        const auto parsing_result = parse::parseToJson(record, parse::use_protobuf);
         if(!parsing_result)
         {
-            spdlog::error("Failed to parse feature `{}`", feature_record.feature().name());
+            spdlog::error("Failed to parse feature `{}`", record.feature().name());
+            co_return false;
+        }
+
+        std::optional<evmc::address> owner_res = evmc::from_hex<evmc::address>(record.owner());
+        if(!owner_res)
+        {
+            spdlog::error("Failed to parse owner address");
             co_return false;
         }
 
         output_file << *parsing_result;
         output_file.close();
 
-        _owned_features[owner].emplace(feature_record.feature().name());
+        _owned_features[*owner_res].emplace(record.feature().name());
 
-        _newest_feature[feature_record.feature().name()] = address;
-        _features.at(feature_record.feature().name())
-            .try_emplace(std::move(address), std::move(feature_record));
+        _newest_feature[record.feature().name()] = address;
+        _features.at(record.feature().name()).try_emplace(std::move(address), std::move(record));
 
         co_return true;
     }
@@ -168,9 +175,9 @@ namespace dcn
     }
 
 
-    asio::awaitable<bool> Registry::addTransformation(evmc::address address, Transformation transformation, evmc::address owner, std::filesystem::path source)
+    asio::awaitable<bool> Registry::addTransformation(evmc::address address, TransformationRecord record)
     {
-        if(transformation.name().empty())
+        if(record.transformation().name().empty())
         {
             spdlog::error("Transformation name is empty");
             co_return false;
@@ -178,46 +185,49 @@ namespace dcn
 
         co_await utils::ensureOnStrand(_strand);
 
-        if(! co_await containsTransformationBucket(transformation.name())) 
+        if(!co_await containsTransformationBucket(record.transformation().name())) 
         {
-            spdlog::debug("Transformation bucket `{}` does not exists, creating new one ... ", transformation.name());
-            _transformations.try_emplace(transformation.name(), absl::flat_hash_map<evmc::address, TransformationRecord>());
+            spdlog::debug("Transformation bucket `{}` does not exists, creating new one ... ", record.transformation().name());
+            _transformations.try_emplace(record.transformation().name(), absl::flat_hash_map<evmc::address, TransformationRecord>());
         }
 
-        if(_transformations.at(transformation.name()).contains(address))
+        if(_transformations.at(record.transformation().name()).contains(address))
         {
-            spdlog::error("Transformation `{}` of this signature already exists", transformation.name());
+            spdlog::error("Transformation `{}` of this signature already exists", record.transformation().name());
             co_return false;
         }
         
-        TransformationRecord transformation_record;
+        static const std::filesystem::path out_dir = getStoragePath() / "transformations";
+        if(std::filesystem::exists(out_dir) == false)
+        {
+            spdlog::error("Directory {} does not exists", out_dir.string());
+            co_return false;
+        }
 
-        *transformation_record.mutable_transformation() = std::move(transformation);
-        transformation_record.set_owner(evmc::hex(owner));
-        transformation_record.set_code_path(source.string());
-
-        std::filesystem::create_directories(getStoragePath() / "transformations");
-        std::ofstream output_file(getStoragePath()/ "transformations" / (transformation_record.transformation().name() + ".json"), std::ios::out | std::ios::trunc);
-        const auto parsing_result = parse::parseToJson(transformation_record, parse::use_protobuf);
+        std::ofstream output_file(out_dir / (record.transformation().name() + ".json"), std::ios::out | std::ios::trunc);
+        const auto parsing_result = parse::parseToJson(record, parse::use_protobuf);
         if(!parsing_result)
         {
-            spdlog::error("Failed to parse transformation `{}`", transformation_record.transformation().name());
+            spdlog::error("Failed to parse transformation `{}`", record.transformation().name());
+            co_return false;
+        }
+
+        std::optional<evmc::address> owner_res = evmc::from_hex<evmc::address>(record.owner());
+        if(!owner_res)
+        {
+            spdlog::error("Failed to parse owner address");
             co_return false;
         }
 
         output_file << *parsing_result;
         output_file.close();
 
-        _owned_transformations[owner].emplace(transformation_record.transformation().name());
+        _owned_transformations[*owner_res].emplace(record.transformation().name());
 
-        _newest_transformation[transformation_record.transformation().name()] = address;
-        _transformations.at(transformation_record.transformation().name())
-            .try_emplace(std::move(address), std::move(transformation_record));
+        _newest_transformation[record.transformation().name()] = address;
+        _transformations.at(record.transformation().name()).try_emplace(std::move(address), std::move(record));
 
         co_return true;
-
-
-
     }
 
     asio::awaitable<std::optional<Transformation>> Registry::getNewestTransformation(const std::string& name) const
@@ -246,7 +256,7 @@ namespace dcn
     }
 
 
-    asio::awaitable<bool> Registry::addCondition(evmc::address address, Condition condition, std::filesystem::path source)
+    asio::awaitable<bool> Registry::addCondition(evmc::address address, Condition condition)
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -267,7 +277,7 @@ namespace dcn
         _conditions.at(condition.name())    
             .try_emplace(
                 std::move(address),
-                Node<Condition>{std::move(condition), std::move(source)});
+                Node<Condition>{std::move(condition)});
         co_return true;
     }
 

@@ -148,9 +148,9 @@ namespace dcn
         input_data.insert(input_data.end(), tuple_vec_bytes.begin(), tuple_vec_bytes.end());
 
         // execute call to runner
-        co_await evm.setGas(address, 1000000000);
-        co_await evm.setGas(evm.getRunnerAddress(), 1000000000);
-        const auto exec_result = co_await evm.execute(address, evm.getRunnerAddress(), input_data, 1000000000, 0);
+        co_await evm.setGas(address, DEFAULT_GAS_LIMIT);
+        co_await evm.setGas(evm.getRunnerAddress(), DEFAULT_GAS_LIMIT);
+        const auto exec_result = co_await evm.execute(address, evm.getRunnerAddress(), input_data, DEFAULT_GAS_LIMIT, 0);
 
         // check execution status
         if(!exec_result)

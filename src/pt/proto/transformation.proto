@@ -12,5 +12,4 @@ message TransformationRecord
 {
   Transformation transformation = 1;
   string owner = 2;
-  string code_path = 3;
 }

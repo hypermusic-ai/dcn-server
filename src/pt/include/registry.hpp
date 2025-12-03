@@ -54,7 +54,7 @@ namespace dcn
              * function returns `std::nullopt`. If the feature does not exist, it is
              * added and the hash of the feature is returned.
              */
-            asio::awaitable<bool> addFeature(evmc::address address, Feature feature, evmc::address owner, std::filesystem::path source);
+            asio::awaitable<bool> addFeature(evmc::address address, FeatureRecord feature);
             
             /**
              * @brief Retrieves the newest feature by name.
@@ -96,7 +96,7 @@ namespace dcn
              * transformation does not exist, it is added and the hash of the
              * transformation is returned.
              */
-            asio::awaitable<bool> addTransformation(evmc::address address, Transformation transformation, evmc::address owner, std::filesystem::path source);
+            asio::awaitable<bool> addTransformation(evmc::address address, TransformationRecord transformation);
 
             /**
              * @brief Retrieves the newest transformation by name.
@@ -137,7 +137,7 @@ namespace dcn
              * the function returns `std::nullopt`. If the condition does not exist, it
              * is added and the hash of the condition is returned.
              */
-            asio::awaitable<bool> addCondition(evmc::address address, Condition condition, std::filesystem::path source);
+            asio::awaitable<bool> addCondition(evmc::address address, Condition condition);
 
             /**
              * @brief Retrieves the newest condition by name.
@@ -262,7 +262,6 @@ namespace dcn
             struct Node
             {
                 T value;
-                std::filesystem::path path;
             };
 
         private:
