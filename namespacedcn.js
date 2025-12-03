@@ -124,6 +124,7 @@ var namespacedcn =
     [ "POST_transformation", "namespacedcn.html#a3068250f81a32e89e4028890e5e4eca1", null ],
     [ "setBinPath", "namespacedcn.html#a802ae4049f4667dcdb1fe8b04a09769d", null ],
     [ "setCORSHeaders", "namespacedcn.html#a8eb997e707a12cc1254162b0fb9c111f", null ],
+    [ "DEFAULT_GAS_LIMIT", "namespacedcn.html#affcf2d5172ca7f658b5a8e4b8301073c", null ],
     [ "DEFAULT_PORT", "namespacedcn.html#a10825d7e3806e0d75a98f30f69cde494", null ],
     [ "DEFAULT_TLS_PORT", "namespacedcn.html#a84f601d5d12f5c2e3369eb95be0adaf1", null ],
     [ "MAJOR_VERSION", "namespacedcn.html#a184b90896887dec190467e00f2cd1bdb", null ],
