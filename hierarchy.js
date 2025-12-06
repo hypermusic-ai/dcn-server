@@ -2,14 +2,14 @@ var hierarchy =
 [
     [ "dcn::evm::EVMStorage::Account", "structdcn_1_1evm_1_1EVMStorage_1_1Account.html", null ],
     [ "dcn::cmd::ArgParser", "classdcn_1_1cmd_1_1ArgParser.html", null ],
-    [ "dcn::AuthError", "structdcn_1_1AuthError.html", null ],
-    [ "dcn::AuthManager", "classdcn_1_1AuthManager.html", null ],
+    [ "dcn::auth::AuthError", "structdcn_1_1auth_1_1AuthError.html", null ],
+    [ "dcn::auth::AuthManager", "classdcn_1_1auth_1_1AuthManager.html", null ],
     [ "dcn::cmd::CommandLineArgDef", "structdcn_1_1cmd_1_1CommandLineArgDef.html", null ],
     [ "dcn::evm::DeployError", "structdcn_1_1evm_1_1DeployError.html", null ],
     [ "dcn::parse::Error", "structdcn_1_1parse_1_1Error.html", null ],
     [ "dcn::evm::EVM", "classdcn_1_1evm_1_1EVM.html", null ],
     [ "std::formatter", null, [
-      [ "std::formatter< dcn::AuthError::Kind >", "structstd_1_1formatter_3_01dcn_1_1AuthError_1_1Kind_01_4.html", null ],
+      [ "std::formatter< dcn::auth::AuthError::Kind >", "structstd_1_1formatter_3_01dcn_1_1auth_1_1AuthError_1_1Kind_01_4.html", null ],
       [ "std::formatter< dcn::evm::DeployError::Kind >", "structstd_1_1formatter_3_01dcn_1_1evm_1_1DeployError_1_1Kind_01_4.html", null ],
       [ "std::formatter< dcn::http::Code >", "structstd_1_1formatter_3_01dcn_1_1http_1_1Code_01_4.html", null ],
       [ "std::formatter< dcn::http::Header >", "structstd_1_1formatter_3_01dcn_1_1http_1_1Header_01_4.html", null ],

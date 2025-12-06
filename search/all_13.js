@@ -10,7 +10,7 @@ var searchData=
   ['set_5fbalance_7',['set_balance',['../classdcn_1_1evm_1_1EVMStorage.html#a04c1841d919c72a3abd7699d1d1814c6',1,'dcn::evm::EVMStorage']]],
   ['set_5fstorage_8',['set_storage',['../classdcn_1_1evm_1_1EVMStorage.html#a3b0e5ba091c8b33ffa02e82ff47f28bd',1,'dcn::evm::EVMStorage']]],
   ['set_5ftransient_5fstorage_9',['set_transient_storage',['../classdcn_1_1evm_1_1EVMStorage.html#a30b939883c437e47ca034707ab8fe495',1,'dcn::evm::EVMStorage']]],
-  ['setbinpath_10',['setBinPath',['../namespacedcn.html#a802ae4049f4667dcdb1fe8b04a09769d',1,'dcn']]],
+  ['setbinpath_10',['setBinPath',['../namespacedcn_1_1file.html#ab520eab7dfac269c19209977cdce3694',1,'dcn::file']]],
   ['setbody_11',['setBody',['../classdcn_1_1http_1_1MessageBase.html#a745ae16753699b7e74ff930ea45dcb36',1,'dcn::http::MessageBase']]],
   ['setbodywithcontentlength_12',['setBodyWithContentLength',['../classdcn_1_1http_1_1MessageBase.html#abf2cf981f5e5f3a1093beca7b27c0952',1,'dcn::http::MessageBase']]],
   ['setcode_13',['setCode',['../classdcn_1_1http_1_1Response.html#a0fe87dea2752c355afc49c0bd01d2bfd',1,'dcn::http::Response']]],

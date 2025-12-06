@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['_7eauthmanager_0',['~AuthManager',['../classdcn_1_1AuthManager.html#a8f1213031aa2f511d251e8a4233a9f9d',1,'dcn::AuthManager']]],
+  ['_7eauthmanager_0',['~AuthManager',['../classdcn_1_1auth_1_1AuthManager.html#a4090f0be70261fadea84d75c4f6037d8',1,'dcn::auth::AuthManager']]],
   ['_7eevm_1',['~EVM',['../classdcn_1_1evm_1_1EVM.html#a9b0bf8cf567efcc4e7657887d6ec59bc',1,'dcn::evm::EVM']]],
   ['_7emessagebase_2',['~MessageBase',['../classdcn_1_1http_1_1MessageBase.html#a5c0364faca7ccc2a7390c6b167e71509',1,'dcn::http::MessageBase']]],
   ['_7eregistry_3',['~Registry',['../classdcn_1_1registry_1_1Registry.html#a93aef24aa32941e6aa82cd2f31781935',1,'dcn::registry::Registry']]],

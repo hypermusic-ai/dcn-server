@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['verifyaccesstoken_0',['verifyAccessToken',['../classdcn_1_1AuthManager.html#ac1915ebd9e7d485f6bab949e98ee18c9',1,'dcn::AuthManager']]],
-  ['verifynonce_1',['verifyNonce',['../classdcn_1_1AuthManager.html#a00a3838355a1730aa12a9e77e0dfaa51',1,'dcn::AuthManager']]],
-  ['verifyrefreshtoken_2',['verifyRefreshToken',['../classdcn_1_1AuthManager.html#a998119921c86a4fa1ba745eaa570b019',1,'dcn::AuthManager']]],
-  ['verifysignature_3',['verifySignature',['../classdcn_1_1AuthManager.html#acee52ec45e274a1252f9baf738b7375f',1,'dcn::AuthManager']]]
+  ['verifyaccesstoken_0',['verifyAccessToken',['../classdcn_1_1auth_1_1AuthManager.html#a6120a2a41fa17f2ce0244e4faae05655',1,'dcn::auth::AuthManager']]],
+  ['verifynonce_1',['verifyNonce',['../classdcn_1_1auth_1_1AuthManager.html#a4c36816a956b2f2c3487d01612cab8f6',1,'dcn::auth::AuthManager']]],
+  ['verifyrefreshtoken_2',['verifyRefreshToken',['../classdcn_1_1auth_1_1AuthManager.html#a8c6d8f72a6ec838432e276eecd16b886',1,'dcn::auth::AuthManager']]],
+  ['verifysignature_3',['verifySignature',['../classdcn_1_1auth_1_1AuthManager.html#a8b0ed3951c4515fe027ca56fc93330e8',1,'dcn::auth::AuthManager']]]
 ];

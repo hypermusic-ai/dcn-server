@@ -33,8 +33,8 @@ var searchData=
   ['array_30',['array',['../namespacedcn_1_1server.html#aa0ab598ae418cd408597c83cff2534c3af1f713c9e000f5d3f280adbd124df4f5',1,'dcn::server']]],
   ['auth_2ecpp_31',['auth.cpp',['../auth_8cpp.html',1,'']]],
   ['auth_2ehpp_32',['auth.hpp',['../auth_8hpp.html',1,'']]],
-  ['authenticate_33',['authenticate',['../namespacedcn.html#aee1aac95c290c7a5c4e374c20f7515fc',1,'dcn']]],
-  ['autherror_34',['AuthError',['../structdcn_1_1AuthError.html',1,'dcn']]],
-  ['authmanager_35',['authmanager',['../classdcn_1_1AuthManager.html#af967674006d58f31cdb5e601c4a135ed',1,'dcn::AuthManager::AuthManager(const AuthManager &amp;)=delete'],['../classdcn_1_1AuthManager.html#a9d2d859fc6285ae965928b127b83e5d5',1,'dcn::AuthManager::AuthManager(asio::io_context &amp;io_context)'],['../classdcn_1_1AuthManager.html#a47f0c0c52834c7e3c591a3f68ba43307',1,'dcn::AuthManager::AuthManager()=delete'],['../classdcn_1_1AuthManager.html',1,'dcn::AuthManager']]],
+  ['authenticate_33',['authenticate',['../namespacedcn.html#a84b0570154c9b68b554f6cf40f0e37a0',1,'dcn']]],
+  ['autherror_34',['AuthError',['../structdcn_1_1auth_1_1AuthError.html',1,'dcn::auth']]],
+  ['authmanager_35',['authmanager',['../classdcn_1_1auth_1_1AuthManager.html#a09cd12c40c8500b64c2474736bded581',1,'dcn::auth::AuthManager::AuthManager(const AuthManager &amp;)=delete'],['../classdcn_1_1auth_1_1AuthManager.html#aaf79dccd96d6e139ed85c8fdcaae7f07',1,'dcn::auth::AuthManager::AuthManager(asio::io_context &amp;io_context)'],['../classdcn_1_1auth_1_1AuthManager.html#a3eba51bd7c992d1b3a3fc8be974a6230',1,'dcn::auth::AuthManager::AuthManager()=delete'],['../classdcn_1_1auth_1_1AuthManager.html',1,'dcn::auth::AuthManager']]],
   ['authorization_36',['Authorization',['../namespacedcn_1_1http.html#aad74d4f2478c6cc863561ebcf03699a9a9cd8a2455b1839ff98ef70c05b9b5983',1,'dcn::http']]]
 ];

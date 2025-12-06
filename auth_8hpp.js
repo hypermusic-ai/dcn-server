@@ -1,8 +1,8 @@
 var auth_8hpp =
 [
-    [ "dcn::AuthError", "structdcn_1_1AuthError.html", "structdcn_1_1AuthError" ],
-    [ "dcn::AuthManager", "classdcn_1_1AuthManager.html", "classdcn_1_1AuthManager" ],
-    [ "std::formatter< dcn::AuthError::Kind >", "structstd_1_1formatter_3_01dcn_1_1AuthError_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1AuthError_1_1Kind_01_4" ],
+    [ "dcn::auth::AuthError", "structdcn_1_1auth_1_1AuthError.html", "structdcn_1_1auth_1_1AuthError" ],
+    [ "dcn::auth::AuthManager", "classdcn_1_1auth_1_1AuthManager.html", "classdcn_1_1auth_1_1AuthManager" ],
+    [ "std::formatter< dcn::auth::AuthError::Kind >", "structstd_1_1formatter_3_01dcn_1_1auth_1_1AuthError_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1auth_1_1AuthError_1_1Kind_01_4" ],
     [ "parseAccessTokenFrom", "auth_8hpp.html#a98854c4c7ac51245450cd55a9c039f19", null ],
     [ "parseAccessTokenFrom< http::Header::Authorization >", "auth_8hpp.html#a10dd63753e96df5424fe6d2b02c5be35", null ],
     [ "parseAccessTokenFrom< http::Header::Cookie >", "auth_8hpp.html#a498ed877d1ab1b72e6e30fae6ca3f183", null ],

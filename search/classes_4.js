@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['formatter_3c_20dcn_3a_3aautherror_3a_3akind_20_3e_0',['formatter&lt; dcn::AuthError::Kind &gt;',['../structstd_1_1formatter_3_01dcn_1_1AuthError_1_1Kind_01_4.html',1,'std']]],
+  ['formatter_3c_20dcn_3a_3aauth_3a_3aautherror_3a_3akind_20_3e_0',['formatter&lt; dcn::auth::AuthError::Kind &gt;',['../structstd_1_1formatter_3_01dcn_1_1auth_1_1AuthError_1_1Kind_01_4.html',1,'std']]],
   ['formatter_3c_20dcn_3a_3aevm_3a_3adeployerror_3a_3akind_20_3e_1',['formatter&lt; dcn::evm::DeployError::Kind &gt;',['../structstd_1_1formatter_3_01dcn_1_1evm_1_1DeployError_1_1Kind_01_4.html',1,'std']]],
   ['formatter_3c_20dcn_3a_3ahttp_3a_3acode_20_3e_2',['formatter&lt; dcn::http::Code &gt;',['../structstd_1_1formatter_3_01dcn_1_1http_1_1Code_01_4.html',1,'std']]],
   ['formatter_3c_20dcn_3a_3ahttp_3a_3aheader_20_3e_3',['formatter&lt; dcn::http::Header &gt;',['../structstd_1_1formatter_3_01dcn_1_1http_1_1Header_01_4.html',1,'std']]],

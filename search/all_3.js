@@ -9,7 +9,7 @@ var searchData=
   ['cmd_2ehpp_6',['cmd.hpp',['../cmd_8hpp.html',1,'']]],
   ['code_7',['code',['../namespacedcn_1_1http.html#a85103dcaf4539b1939d3a039e2f7e4ff',1,'dcn::http::Code'],['../structdcn_1_1evm_1_1DeployError.html#ad55f33be96d74c8a65530dd06a8033f7',1,'dcn::evm::DeployError::code'],['../structdcn_1_1evm_1_1EVMStorage_1_1Account.html#a8f47dc01cc6fb2e9e5eb37abfe466123',1,'dcn::evm::EVMStorage::Account::code']]],
   ['commandlineargdef_8',['CommandLineArgDef',['../structdcn_1_1cmd_1_1CommandLineArgDef.html',1,'dcn::cmd']]],
-  ['compareaccesstoken_9',['compareAccessToken',['../classdcn_1_1AuthManager.html#a1add7ce5d6914b194e26215c284d8145',1,'dcn::AuthManager']]],
+  ['compareaccesstoken_9',['compareAccessToken',['../classdcn_1_1auth_1_1AuthManager.html#a02d8c9fec5655facbc3e87759a59aba1',1,'dcn::auth::AuthManager']]],
   ['compilation_5ferror_10',['COMPILATION_ERROR',['../structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6aa1bc3585e8f796013046b688f877220c',1,'dcn::evm::DeployError']]],
   ['compile_11',['compile',['../classdcn_1_1evm_1_1EVM.html#aee6d85a27a62c7fd4227cf6eb77c4688',1,'dcn::evm::EVM']]],
   ['condition_2ehpp_12',['condition.hpp',['../condition_8hpp.html',1,'']]],
