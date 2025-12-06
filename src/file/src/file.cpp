@@ -1,6 +1,6 @@
 #include "file.hpp"
 
-namespace dcn
+namespace dcn::file
 {
     static std::filesystem::path BIN_PATH = std::filesystem::path();
     static std::filesystem::path LOGS_PATH = std::filesystem::path("logs");

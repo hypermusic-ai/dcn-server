@@ -80,7 +80,7 @@ namespace dcn
         }
         const auto & address = *address_result;
 
-        static const std::filesystem::path out_dir = getStoragePath() / "features" / "build";
+        static const std::filesystem::path out_dir = file::getStoragePath() / "features" / "build";
 
         if(std::filesystem::exists(out_dir) == false)
         {
@@ -106,7 +106,7 @@ namespace dcn
             out_file.close();
 
             // compile code
-            if(!co_await evm.compile(code_path, out_dir, getPTPath()/ "contracts", getPTPath() / "node_modules"))
+            if(!co_await evm.compile(code_path, out_dir, file::getPTPath()/ "contracts", file::getPTPath() / "node_modules"))
             {
                 spdlog::error("Failed to compile code");
                 // remove code file
@@ -202,7 +202,7 @@ namespace dcn
         }
         const auto & address = *address_result;
 
-        static const std::filesystem::path out_dir = getStoragePath() / "transformations" / "build";
+        static const std::filesystem::path out_dir = file::getStoragePath() / "transformations" / "build";
 
         if(std::filesystem::exists(out_dir) == false)
         {
@@ -228,7 +228,7 @@ namespace dcn
             out_file.close();
 
             // compile code
-            if(!co_await evm.compile(code_path, out_dir, getPTPath()/ "contracts", getPTPath() / "node_modules"))
+            if(!co_await evm.compile(code_path, out_dir, file::getPTPath()/ "contracts", file::getPTPath() / "node_modules"))
             {
                 spdlog::error("Failed to compile code");
                 // remove code file
@@ -311,7 +311,7 @@ namespace dcn
     {
         spdlog::info("Loading stored features...");
 
-        auto loaded_features = _loadJSONRecords<FeatureRecord>(getStoragePath() / "features");
+        auto loaded_features = _loadJSONRecords<FeatureRecord>(file::getStoragePath() / "features");
         if(loaded_features.empty())
         {
             co_return false;
@@ -346,7 +346,7 @@ namespace dcn
     {
         spdlog::info("Loading stored transformations...");
 
-        auto loaded_transformations = _loadJSONRecords<TransformationRecord>(getStoragePath() / "transformations");
+        auto loaded_transformations = _loadJSONRecords<TransformationRecord>(file::getStoragePath() / "transformations");
         if(loaded_transformations.empty())
         {
             co_return false;

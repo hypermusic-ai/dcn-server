@@ -6,7 +6,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace dcn
+namespace dcn::file
 {
     /**
      * @brief Set the BIN_PATH variable to the path of the binary directory.

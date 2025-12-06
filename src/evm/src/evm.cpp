@@ -601,9 +601,9 @@ namespace dcn::evm
 
     asio::awaitable<bool> EVM::loadPT()
     { 
-        const auto & contracts_dir = getPTPath()    / "contracts";
-        const auto & node_modules = getPTPath()     / "node_modules";
-        const auto & out_dir = getPTPath()          / "out";
+        const auto & contracts_dir = file::getPTPath()    / "contracts";
+        const auto & node_modules = file::getPTPath()     / "node_modules";
+        const auto & out_dir = file::getPTPath()          / "out";
 
         std::filesystem::create_directories(out_dir);
         

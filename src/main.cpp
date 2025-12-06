@@ -6,13 +6,13 @@
 
 static void _configureLogger()
 {
-    std::filesystem::create_directories(dcn::getLogsPath());
+    std::filesystem::create_directories(dcn::file::getLogsPath());
 
     // Create sinks
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     const std::string log_name = dcn::utils::currentTimestamp() + "-DCNServer.log";
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-        (dcn::getLogsPath() / log_name).string(), true);
+        (dcn::file::getLogsPath() / log_name).string(), true);
 
     // set different log levels per sink
     console_sink->set_level(spdlog::level::info);
@@ -29,13 +29,13 @@ static void _configureLogger()
 
 int main(int argc, char* argv[])
 {
-    dcn::setBinPath(std::filesystem::path(argv[0]).parent_path());
+    dcn::file::setBinPath(std::filesystem::path(argv[0]).parent_path());
     
     _configureLogger();
 
     spdlog::info("{}", dcn::utils::getAsciiLogo());
 
-    const std::string build_timestamp = dcn::utils::loadBuildTimestamp(dcn::getBinPath() / "build_timestamp");
+    const std::string build_timestamp = dcn::utils::loadBuildTimestamp(dcn::file::getBinPath() / "build_timestamp");
     spdlog::debug("Build timestamp: {}", build_timestamp);
 
     spdlog::debug("Version: {}.{}.{}\n", dcn::MAJOR_VERSION, dcn::MINOR_VERSION, dcn::PATCH_VERSION);
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 
     // solidity check
     auto solc_path = std::filesystem::path(
-        dcn::getBinPath() / TOSTRING(Solidity_SOLC_EXECUTABLE));
+        dcn::file::getBinPath() / TOSTRING(Solidity_SOLC_EXECUTABLE));
 
     spdlog::info(std::format("Path to solidity solc compiler : {}", solc_path.string()));
 
@@ -92,11 +92,11 @@ int main(int argc, char* argv[])
 
     server.setIdleInterval(5000ms);
     
-    const auto ico = dcn::loadBinaryFile(std::filesystem::path{"media"} / "img" / "DCN.ico");
+    const auto ico = dcn::file::loadBinaryFile(std::filesystem::path{"media"} / "img" / "DCN.ico");
 
-    const auto simple_form = dcn::loadTextFile(std::filesystem::path{"html"} / "simple_form.html");
-    const auto simple_form_js = dcn::loadTextFile(std::filesystem::path{"js"} / "simple_form.js");
-    const auto simple_form_css = dcn::loadTextFile(std::filesystem::path{"styles"} / "simple_form.css");
+    const auto simple_form = dcn::file::loadTextFile(std::filesystem::path{"html"} / "simple_form.html");
+    const auto simple_form_js = dcn::file::loadTextFile(std::filesystem::path{"js"} / "simple_form.js");
+    const auto simple_form_css = dcn::file::loadTextFile(std::filesystem::path{"styles"} / "simple_form.css");
 
     if(simple_form && simple_form_js && simple_form_css)
     {
@@ -150,11 +150,11 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::GET, "/execute/<string>/<uint>/<~[<(<uint>;<uint>)>]>"},        dcn::GET_execute, std::cref(auth_manager), std::cref(registry), std::ref(evm));
 
     // create directories
-    std::filesystem::create_directory(dcn::getStoragePath());
-    std::filesystem::create_directory(dcn::getStoragePath() / "features");
-    std::filesystem::create_directory(dcn::getStoragePath() / "features" / "build");
-    std::filesystem::create_directory(dcn::getStoragePath() / "transformations");
-    std::filesystem::create_directory(dcn::getStoragePath() / "transformations" / "build");
+    std::filesystem::create_directory(dcn::file::getStoragePath());
+    std::filesystem::create_directory(dcn::file::getStoragePath() / "features");
+    std::filesystem::create_directory(dcn::file::getStoragePath() / "features" / "build");
+    std::filesystem::create_directory(dcn::file::getStoragePath() / "transformations");
+    std::filesystem::create_directory(dcn::file::getStoragePath() / "transformations" / "build");
 
     asio::co_spawn(io_context, dcn::loadStoredTransformations(evm, registry), 
         [&io_context, &registry, &evm, &server](std::exception_ptr, bool){

@@ -116,7 +116,7 @@ namespace dcn::registry
             }
         }
 
-        static const std::filesystem::path out_dir = getStoragePath() / "features";
+        static const std::filesystem::path out_dir = file::getStoragePath() / "features";
         if(std::filesystem::exists(out_dir) == false)
         {
             spdlog::error("Directory {} does not exists", out_dir.string());
@@ -198,7 +198,7 @@ namespace dcn::registry
             co_return false;
         }
         
-        static const std::filesystem::path out_dir = getStoragePath() / "transformations";
+        static const std::filesystem::path out_dir = file::getStoragePath() / "transformations";
         if(std::filesystem::exists(out_dir) == false)
         {
             spdlog::error("Directory {} does not exists", out_dir.string());
