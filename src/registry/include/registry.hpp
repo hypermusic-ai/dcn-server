@@ -14,7 +14,7 @@
 #include "pt.hpp"
 #include "evm.hpp"
 
-namespace dcn
+namespace dcn::registry
 {
     /**
      * @brief A class that represents a registry of features, transformations, and conditions.

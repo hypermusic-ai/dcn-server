@@ -5,7 +5,7 @@ namespace dcn::evm
     std::vector<std::uint8_t> constructSelector(std::string signature)
     {
         std::uint8_t hash[32];
-        Keccak256::getHash(reinterpret_cast<const uint8_t*>(signature.data()), signature.size(), hash);
+        crypto::Keccak256::getHash(reinterpret_cast<const uint8_t*>(signature.data()), signature.size(), hash);
         return std::vector<std::uint8_t>(hash, hash + 4);
     }
 
@@ -504,7 +504,7 @@ namespace dcn::evm
 
         // fill message salt
         std::string salt_str = "message_salt_42";
-        Keccak256::getHash(reinterpret_cast<const uint8_t*>(salt_str.data()), salt_str.size(), create_msg.create2_salt.bytes);
+        crypto::Keccak256::getHash(reinterpret_cast<const uint8_t*>(salt_str.data()), salt_str.size(), create_msg.create2_salt.bytes);
 
         // fill message value
         evmc_uint256be value256{};

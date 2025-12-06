@@ -58,7 +58,7 @@ namespace dcn
         return loaded_data;
     }
 
-    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployFeature(evm::EVM & evm, Registry & registry, FeatureRecord feature_record)
+    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployFeature(evm::EVM & evm, registry::Registry & registry, FeatureRecord feature_record)
     {
         if(feature_record.feature().name().empty())
         {
@@ -186,7 +186,7 @@ namespace dcn
         co_return deploy_res.value();
     }
 
-    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployTransformation(evm::EVM & evm, Registry & registry, TransformationRecord transformation_record)
+    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployTransformation(evm::EVM & evm, registry::Registry & registry, TransformationRecord transformation_record)
     {
         if(transformation_record.transformation().name().empty() || transformation_record.transformation().sol_src().empty())
         {
@@ -307,7 +307,7 @@ namespace dcn
         co_return deploy_res.value();
     }
 
-    asio::awaitable<bool> loadStoredFeatures(evm::EVM & evm, Registry & registry)
+    asio::awaitable<bool> loadStoredFeatures(evm::EVM & evm, registry::Registry & registry)
     {
         spdlog::info("Loading stored features...");
 
@@ -342,7 +342,7 @@ namespace dcn
         co_return success;
     }
 
-    asio::awaitable<bool> loadStoredTransformations(evm::EVM & evm, Registry & registry)
+    asio::awaitable<bool> loadStoredTransformations(evm::EVM & evm, registry::Registry & registry)
     {
         spdlog::info("Loading stored transformations...");
 

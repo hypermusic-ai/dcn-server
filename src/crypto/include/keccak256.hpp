@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cassert>
 
-namespace dcn
+namespace dcn::crypto
 {
     class Keccak256 
     {

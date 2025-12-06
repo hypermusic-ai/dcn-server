@@ -1,7 +1,7 @@
 #include "keccak256.hpp"
 
 
-namespace dcn
+namespace dcn::crypto
 {
     void Keccak256::getHash(const std::uint8_t msg[], std::size_t len, std::uint8_t hashResult[HASH_LEN]) 
     {

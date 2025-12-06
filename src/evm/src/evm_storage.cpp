@@ -55,7 +55,7 @@ namespace dcn::evm
 
         const auto& code = _accounts.at(to_key(addr)).code;
         evmc::bytes32 hash;
-        dcn::Keccak256::getHash((const std::uint8_t*)code.data(), code.size(), hash.bytes);
+        dcn::crypto::Keccak256::getHash((const std::uint8_t*)code.data(), code.size(), hash.bytes);
         return hash;
     }
 
@@ -310,7 +310,7 @@ namespace dcn::evm
         std::memcpy(data.data() + 20, &nonce, sizeof(nonce));
             
         evmc::bytes32 hash;
-        dcn::Keccak256::getHash((const std::uint8_t*)data.data(), 20 + sizeof(nonce), hash.bytes);
+        dcn::crypto::Keccak256::getHash((const std::uint8_t*)data.data(), 20 + sizeof(nonce), hash.bytes);
 
         evmc_address addr;
         std::memcpy(addr.bytes, &hash.bytes[12], 20);
@@ -326,12 +326,12 @@ namespace dcn::evm
         data.insert(data.end(), salt.bytes, salt.bytes + 32);
 
         evmc::bytes32 code_hash;
-        dcn::Keccak256::getHash((const std::uint8_t*)code.data(), code.size(), code_hash.bytes);
+        dcn::crypto::Keccak256::getHash((const std::uint8_t*)code.data(), code.size(), code_hash.bytes);
 
         data.insert(data.end(), code_hash.bytes, code_hash.bytes + 32);
 
         evmc::bytes32 hash;
-        dcn::Keccak256::getHash((const std::uint8_t*)data.data(), data.size(), hash.bytes);
+        dcn::crypto::Keccak256::getHash((const std::uint8_t*)data.data(), data.size(), hash.bytes);
 
         evmc_address addr;
         std::memcpy(addr.bytes, &hash.bytes[12], 20);

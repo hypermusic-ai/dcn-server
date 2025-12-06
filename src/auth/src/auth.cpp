@@ -5,9 +5,9 @@ namespace dcn::parse
     // Get Ethereum address from public key (last 20 bytes of Keccak256(pubkey))
     static evm::Address _parseEthAddressFromPublicKey(const std::uint8_t* pubkey, std::size_t len) 
     {
-        uint8_t hash[Keccak256::HASH_LEN];
+        uint8_t hash[crypto::Keccak256::HASH_LEN];
         // skip 0x04 prefix
-        dcn::Keccak256::getHash(pubkey + 1, len - 1, hash);
+        dcn::crypto::Keccak256::getHash(pubkey + 1, len - 1, hash);
         evm::Address address;
         // last 20 bytes
         std::copy(hash + 12, hash + 32, address.bytes);
@@ -177,10 +177,10 @@ namespace dcn
 
         if (signature_bytes.size() != 65) co_return false;
 
-        uint8_t hash[Keccak256::HASH_LEN];
+        uint8_t hash[crypto::Keccak256::HASH_LEN];
         std::string prefix(1, '\x19');
         prefix += "Ethereum Signed Message:\n" + std::to_string(message.size()) + message;
-        dcn::Keccak256::getHash((const uint8_t*)prefix.data(), prefix.size(), hash);
+        dcn::crypto::Keccak256::getHash((const uint8_t*)prefix.data(), prefix.size(), hash);
 
         // Adjust v
         int recid = signature_bytes[64];

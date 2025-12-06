@@ -19,7 +19,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<RouteArg> args, QueryArgsList query_args, Registry & registry)
+    asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<RouteArg> args, QueryArgsList query_args, registry::Registry & registry)
     {
         http::Response response;
         response.setVersion("HTTP/1.1")

@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
     
     asio::io_context io_context;
 
-    dcn::Registry registry(io_context);
+    dcn::registry::Registry registry(io_context);
 
     dcn::AuthManager auth_manager(io_context);
 
