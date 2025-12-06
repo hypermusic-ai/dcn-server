@@ -21,62 +21,39 @@ using namespace asio::experimental::awaitable_operators;
 namespace dcn
 {
     /**
-     * Sets CORS headers for the response.
-     *
-     * @param request The incoming HTTP request
-     * @param response The HTTP response to set CORS headers on
+     * @brief Helper function to set CORS headers for the response.
      */
     void setCORSHeaders(const http::Request & request, http::Response& response);
 
     /**
-     * @brief Helper function to handle authentication
-     * 
-     * @param request The request object
-     * @param args The arguments of the request
-     * @param auth_manager The authentication manager
-     * @return http::Response The response object
+     * @brief Helper function to handle authentication.
      */
-    asio::awaitable<std::expected<evm::Address, AuthError>> authenticate(const http::Request & request, const AuthManager & auth_manager);
+    asio::awaitable<std::expected<evm::Address, auth::AuthError>> authenticate(const http::Request & request, const auth::AuthManager & auth_manager);
 
     /**
-     * Handles GET requests for the version endpoint.
-     *
-     * @param request The incoming HTTP request (not used in this implementation)
-     * @param routeArgs Route arguments (not used in this implementation)
-     * @param build_timestamp The build timestamp of the server
-     * @return An HTTP response with the version information
+     * @brief Handles GET requests for the version endpoint.
      */
     asio::awaitable<http::Response> GET_version(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, const std::string & build_timestamp);
 
     /**
-     * Handles HEAD requests for a simple form by returning a response with CORS headers.
-     *
-     * @param request The incoming HTTP request (not used in this implementation)
-     * @param routeArgs Route arguments (not used in this implementation)
-     * @return An HTTP response with CORS headers for the simple form
+     * @brief Handles HEAD requests for a file by returning a response with CORS headers.
      */
-    asio::awaitable<http::Response> HEAD_ServeFile(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList);
+    asio::awaitable<http::Response> HEAD_serveFile(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList);
 
     /**
-     * Handles OPTIONS requests for a simple form by returning a response with CORS headers.
-     *
-     * @param request The incoming HTTP request (not used in this implementation)
-     * @param routeArgs Route arguments (not used in this implementation)
-     * @return An HTTP response with CORS headers for the simple form
+     * @brief Handles OPTIONS requests for a file by returning a response with CORS headers.
      */
-    asio::awaitable<http::Response> OPTIONS_ServeFile(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList);
+    asio::awaitable<http::Response> OPTIONS_serveFile(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList);
 
     /**
-     * Handles GET requests for a simple form by returning the form content.
-     *
-     * @param request The incoming HTTP request (not used in this implementation)
-     * @param routeArgs Route arguments (not used in this implementation)
-     * @param simple_form The content of the simple form to be returned
-     * @return An HTTP response with the simple form content
+     * @brief Handles GET requests for a file.
      */
-    asio::awaitable<http::Response> GET_ServeFile(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, const std::string mime_type, const std::string & file_content);
+    asio::awaitable<http::Response> GET_serveFile(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, const std::string mime_type, const std::string & file_content);
 
-    asio::awaitable<http::Response> GET_ServeBinaryFile(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, const std::string mime_type, const std::vector<std::byte> & file_content);
+    /**
+     * @brief Handles GET requests for a binary file.
+     */
+    asio::awaitable<http::Response> GET_serveBinaryFile(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, const std::string mime_type, const std::vector<std::byte> & file_content);
 
 
     /**
@@ -94,7 +71,7 @@ namespace dcn
      *
      * Where `<nonce>` is the generated nonce.
      */
-    asio::awaitable<http::Response> GET_nonce(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, AuthManager &);
+    asio::awaitable<http::Response> GET_nonce(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, auth::AuthManager &);
 
 
     asio::awaitable<http::Response> OPTIONS_auth(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList);
@@ -126,7 +103,7 @@ namespace dcn
      * @param auth_manager The authentication manager
      * @return http::Response The response object
      */
-    asio::awaitable<http::Response> POST_auth(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, AuthManager &);
+    asio::awaitable<http::Response> POST_auth(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, auth::AuthManager &);
 
 
     asio::awaitable<http::Response> OPTIONS_refresh(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList);
@@ -156,14 +133,14 @@ namespace dcn
      * @param auth_manager The authentication manager
      * @return http::Response The response object
      */
-    asio::awaitable<http::Response> POST_refresh(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, AuthManager &);
+    asio::awaitable<http::Response> POST_refresh(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, auth::AuthManager &);
 
 
     asio::awaitable<http::Response> OPTIONS_accountInfo(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList);
     asio::awaitable<http::Response> GET_accountInfo(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, registry::Registry & registry);
 
     /**
-     * Handles HEAD requests for the feature endpoint.
+     * @brief Handles HEAD requests for the feature endpoint.
      *
      * @param request The incoming HTTP request
      * @param routeArgs Route arguments
@@ -172,7 +149,7 @@ namespace dcn
     */
     asio::awaitable<http::Response> HEAD_feature(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, registry::Registry & registry);
     /**
-     * Handles OPTIONS requests by returning a response with CORS headers.
+     * @brief Handles OPTIONS requests by returning a response with CORS headers.
      *
      * @param request The incoming HTTP request (not used in this implementation)
      * @param routeArgs Route arguments (not used in this implementation)
@@ -210,11 +187,11 @@ namespace dcn
      *
      * Where `<name>` is the name of the feature and `<version>` is the hash of the feature.
      */
-    asio::awaitable<http::Response> POST_feature(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> POST_feature(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm);
 
 
     /**
-     * Handles HEAD requests for the transformation endpoint.
+     * @brief Handles HEAD requests for the transformation endpoint.
      *
      * @param request The incoming HTTP request
      * @param routeArgs Route arguments
@@ -224,7 +201,7 @@ namespace dcn
     asio::awaitable<http::Response> HEAD_transformation(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, registry::Registry & registry);
 
     /**
-     * Handles OPTIONS requests for the transformation endpoint by returning a response with CORS headers.
+     * @brief Handles OPTIONS requests for the transformation endpoint by returning a response with CORS headers.
      *
      * @param request The incoming HTTP request (not used in this implementation)
      * @param routeArgs Route arguments (not used in this implementation)
@@ -233,7 +210,7 @@ namespace dcn
     asio::awaitable<http::Response> OPTIONS_transformation(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList);
 
     /**
-     * Handles GET requests for the transformation endpoint.
+     * @brief Handles GET requests for the transformation endpoint.
      *
      * Retrieves a transformation by name and optional ID, and returns it as JSON.
      *
@@ -245,7 +222,7 @@ namespace dcn
     asio::awaitable<http::Response> GET_transformation(const http::Request &, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry, evm::EVM & evm);
 
     /**
-     * Handles POST requests for the transformation endpoint.
+     * @brief Handles POST requests for the transformation endpoint.
      *
      * Verifies the access token in the cookie header, then adds a new transformation to the registry.
      *
@@ -255,7 +232,7 @@ namespace dcn
      * @param registry Registry instance for adding transformations
      * @return An HTTP response with the added transformation data as JSON, or an error response if invalid input or authentication failure
      */
-    asio::awaitable<http::Response> POST_transformation(const http::Request &, std::vector<server::RouteArg> args, server::QueryArgsList, AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> POST_transformation(const http::Request &, std::vector<server::RouteArg> args, server::QueryArgsList, auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm);
 
 
     //asio::awaitable<http::Response> GET_condition(const http::Request &, std::vector<RouteArg>);
@@ -263,5 +240,5 @@ namespace dcn
     //asio::awaitable<http::Response> POST_condition(const http::Request &);
 
     asio::awaitable<http::Response> OPTIONS_execute(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList);
-    asio::awaitable<http::Response> GET_execute(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, const AuthManager & auth_manager, const registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> GET_execute(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, const auth::AuthManager & auth_manager, const registry::Registry & registry, evm::EVM & evm);
 }

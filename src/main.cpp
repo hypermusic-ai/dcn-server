@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
 
     dcn::registry::Registry registry(io_context);
 
-    dcn::AuthManager auth_manager(io_context);
+    dcn::auth::AuthManager auth_manager(io_context);
 
     dcn::evm::EVM evm(io_context, EVMC_SHANGHAI, solc_path);
 
@@ -100,24 +100,24 @@ int main(int argc, char* argv[])
 
     if(simple_form && simple_form_js && simple_form_css)
     {
-        server.addRoute({dcn::http::Method::HEAD, "/"},     dcn::HEAD_ServeFile);
-        server.addRoute({dcn::http::Method::OPTIONS, "/"},  dcn::OPTIONS_ServeFile);
-        server.addRoute({dcn::http::Method::GET, "/"},      dcn::GET_ServeFile, "text/html; charset=utf-8", std::cref(simple_form.value()));
+        server.addRoute({dcn::http::Method::HEAD, "/"},     dcn::HEAD_serveFile);
+        server.addRoute({dcn::http::Method::OPTIONS, "/"},  dcn::OPTIONS_serveFile);
+        server.addRoute({dcn::http::Method::GET, "/"},      dcn::GET_serveFile, "text/html; charset=utf-8", std::cref(simple_form.value()));
 
-        server.addRoute({dcn::http::Method::HEAD, "/js/simple_form.js"},    dcn::HEAD_ServeFile);
-        server.addRoute({dcn::http::Method::OPTIONS, "/js/simple_form.js"}, dcn::OPTIONS_ServeFile);
-        server.addRoute({dcn::http::Method::GET, "/js/simple_form.js"},     dcn::GET_ServeFile, "text/javascript; charset=utf-8", std::cref(simple_form_js.value()));
+        server.addRoute({dcn::http::Method::HEAD, "/js/simple_form.js"},    dcn::HEAD_serveFile);
+        server.addRoute({dcn::http::Method::OPTIONS, "/js/simple_form.js"}, dcn::OPTIONS_serveFile);
+        server.addRoute({dcn::http::Method::GET, "/js/simple_form.js"},     dcn::GET_serveFile, "text/javascript; charset=utf-8", std::cref(simple_form_js.value()));
     
-        server.addRoute({dcn::http::Method::HEAD, "/styles/simple_form.css"},       dcn::HEAD_ServeFile);
-        server.addRoute({dcn::http::Method::OPTIONS, "/styles/simple_form.css"},    dcn::OPTIONS_ServeFile);
-        server.addRoute({dcn::http::Method::GET, "/styles/simple_form.css"},        dcn::GET_ServeFile, "text/css; charset=utf-8", std::cref(simple_form_css.value()));
+        server.addRoute({dcn::http::Method::HEAD, "/styles/simple_form.css"},       dcn::HEAD_serveFile);
+        server.addRoute({dcn::http::Method::OPTIONS, "/styles/simple_form.css"},    dcn::OPTIONS_serveFile);
+        server.addRoute({dcn::http::Method::GET, "/styles/simple_form.css"},        dcn::GET_serveFile, "text/css; charset=utf-8", std::cref(simple_form_css.value()));
     }
 
     if(ico)
     {
-        server.addRoute({dcn::http::Method::HEAD, "/favicon.ico"},      dcn::HEAD_ServeFile);
-        server.addRoute({dcn::http::Method::OPTIONS, "/favicon.ico"},   dcn::OPTIONS_ServeFile);
-        server.addRoute({dcn::http::Method::GET, "/favicon.ico"},       dcn::GET_ServeBinaryFile, "image/x-icon", std::cref(ico.value()));
+        server.addRoute({dcn::http::Method::HEAD, "/favicon.ico"},      dcn::HEAD_serveFile);
+        server.addRoute({dcn::http::Method::OPTIONS, "/favicon.ico"},   dcn::OPTIONS_serveFile);
+        server.addRoute({dcn::http::Method::GET, "/favicon.ico"},       dcn::GET_serveBinaryFile, "image/x-icon", std::cref(ico.value()));
     }
     
     server.addRoute({dcn::http::Method::GET, "/version"},   dcn::GET_version, std::cref(build_timestamp));

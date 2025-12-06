@@ -72,7 +72,7 @@ namespace dcn::parse
     std::string parseRefreshTokenTo<http::Header::XRefreshToken>(const std::string & token_str);
 }
 
-namespace dcn
+namespace dcn::auth
 {
     struct AuthError
     {
@@ -139,17 +139,17 @@ namespace dcn
 }
 
 template <>
-struct std::formatter<dcn::AuthError::Kind> : std::formatter<std::string> {
-    auto format(const dcn::AuthError::Kind & err, format_context& ctx) const {
+struct std::formatter<dcn::auth::AuthError::Kind> : std::formatter<std::string> {
+    auto format(const dcn::auth::AuthError::Kind & err, format_context& ctx) const {
         switch(err)
         {
-            case dcn::AuthError::Kind::MISSING_COOKIE : return formatter<string>::format("Missing cookie", ctx);
-            case dcn::AuthError::Kind::INVALID_COOKIE : return formatter<string>::format("Invalid cookie", ctx);
-            case dcn::AuthError::Kind::MISSING_TOKEN : return formatter<string>::format("Missing token", ctx);
-            case dcn::AuthError::Kind::INVALID_TOKEN : return formatter<string>::format("Invalid token", ctx);
-            case dcn::AuthError::Kind::INVALID_SIGNATURE : return formatter<string>::format("Invalid signature", ctx);
-            case dcn::AuthError::Kind::INVALID_NONCE : return formatter<string>::format("Invalid nonce", ctx);
-            case dcn::AuthError::Kind::INVALID_ADDRESS : return formatter<string>::format("Invalid address", ctx);
+            case dcn::auth::AuthError::Kind::MISSING_COOKIE : return formatter<string>::format("Missing cookie", ctx);
+            case dcn::auth::AuthError::Kind::INVALID_COOKIE : return formatter<string>::format("Invalid cookie", ctx);
+            case dcn::auth::AuthError::Kind::MISSING_TOKEN : return formatter<string>::format("Missing token", ctx);
+            case dcn::auth::AuthError::Kind::INVALID_TOKEN : return formatter<string>::format("Invalid token", ctx);
+            case dcn::auth::AuthError::Kind::INVALID_SIGNATURE : return formatter<string>::format("Invalid signature", ctx);
+            case dcn::auth::AuthError::Kind::INVALID_NONCE : return formatter<string>::format("Invalid nonce", ctx);
+            case dcn::auth::AuthError::Kind::INVALID_ADDRESS : return formatter<string>::format("Invalid address", ctx);
 
             default:  return formatter<string>::format("Unknown", ctx);
         }

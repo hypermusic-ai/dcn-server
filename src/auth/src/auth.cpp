@@ -126,7 +126,7 @@ namespace dcn::parse
     }
 }
 
-namespace dcn
+namespace dcn::auth
 {
     AuthManager::AuthManager(asio::io_context & io_context)
     :   _strand(asio::make_strand(io_context)),

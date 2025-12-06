@@ -2,7 +2,7 @@
 
 namespace dcn
 {
-    asio::awaitable<std::expected<evm::Address, AuthError>> authenticate(const http::Request & request, const AuthManager & auth_manager)
+    asio::awaitable<std::expected<evm::Address, auth::AuthError>> authenticate(const http::Request & request, const auth::AuthManager & auth_manager)
     {
         parse::Result<std::string> token_res;
 
@@ -27,7 +27,7 @@ namespace dcn
         if (!token_res) 
         {
             spdlog::error("Failed to parse token");
-            co_return std::unexpected(AuthError{AuthError::Kind::INVALID_TOKEN});
+            co_return std::unexpected(auth::AuthError{auth::AuthError::Kind::INVALID_TOKEN});
         }
 
         const std::string & token = token_res.value();
@@ -43,7 +43,7 @@ namespace dcn
         co_return verification_res.value();
     }
 
-    asio::awaitable<http::Response> GET_nonce(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, AuthManager & auth_manager)
+    asio::awaitable<http::Response> GET_nonce(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, auth::AuthManager & auth_manager)
     {
         http::Response response;
         response.setVersion("HTTP/1.1")
@@ -118,7 +118,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> POST_auth(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, AuthManager & auth_manager)
+    asio::awaitable<http::Response> POST_auth(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, auth::AuthManager & auth_manager)
     {
         http::Response response;
         response.setVersion("HTTP/1.1")
@@ -274,7 +274,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> POST_refresh(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, AuthManager & auth_manager)
+    asio::awaitable<http::Response> POST_refresh(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, auth::AuthManager & auth_manager)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");
