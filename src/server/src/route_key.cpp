@@ -14,7 +14,7 @@ namespace dcn
         {
             auto arg_parse_result = parse::parseRouteArgDefFromString(segment);
 
-            if(arg_parse_result.has_value())
+            if(arg_parse_result)
             {
                 if(optional_at_end == true && arg_parse_result->requirement == RouteArgRequirement::required)
                 {
@@ -46,7 +46,7 @@ namespace dcn
         {
             auto arg_parse_result = parse::parseRouteArgDefFromString(value);
 
-            if(arg_parse_result.has_value())
+            if(arg_parse_result)
             {
                 std::variant<std::string, dcn::RouteArgDef> value_var = std::move(arg_parse_result.value());
                 _query_segments.try_emplace(std::move(key), std::move(value_var));

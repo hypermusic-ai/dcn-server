@@ -90,7 +90,8 @@ namespace dcn
 namespace dcn::parse
 {
 
-    std::optional<json> parseToJson(TransformationDef transform_def, use_json_t)
+    template<>
+    Result<json> parseToJson(TransformationDef transform_def, use_json_t)
     {
         json json_obj = json::object();
         json_obj["name"] = transform_def.name();
@@ -100,13 +101,13 @@ namespace dcn::parse
     }
 
     template<>
-    std::optional<TransformationDef> parseFromJson(json json, use_json_t)
+    Result<TransformationDef> parseFromJson(json json, use_json_t)
     {
         TransformationDef transform_def;
         if (json.contains("name")) {
             transform_def.set_name(json["name"].get<std::string>());
         }
-        else return std::nullopt;
+        else return std::unexpected(Error{Error::Kind::INVALID_VALUE, "name not found"});
 
         if (json.contains("args")) {
             for(const int32_t & arg : json["args"].get<std::vector<int32_t>>())
@@ -117,43 +118,49 @@ namespace dcn::parse
         return transform_def;
     }
 
-    std::optional<json> parseToJson(Dimension dimension, use_json_t)
+    template<>
+    Result<json> parseToJson(Dimension dimension, use_json_t)
     {
         json json_obj = json::object();
         json_obj["feature_name"] = dimension.feature_name();
         for(const TransformationDef & transform_def : dimension.transformations())
         {
-            json_obj["transformations"].push_back(parseToJson(transform_def, use_json));
+            auto transform_result = parseToJson(transform_def, use_json);\
+            if(!transform_result) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
+
+            json_obj["transformations"].emplace_back(std::move(*transform_result));
         }
 
         return json_obj;
     }
 
     template<>
-    std::optional<Dimension> parseFromJson(json json_obj, use_json_t)
+    Result<Dimension> parseFromJson(json json_obj, use_json_t)
     {
         Dimension dimension;
 
         if (json_obj.contains("feature_name")) {
             dimension.set_feature_name(json_obj["feature_name"].get<std::string>());
         }
-        else return std::nullopt;
+        else return std::unexpected(Error{Error::Kind::INVALID_VALUE, "feature_name not found"});
 
         if(json_obj.contains("transformations") == false) {
-            return std::nullopt;
+            return std::unexpected(Error{Error::Kind::INVALID_VALUE, "transformations not found"});
         }
 
         for(const std::string & transform_name : json_obj["transformations"])
         {
-            std::optional<TransformationDef> transformation_def = parseFromJson<TransformationDef>(transform_name, use_json);
-            if(!transformation_def.has_value()) return std::nullopt;
-                dimension.add_transformations();
-                *dimension.mutable_transformations(dimension.transformations_size() - 1) = *transformation_def;
+            auto transformation_def = parseFromJson<TransformationDef>(transform_name, use_json);
+            if(!transformation_def) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
+
+            dimension.add_transformations();
+            *dimension.mutable_transformations(dimension.transformations_size() - 1) = *transformation_def;
         }
         return dimension;
     }
 
-    std::optional<std::string> parseToJson(Dimension dimension, use_protobuf_t)
+    template<>
+    Result<std::string> parseToJson(Dimension dimension, use_protobuf_t)
     {
         google::protobuf::util::JsonPrintOptions options;
         options.add_whitespace = true; // Pretty print
@@ -164,13 +171,13 @@ namespace dcn::parse
 
         auto status = google::protobuf::util::MessageToJsonString(dimension, &json_output, options);
 
-        if(!status.ok()) return std::nullopt;
+        if(!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid dimension"});
 
         return json_output;
     }
 
     template<>
-    std::optional<Dimension> parseFromJson(std::string json_str, use_protobuf_t)
+    Result<Dimension> parseFromJson(std::string json_str, use_protobuf_t)
     {
         google::protobuf::util::JsonParseOptions options;
 
@@ -178,18 +185,22 @@ namespace dcn::parse
 
         auto status = google::protobuf::util::JsonStringToMessage(json_str, &dimension, options);
 
-        if(!status.ok()) return std::nullopt;
+        if(!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid dimension"});
 
         return dimension;
     }
 
-    std::optional<json> parseToJson(Feature feature ,use_json_t)
+    template<>
+    Result<json> parseToJson(Feature feature ,use_json_t)
     {
         json json_obj = json::object();
         json_obj["dimensions"] = json::array();
         for(const Dimension & dimension : feature.dimensions())
         {
-            json_obj["dimensions"].push_back(parseToJson(dimension, use_json));
+            auto dimension_result = parseToJson(dimension, use_json);
+            if(!dimension_result) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid dimension"});
+
+            json_obj["dimensions"].emplace_back(std::move(*dimension_result));
         }
         json_obj["name"] = feature.name();
 
@@ -197,33 +208,35 @@ namespace dcn::parse
     }
 
     template<>
-    std::optional<Feature> parseFromJson(json json_obj, use_json_t)
+    Result<Feature> parseFromJson(json json_obj, use_json_t)
     {
         Feature feature;
 
         if (json_obj.contains("name")) {
             feature.set_name(json_obj["name"].get<std::string>());
         }
-        else return std::nullopt;
+        else return std::unexpected(Error{Error::Kind::INVALID_VALUE, "name not found"});
 
         if (json_obj.contains("dimensions") == false) {
-            return std::nullopt;
+            return std::unexpected(Error{Error::Kind::INVALID_VALUE, "dimensions not found"});
         }
 
         for(const auto & dim : json_obj["dimensions"])
         {
-            std::optional<Dimension> dimension = parseFromJson<Dimension>(dim, use_json);
+            auto dimension = parseFromJson<Dimension>(dim, use_json);
             if(dimension) {
                 feature.add_dimensions();
                 *feature.mutable_dimensions(feature.dimensions_size() - 1) = *dimension;
             }else {
-                return std::nullopt; // Error in parsing dimension
+                // Error in parsing dimension
+                return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid dimension"}); 
             }
         }
         return feature;
     }
 
-    std::optional<std::string> parseToJson(Feature feature, use_protobuf_t)
+    template<>
+    Result<std::string> parseToJson(Feature feature, use_protobuf_t)
     {
         google::protobuf::util::JsonPrintOptions options;
         options.add_whitespace = true; // Pretty print
@@ -234,13 +247,13 @@ namespace dcn::parse
 
         auto status = google::protobuf::util::MessageToJsonString(feature, &json_output, options);
 
-        if(!status.ok()) return std::nullopt;
+        if(!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid feature"});
 
         return json_output;
     }
 
     template<>
-    std::optional<Feature> parseFromJson(std::string json_str, use_protobuf_t)
+    Result<Feature> parseFromJson(std::string json_str, use_protobuf_t)
     {
         google::protobuf::util::JsonParseOptions options;
 
@@ -248,21 +261,25 @@ namespace dcn::parse
 
         auto status = google::protobuf::util::JsonStringToMessage(json_str, &feature, options);
 
-        if(!status.ok()) return std::nullopt;
+        if(!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid feature"});
 
         return feature;
     }
 
-
-    std::optional<json> parseToJson(FeatureRecord feature, use_json_t)
+    template<>
+    Result<json> parseToJson(FeatureRecord feature, use_json_t)
     {
         json json_obj = json::object();
-        json_obj["feature"] = parseToJson(feature.feature(), use_json);
+        auto feature_result = parseToJson(feature.feature(), use_json);
+        if(!feature_result) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid feature"});
+
+        json_obj["feature"] = std::move(*feature_result);
         json_obj["owner"] = feature.owner();
         return json_obj;
     }
 
-    std::optional<std::string> parseToJson(FeatureRecord feature_record, use_protobuf_t)
+    template<>
+    Result<std::string> parseToJson(FeatureRecord feature_record, use_protobuf_t)
     {
         google::protobuf::util::JsonPrintOptions options;
         options.add_whitespace = true; // Pretty print
@@ -273,27 +290,27 @@ namespace dcn::parse
 
         auto status = google::protobuf::util::MessageToJsonString(feature_record, &json_output, options);
 
-        if(!status.ok()) return std::nullopt;
+        if(!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid feature record"});
 
         return json_output;
     }
 
     template<>
-    std::optional<FeatureRecord> parseFromJson(json json_obj, use_json_t)
+    Result<FeatureRecord> parseFromJson(json json_obj, use_json_t)
     {
         FeatureRecord feature_record;
         if (json_obj.contains("feature") == false)
-            return std::nullopt;
+            return std::unexpected(Error{Error::Kind::INVALID_VALUE, "feature not found"});
 
-        std::optional<Feature> feature = parseFromJson<Feature>(json_obj["feature"], use_json);
+        auto feature = parseFromJson<Feature>(json_obj["feature"], use_json);
 
         if(!feature)
-            return std::nullopt;
+            return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid feature"});
 
         *feature_record.mutable_feature() = std::move(*feature);
 
         if (json_obj.contains("owner") == false)
-            return std::nullopt;
+            return std::unexpected(Error{Error::Kind::INVALID_VALUE, "owner not found"});
         
         feature_record.set_owner(json_obj["owner"].get<std::string>());
 
@@ -301,7 +318,7 @@ namespace dcn::parse
     }
     
     template<>
-    std::optional<FeatureRecord> parseFromJson(std::string json_str, use_protobuf_t)
+    Result<FeatureRecord> parseFromJson(std::string json_str, use_protobuf_t)
     {
         google::protobuf::util::JsonParseOptions options;
         options.ignore_unknown_fields = true;
@@ -310,7 +327,7 @@ namespace dcn::parse
 
         auto status = google::protobuf::util::JsonStringToMessage(json_str, &feature_record, options);
 
-        if(!status.ok()) return std::nullopt;
+        if(!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid feature record"});
 
         return feature_record;
     }

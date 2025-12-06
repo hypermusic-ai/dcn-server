@@ -24,7 +24,7 @@ namespace dcn
 
     void setCORSHeaders(const http::Request & request, http::Response& response);
 
-    asio::awaitable<std::expected<evmc::address, AuthenticationError>> authenticate(const http::Request & request, const AuthManager & auth_manager);
+    asio::awaitable<std::expected<evmc::address, AuthError>> authenticate(const http::Request & request, const AuthManager & auth_manager);
 
     asio::awaitable<http::Response> GET_version(const http::Request &, std::vector<RouteArg>, QueryArgsList, const std::string & build_timestamp);
 

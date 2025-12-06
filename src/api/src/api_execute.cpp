@@ -42,7 +42,7 @@ namespace dcn
 
         const auto auth_result = co_await authenticate(request, auth_manager);
 
-        if(auth_result.has_value() == false)
+        if(!auth_result)
         {
             response.setHeader(http::Header::Connection, "close");
             response.setCode(http::Code::Unauthorized);
@@ -50,7 +50,7 @@ namespace dcn
 
             json error_output;
             error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = std::format("Error: {}", auth_result.error());
+            error_output["message"] = std::format("Error: {}", auth_result.error().kind);
             response.setBodyWithContentLength(error_output.dump());
 
             co_return std::move(response);
@@ -116,7 +116,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // runner function selector
-        const auto selector = constructFunctionSelector("gen(string,uint32,(uint32,uint32)[])");
+        const auto selector = constructSelector("gen(string,uint32,(uint32,uint32)[])");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // 1. Offset to start of string data
@@ -170,11 +170,26 @@ namespace dcn
 
         auto samples = decodeReturnedValue<std::vector<Samples>>(exec_result.value());
 
-        json json_output = parse::parseToJson(samples, parse::use_json);
+        auto json_output = parse::parseToJson(samples, parse::use_json);
+        if(!json_output)
+        {
+            spdlog::error("Failed to parse json output");
+            response.setHeader(http::Header::Connection, "close");
+            response.setCode(http::Code::InternalServerError);
+            response.setHeader(http::Header::ContentType, "application/json");
+
+            json error_output;
+            error_output["error"] = std::format("{}", response.getCode());
+            error_output["message"] = "Failed to parse json output";
+            response.setBodyWithContentLength(error_output.dump());
+
+            co_return std::move(response);
+        }
+
         response.setHeader(http::Header::Connection, "close");
         response.setHeader(http::Header::ContentType, "application/json");
         response.setCode(http::Code::OK);
-        response.setBodyWithContentLength(json_output.dump());
+        response.setBodyWithContentLength(json_output->dump());
         co_return std::move(response);
     }
 }

@@ -5,7 +5,6 @@
 #include <expected>
 #include <format>
 #include <regex>
-#include <optional>
 
 #include "native.h"
 #include <asio.hpp>
@@ -30,22 +29,23 @@ using namespace asio::experimental::awaitable_operators;
 #include "utils.hpp"
 #include "keccak256.hpp"
 #include "http.hpp"
+#include "parse_error.hpp"
 
 namespace dcn::parse
 {
-    std::string parseNonceFromMessage(const std::string & msg);
+    Result<std::string> parseNonceFromMessage(const std::string & msg);
 
     // access token
 
     // from header
     template<http::Header HeaderType>
-    std::optional<std::string> parseAccessTokenFrom(const std::string & header_str);
+    Result<std::string> parseAccessTokenFrom(const std::string & header_str);
     
     template<>
-    std::optional<std::string> parseAccessTokenFrom<http::Header::Cookie>(const std::string& header_str);
+    Result<std::string> parseAccessTokenFrom<http::Header::Cookie>(const std::string& header_str);
 
     template<>
-    std::optional<std::string> parseAccessTokenFrom<http::Header::Authorization>(const std::string& header_str);
+    Result<std::string> parseAccessTokenFrom<http::Header::Authorization>(const std::string& header_str);
 
     // to header
     template<http::Header HeaderType>
@@ -61,13 +61,13 @@ namespace dcn::parse
 
     // from header
     template<http::Header HeaderType>
-    std::optional<std::string> parseRefreshTokenFrom(const std::string & header_str);
+    Result<std::string> parseRefreshTokenFrom(const std::string & header_str);
 
     template<>
-    std::optional<std::string> parseRefreshTokenFrom<http::Header::Cookie>(const std::string & header_str);
+    Result<std::string> parseRefreshTokenFrom<http::Header::Cookie>(const std::string & header_str);
 
     template<>
-    std::optional<std::string> parseRefreshTokenFrom<http::Header::XRefreshToken>(const std::string & header_str);
+    Result<std::string> parseRefreshTokenFrom<http::Header::XRefreshToken>(const std::string & header_str);
 
     // to header
     template<http::Header HeaderType>
@@ -82,16 +82,27 @@ namespace dcn::parse
 
 namespace dcn
 {
-    enum class AuthenticationError : std::uint8_t
+    struct AuthError
     {
-        Unknown = 0,
-        MissingCookie,
-        InvalidCookie,
-        MissingToken,
-        InvalidToken,
-        InvalidSignature,
-        InvalidNonce,
-        InvalidAddress
+        enum class Kind : std::uint8_t
+        {
+            UNKNOWN = 0,
+
+            MISSING_COOKIE,
+            INVALID_COOKIE,
+
+            MISSING_TOKEN,
+            INVALID_TOKEN,
+
+            INVALID_SIGNATURE,
+
+            INVALID_NONCE,
+
+            INVALID_ADDRESS
+        }
+        kind = Kind::UNKNOWN;
+
+        std::string message = "";
     };
 
     class AuthManager
@@ -113,13 +124,13 @@ namespace dcn
 
             asio::awaitable<std::string> generateAccessToken(const evmc::address & address);
 
-            asio::awaitable<std::expected<evmc::address, AuthenticationError>> verifyAccessToken(std::string token) const;
+            asio::awaitable<std::expected<evmc::address, AuthError>> verifyAccessToken(std::string token) const;
 
             asio::awaitable<bool> compareAccessToken(const evmc::address & address, std::string token) const;
 
             asio::awaitable<std::string> generateRefreshToken(const evmc::address & address);
 
-            asio::awaitable<std::expected<evmc::address, AuthenticationError>> verifyRefreshToken(std::string token) const;
+            asio::awaitable<std::expected<evmc::address, AuthError>> verifyRefreshToken(std::string token) const;
 
         private:
             asio::strand<asio::io_context::executor_type> _strand;
@@ -136,17 +147,17 @@ namespace dcn
 }
 
 template <>
-struct std::formatter<dcn::AuthenticationError> : std::formatter<std::string> {
-    auto format(const dcn::AuthenticationError & err, format_context& ctx) const {
+struct std::formatter<dcn::AuthError::Kind> : std::formatter<std::string> {
+    auto format(const dcn::AuthError::Kind & err, format_context& ctx) const {
         switch(err)
         {
-            case dcn::AuthenticationError::MissingCookie : return formatter<string>::format("MissingCookie", ctx);
-            case dcn::AuthenticationError::InvalidCookie : return formatter<string>::format("InvalidCookie", ctx);
-            case dcn::AuthenticationError::MissingToken : return formatter<string>::format("MissingToken", ctx);
-            case dcn::AuthenticationError::InvalidToken : return formatter<string>::format("InvalidToken", ctx);
-            case dcn::AuthenticationError::InvalidSignature : return formatter<string>::format("InvalidSignature", ctx);
-            case dcn::AuthenticationError::InvalidNonce : return formatter<string>::format("InvalidNonce", ctx);
-            case dcn::AuthenticationError::InvalidAddress : return formatter<string>::format("InvalidAddress", ctx);
+            case dcn::AuthError::Kind::MISSING_COOKIE : return formatter<string>::format("Missing cookie", ctx);
+            case dcn::AuthError::Kind::INVALID_COOKIE : return formatter<string>::format("Invalid cookie", ctx);
+            case dcn::AuthError::Kind::MISSING_TOKEN : return formatter<string>::format("Missing token", ctx);
+            case dcn::AuthError::Kind::INVALID_TOKEN : return formatter<string>::format("Invalid token", ctx);
+            case dcn::AuthError::Kind::INVALID_SIGNATURE : return formatter<string>::format("Invalid signature", ctx);
+            case dcn::AuthError::Kind::INVALID_NONCE : return formatter<string>::format("Invalid nonce", ctx);
+            case dcn::AuthError::Kind::INVALID_ADDRESS : return formatter<string>::format("Invalid address", ctx);
 
             default:  return formatter<string>::format("Unknown", ctx);
         }

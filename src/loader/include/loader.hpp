@@ -13,8 +13,8 @@
 
 namespace dcn
 {
-    asio::awaitable<bool> deployFeature(EVM & evm, Registry & registry, FeatureRecord feature);
-    asio::awaitable<bool> deployTransformation(EVM & evm, Registry & registry, TransformationRecord transformation);
+    asio::awaitable<std::expected<evmc::address, DeployError>> deployFeature(EVM & evm, Registry & registry, FeatureRecord feature);
+    asio::awaitable<std::expected<evmc::address, DeployError>> deployTransformation(EVM & evm, Registry & registry, TransformationRecord transformation);
 
     asio::awaitable<bool> loadStoredTransformations(EVM & evm, Registry & registry);
 

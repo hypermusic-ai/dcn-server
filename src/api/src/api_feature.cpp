@@ -196,7 +196,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // function selector
-        const auto selector = constructFunctionSelector("getFeature(string)");
+        const auto selector = constructSelector("getFeature(string)");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // Step 2: Offset to string data (32 bytes with value 0x20)
@@ -273,7 +273,7 @@ namespace dcn
 
         const auto auth_result = co_await authenticate(request, auth_manager);
 
-        if(auth_result.has_value() == false)
+        if(!auth_result)
         {
             response.setHeader(http::Header::Connection, "close");
             response.setCode(http::Code::Unauthorized);
@@ -281,7 +281,7 @@ namespace dcn
 
             json error_output;
             error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = std::format("Error: {}", auth_result.error());
+            error_output["message"] = std::format("Error: {}", auth_result.error().kind);
             response.setBodyWithContentLength(error_output.dump());
 
             co_return std::move(response);
@@ -313,7 +313,8 @@ namespace dcn
         feature_record.set_owner(evmc::hex(address));
         *feature_record.mutable_feature() = std::move(feature);
 
-        if(!co_await deployFeature(evm, registry, feature_record))
+        const auto deploy_res = co_await deployFeature(evm, registry, feature_record);
+        if(!deploy_res)
         {
             response.setHeader(http::Header::Connection, "close");
             response.setCode(http::Code::BadRequest);
@@ -321,7 +322,7 @@ namespace dcn
 
             json error_output;
             error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Failed to deploy feature";
+            error_output["message"] = std::format("Failed to deploy feature. Error: {}", deploy_res.error().kind);
             response.setBodyWithContentLength(error_output.dump());
 
             co_return std::move(response);
@@ -330,6 +331,7 @@ namespace dcn
         json json_output;
         json_output["name"] = feature_record.feature().name();
         json_output["owner"] = feature_record.owner();
+        json_output["local_address"] = evmc::hex(deploy_res.value());
         json_output["address"] = "0x0";
 
         response.setHeader(http::Header::Connection, "close");

@@ -4,6 +4,8 @@ add_module(NAME "Auth"
         "${PROJECT_PREFIX}::Native"
         "${PROJECT_PREFIX}::Crypto"
         "${PROJECT_PREFIX}::HTTP"
+        "${PROJECT_PREFIX}::Parser"
+
         spdlog::spdlog
         asio
         absl::hash

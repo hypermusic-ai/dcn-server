@@ -14,16 +14,16 @@ namespace dcn::parse
         return address; 
     }
 
-    std::string parseNonceFromMessage(const std::string& nonce_str) 
+    Result<std::string> parseNonceFromMessage(const std::string& nonce_str) 
     {
         const std::string prefix = "Login nonce: ";
         // Check that str is at least as long as the prefix
         if (nonce_str.size() <= prefix.size()) {
-            return {};
+            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Nonce too short"});
         }
         // Does it start with prefix?
         if (nonce_str.compare(0, prefix.size(), prefix) != 0) {
-            return {};
+            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Nonce does not start with prefix"});
         }
         // Extract everything after prefix
         return nonce_str.substr(prefix.size());
@@ -32,33 +32,33 @@ namespace dcn::parse
     static const std::string ACCESS_TOKEN_PREFIX = "access_token=";  
 
     template<>
-    std::optional<std::string> parseAccessTokenFrom<http::Header::Cookie>(const std::string& cookie_str) 
+    Result<std::string> parseAccessTokenFrom<http::Header::Cookie>(const std::string& cookie_str) 
     {
         static const std::regex token_regex(ACCESS_TOKEN_PREFIX+"([^;]+)");
         // Check if the cookie string is empty
         if (cookie_str.empty()) {
-            return {};
+            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Cookie string is empty"});
         }
         // Use regex to find the token in the cookie string
         std::smatch match;
         if (std::regex_search(cookie_str, match, token_regex) == false) {
-            return {};
+            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Token not found in cookie"});
         }
         return match[1].str();
     }
 
     template<>
-    std::optional<std::string> parseAccessTokenFrom<http::Header::Authorization>(const std::string& header_str) 
+    Result<std::string> parseAccessTokenFrom<http::Header::Authorization>(const std::string& header_str) 
     {
         static const std::regex token_regex(R"(Bearer\s+([^\s]+))");
 
         if (header_str.empty()) {
-            return {};
+            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Header string is empty"});
         }
 
         std::smatch match;
         if (std::regex_search(header_str, match, token_regex) == false) {
-            return {};
+            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Token not found in header"});
         }
 
         return match[1].str();
@@ -80,26 +80,26 @@ namespace dcn::parse
     static const std::string REFRESH_TOKEN_PREFIX = "refresh_token=";  
 
     template<>
-    std::optional<std::string> parseRefreshTokenFrom<http::Header::Cookie>(const std::string& cookie_str) 
+    Result<std::string> parseRefreshTokenFrom<http::Header::Cookie>(const std::string& cookie_str) 
     {
         static const std::regex token_regex(REFRESH_TOKEN_PREFIX+"([^;]+)");
         // Check if the cookie string is empty
         if (cookie_str.empty()) {
-            return {};
+            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Cookie string is empty"});
         }
         // Use regex to find the token in the cookie string
         std::smatch match;
         if (std::regex_search(cookie_str, match, token_regex) == false) {
-            return {};
+            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Token not found in cookie"});
         }
         return match[1].str();
     }
 
     template<>
-    std::optional<std::string> parseRefreshTokenFrom<http::Header::XRefreshToken>(const std::string& header_str)
+    Result<std::string> parseRefreshTokenFrom<http::Header::XRefreshToken>(const std::string& header_str)
     {
         if (header_str.empty()) {
-            return {};
+            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Header string is empty"});
         }
 
         // Optionally, trim whitespace
@@ -107,7 +107,7 @@ namespace dcn::parse
         auto end = header_str.find_last_not_of(" \t");
 
         if (start == std::string::npos || end == std::string::npos) {
-            return {};
+            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Token not found in header"});
         }
 
         return header_str.substr(start, end - start + 1);
@@ -225,11 +225,11 @@ namespace dcn
         co_return token;
     }
 
-    asio::awaitable<std::expected<evmc::address, AuthenticationError>> AuthManager::verifyAccessToken(std::string token) const
+    asio::awaitable<std::expected<evmc::address, AuthError>> AuthManager::verifyAccessToken(std::string token) const
     {
         co_await utils::ensureOnStrand(_strand);
 
-        if(token.empty()) co_return std::unexpected(AuthenticationError::InvalidToken);
+        if(token.empty()) co_return std::unexpected(AuthError{AuthError::Kind::INVALID_TOKEN});
         if(token.back() == '\r')token.pop_back(); // remove \r if present
 
         try 
@@ -245,18 +245,18 @@ namespace dcn
             auto address_result = evmc::from_hex<evmc::address>(decoded.get_subject());
             if(!address_result)
             {
-                co_return std::unexpected(AuthenticationError::InvalidToken);
+                co_return std::unexpected(AuthError{AuthError::Kind::INVALID_TOKEN});
             }
             const auto &  address = *address_result;
 
             if(_access_tokens.contains(address) == false)
             {
-                co_return std::unexpected(AuthenticationError::MissingToken);
+                co_return std::unexpected(AuthError{AuthError::Kind::MISSING_TOKEN});
             }
 
             if(token != _access_tokens.at(address))
             {
-                co_return std::unexpected(AuthenticationError::InvalidToken);
+                co_return std::unexpected(AuthError{AuthError::Kind::INVALID_TOKEN});
             }
 
             co_return address;
@@ -264,7 +264,7 @@ namespace dcn
         } catch (const std::exception& e) 
         {
             spdlog::error("Access token verification failed: {}", e.what());
-            co_return std::unexpected(AuthenticationError::Unknown);
+            co_return std::unexpected(AuthError{AuthError::Kind::UNKNOWN});
         }
     }
 
@@ -302,11 +302,11 @@ namespace dcn
         co_return token;
     }
 
-    asio::awaitable<std::expected<evmc::address, AuthenticationError>> AuthManager::verifyRefreshToken(std::string token) const
+    asio::awaitable<std::expected<evmc::address, AuthError>> AuthManager::verifyRefreshToken(std::string token) const
     {
         co_await utils::ensureOnStrand(_strand);
 
-        if(token.empty()) co_return std::unexpected(AuthenticationError::InvalidToken);
+        if(token.empty()) co_return std::unexpected(AuthError{AuthError::Kind::INVALID_TOKEN});
         if(token.back() == '\r')token.pop_back(); // remove \r if present
 
         try 
@@ -322,18 +322,18 @@ namespace dcn
             auto address_result = evmc::from_hex<evmc::address>(decoded.get_subject());
             if(!address_result)
             {
-                co_return std::unexpected(AuthenticationError::InvalidToken);
+                co_return std::unexpected(AuthError{AuthError::Kind::INVALID_TOKEN});
             }
             const auto &  address = *address_result;
 
             if(_refresh_tokens.contains(address) == false)
             {
-                co_return std::unexpected(AuthenticationError::MissingToken);
+                co_return std::unexpected(AuthError{AuthError::Kind::MISSING_TOKEN});
             }
 
             if(token != _refresh_tokens.at(address))
             {
-                co_return std::unexpected(AuthenticationError::InvalidToken);
+                co_return std::unexpected(AuthError{AuthError::Kind::INVALID_TOKEN});
             }
 
             co_return address;
@@ -341,7 +341,7 @@ namespace dcn
         } catch (const std::exception& e) 
         {
             spdlog::error("Refresh token verification failed: {}", e.what());
-            co_return std::unexpected(AuthenticationError::Unknown);
+            co_return std::unexpected(AuthError{AuthError::Kind::UNKNOWN});
         }
     }
 }

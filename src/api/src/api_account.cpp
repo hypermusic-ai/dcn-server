@@ -82,8 +82,15 @@ namespace dcn
         }
         const auto & address = address_res.value();
 
+        static const std::size_t MAX_LIMIT = 256;
 
-        const auto limit_res = parse::parseRouteArgAs<std::size_t>(query_args.at("limit"));
+        const auto limit_res = parse::parseRouteArgAs<std::size_t>(query_args.at("limit"))  
+            .and_then([](std::size_t limit) -> parse::Result<std::size_t>
+            {
+                if(limit > MAX_LIMIT) return std::unexpected(parse::Error{parse::Error::Kind::OUT_OF_RANGE});
+                return limit;
+            });
+
         const auto page_res = parse::parseRouteArgAs<std::size_t>(query_args.at("page"));
 
         if(!limit_res || !page_res)
@@ -93,7 +100,11 @@ namespace dcn
 
             json error_output;
             error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Invalid arguments limit or page";
+
+            std::string msg_str = "Invalid arguments limit or page.";
+            if(!limit_res) msg_str += std::format(" limit error: {}.", limit_res.error().kind);
+            if(!page_res) msg_str += std::format(" page error: {}.", page_res.error().kind);
+            error_output["message"] = msg_str;
             response.setBodyWithContentLength(error_output.dump());
 
             co_return response;

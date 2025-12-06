@@ -12,6 +12,9 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
+    - name: Install tools
+      run: sudo apt update && sudo apt install -y sshpass rsync
+
     - name: Download and extract artifacts
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -50,6 +53,7 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           sudo systemctl stop decentralised-art-server
+          echo "Service stopped"
     
     - name: Clear remote install directory
       uses: appleboy/ssh-action@v1.0.3
@@ -61,9 +65,6 @@ jobs:
           echo "Clearing /home/hypermusic/decentralised-art-install..."
           mkdir -p /tmp/empty-dir
           rsync -a --delete --exclude 'storage' /tmp/empty-dir/ /home/hypermusic/decentralised-art-install/
-
-    - name: Install tools
-      run: sudo apt update && sudo apt install -y sshpass rsync
 
     - name: Upload to server
       env:
@@ -90,3 +91,5 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           sudo systemctl restart decentralised-art-server
+          sudo systemctl status decentralised-art-server --no-pager
+          echo "Service restarted"

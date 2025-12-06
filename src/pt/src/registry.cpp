@@ -123,7 +123,6 @@ namespace dcn
             co_return false;
         }
 
-        std::ofstream output_file(out_dir / (record.feature().name() + ".json"), std::ios::out | std::ios::trunc);
         const auto parsing_result = parse::parseToJson(record, parse::use_protobuf);
         if(!parsing_result)
         {
@@ -137,6 +136,8 @@ namespace dcn
             spdlog::error("Failed to parse owner address");
             co_return false;
         }
+
+        std::ofstream output_file(out_dir / (record.feature().name() + ".json"), std::ios::out | std::ios::trunc);
 
         output_file << *parsing_result;
         output_file.close();
@@ -204,7 +205,6 @@ namespace dcn
             co_return false;
         }
 
-        std::ofstream output_file(out_dir / (record.transformation().name() + ".json"), std::ios::out | std::ios::trunc);
         const auto parsing_result = parse::parseToJson(record, parse::use_protobuf);
         if(!parsing_result)
         {
@@ -218,6 +218,8 @@ namespace dcn
             spdlog::error("Failed to parse owner address");
             co_return false;
         }
+        
+        std::ofstream output_file(out_dir / (record.transformation().name() + ".json"), std::ios::out | std::ios::trunc);
 
         output_file << *parsing_result;
         output_file.close();

@@ -2,7 +2,7 @@
 
 namespace dcn
 {
-    std::vector<std::uint8_t> constructFunctionSelector(std::string signature)
+    std::vector<std::uint8_t> constructSelector(std::string signature)
     {
         std::uint8_t hash[32];
         Keccak256::getHash(reinterpret_cast<const uint8_t*>(signature.data()), signature.size(), hash);
@@ -156,6 +156,65 @@ namespace dcn
         return return_offset;
     }
 
+    template<class E>
+    static E _decodeError(const evmc::Result& r);
+
+    template<>
+    static DeployError _decodeError(const evmc::Result& r)
+    {
+        std::vector<std::uint8_t> selector;
+
+        selector = constructSelector("FeatureAlreadyRegistered(bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::FEATURE_ALREADY_REGISTERED};
+        }
+
+        selector = constructSelector("FeatureMissing(bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::FEATURE_MISSING};
+        }
+
+        selector = constructSelector("TransformationAlreadyRegistered(bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::TRANSFORMATION_ALREADY_REGISTERED};
+        }
+
+        selector = constructSelector("TransformationArgumentsMismatch(bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::TRANSFORMATION_ARGUMENTS_MISMATCH};
+        }
+
+        selector = constructSelector("TransformationMissing(bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::TRANSFORMATION_MISSING};
+        }
+
+        selector = constructSelector("RunInstanceAlreadyRegistered(bytes32, bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::RUN_INSTANCE_ALREADY_REGISTERED};
+        }
+
+        selector = constructSelector("RunInstanceMissing(bytes32, bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::RUN_INSTANCE_MISSING};
+        }
+
+        selector = constructSelector("RegistryError(bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::REGISTRY_ERROR};
+        }
+
+        return DeployError{};
+    }
+
 
     template<>
     std::vector<std::vector<uint32_t>> decodeReturnedValue(const std::vector<std::uint8_t> & bytes)
@@ -265,7 +324,7 @@ namespace dcn
     {
         spdlog::debug(std::format("Fetching contract owner: {}", address));
         std::vector<uint8_t> input_data;
-        const auto selector = constructFunctionSelector("getOwner()");
+        const auto selector = constructSelector("getOwner()");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
         co_return  co_await evm.execute(evm.getRegistryAddress(), address, input_data, 1'000'000, 0);
     }
@@ -293,7 +352,13 @@ namespace dcn
         std::memcpy(_console_log_address.bytes + (20 - 11), "console.log", 11);
         addAccount(_console_log_address, DEFAULT_GAS_LIMIT);
 
-        co_spawn(io_context, loadPT(), asio::detached);
+        co_spawn(io_context, loadPT(), [](std::exception_ptr e, bool r){
+            if(e || !r)
+            {
+                spdlog::error("Failed to load PT");
+                throw std::runtime_error("Failed to load PT");
+            }
+        });
     }
     
     evmc::address EVM::getRegistryAddress() const
@@ -390,7 +455,7 @@ namespace dcn
         co_return true;
     }
 
-    asio::awaitable<std::expected<evmc::address, evmc_status_code>> EVM::deploy(
+    asio::awaitable<std::expected<evmc::address, DeployError>> EVM::deploy(
                         std::istream & code_stream,
                         evmc::address sender,
                         std::vector<std::uint8_t> constructor_args, 
@@ -402,14 +467,14 @@ namespace dcn
         if(!bytecode_result)
         {
             spdlog::error("Cannot parse bytecode");
-            co_return evmc_status_code::EVMC_FAILURE;
+            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_BYTECODE});
         }
         const auto & bytecode = *bytecode_result;
 
         if(bytecode.size() == 0)
         {
             spdlog::error("Empty bytecode");
-            co_return evmc_status_code::EVMC_FAILURE;
+            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_BYTECODE});
         }
 
         if(!constructor_args.empty())
@@ -448,12 +513,13 @@ namespace dcn
 
         co_await utils::ensureOnStrand(_strand);
 
-        evmc::Result result = _storage.call(create_msg);        
+        const evmc::Result result = _storage.call(create_msg);        
 
         if (result.status_code != EVMC_SUCCESS)
         {
-            spdlog::error("Failed to deploy contract: {}", evmc_status_code_to_string(result.status_code));
-            co_return std::unexpected<evmc_status_code>(result.status_code);
+            const DeployError error = _decodeError<DeployError>(result);
+            spdlog::error(std::format("Failed to deploy contract: {}, error: {}", result.status_code, error.kind));
+            co_return std::unexpected(error);
         }
 
         // Display result
@@ -467,7 +533,7 @@ namespace dcn
         co_return result.create_address;
      }
 
-    asio::awaitable<std::expected<evmc::address, evmc_status_code>> EVM::deploy(
+    asio::awaitable<std::expected<evmc::address, DeployError>> EVM::deploy(
                         std::filesystem::path code_path,
                         evmc::address sender,
                         std::vector<uint8_t> constructor_args,
@@ -542,11 +608,15 @@ namespace dcn
         std::filesystem::create_directories(out_dir);
         
         { // deploy registry
-            co_await compile(
+            if(co_await compile(
                     contracts_dir / "registry" / "RegistryBase.sol",
                     out_dir / "registry", 
                     contracts_dir, 
-                    node_modules);
+                    node_modules) == false)
+            {
+                spdlog::error("Failed to compile registry");
+                co_return false;
+            }
 
             const auto registry_address_res = co_await deploy(
                     out_dir / "registry" / "RegistryBase.bin", 
@@ -555,7 +625,7 @@ namespace dcn
                     DEFAULT_GAS_LIMIT, 
                     0);
 
-            if(!registry_address_res.has_value())
+            if(!registry_address_res)
                 co_return false;
 
             _registry_address = registry_address_res.value();
@@ -563,11 +633,15 @@ namespace dcn
         }
 
         { // deploy runner
-            co_await compile(
+            if(co_await compile(
                     contracts_dir /  "Runner.sol",
                     out_dir, 
                     contracts_dir, 
-                    node_modules);
+                    node_modules) == false)
+            {
+                spdlog::error("Failed to compile runner");
+                co_return false;
+            }
             
             spdlog::debug("Deploy runner");
             const auto runner_address_res = co_await deploy(
@@ -577,12 +651,11 @@ namespace dcn
                     DEFAULT_GAS_LIMIT, 
                     0);
 
-            if(!runner_address_res.has_value())
+            if(!runner_address_res)
                 co_return false;
         
             _runner_address = runner_address_res.value();
             spdlog::info("Runner address: {}", evmc::hex(_runner_address));
-
         }
 
         co_return true;

@@ -33,59 +33,58 @@ namespace dcn::parse
     /**
      * @brief Parses a Transformation object to a JSON object.
      * @param transformation The Transformation object to parse.
-     * @return An optional JSON object. If parsing fails, returns std::nullopt.
      */
-    std::optional<json> parseToJson(Transformation transformation, use_json_t);
+    template<>
+    Result<json> parseToJson(Transformation transformation, use_json_t);
 
     /**
      * @brief Parses a JSON object to a Transformation object.
      * @param json_obj The JSON object to parse.
-     * @return An optional Transformation object. If parsing fails, returns std::nullopt.
      */
-    std::optional<Transformation> parseFromJson(json json_obj, use_json_t);
+    template<>
+    Result<Transformation> parseFromJson(json json_obj, use_json_t);
 
     /**
      * @brief Converts a Transformation object to a JSON string using protobuf
      * @param transformation The Transformation object to convert
      * @return A JSON string representation of the Transformation object
      */
-    std::optional<std::string> parseToJson(Transformation transformation, use_protobuf_t);
+    template<>
+    Result<std::string> parseToJson(Transformation transformation, use_protobuf_t);
 
     /**
      * @brief Parses a JSON string to a Transformation object using Protobuf.
      * @param json_str The JSON string to parse.
-     * @return An optional Transformation object. If parsing fails, returns std::nullopt.
      */
-    std::optional<Transformation> parseFromJson(std::string json_str, use_protobuf_t);
+    template<>
+    Result<Transformation> parseFromJson(std::string json_str, use_protobuf_t);
 
     /**
      * @brief Converts a TransformationRecord object to a JSON object.
      * @param transformation_record The TransformationRecord object to convert.
-     * @return An optional JSON object. If conversion fails, returns std::nullopt.
      */
-    std::optional<json> parseToJson(TransformationRecord transformation_record, use_json_t);
+    template<>
+    Result<json> parseToJson(TransformationRecord transformation_record, use_json_t);
 
     /**
      * @brief Converts a TransformationRecord object to a JSON string using Protobuf.
      * @param transformation_record The TransformationRecord object to convert.
-     * @return An optional JSON string. If conversion fails, returns std::nullopt.
      */
-    std::optional<std::string> parseToJson(TransformationRecord transformation_record, use_protobuf_t);
+    template<>
+    Result<std::string> parseToJson(TransformationRecord transformation_record, use_protobuf_t);
 
     /**
      * @brief Parses a JSON object to a TransformationRecord object.
      * @param json_obj The JSON object to parse.
-     * @return An optional TransformationRecord object. If parsing fails, returns std::nullopt.
      */
     template<>
-    std::optional<TransformationRecord> parseFromJson(json json_obj, use_json_t);
+    Result<TransformationRecord> parseFromJson(json json_obj, use_json_t);
     
     /**
      * @brief Parses a JSON string to a TransformationRecord object using Protobuf.
      * @param json_str The JSON string to parse.
-     * @return An optional TransformationRecord object. If parsing fails, returns std::nullopt.
      */
     template<>
-    std::optional<TransformationRecord> parseFromJson(std::string json_str, use_protobuf_t);
+    Result<TransformationRecord> parseFromJson(std::string json_str, use_protobuf_t);
 
 }

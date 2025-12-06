@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <optional>
 #include <format>
 #include <cassert>
 #include <tuple>
@@ -187,52 +186,45 @@ namespace dcn::parse
      * @brief Parses a string to a RouteArgDef.
      * 
      * This function takes a string representation of a `RouteArgDef` and converts it to the corresponding enum value.
-     * If the string does not match any known `RouteArgDef`, it returns an empty optional.
      * 
      * @param str The `string` to parse.
      * @return The corresponding RouteArgDef.
      */
-    std::optional<RouteArgDef> parseRouteArgDefFromString(const std::string str);
+    parse::Result<RouteArgDef> parseRouteArgDefFromString(const std::string str);
 
     template<class T>
     requires (!IsSequenceContainer<T> && !IsTupleLike<T>)
-    std::optional<T> parseRouteArgAs(const RouteArg & arg);
+    parse::Result<T> parseRouteArgAs(const RouteArg & arg);
 
     /**
      * @brief Parses a `RouteArg` as a unsigned integer.
      * 
      * This function takes a `RouteArg` and attempts to parse it as a unsigned integer.
-     * If the parsing is successful, it returns the unsigned integer; otherwise, it returns an empty optional.
      * 
      * @param arg The `RouteArg` to parse.
-     * @return The parsed unsigned integer or an empty optional if parsing fails.
      */
     template<>
-    std::optional<std::size_t> parseRouteArgAs<std::size_t>(const RouteArg & arg);
+    parse::Result<std::size_t> parseRouteArgAs<std::size_t>(const RouteArg & arg);
 
     /**
      * @brief Parses a `RouteArg` as a 32bit unsigned integer.
      * 
      * This function takes a `RouteArg` and attempts to parse it as a 32bit unsigned integer.
-     * If the parsing is successful, it returns the 32bit unsigned integer; otherwise, it returns an empty optional.
      * 
      * @param arg The `RouteArg` to parse.
-     * @return The parsed 32bit unsigned integer or an empty optional if parsing fails.
      */
     template<>
-    std::optional<std::uint32_t> parseRouteArgAs<std::uint32_t>(const RouteArg & arg);
+    parse::Result<std::uint32_t> parseRouteArgAs<std::uint32_t>(const RouteArg & arg);
 
     /**
      * @brief Parses a `RouteArg` as a string.
      * 
      * This function takes a `RouteArg` and attempts to parse it as a `string`.
-     * If the parsing is successful, it returns the `string`; otherwise, it returns an empty optional.
      * 
      * @param arg The `RouteArg` to parse.
-     * @return The parsed `string` or an empty optional if parsing fails.
      */
     template<>
-    std::optional<std::string> parseRouteArgAs<std::string>(const RouteArg & arg);
+    parse::Result<std::string> parseRouteArgAs<std::string>(const RouteArg & arg);
 
 
     template <IsTupleLike TupleT, std::size_t Size>
@@ -241,15 +233,16 @@ namespace dcn::parse
     template <IsTupleLike TupleT>
     struct TupleParser<TupleT, 2>
     {
-        std::optional<TupleT> operator()(const std::vector<std::unique_ptr<dcn::RouteArgDef>> &defs, const std::vector<std::string> & values_str)
+        parse::Result<TupleT> operator()(const std::vector<std::unique_ptr<dcn::RouteArgDef>> &defs, const std::vector<std::string> & values_str)
         {
-            if(values_str.size() != std::tuple_size<TupleT>::value)return std::nullopt;
-            if(defs.size() != std::tuple_size<TupleT>::value)return std::nullopt;
+            if(values_str.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+            if(defs.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
 
             auto t0 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(0), values_str.at(0)));
-            auto t1 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(1), values_str.at(1)));
+            if(!t0) return std::unexpected(t0.error());
 
-            if(!t0 || !t1)return std::nullopt; 
+            auto t1 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(1), values_str.at(1)));
+            if(!t1) return std::unexpected(t1.error());
             
             return std::make_tuple(*t0, *t1);
         }
@@ -258,16 +251,19 @@ namespace dcn::parse
     template <IsTupleLike TupleT>
     struct TupleParser<TupleT, 3>
     {
-        std::optional<TupleT> operator()(const std::vector<std::unique_ptr<dcn::RouteArgDef>> &defs, const std::vector<std::string> & values_str)
+        parse::Result<TupleT> operator()(const std::vector<std::unique_ptr<dcn::RouteArgDef>> &defs, const std::vector<std::string> & values_str)
         {
-            if(values_str.size() != std::tuple_size<TupleT>::value)return std::nullopt;
-            if(defs.size() != std::tuple_size<TupleT>::value)return std::nullopt;
+            if(values_str.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+            if(defs.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
 
             auto t0 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(0), values_str.at(0)));
-            auto t1 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(1), values_str.at(1)));
-            auto t2 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(2), values_str.at(2)));
+            if(!t0) return std::unexpected(t0.error());
 
-            if(!t0 || !t1 || !t2)return std::nullopt; 
+            auto t1 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(1), values_str.at(1)));
+            if(!t1) return std::unexpected(t1.error());
+
+            auto t2 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(2), values_str.at(2)));
+            if(!t2) return std::unexpected(t2.error());
             
             return std::make_tuple(*t0, *t1, *t2);
         }
@@ -276,17 +272,22 @@ namespace dcn::parse
     template <IsTupleLike TupleT>
     struct TupleParser<TupleT, 4>
     {
-        std::optional<TupleT> operator()(const std::vector<std::unique_ptr<dcn::RouteArgDef>> &defs, const std::vector<std::string> & values_str)
+        parse::Result<TupleT> operator()(const std::vector<std::unique_ptr<dcn::RouteArgDef>> &defs, const std::vector<std::string> & values_str)
         {
-            if(values_str.size() != std::tuple_size<TupleT>::value)return std::nullopt;
-            if(defs.size() != std::tuple_size<TupleT>::value)return std::nullopt;
+            if(values_str.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+            if(defs.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
 
             auto t0 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(0), values_str.at(0)));
-            auto t1 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(1), values_str.at(1)));
-            auto t2 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(2), values_str.at(2)));
-            auto t3 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(3), values_str.at(3)));
+            if(!t0) return std::unexpected(t0.error());
 
-            if(!t0 || !t1 || !t2 || !t3)return std::nullopt; 
+            auto t1 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(1), values_str.at(1)));
+            if(!t1) return std::unexpected(t1.error());
+
+            auto t2 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(2), values_str.at(2)));
+            if(!t2) return std::unexpected(t2.error());
+
+            auto t3 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(RouteArg(*defs.at(3), values_str.at(3)));
+            if(!t3) return std::unexpected(t3.error());
             
             return std::make_tuple(*t0, *t1, *t2, *t3);
         }
@@ -294,16 +295,16 @@ namespace dcn::parse
 
 
     template<IsTupleLike TupleT>
-    std::optional<TupleT> parseRouteArgAs(const RouteArg& arg)
+    parse::Result<TupleT> parseRouteArgAs(const RouteArg& arg)
     {
-        if(arg.getType() != RouteArgType::object)return std::nullopt;
-        if(std::tuple_size<TupleT>::value == 0) return std::nullopt;
-        if(arg.getChildren().size() != std::tuple_size<TupleT>::value) return std::nullopt;
+        if(arg.getType() != RouteArgType::object) return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH});
+        if(std::tuple_size<TupleT>::value == 0) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+        if(arg.getChildren().size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
         
         std::string data = arg.getData();
-        if(data.empty())return std::nullopt;
-        if(data.front() != OBJECT_START_IDENTIFIER) return std::nullopt;
-        if(data.back() != OBJECT_END_IDENTIFIER) return std::nullopt;
+        if(data.empty()) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+        if(data.front() != OBJECT_START_IDENTIFIER) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+        if(data.back() != OBJECT_END_IDENTIFIER) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
         
         // remove delimiters
         data = data.substr(1, data.size() - 2);
@@ -324,18 +325,18 @@ namespace dcn::parse
     }
 
     template<IsSequenceContainer ContainerT>
-    std::optional<ContainerT> parseRouteArgAs(const RouteArg& arg)
+    parse::Result<ContainerT> parseRouteArgAs(const RouteArg& arg)
     {
         using T = typename ContainerT::value_type;
 
-        if(arg.getType() != RouteArgType::array)return std::nullopt;
-        if(arg.getChildren().size() != 1)return std::nullopt;
-        if(arg.getChildren().at(0) == nullptr)return std::nullopt;
+        if(arg.getType() != RouteArgType::array) return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH});
+        if(arg.getChildren().size() != 1) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+        if(arg.getChildren().at(0) == nullptr) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
 
         std::string data = arg.getData();
-        if(data.empty())return std::nullopt;
-        if(data.front() != ARRAY_START_IDENTIFIER) return std::nullopt;
-        if(data.back() != ARRAY_END_IDENTIFIER) return std::nullopt;
+        if(data.empty()) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+        if(data.front() != ARRAY_START_IDENTIFIER) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+        if(data.back() != ARRAY_END_IDENTIFIER) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
 
         // remove delimiters
         data = data.substr(1, data.size() - 2);
@@ -361,14 +362,13 @@ namespace dcn::parse
         {
             RouteArg array_value = RouteArg(array_type, value_str);
             const auto parsed_value = parseRouteArgAs<T>(array_value);
-            if(!parsed_value)return std::nullopt;
+            if(!parsed_value)return std::unexpected(parsed_value.error());
+
             values.emplace_back(*parsed_value);
         }
 
         return values;
     }
-
-
 }
 
 template <>

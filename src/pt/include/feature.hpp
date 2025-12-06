@@ -69,85 +69,99 @@ namespace dcn::parse
     /**
      * @brief Parses a TransformationDef object to a JSON object.
      * @param transform_def The TransformationDef object to parse.
-     * @return An optional JSON object. If parsing fails, returns std::nullopt.
      */
-    std::optional<json> parseToJson(TransformationDef transform_def, use_json_t);
+    template<>
+    Result<json> parseToJson(TransformationDef transform_def, use_json_t);
 
     /**
      * @brief Parses a JSON object to a TransformationDef object.
      * @param json The JSON object to parse.
-     * @return An optional TransformationDef object. If parsing fails, returns std::nullopt.
      */
     template<>
-    std::optional<TransformationDef> parseFromJson(json json, use_json_t);
+    Result<TransformationDef> parseFromJson(json json, use_json_t);
 
     /**
      * @brief Parses a Dimension object to a JSON object.
      * @param dimension The Dimension object to parse.
-     * @return An optional JSON object. If parsing fails, returns std::nullopt.
      */
-    std::optional<json> parseToJson(Dimension dimension, use_json_t);
+    template<>
+    Result<json> parseToJson(Dimension dimension, use_json_t);
 
     /**
      * @brief Parses a JSON object to a Dimension object.
      * @param json The JSON object to parse.
-     * @return An optional Dimension object. If parsing fails, returns std::nullopt.
      */
     template<>
-    std::optional<Dimension> parseFromJson(json json, use_json_t);
+    Result<Dimension> parseFromJson(json json, use_json_t);
 
     /**
      * @brief Parses a Dimension object to a JSON string using Protobuf.
      * @param dimension The Dimension object to parse.
-     * @return An optional JSON string. If parsing fails, returns std::nullopt.
      */
-    std::optional<std::string> parseToJson(Dimension dimension, use_protobuf_t);
+    template<>
+    Result<std::string> parseToJson(Dimension dimension, use_protobuf_t);
 
     /**
      * @brief Parses a JSON string to a Dimension object.
      * @param json_str The JSON string to parse.
-     * @return An optional Dimension object. If parsing fails, returns std::nullopt.
      */
     template<>
-    std::optional<Dimension> parseFromJson(std::string json_str, use_protobuf_t);
+    Result<Dimension> parseFromJson(std::string json_str, use_protobuf_t);
     
     /**
      * @brief Parses a Feature object to a JSON object.
      * @param feature The Feature object to parse.
-     * @return An optional JSON object. If parsing fails, returns std::nullopt.
      */
-    std::optional<json> parseToJson(Feature feature, use_json_t);
+    template<>
+    Result<json> parseToJson(Feature feature, use_json_t);
 
     /**
      * @brief Parses a JSON object to a Feature object.
      * @param json_obj The JSON object to parse.
-     * @return An optional Feature object. If parsing fails, returns std::nullopt.
      */
     template<>
-    std::optional<Feature> parseFromJson(json json_obj, use_json_t);
+    Result<Feature> parseFromJson(json json_obj, use_json_t);
 
     /**
      * @brief Converts a Feature object to a JSON string using protobuf
      * @param feature The Feature object to convert
      * @return A JSON string representation of the Feature object
      */
-    std::optional<std::string> parseToJson(Feature feature, use_protobuf_t);
+    template<>
+    Result<std::string> parseToJson(Feature feature, use_protobuf_t);
 
     /**
      * @brief Parses a JSON string to a Feature object using Protobuf.
      * @param json_str The JSON string to parse.
-     * @return An optional Feature object. If parsing fails, returns std::nullopt.
      */
     template<>
-    std::optional<Feature> parseFromJson(std::string json_str, use_protobuf_t);
+    Result<Feature> parseFromJson(std::string json_str, use_protobuf_t);
 
-
-    std::optional<json> parseToJson(FeatureRecord feature, use_json_t);
-    std::optional<std::string> parseToJson(FeatureRecord feature_record, use_protobuf_t);
-
+    /**
+     * @brief Converts a FeatureRecord object to a JSON object using JSON.
+     * @param feature The FeatureRecord object to convert.
+     */
     template<>
-    std::optional<FeatureRecord> parseFromJson(json json_obj, use_json_t);
+    Result<json> parseToJson(FeatureRecord feature, use_json_t);
+
+    /**
+     * @brief Converts a FeatureRecord to a JSON string using Protobuf.
+     * @param feature_record The FeatureRecord object to convert.
+     */
+    template<>
+    Result<std::string> parseToJson(FeatureRecord feature_record, use_protobuf_t);
+
+    /**
+     * @brief Parses a JSON object to a FeatureRecord object using JSON.
+     * @param json_obj The JSON object to parse.
+     */
+    template<>
+    Result<FeatureRecord> parseFromJson(json json_obj, use_json_t);
     
+    /**
+     * @brief Parses a JSON string to a FeatureRecord object using Protobuf.
+     * @param json_str The JSON string to parse.
+     */
     template<>
-    std::optional<FeatureRecord> parseFromJson(std::string json_str, use_protobuf_t);
+    Result<FeatureRecord> parseFromJson(std::string json_str, use_protobuf_t);
 }

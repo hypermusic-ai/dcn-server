@@ -2,9 +2,9 @@
 
 namespace dcn
 {
-    asio::awaitable<std::expected<evmc::address, AuthenticationError>> authenticate(const http::Request & request, const AuthManager & auth_manager)
+    asio::awaitable<std::expected<evmc::address, AuthError>> authenticate(const http::Request & request, const AuthManager & auth_manager)
     {
-        std::optional<std::string> token_res;
+        parse::Result<std::string> token_res;
 
         // firstly try to obtain token from authorization header
         const auto auth_res = request.getHeader(http::Header::Authorization);
@@ -24,17 +24,17 @@ namespace dcn
             }
         }
 
-        if (token_res.has_value() == false) 
+        if (!token_res) 
         {
             spdlog::error("Failed to parse token");
-            co_return std::unexpected(AuthenticationError::InvalidToken);
+            co_return std::unexpected(AuthError{AuthError::Kind::INVALID_TOKEN});
         }
 
         const std::string & token = token_res.value();
 
         auto verification_res = co_await auth_manager.verifyAccessToken(token);
 
-        if(verification_res.has_value() == false)
+        if(!verification_res)
         {
             spdlog::error("Failed to verify token");
             co_return std::unexpected(verification_res.error());
@@ -183,9 +183,9 @@ namespace dcn
         const std::string & address_str = auth_request["address"].get<std::string>();
         const std::string & signature = auth_request["signature"].get<std::string>();
         const std::string & message = auth_request["message"].get<std::string>();
-        const std::string request_nonce = parse::parseNonceFromMessage(message);
+        const auto request_nonce = parse::parseNonceFromMessage(message);
 
-        if(request_nonce.length() == 0)
+        if(!request_nonce)
         {
             response.setCode(http::Code::BadRequest);
             response.setHeader(http::Header::ContentType, "application/json");
@@ -199,7 +199,7 @@ namespace dcn
         }
 
         auto address_res = evmc::from_hex<evmc::address>(address_str);
-        if(address_res.has_value() == false)
+        if(!address_res)
         {
             response.setCode(http::Code::BadRequest);
             response.setHeader(http::Header::ContentType, "application/json");
@@ -213,7 +213,7 @@ namespace dcn
         }
         const evmc::address & address = address_res.value();
 
-        if(co_await auth_manager.verifyNonce(address, request_nonce) == false)
+        if(co_await auth_manager.verifyNonce(address, *request_nonce) == false)
         {
             response.setCode(http::Code::BadRequest);
             response.setHeader(http::Header::ContentType, "application/json");
@@ -281,7 +281,7 @@ namespace dcn
     
         setCORSHeaders(request, response);
 
-        std::optional<std::string> refresh_token_res;
+        parse::Result<std::string> refresh_token_res;
         // firstly try to obtain refresh token from XRefreshToken header
         const auto xRefreshToken_res = request.getHeader(http::Header::XRefreshToken);
         if(xRefreshToken_res.empty() == false)
@@ -300,7 +300,7 @@ namespace dcn
             }
         }       
         
-        if (refresh_token_res.has_value() == false) {
+        if (!refresh_token_res) {
             response.setCode(dcn::http::Code::Unauthorized)
                     .setHeader(http::Header::Connection, "close")
                     .setHeader(http::Header::ContentType, "application/json");
@@ -315,7 +315,7 @@ namespace dcn
         const std::string & refresh_token = refresh_token_res.value();
 
         auto refresh_verification_res = co_await auth_manager.verifyRefreshToken(refresh_token);
-        if(refresh_verification_res.has_value() == false)
+        if(!refresh_verification_res)
         {
             response.setCode(dcn::http::Code::Unauthorized)
                     .setHeader(http::Header::Connection, "close")
@@ -323,7 +323,7 @@ namespace dcn
 
             json error_output;
             error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = std::format("Error: {}", refresh_verification_res.error());
+            error_output["message"] = std::format("Error: {}", refresh_verification_res.error().kind);
             response.setBodyWithContentLength(error_output.dump());
 
             co_return std::move(response);
@@ -334,7 +334,7 @@ namespace dcn
         // Verify if access token matches old one for that address
         // since it probably expired we does not strictly verify it
         // only compare it
-        std::optional<std::string> access_token_res;
+        dcn::parse::Result<std::string> access_token_res;
 
         // firstly try to obtain token from authorization header
         const auto auth_res = request.getHeader(http::Header::Authorization);
@@ -354,7 +354,7 @@ namespace dcn
             }
         }
 
-        if (access_token_res.has_value() == false) {
+        if (!access_token_res) {
             response.setCode(dcn::http::Code::Unauthorized)
                     .setHeader(http::Header::Connection, "close")
                     .setHeader(http::Header::ContentType, "text/plain");

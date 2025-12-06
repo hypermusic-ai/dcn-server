@@ -2,7 +2,8 @@
 
 namespace dcn::parse
 {
-    std::optional<json> parseToJson(std::vector<Samples> samples, use_json_t) 
+    template<>
+    Result<json> parseToJson(std::vector<Samples> samples, use_json_t) 
     {
         json arr = json::array();
 
@@ -17,16 +18,16 @@ namespace dcn::parse
     }
 
     template<>
-    std::optional<std::vector<Samples>> parseFromJson(json json_val, use_json_t) 
+    Result<std::vector<Samples>> parseFromJson(json json_val, use_json_t) 
     {
         if (!json_val.is_array())
-            return std::nullopt;
+            return std::unexpected(Error{Error::Kind::TYPE_MISMATCH, "Invalid JSON object"});
 
         std::vector<Samples> result;
 
         for (const auto& item : json_val) {
             if (!item.contains("feature_path") || !item.contains("data"))
-                return std::nullopt;
+                return std::unexpected(Error{Error::Kind::INVALID_VALUE, "feature_path or data not found"});
 
             Samples s;
             s.set_feature_path(item["feature_path"].get<std::string>());

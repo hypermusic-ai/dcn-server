@@ -202,7 +202,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // function selector
-        const auto selector = constructFunctionSelector("getTransformation(string)");
+        const auto selector = constructSelector("getTransformation(string)");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // Step 2: Offset to string data (32 bytes with value 0x20)
@@ -279,7 +279,7 @@ namespace dcn
 
         const auto auth_result = co_await authenticate(request, auth_manager);
 
-        if(auth_result.has_value() == false)
+        if(!auth_result)
         {
             response.setHeader(http::Header::Connection, "close");
             response.setCode(http::Code::Unauthorized);
@@ -287,7 +287,7 @@ namespace dcn
 
             json error_output;
             error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = std::format("Error: {}", auth_result.error());
+            error_output["message"] = std::format("Error: {}", auth_result.error().kind);
             response.setBodyWithContentLength(error_output.dump());
 
             co_return std::move(response);
@@ -320,7 +320,8 @@ namespace dcn
         transformation_record.set_owner(evmc::hex(address));
         *transformation_record.mutable_transformation() = std::move(transformation);
 
-        if(!co_await deployTransformation(evm, registry, transformation_record))
+        const auto deploy_res = co_await deployTransformation(evm, registry, transformation_record);
+        if(!deploy_res)
         {
             spdlog::error("Failed to deploy transformation");
             response.setHeader(http::Header::Connection, "close");
@@ -329,7 +330,7 @@ namespace dcn
 
             json error_output;
             error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Failed to deploy transformation";
+            error_output["message"] = std::format("Failed to deploy transformation. Error: {}", deploy_res.error().kind);
             response.setBodyWithContentLength(error_output.dump());
 
             co_return std::move(response);
@@ -338,6 +339,7 @@ namespace dcn
         json json_output;
         json_output["name"] = transformation_record.transformation().name();
         json_output["owner"] = transformation_record.owner();
+        json_output["local_address"] = evmc::hex(deploy_res.value());
         json_output["address"] = "0x0";
 
         response.setHeader(http::Header::Connection, "close");

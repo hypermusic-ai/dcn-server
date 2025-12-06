@@ -173,6 +173,10 @@ int main(int argc, char* argv[])
     {
         spdlog::error("Error: {}", e.what());
     }
+    catch(...)
+    {
+        spdlog::error("Unknown error");
+    }
     
 
     spdlog::debug("Program finished");

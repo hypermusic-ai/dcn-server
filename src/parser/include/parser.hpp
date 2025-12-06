@@ -37,10 +37,39 @@ namespace dcn::parse
      */
     static constexpr use_json_t use_json{};
 
-
+    /**
+     * @brief Converts a JSON string to a T using JSON.
+     * 
+     * @tparam T The message type.
+     * @param json The JSON string to convert.
+     */
     template<class T>
-    std::optional<T> parseFromJson(json json, use_json_t);
+    Result<T> parseFromJson(json json, use_json_t);
 
+    /**
+     * @brief Converts a JSON string to a T using Protobuf.
+     * 
+     * @tparam T The message type.
+     * @param json The JSON string to convert.
+     */
     template<class T>
-    std::optional<T> parseFromJson(std::string json_str, use_protobuf_t);
+    Result<T> parseFromJson(std::string json_str, use_protobuf_t);
+
+    /**
+     * @brief Converts a T to a JSON object using JSON.
+     * 
+     * @tparam T The message type.
+     * @param message The message to convert.
+     */
+    template<class T>
+    Result<json> parseToJson(T message, use_json_t);
+
+    /**
+     * @brief Converts a T to a JSON string using Protobuf.
+     * 
+     * @tparam T The message type.
+     * @param message The message to convert.
+     */
+    template<class T>
+    Result<std::string> parseToJson(T message, use_protobuf_t);
 }

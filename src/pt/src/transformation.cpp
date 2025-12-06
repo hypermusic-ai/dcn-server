@@ -64,7 +64,8 @@ namespace dcn
 
 namespace dcn::parse
 {
-    std::optional<json> parseToJson(Transformation transformation, use_json_t)
+    template<>
+    Result<json> parseToJson(Transformation transformation, use_json_t)
     {
         json json_obj;
 
@@ -75,26 +76,27 @@ namespace dcn::parse
     }
 
     template<>
-    std::optional<Transformation> parseFromJson(json json_obj, use_json_t)
+    Result<Transformation> parseFromJson(json json_obj, use_json_t)
     {
         Transformation transformation;
 
         if (json_obj.contains("name")) {
             transformation.set_name(json_obj["name"].get<std::string>());
         }
-        else return std::nullopt;
+        else return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid name"});
         
 
         if (json_obj.contains("sol_src")) {
             transformation.set_sol_src(json_obj["sol_src"].get<std::string>());
         }
-        else return std::nullopt;
+        else return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid sol_src"});
         
 
         return transformation;
     }
 
-    std::optional<std::string> parseToJson(Transformation transformation, use_protobuf_t)
+    template<>
+    Result<std::string> parseToJson(Transformation transformation, use_protobuf_t)
     {
         google::protobuf::util::JsonPrintOptions options;
         options.add_whitespace = true;
@@ -104,13 +106,13 @@ namespace dcn::parse
         std::string json_str;
         auto status = google::protobuf::util::MessageToJsonString(transformation, &json_str, options);
 
-        if (!status.ok()) return std::nullopt;
+        if (!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
 
         return json_str;
     }
 
     template<>
-    std::optional<Transformation> parseFromJson(std::string json_str, use_protobuf_t)
+    Result<Transformation> parseFromJson(std::string json_str, use_protobuf_t)
     {
         google::protobuf::util::JsonParseOptions options;
 
@@ -118,20 +120,26 @@ namespace dcn::parse
 
         auto status = google::protobuf::util::JsonStringToMessage(json_str, &transformation, options);
 
-        if(!status.ok()) return std::nullopt;
+        if(!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
 
         return transformation;
     }
 
-    std::optional<json> parseToJson(TransformationRecord transformation_record, use_json_t)
+    template<>
+    Result<json> parseToJson(TransformationRecord transformation_record, use_json_t)
     {
         json json_obj = json::object();
-        json_obj["transformation"] = parseToJson(transformation_record.transformation(), use_json);
+
+        auto transformation_result = parseToJson(transformation_record.transformation(), use_json);
+        if(!transformation_result) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
+
+        json_obj["transformation"] = std::move(*transformation_result);
         json_obj["owner"] = transformation_record.owner();
         return json_obj;
     }
 
-    std::optional<std::string> parseToJson(TransformationRecord transformation_record, use_protobuf_t)
+    template<>
+    Result<std::string> parseToJson(TransformationRecord transformation_record, use_protobuf_t)
     {
         google::protobuf::util::JsonPrintOptions options;
         options.add_whitespace = true;
@@ -141,27 +149,27 @@ namespace dcn::parse
         std::string json_str;
         auto status = google::protobuf::util::MessageToJsonString(transformation_record, &json_str, options);
 
-        if (!status.ok()) return std::nullopt;
+        if (!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation record"});
 
         return json_str;
     }
 
     template<>
-    std::optional<TransformationRecord> parseFromJson(json json_obj, use_json_t)
+    Result<TransformationRecord> parseFromJson(json json_obj, use_json_t)
     {
         TransformationRecord transformation_record;
         if (json_obj.contains("transformation") == false)
-            return std::nullopt;
+            return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
 
-        std::optional<Transformation> transformation = parseFromJson<Transformation>(json_obj["transformation"], use_json);
+        auto transformation = parseFromJson<Transformation>(json_obj["transformation"], use_json);
 
         if(!transformation)
-            return std::nullopt;
+            return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
 
         *transformation_record.mutable_transformation() = std::move(*transformation);
 
         if (json_obj.contains("owner") == false)
-            return std::nullopt;
+            return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid owner"});
         
         transformation_record.set_owner(json_obj["owner"].get<std::string>());
 
@@ -169,7 +177,7 @@ namespace dcn::parse
     }
 
     template<>
-    std::optional<TransformationRecord> parseFromJson(std::string json_str, use_protobuf_t)
+    Result<TransformationRecord> parseFromJson(std::string json_str, use_protobuf_t)
     {
         google::protobuf::util::JsonParseOptions options;
         options.ignore_unknown_fields = true;
@@ -178,7 +186,7 @@ namespace dcn::parse
 
         auto status = google::protobuf::util::JsonStringToMessage(json_str, &transformation_record, options);
 
-        if(!status.ok()) return std::nullopt;
+        if(!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation record"});
 
         return transformation_record;
     }

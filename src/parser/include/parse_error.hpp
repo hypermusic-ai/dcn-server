@@ -3,22 +3,40 @@
 #include <cstdint>
 #include <string>
 #include <expected>
+#include <format>
 
 namespace dcn::parse
 {   
     struct Error
     {
-        enum class Type : std::uint8_t
+        enum class Kind : std::uint8_t
         {
             UNKNOWN         = 0U,
-            INVALID         = 1U,
-            OUT_OF_RANGE    = 2U
-        };
 
+            INVALID_VALUE   = 1U,
+            OUT_OF_RANGE    = 2U,
+            TYPE_MISMATCH   = 3U
+        };
+        
+        Kind kind = Kind::UNKNOWN;
         std::string message = "";
-        Type type = Type::UNKNOWN;
     };
 
     template<class T>
     using Result = std::expected<T, Error>;
 }
+
+template <>
+struct std::formatter<dcn::parse::Error::Kind> : std::formatter<std::string> {
+    auto format(const dcn::parse::Error::Kind & err, format_context& ctx) const {
+        switch(err)
+        {
+            case dcn::parse::Error::Kind::INVALID_VALUE : return formatter<string>::format("Invalid value", ctx);
+            case dcn::parse::Error::Kind::OUT_OF_RANGE : return formatter<string>::format("Out of range", ctx);
+            case dcn::parse::Error::Kind::TYPE_MISMATCH : return formatter<string>::format("Type mismatch", ctx);
+
+            default:  return formatter<string>::format("Unknown", ctx);
+        }
+        return formatter<string>::format("", ctx);
+    }
+};
