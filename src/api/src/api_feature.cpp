@@ -3,7 +3,7 @@
 namespace dcn
 {
 
-    asio::awaitable<http::Response> HEAD_feature(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, registry::Registry & registry)
+    asio::awaitable<http::Response> HEAD_feature(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");
@@ -71,7 +71,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> OPTIONS_feature(const http::Request & request, std::vector<RouteArg>, QueryArgsList)
+    asio::awaitable<http::Response> OPTIONS_feature(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");
@@ -88,7 +88,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_feature(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, registry::Registry & registry, evm::EVM & evm)
+    asio::awaitable<http::Response> GET_feature(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry, evm::EVM & evm)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");
@@ -264,7 +264,7 @@ namespace dcn
         co_return std::move(response);
     }
 
-    asio::awaitable<http::Response> POST_feature(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm)
+    asio::awaitable<http::Response> POST_feature(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");

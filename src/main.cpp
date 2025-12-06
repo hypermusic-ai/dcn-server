@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
 
     dcn::evm::EVM evm(io_context, EVMC_SHANGHAI, solc_path);
 
-    dcn::Server server(io_context, {asio::ip::tcp::v4(), port});
+    dcn::server::Server server(io_context, {asio::ip::tcp::v4(), port});
 
     server.setIdleInterval(5000ms);
     

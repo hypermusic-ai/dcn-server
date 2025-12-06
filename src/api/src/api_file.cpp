@@ -2,7 +2,7 @@
 
 namespace dcn
 {
-    asio::awaitable<http::Response> HEAD_ServeFile(const http::Request & request, std::vector<RouteArg>, QueryArgsList)
+    asio::awaitable<http::Response> HEAD_ServeFile(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");
@@ -15,7 +15,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> OPTIONS_ServeFile(const http::Request & request, std::vector<RouteArg>, QueryArgsList)
+    asio::awaitable<http::Response> OPTIONS_ServeFile(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");
@@ -33,7 +33,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_ServeFile(const http::Request & request, std::vector<RouteArg>, QueryArgsList, const std::string mime_type, const std::string & file_content)
+    asio::awaitable<http::Response> GET_ServeFile(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList, const std::string mime_type, const std::string & file_content)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");
@@ -48,7 +48,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_ServeBinaryFile(const http::Request & request, std::vector<RouteArg>, QueryArgsList, const std::string mime_type, const std::vector<std::byte> & file_content)
+    asio::awaitable<http::Response> GET_ServeBinaryFile(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList, const std::string mime_type, const std::vector<std::byte> & file_content)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");

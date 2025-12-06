@@ -9,7 +9,7 @@
 #include "http.hpp"
 #include "route_arg.hpp"
 
-namespace dcn
+namespace dcn::server
 {
     /**
      * @brief A class representing a route key, which is a combination of a HTTP method and a URL.

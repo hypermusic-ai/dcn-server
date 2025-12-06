@@ -1,6 +1,6 @@
 #include "route_key.hpp"
 
-namespace dcn
+namespace dcn::server
 {
     RouteKey::RouteKey(http::Method method, http::URL path)
     :   _method(method), 
@@ -48,12 +48,12 @@ namespace dcn
 
             if(arg_parse_result)
             {
-                std::variant<std::string, dcn::RouteArgDef> value_var = std::move(arg_parse_result.value());
+                std::variant<std::string, dcn::server::RouteArgDef> value_var = std::move(arg_parse_result.value());
                 _query_segments.try_emplace(std::move(key), std::move(value_var));
             }
             else
             {
-                std::variant<std::string, dcn::RouteArgDef> value_var = std::move(value);
+                std::variant<std::string, dcn::server::RouteArgDef> value_var = std::move(value);
                 _query_segments.try_emplace(std::move(key), std::move(value_var));
             }
         }

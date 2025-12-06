@@ -1,6 +1,6 @@
 #include "route.hpp"
 
-namespace dcn
+namespace dcn::server
 {
     std::tuple<bool, std::vector<RouteArg>, QueryArgsList> Router::doesRouteMatch(
             const RouteKey & route,

@@ -43,7 +43,7 @@ namespace dcn
         co_return verification_res.value();
     }
 
-    asio::awaitable<http::Response> GET_nonce(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, AuthManager & auth_manager)
+    asio::awaitable<http::Response> GET_nonce(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, AuthManager & auth_manager)
     {
         http::Response response;
         response.setVersion("HTTP/1.1")
@@ -101,7 +101,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> OPTIONS_auth(const http::Request & request, std::vector<RouteArg>, QueryArgsList)
+    asio::awaitable<http::Response> OPTIONS_auth(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");
@@ -118,7 +118,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> POST_auth(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, AuthManager & auth_manager)
+    asio::awaitable<http::Response> POST_auth(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, AuthManager & auth_manager)
     {
         http::Response response;
         response.setVersion("HTTP/1.1")
@@ -257,7 +257,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> OPTIONS_refresh(const http::Request & request, std::vector<RouteArg>, QueryArgsList)
+    asio::awaitable<http::Response> OPTIONS_refresh(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");
@@ -274,7 +274,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> POST_refresh(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, AuthManager & auth_manager)
+    asio::awaitable<http::Response> POST_refresh(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, AuthManager & auth_manager)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");

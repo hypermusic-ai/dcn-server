@@ -14,7 +14,7 @@ using namespace asio::experimental::awaitable_operators;
 #include "http.hpp"
 #include "route.hpp"
 
-namespace dcn
+namespace dcn::server
 {
     /**
      * @brief Type representing a route handler function.

@@ -18,7 +18,7 @@ using namespace std::placeholders;
 #include "route_arg.hpp"
 #include "route_key.hpp"
 
-namespace dcn
+namespace dcn::server
 {
     using QueryArgsList = absl::flat_hash_map<std::string, RouteArg>;
 

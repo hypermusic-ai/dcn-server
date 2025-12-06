@@ -18,7 +18,7 @@ namespace dcn
         response.setHeader(http::Header::AccessControlAllowCredentials, "true");
     }
 
-    asio::awaitable<http::Response> GET_version(const http::Request & request, std::vector<RouteArg>, QueryArgsList, const std::string & build_timestamp)
+    asio::awaitable<http::Response> GET_version(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList, const std::string & build_timestamp)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");

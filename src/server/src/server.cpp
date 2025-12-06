@@ -1,6 +1,6 @@
 #include "server.hpp"
 
-namespace dcn
+namespace dcn::server
 {
     Server::Server(asio::io_context & io_context, asio::ip::tcp::endpoint endpoint)
     :   _io_context(io_context),
