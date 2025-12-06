@@ -30,7 +30,7 @@ function(add_module)
     )
 
     target_link_libraries("${add_module_NAME}" 
-        PUBLIC 
+        PRIVATE 
             ${add_module_DEPENDENCIES}
     )
 

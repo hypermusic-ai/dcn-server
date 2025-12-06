@@ -9,9 +9,12 @@ add_module(NAME "Loader"
     "${PROJECT_PREFIX}::EVM"
     "${PROJECT_PREFIX}::Parser"
     "${PROJECT_PREFIX}::File"
-
+    "${PROJECT_PREFIX}::Registry"
+    "${PROJECT_PREFIX}::Crypto"
 
     spdlog::spdlog
     asio
-    evmc::evmc
+    evmc
+    evmone
+    nlohmann_json
 )

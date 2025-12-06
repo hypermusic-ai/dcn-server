@@ -67,7 +67,7 @@ namespace dcn
             co_return response;
         }
 
-        std::optional<evmc::address> address_res = evmc::from_hex<evmc::address>(address_arg.value());
+        std::optional<evm::Address> address_res = evmc::from_hex<evm::Address>(address_arg.value());
         if(!address_res)
         {
             response.setCode(http::Code::BadRequest);

@@ -29,7 +29,7 @@
 
 #include "evm_formatter.hpp"
 
-namespace dcn
+namespace dcn::evm
 {
     const std::uint64_t DEFAULT_GAS_LIMIT = 100'000'000;
 

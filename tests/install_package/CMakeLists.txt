@@ -24,7 +24,7 @@ target_link_libraries("${PROJECT_NAME}"
         GTest::gtest_main
         spdlog::spdlog
         asio
-        evmc::evmc
+        evmc
         evmone
         protobuf::libprotobuf
         DecentralisedArtServer

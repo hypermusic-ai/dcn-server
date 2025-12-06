@@ -1,6 +1,6 @@
 #include "evm.hpp"
 
-namespace dcn
+namespace dcn::evm
 {
     std::vector<std::uint8_t> constructSelector(std::string signature)
     {
@@ -10,7 +10,7 @@ namespace dcn
     }
 
     template<>
-    std::vector<std::uint8_t> encodeAsArg<evmc::address>(const evmc::address & address)
+    std::vector<std::uint8_t> encodeAsArg<Address>(const Address & address)
     {
         std::vector<std::uint8_t> encoded(32, 0); // Initialize with 32 zero bytes
         std::copy(address.bytes, address.bytes + 20, encoded.begin() + 12); // Right-align in last 20 bytes
@@ -256,12 +256,12 @@ namespace dcn
     }
 
     template<>
-    evmc::address decodeReturnedValue(const std::vector<std::uint8_t> & bytes)
+    Address decodeReturnedValue(const std::vector<std::uint8_t> & bytes)
     {
         if (bytes.size() < 32)
             throw std::runtime_error("Invalid ABI data: less than 32 bytes");
 
-        evmc::address result;
+        Address result;
         // Copy last 20 bytes from the 32-byte word (ABI stores address in the last 20 bytes)
         std::copy(bytes.begin() + 12, bytes.begin() + 32, result.bytes);
         return result;
@@ -320,7 +320,7 @@ namespace dcn
         return result;
     }
 
-    asio::awaitable<std::expected<std::vector<std::uint8_t>, evmc_status_code>> fetchOwner(EVM & evm, const evmc::address & address)
+    asio::awaitable<std::expected<std::vector<std::uint8_t>, evmc_status_code>> fetchOwner(EVM & evm, const Address & address)
     {
         spdlog::debug(std::format("Fetching contract owner: {}", address));
         std::vector<uint8_t> input_data;
@@ -361,17 +361,17 @@ namespace dcn
         });
     }
     
-    evmc::address EVM::getRegistryAddress() const
+    Address EVM::getRegistryAddress() const
     {
         return _registry_address;
     }
 
-    evmc::address EVM::getRunnerAddress() const
+    Address EVM::getRunnerAddress() const
     {
         return _runner_address;
     }
 
-    asio::awaitable<bool> EVM::addAccount(evmc::address address, std::uint64_t initial_gas) noexcept
+    asio::awaitable<bool> EVM::addAccount(Address address, std::uint64_t initial_gas) noexcept
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -393,7 +393,7 @@ namespace dcn
         co_return true;
     }
 
-    asio::awaitable<bool> EVM::setGas(evmc::address address, std::uint64_t gas) noexcept
+    asio::awaitable<bool> EVM::setGas(Address address, std::uint64_t gas) noexcept
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -455,9 +455,9 @@ namespace dcn
         co_return true;
     }
 
-    asio::awaitable<std::expected<evmc::address, DeployError>> EVM::deploy(
+    asio::awaitable<std::expected<Address, DeployError>> EVM::deploy(
                         std::istream & code_stream,
-                        evmc::address sender,
+                        Address sender,
                         std::vector<std::uint8_t> constructor_args, 
                         std::uint64_t gas_limit,
                         std::uint64_t value) noexcept
@@ -533,9 +533,9 @@ namespace dcn
         co_return result.create_address;
      }
 
-    asio::awaitable<std::expected<evmc::address, DeployError>> EVM::deploy(
+    asio::awaitable<std::expected<Address, DeployError>> EVM::deploy(
                         std::filesystem::path code_path,
-                        evmc::address sender,
+                        Address sender,
                         std::vector<uint8_t> constructor_args,
                         std::uint64_t gas_limit,
                         std::uint64_t value) noexcept
@@ -546,8 +546,8 @@ namespace dcn
     }
 
     asio::awaitable<std::expected<std::vector<std::uint8_t>, evmc_status_code>> EVM::execute(
-                    evmc::address sender,
-                    evmc::address recipient,
+                    Address sender,
+                    Address recipient,
                     std::vector<std::uint8_t> input_bytes,
                     std::uint64_t gas_limit,
                     std::uint64_t value) noexcept

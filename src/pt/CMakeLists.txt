@@ -8,12 +8,12 @@ add_module(NAME "PT"
         "${PROJECT_PREFIX}::Utils"
         "${PROJECT_PREFIX}::Parser"
         "${PROJECT_PREFIX}::Crypto"
-        "${PROJECT_PREFIX}::File"
-
+        
         absl::hash
         spdlog::spdlog
         asio
-        evmc::evmc
+        evmc
+        nlohmann_json
 )
 
 add_dependencies("PT" check_protoc_version pt_configure)

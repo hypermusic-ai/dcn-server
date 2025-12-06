@@ -3,12 +3,12 @@
 namespace dcn::parse
 {
     // Get Ethereum address from public key (last 20 bytes of Keccak256(pubkey))
-    static evmc::address _parseEthAddressFromPublicKey(const std::uint8_t* pubkey, std::size_t len) 
+    static evm::Address _parseEthAddressFromPublicKey(const std::uint8_t* pubkey, std::size_t len) 
     {
         uint8_t hash[Keccak256::HASH_LEN];
         // skip 0x04 prefix
         dcn::Keccak256::getHash(pubkey + 1, len - 1, hash);
-        evmc::address address;
+        evm::Address address;
         // last 20 bytes
         std::copy(hash + 12, hash + 32, address.bytes);
         return address; 
@@ -137,7 +137,7 @@ namespace dcn
 
     }
 
-    asio::awaitable<std::string> AuthManager::generateNonce(const evmc::address & address)
+    asio::awaitable<std::string> AuthManager::generateNonce(const evm::Address & address)
     {
         std::string nonce =  std::to_string(_dist(_rng));
         
@@ -147,7 +147,7 @@ namespace dcn
         co_return nonce;
     }
 
-    asio::awaitable<bool> AuthManager::verifyNonce(const evmc::address & address, const std::string & nonce)
+    asio::awaitable<bool> AuthManager::verifyNonce(const evm::Address & address, const std::string & nonce)
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -166,7 +166,7 @@ namespace dcn
         co_return true;
     }
 
-    asio::awaitable<bool> AuthManager::verifySignature(const evmc::address & address, const std::string& sig_hex, const std::string& message)
+    asio::awaitable<bool> AuthManager::verifySignature(const evm::Address & address, const std::string& sig_hex, const std::string& message)
     {
         co_await utils::ensureOnStrand(_strand);
         
@@ -208,7 +208,7 @@ namespace dcn
         co_return address == parse::_parseEthAddressFromPublicKey(pubkey_serialized, pubkey_len);
     }
 
-    asio::awaitable<std::string> AuthManager::generateAccessToken(const evmc::address & address)
+    asio::awaitable<std::string> AuthManager::generateAccessToken(const evm::Address & address)
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -225,7 +225,7 @@ namespace dcn
         co_return token;
     }
 
-    asio::awaitable<std::expected<evmc::address, AuthError>> AuthManager::verifyAccessToken(std::string token) const
+    asio::awaitable<std::expected<evm::Address, AuthError>> AuthManager::verifyAccessToken(std::string token) const
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -242,7 +242,7 @@ namespace dcn
 
             verifier.verify(decoded);
 
-            auto address_result = evmc::from_hex<evmc::address>(decoded.get_subject());
+            auto address_result = evmc::from_hex<evm::Address>(decoded.get_subject());
             if(!address_result)
             {
                 co_return std::unexpected(AuthError{AuthError::Kind::INVALID_TOKEN});
@@ -268,7 +268,7 @@ namespace dcn
         }
     }
 
-    asio::awaitable<bool> AuthManager::compareAccessToken(const evmc::address & address, std::string token) const
+    asio::awaitable<bool> AuthManager::compareAccessToken(const evm::Address & address, std::string token) const
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -285,7 +285,7 @@ namespace dcn
         co_return true;
     }
 
-    asio::awaitable<std::string> AuthManager::generateRefreshToken(const evmc::address & address)
+    asio::awaitable<std::string> AuthManager::generateRefreshToken(const evm::Address & address)
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -302,7 +302,7 @@ namespace dcn
         co_return token;
     }
 
-    asio::awaitable<std::expected<evmc::address, AuthError>> AuthManager::verifyRefreshToken(std::string token) const
+    asio::awaitable<std::expected<evm::Address, AuthError>> AuthManager::verifyRefreshToken(std::string token) const
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -319,7 +319,7 @@ namespace dcn
 
             verifier.verify(decoded);
 
-            auto address_result = evmc::from_hex<evmc::address>(decoded.get_subject());
+            auto address_result = evmc::from_hex<evm::Address>(decoded.get_subject());
             if(!address_result)
             {
                 co_return std::unexpected(AuthError{AuthError::Kind::INVALID_TOKEN});

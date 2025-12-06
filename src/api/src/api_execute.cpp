@@ -19,7 +19,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_execute(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, const AuthManager & auth_manager, const Registry & registry, EVM & evm)
+    asio::awaitable<http::Response> GET_execute(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, const AuthManager & auth_manager, const Registry & registry, evm::EVM & evm)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");
@@ -116,7 +116,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // runner function selector
-        const auto selector = constructSelector("gen(string,uint32,(uint32,uint32)[])");
+        const auto selector = evm::constructSelector("gen(string,uint32,(uint32,uint32)[])");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // 1. Offset to start of string data
@@ -125,11 +125,11 @@ namespace dcn
         input_data.insert(input_data.end(), offset_to_string.begin(), offset_to_string.end());
 
         // 2. uint32 argument, properly encoded as a 32-byte word
-        std::vector<std::uint8_t> N_bytes = encodeAsArg(N);
+        std::vector<std::uint8_t> N_bytes = evm::encodeAsArg(N);
         input_data.insert(input_data.end(), N_bytes.begin(), N_bytes.end());
 
         // (String encoding)
-        std::vector<std::uint8_t> name_bytes = encodeAsArg(feature_name);
+        std::vector<std::uint8_t> name_bytes = evm::encodeAsArg(feature_name);
 
         // 3. Offset to vector<tuple>, will be right after string
         std::vector<uint8_t> offset_tuple_vec(32, 0);
@@ -144,13 +144,13 @@ namespace dcn
         input_data.insert(input_data.end(), name_bytes.begin(), name_bytes.end());
         
         // 5. Append vector<tuple<uint32_t, uint32_t>> bytes (dynamic)
-        std::vector<uint8_t> tuple_vec_bytes = encodeAsArg(running_instances);
+        std::vector<uint8_t> tuple_vec_bytes = evm::encodeAsArg(running_instances);
         input_data.insert(input_data.end(), tuple_vec_bytes.begin(), tuple_vec_bytes.end());
 
         // execute call to runner
-        co_await evm.setGas(address, DEFAULT_GAS_LIMIT);
-        co_await evm.setGas(evm.getRunnerAddress(), DEFAULT_GAS_LIMIT);
-        const auto exec_result = co_await evm.execute(address, evm.getRunnerAddress(), input_data, DEFAULT_GAS_LIMIT, 0);
+        co_await evm.setGas(address, evm::DEFAULT_GAS_LIMIT);
+        co_await evm.setGas(evm.getRunnerAddress(), evm::DEFAULT_GAS_LIMIT);
+        const auto exec_result = co_await evm.execute(address, evm.getRunnerAddress(), input_data, evm::DEFAULT_GAS_LIMIT, 0);
 
         // check execution status
         if(!exec_result)
@@ -168,7 +168,7 @@ namespace dcn
             co_return std::move(response);
         }
 
-        auto samples = decodeReturnedValue<std::vector<Samples>>(exec_result.value());
+        auto samples = evm::decodeReturnedValue<std::vector<Samples>>(exec_result.value());
 
         auto json_output = parse::parseToJson(samples, parse::use_json);
         if(!json_output)

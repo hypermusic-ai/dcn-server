@@ -39,8 +39,9 @@
 #include "evm_storage.hpp"
 #include "evm_formatter.hpp"
 
-namespace dcn
+namespace dcn::evm
 {
+    using Address = evmc::address;
 
     /**
      * error FeatureAlreadyRegistered(bytes32 name);
@@ -97,37 +98,37 @@ namespace dcn
         EVM(EVM&&) = delete;
         EVM& operator=(EVM&&) = delete;
 
-        asio::awaitable<bool> addAccount(evmc::address address, std::uint64_t initial_gas) noexcept;
-        asio::awaitable<bool> setGas(evmc::address address, std::uint64_t gas) noexcept;
+        asio::awaitable<bool> addAccount(Address address, std::uint64_t initial_gas) noexcept;
+        asio::awaitable<bool> setGas(Address address, std::uint64_t gas) noexcept;
 
         asio::awaitable<bool> compile(std::filesystem::path code_path,
                 std::filesystem::path out_dir,
                 std::filesystem::path base_path = {},
                 std::filesystem::path includes = {}) const noexcept;
 
-        asio::awaitable<std::expected<evmc::address, DeployError>> deploy(  
+        asio::awaitable<std::expected<Address, DeployError>> deploy(  
                     std::istream & code_stream, 
-                    evmc::address sender,
+                    Address sender,
                     std::vector<std::uint8_t> constructor_args,
                     std::uint64_t gas_limit,
                     std::uint64_t value) noexcept;
 
-        asio::awaitable<std::expected<evmc::address, DeployError>> deploy(
+        asio::awaitable<std::expected<Address, DeployError>> deploy(
                     std::filesystem::path code_path,    
-                    evmc::address sender,
+                    Address sender,
                     std::vector<uint8_t> constructor_args,
                     std::uint64_t gas_limit,
                     std::uint64_t value) noexcept;
 
         asio::awaitable<std::expected<std::vector<std::uint8_t>, evmc_status_code>> execute(
-                    evmc::address sender,
-                    evmc::address recipient, 
+                    Address sender,
+                    Address recipient, 
                     std::vector<std::uint8_t> input_bytes,
                     std::uint64_t gas_limit,
                     std::uint64_t value) noexcept;
 
-        evmc::address getRegistryAddress() const;
-        evmc::address getRunnerAddress() const;
+        Address getRegistryAddress() const;
+        Address getRunnerAddress() const;
 
     protected:
         asio::awaitable<bool> loadPT();
@@ -142,13 +143,13 @@ namespace dcn
 
         EVMStorage _storage;
         
-        evmc::address _genesis_address;
-        evmc::address _console_log_address;
+        Address _genesis_address;
+        Address _console_log_address;
 
-        evmc::address _registry_address;
-        evmc::address _runner_address;
+        Address _registry_address;
+        Address _runner_address;
     };
-    asio::awaitable<std::expected<std::vector<std::uint8_t>, evmc_status_code>> fetchOwner(EVM & evm, const evmc::address & address);
+    asio::awaitable<std::expected<std::vector<std::uint8_t>, evmc_status_code>> fetchOwner(EVM & evm, const Address & address);
 
     std::vector<std::uint8_t> constructSelector(std::string signature);
 
@@ -156,7 +157,7 @@ namespace dcn
     std::vector<std::uint8_t> encodeAsArg(const T & val);
 
     template<>
-    std::vector<std::uint8_t> encodeAsArg<evmc::address>(const evmc::address & address);
+    std::vector<std::uint8_t> encodeAsArg<Address>(const Address & address);
 
     template<>
     std::vector<std::uint8_t> encodeAsArg<std::uint32_t>(const std::uint32_t & value);
@@ -179,31 +180,31 @@ namespace dcn
     std::vector<std::vector<std::uint32_t>> decodeReturnedValue(const std::vector<std::uint8_t> & bytes);
 
     template<>
-    evmc::address decodeReturnedValue(const std::vector<std::uint8_t> & bytes);
+    Address decodeReturnedValue(const std::vector<std::uint8_t> & bytes);
 
     template<>
     std::vector<Samples> decodeReturnedValue(const std::vector<uint8_t> & bytes);
 }
 
 template <>
-struct std::formatter<dcn::DeployError::Kind> : std::formatter<std::string> {
-    auto format(const dcn::DeployError::Kind & err, format_context& ctx) const {
+struct std::formatter<dcn::evm::DeployError::Kind> : std::formatter<std::string> {
+    auto format(const dcn::evm::DeployError::Kind & err, format_context& ctx) const {
         switch(err)
         {
-            case dcn::DeployError::Kind::INVALID_BYTECODE : return formatter<string>::format("Invalid bytecode", ctx);
-            case dcn::DeployError::Kind::INVALID_ADDRESS : return formatter<string>::format("Invalid address", ctx);
-            case dcn::DeployError::Kind::INVALID_DATA : return formatter<string>::format("Invalid data", ctx);
-            case dcn::DeployError::Kind::COMPILATION_ERROR : return formatter<string>::format("Compilation error", ctx);
+            case dcn::evm::DeployError::Kind::INVALID_BYTECODE : return formatter<string>::format("Invalid bytecode", ctx);
+            case dcn::evm::DeployError::Kind::INVALID_ADDRESS : return formatter<string>::format("Invalid address", ctx);
+            case dcn::evm::DeployError::Kind::INVALID_DATA : return formatter<string>::format("Invalid data", ctx);
+            case dcn::evm::DeployError::Kind::COMPILATION_ERROR : return formatter<string>::format("Compilation error", ctx);
 
-            case dcn::DeployError::Kind::FEATURE_ALREADY_REGISTERED : return formatter<string>::format("Feature already registered", ctx);
-            case dcn::DeployError::Kind::FEATURE_MISSING : return formatter<string>::format("Feature missing", ctx);
+            case dcn::evm::DeployError::Kind::FEATURE_ALREADY_REGISTERED : return formatter<string>::format("Feature already registered", ctx);
+            case dcn::evm::DeployError::Kind::FEATURE_MISSING : return formatter<string>::format("Feature missing", ctx);
 
-            case dcn::DeployError::Kind::TRANSFORMATION_ALREADY_REGISTERED : return formatter<string>::format("Transformation already registered", ctx);
-            case dcn::DeployError::Kind::TRANSFORMATION_ARGUMENTS_MISMATCH : return formatter<string>::format("Transformation arguments mismatch", ctx);
-            case dcn::DeployError::Kind::TRANSFORMATION_MISSING : return formatter<string>::format("Transformation missing", ctx);
+            case dcn::evm::DeployError::Kind::TRANSFORMATION_ALREADY_REGISTERED : return formatter<string>::format("Transformation already registered", ctx);
+            case dcn::evm::DeployError::Kind::TRANSFORMATION_ARGUMENTS_MISMATCH : return formatter<string>::format("Transformation arguments mismatch", ctx);
+            case dcn::evm::DeployError::Kind::TRANSFORMATION_MISSING : return formatter<string>::format("Transformation missing", ctx);
             
-            case dcn::DeployError::Kind::RUN_INSTANCE_ALREADY_REGISTERED : return formatter<string>::format("Run instance already registered", ctx);
-            case dcn::DeployError::Kind::RUN_INSTANCE_MISSING : return formatter<string>::format("Run instance missing", ctx);
+            case dcn::evm::DeployError::Kind::RUN_INSTANCE_ALREADY_REGISTERED : return formatter<string>::format("Run instance already registered", ctx);
+            case dcn::evm::DeployError::Kind::RUN_INSTANCE_MISSING : return formatter<string>::format("Run instance missing", ctx);
 
             default:  return formatter<string>::format("Unknown", ctx);
         }

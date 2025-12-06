@@ -58,25 +58,25 @@ namespace dcn
         return loaded_data;
     }
 
-    asio::awaitable<std::expected<evmc::address, DeployError>> deployFeature(EVM & evm, Registry & registry, FeatureRecord feature_record)
+    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployFeature(evm::EVM & evm, Registry & registry, FeatureRecord feature_record)
     {
         if(feature_record.feature().name().empty())
         {
             spdlog::error("Feature name is empty");
-            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
         }
 
         if(co_await registry.checkIfSubFeaturesExist(feature_record.feature()) == false)
         {
             spdlog::error("Cannot find subfeatures for feature");
-            co_return std::unexpected(DeployError{DeployError::Kind::FEATURE_MISSING});
+            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::FEATURE_MISSING});
         }
 
-        const auto address_result = evmc::from_hex<evmc::address>(feature_record.owner());
+        const auto address_result = evmc::from_hex<evm::Address>(feature_record.owner());
         if(!address_result)
         {
             spdlog::error("Failed to parse address");
-            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_ADDRESS});
+            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_ADDRESS});
         }
         const auto & address = *address_result;
 
@@ -85,7 +85,7 @@ namespace dcn
         if(std::filesystem::exists(out_dir) == false)
         {
             spdlog::error("Directory {} does not exists", out_dir.string());
-            co_return std::unexpected(DeployError{});
+            co_return std::unexpected(evm::DeployError{});
         }
 
         // if binary file does not exist
@@ -99,7 +99,7 @@ namespace dcn
             if(!out_file.is_open())
             {
                 spdlog::error("Failed to create file");
-                co_return std::unexpected(DeployError{});
+                co_return std::unexpected(evm::DeployError{});
             }
 
             out_file << constructFeatureSolidityCode(feature_record.feature());
@@ -111,21 +111,21 @@ namespace dcn
                 spdlog::error("Failed to compile code");
                 // remove code file
                 std::filesystem::remove(code_path);
-                co_return std::unexpected(DeployError{DeployError::Kind::COMPILATION_ERROR});
+                co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::COMPILATION_ERROR});
             }
 
             // remove code file
             std::filesystem::remove(code_path);
         }
 
-        co_await evm.addAccount(address, DEFAULT_GAS_LIMIT);
-        co_await evm.setGas(address, DEFAULT_GAS_LIMIT);
+        co_await evm.addAccount(address, evm::DEFAULT_GAS_LIMIT);
+        co_await evm.setGas(address, evm::DEFAULT_GAS_LIMIT);
         
         auto deploy_res = co_await evm.deploy(
             out_dir / (feature_record.feature().name() + ".bin"), 
             address, 
-            encodeAsArg(evm.getRegistryAddress()),
-            DEFAULT_GAS_LIMIT, 
+            evm::encodeAsArg(evm.getRegistryAddress()),
+            evm::DEFAULT_GAS_LIMIT, 
             0);
 
         if(!deploy_res)
@@ -134,7 +134,7 @@ namespace dcn
 
             // deploy can fail in case when this name is already taken - then we don't want to remove binary file
             // if it fails for another reason - we want to remove binary file
-            if(deploy_res.error().kind != DeployError::Kind::FEATURE_ALREADY_REGISTERED)
+            if(deploy_res.error().kind != evm::DeployError::Kind::FEATURE_ALREADY_REGISTERED)
             {
                 // remove binary file
                 std::filesystem::remove(out_dir / (feature_record.feature().name() + ".bin"));
@@ -154,10 +154,10 @@ namespace dcn
             std::filesystem::remove(out_dir / (feature_record.feature().name() + ".bin"));
             std::filesystem::remove(out_dir / (feature_record.feature().name() + ".abi"));
 
-            co_return std::unexpected(DeployError{});
+            co_return std::unexpected(evm::DeployError{});
         }
 
-        const auto owner_address = decodeReturnedValue<evmc::address>(owner_result.value());
+        const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
 
         if(owner_address != address)
         {
@@ -167,7 +167,7 @@ namespace dcn
             std::filesystem::remove(out_dir / (feature_record.feature().name() + ".bin"));
             std::filesystem::remove(out_dir / (feature_record.feature().name() + ".abi"));
 
-            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
         }
 
         const std::string name = feature_record.feature().name();
@@ -179,26 +179,26 @@ namespace dcn
             std::filesystem::remove(out_dir / (feature_record.feature().name() + ".bin"));
             std::filesystem::remove(out_dir / (feature_record.feature().name() + ".abi"));
 
-            co_return std::unexpected(DeployError{});
+            co_return std::unexpected(evm::DeployError{});
         }
 
         spdlog::debug("feature '{}' added", name);
         co_return deploy_res.value();
     }
 
-    asio::awaitable<std::expected<evmc::address, DeployError>> deployTransformation(EVM & evm, Registry & registry, TransformationRecord transformation_record)
+    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployTransformation(evm::EVM & evm, Registry & registry, TransformationRecord transformation_record)
     {
         if(transformation_record.transformation().name().empty() || transformation_record.transformation().sol_src().empty())
         {
             spdlog::error("Transformation name or source is empty");
-            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
         }
 
-        const auto address_result = evmc::from_hex<evmc::address>(transformation_record.owner());
+        const auto address_result = evmc::from_hex<evm::Address>(transformation_record.owner());
         if(!address_result)
         {
             spdlog::error("Failed to parse address");
-            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_ADDRESS});
+            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_ADDRESS});
         }
         const auto & address = *address_result;
 
@@ -207,7 +207,7 @@ namespace dcn
         if(std::filesystem::exists(out_dir) == false)
         {
             spdlog::error("Directory {} does not exists", out_dir.string());
-            co_return std::unexpected(DeployError{});
+            co_return std::unexpected(evm::DeployError{});
         }
 
         // if binary file does not exist
@@ -221,7 +221,7 @@ namespace dcn
             if(!out_file.is_open())
             {
                 spdlog::error("Failed to create file");
-                co_return std::unexpected(DeployError{});
+                co_return std::unexpected(evm::DeployError{});
             }
 
             out_file << constructTransformationSolidityCode(transformation_record.transformation());
@@ -233,21 +233,21 @@ namespace dcn
                 spdlog::error("Failed to compile code");
                 // remove code file
                 std::filesystem::remove(code_path);
-                co_return std::unexpected(DeployError{DeployError::Kind::COMPILATION_ERROR});
+                co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::COMPILATION_ERROR});
             }
 
             // remove code file
             std::filesystem::remove(code_path);
         }
 
-        co_await evm.addAccount(address, DEFAULT_GAS_LIMIT);
-        co_await evm.setGas(address, DEFAULT_GAS_LIMIT);
+        co_await evm.addAccount(address, evm::DEFAULT_GAS_LIMIT);
+        co_await evm.setGas(address, evm::DEFAULT_GAS_LIMIT);
 
         auto deploy_res = co_await evm.deploy(  
             out_dir / (transformation_record.transformation().name() + ".bin"), 
             address, 
-            encodeAsArg(evm.getRegistryAddress()), 
-            DEFAULT_GAS_LIMIT, 
+            evm::encodeAsArg(evm.getRegistryAddress()), 
+            evm::DEFAULT_GAS_LIMIT, 
             0);
         
         if(!deploy_res)
@@ -256,7 +256,7 @@ namespace dcn
 
             // deploy can fail in case when this name is already taken - then we don't want to remove binary file
             // if it fails for another reason - we want to remove binary file
-            if(deploy_res.error().kind != DeployError::Kind::TRANSFORMATION_ALREADY_REGISTERED)
+            if(deploy_res.error().kind != evm::DeployError::Kind::TRANSFORMATION_ALREADY_REGISTERED)
             {
                 // remove binary file
                 std::filesystem::remove(out_dir / (transformation_record.transformation().name() + ".bin"));
@@ -276,9 +276,9 @@ namespace dcn
             std::filesystem::remove(out_dir / (transformation_record.transformation().name() + ".bin"));
             std::filesystem::remove(out_dir / (transformation_record.transformation().name() + ".abi"));
 
-            co_return std::unexpected(DeployError{});
+            co_return std::unexpected(evm::DeployError{});
         }
-        const auto owner_address = decodeReturnedValue<evmc::address>(owner_result.value());
+        const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
 
         if(owner_address != address)
         {
@@ -288,7 +288,7 @@ namespace dcn
             std::filesystem::remove(out_dir / (transformation_record.transformation().name() + ".bin"));
             std::filesystem::remove(out_dir / (transformation_record.transformation().name() + ".abi"));
 
-            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
         }
 
         const std::string name = transformation_record.transformation().name();
@@ -300,14 +300,14 @@ namespace dcn
             std::filesystem::remove(out_dir / (transformation_record.transformation().name() + ".bin"));
             std::filesystem::remove(out_dir / (transformation_record.transformation().name() + ".abi"));
 
-            co_return std::unexpected(DeployError{});
+            co_return std::unexpected(evm::DeployError{});
         }
 
         spdlog::debug("transformation '{}' added", name);
         co_return deploy_res.value();
     }
 
-    asio::awaitable<bool> loadStoredFeatures(EVM & evm, Registry & registry)
+    asio::awaitable<bool> loadStoredFeatures(evm::EVM & evm, Registry & registry)
     {
         spdlog::info("Loading stored features...");
 
@@ -342,7 +342,7 @@ namespace dcn
         co_return success;
     }
 
-    asio::awaitable<bool> loadStoredTransformations(EVM & evm, Registry & registry)
+    asio::awaitable<bool> loadStoredTransformations(evm::EVM & evm, Registry & registry)
     {
         spdlog::info("Loading stored transformations...");
 

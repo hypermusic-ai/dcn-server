@@ -40,7 +40,7 @@ namespace dcn
                 co_return response;
             }
 
-            const auto feature_address_result = evmc::from_hex<evmc::address>(feature_address_arg.value());
+            const auto feature_address_result = evmc::from_hex<evm::Address>(feature_address_arg.value());
 
             if (!feature_address_result) {
                 response.setCode(http::Code::BadRequest);
@@ -88,7 +88,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_feature(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, Registry & registry, EVM & evm)
+    asio::awaitable<http::Response> GET_feature(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, Registry & registry, evm::EVM & evm)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");
@@ -144,7 +144,7 @@ namespace dcn
                 co_return response;
             }
 
-            const auto feature_address_result = evmc::from_hex<evmc::address>(feature_address_arg.value());
+            const auto feature_address_result = evmc::from_hex<evm::Address>(feature_address_arg.value());
 
             if(!feature_address_result)
             {
@@ -196,7 +196,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // function selector
-        const auto selector = constructSelector("getFeature(string)");
+        const auto selector = evm::constructSelector("getFeature(string)");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // Step 2: Offset to string data (32 bytes with value 0x20)
@@ -216,8 +216,8 @@ namespace dcn
         size_t padding = (32 - (feature_name.size() % 32)) % 32;
         input_data.insert(input_data.end(), padding, 0);
         
-        co_await evm.setGas(evm.getRegistryAddress(), DEFAULT_GAS_LIMIT);
-        const auto exec_result = co_await evm.execute(evm.getRegistryAddress(), evm.getRegistryAddress(), input_data, DEFAULT_GAS_LIMIT, 0);
+        co_await evm.setGas(evm.getRegistryAddress(), evm::DEFAULT_GAS_LIMIT);
+        const auto exec_result = co_await evm.execute(evm.getRegistryAddress(), evm.getRegistryAddress(), input_data, evm::DEFAULT_GAS_LIMIT, 0);
 
         // check execution status
         if(!exec_result)
@@ -235,7 +235,7 @@ namespace dcn
             co_return std::move(response);
         }
 
-        const auto feature_address = decodeReturnedValue<evmc::address>(exec_result.value());
+        const auto feature_address = evm::decodeReturnedValue<evm::Address>(exec_result.value());
         const auto owner_result = co_await fetchOwner(evm, feature_address);
         if(!owner_result)
         {
@@ -252,7 +252,7 @@ namespace dcn
             co_return std::move(response);
         }
 
-        const auto owner_address = decodeReturnedValue<evmc::address>(owner_result.value());
+        const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
 
         (*json_res)["owner"] = evmc::hex(owner_address);
         (*json_res)["local_address"] = evmc::hex(feature_address);
@@ -264,7 +264,7 @@ namespace dcn
         co_return std::move(response);
     }
 
-    asio::awaitable<http::Response> POST_feature(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, AuthManager & auth_manager, Registry & registry, EVM & evm)
+    asio::awaitable<http::Response> POST_feature(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, AuthManager & auth_manager, Registry & registry, evm::EVM & evm)
     {
         http::Response response;
         response.setVersion("HTTP/1.1");

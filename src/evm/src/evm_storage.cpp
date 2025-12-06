@@ -1,6 +1,6 @@
 #include "evm_storage.hpp"
 
-namespace dcn
+namespace dcn::evm
 {
     EVMStorage::EVMStorage(evmc::VM & vm, evmc_revision rev)
         :   _vm(vm),

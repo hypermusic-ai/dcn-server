@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 
     dcn::AuthManager auth_manager(io_context);
 
-    dcn::EVM evm(io_context, EVMC_SHANGHAI, solc_path);
+    dcn::evm::EVM evm(io_context, EVMC_SHANGHAI, solc_path);
 
     dcn::Server server(io_context, {asio::ip::tcp::v4(), port});
 

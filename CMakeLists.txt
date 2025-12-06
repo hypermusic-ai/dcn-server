@@ -48,6 +48,7 @@ target_link_libraries("${PROJECT_NAME}Lib"
         secp256k1
         evmc
         evmone
+        nlohmann_json
 
         proto_gen
         
@@ -65,6 +66,7 @@ target_link_libraries("${PROJECT_NAME}Lib"
         "${PROJECT_PREFIX}::API"
         "${PROJECT_PREFIX}::EVM"
         "${PROJECT_PREFIX}::Loader"
+        "${PROJECT_PREFIX}::Registry"
 )
 
 target_sources("${PROJECT_NAME}Lib" PUBLIC

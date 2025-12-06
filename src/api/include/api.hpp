@@ -23,7 +23,7 @@ namespace dcn
 
     void setCORSHeaders(const http::Request & request, http::Response& response);
 
-    asio::awaitable<std::expected<evmc::address, AuthError>> authenticate(const http::Request & request, const AuthManager & auth_manager);
+    asio::awaitable<std::expected<evm::Address, AuthError>> authenticate(const http::Request & request, const AuthManager & auth_manager);
 
     asio::awaitable<http::Response> GET_version(const http::Request &, std::vector<RouteArg>, QueryArgsList, const std::string & build_timestamp);
 
@@ -169,7 +169,7 @@ namespace dcn
      * 
      * - /features/<feature_name>/<feature_id>
      */
-    asio::awaitable<http::Response> GET_feature(const http::Request &, std::vector<RouteArg>, QueryArgsList, Registry & registry, EVM & evm);
+    asio::awaitable<http::Response> GET_feature(const http::Request &, std::vector<RouteArg>, QueryArgsList, Registry & registry, evm::EVM & evm);
 
     /**
      * @brief Handle a POST request to /features
@@ -189,7 +189,7 @@ namespace dcn
      *
      * Where `<name>` is the name of the feature and `<version>` is the hash of the feature.
      */
-    asio::awaitable<http::Response> POST_feature(const http::Request &, std::vector<RouteArg>, QueryArgsList, AuthManager & auth_manager, Registry & registry, EVM & evm);
+    asio::awaitable<http::Response> POST_feature(const http::Request &, std::vector<RouteArg>, QueryArgsList, AuthManager & auth_manager, Registry & registry, evm::EVM & evm);
 
 
     /**
@@ -221,7 +221,7 @@ namespace dcn
      * @param registry Registry instance for retrieving transformations
      * @return An HTTP response with the transformation data as JSON, or an error response if invalid input or not found
      */
-    asio::awaitable<http::Response> GET_transformation(const http::Request &, std::vector<RouteArg> args, QueryArgsList, Registry & registry, EVM & evm);
+    asio::awaitable<http::Response> GET_transformation(const http::Request &, std::vector<RouteArg> args, QueryArgsList, Registry & registry, evm::EVM & evm);
 
     /**
      * Handles POST requests for the transformation endpoint.
@@ -234,7 +234,7 @@ namespace dcn
      * @param registry Registry instance for adding transformations
      * @return An HTTP response with the added transformation data as JSON, or an error response if invalid input or authentication failure
      */
-    asio::awaitable<http::Response> POST_transformation(const http::Request &, std::vector<RouteArg> args, QueryArgsList, AuthManager & auth_manager, Registry & registry, EVM & evm);
+    asio::awaitable<http::Response> POST_transformation(const http::Request &, std::vector<RouteArg> args, QueryArgsList, AuthManager & auth_manager, Registry & registry, evm::EVM & evm);
 
 
     //asio::awaitable<http::Response> GET_condition(const http::Request &, std::vector<RouteArg>);
@@ -242,5 +242,5 @@ namespace dcn
     //asio::awaitable<http::Response> POST_condition(const http::Request &);
 
     asio::awaitable<http::Response> OPTIONS_execute(const http::Request &, std::vector<RouteArg>, QueryArgsList);
-    asio::awaitable<http::Response> GET_execute(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, const AuthManager & auth_manager, const Registry & registry, EVM & evm);
+    asio::awaitable<http::Response> GET_execute(const http::Request & request, std::vector<RouteArg> args, QueryArgsList, const AuthManager & auth_manager, const Registry & registry, evm::EVM & evm);
 }

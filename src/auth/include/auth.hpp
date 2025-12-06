@@ -17,19 +17,11 @@ using namespace asio::experimental::awaitable_operators;
 #include <secp256k1_recovery.h>
 #include <jwt-cpp/jwt.h>
 
-// Undefine the conflicting macro
-#ifdef interface
-    #undef interface
-#endif
-#include <evmc/evmc.hpp>
-#ifndef interface
-    #define interface __STRUCT__
-#endif
-
 #include "utils.hpp"
 #include "keccak256.hpp"
 #include "http.hpp"
 #include "parse_error.hpp"
+#include "evm.hpp"
 
 namespace dcn::parse
 {
@@ -116,21 +108,21 @@ namespace dcn
             
             ~AuthManager() = default;
 
-            asio::awaitable<std::string> generateNonce(const evmc::address & address);
+            asio::awaitable<std::string> generateNonce(const evm::Address & address);
 
-            asio::awaitable<bool> verifyNonce(const evmc::address & address, const std::string & nonce);
+            asio::awaitable<bool> verifyNonce(const evm::Address & address, const std::string & nonce);
 
-            asio::awaitable<bool> verifySignature(const evmc::address & address, const std::string& signature, const std::string& message);
+            asio::awaitable<bool> verifySignature(const evm::Address & address, const std::string& signature, const std::string& message);
 
-            asio::awaitable<std::string> generateAccessToken(const evmc::address & address);
+            asio::awaitable<std::string> generateAccessToken(const evm::Address & address);
 
-            asio::awaitable<std::expected<evmc::address, AuthError>> verifyAccessToken(std::string token) const;
+            asio::awaitable<std::expected<evm::Address, AuthError>> verifyAccessToken(std::string token) const;
 
-            asio::awaitable<bool> compareAccessToken(const evmc::address & address, std::string token) const;
+            asio::awaitable<bool> compareAccessToken(const evm::Address & address, std::string token) const;
 
-            asio::awaitable<std::string> generateRefreshToken(const evmc::address & address);
+            asio::awaitable<std::string> generateRefreshToken(const evm::Address & address);
 
-            asio::awaitable<std::expected<evmc::address, AuthError>> verifyRefreshToken(std::string token) const;
+            asio::awaitable<std::expected<evm::Address, AuthError>> verifyRefreshToken(std::string token) const;
 
         private:
             asio::strand<asio::io_context::executor_type> _strand;
@@ -139,10 +131,10 @@ namespace dcn
 
             std::mt19937 _rng;
             std::uniform_int_distribution<int> _dist;
-            absl::flat_hash_map<evmc::address, std::string> _nonces;
+            absl::flat_hash_map<evm::Address, std::string> _nonces;
 
-            absl::flat_hash_map<evmc::address, std::string> _refresh_tokens;
-            absl::flat_hash_map<evmc::address, std::string> _access_tokens;
+            absl::flat_hash_map<evm::Address, std::string> _refresh_tokens;
+            absl::flat_hash_map<evm::Address, std::string> _access_tokens;
     };
 }
 

@@ -2,7 +2,7 @@
 
 namespace dcn
 {
-    asio::awaitable<std::expected<evmc::address, AuthError>> authenticate(const http::Request & request, const AuthManager & auth_manager)
+    asio::awaitable<std::expected<evm::Address, AuthError>> authenticate(const http::Request & request, const AuthManager & auth_manager)
     {
         parse::Result<std::string> token_res;
 
@@ -78,7 +78,7 @@ namespace dcn
             co_return response;
         }
 
-        std::optional<evmc::address> address_res = evmc::from_hex<evmc::address>(address_arg.value());
+        std::optional<evm::Address> address_res = evmc::from_hex<evm::Address>(address_arg.value());
         if(!address_res)
         {
             response.setCode(http::Code::BadRequest);
@@ -198,7 +198,7 @@ namespace dcn
             co_return response;
         }
 
-        auto address_res = evmc::from_hex<evmc::address>(address_str);
+        auto address_res = evmc::from_hex<evm::Address>(address_str);
         if(!address_res)
         {
             response.setCode(http::Code::BadRequest);
@@ -211,7 +211,7 @@ namespace dcn
 
             co_return response;
         }
-        const evmc::address & address = address_res.value();
+        const evm::Address & address = address_res.value();
 
         if(co_await auth_manager.verifyNonce(address, *request_nonce) == false)
         {
@@ -368,7 +368,7 @@ namespace dcn
         }
         const std::string & access_token = access_token_res.value();
 
-        const evmc::address & address = refresh_verification_res.value();
+        const evm::Address & address = refresh_verification_res.value();
 
         if(co_await auth_manager.compareAccessToken(address, access_token) == false)
         {

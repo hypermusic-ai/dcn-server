@@ -6,6 +6,6 @@ add_module(NAME "Crypto"
         asio
         absl::hash
         secp256k1
-        jwt-cpp::jwt-cpp
+        jwt-cpp
 )
 
