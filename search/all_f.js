@@ -15,5 +15,6 @@ var searchData=
   ['options_5frefresh_12',['OPTIONS_refresh',['../namespacedcn.html#a18091a75ab819075ebc601cc0b1d12e5',1,'dcn']]],
   ['options_5fservefile_13',['OPTIONS_ServeFile',['../namespacedcn.html#a169de1d6bbe37ad5491bdd0fdc4b6cc9',1,'dcn']]],
   ['options_5ftransformation_14',['OPTIONS_transformation',['../namespacedcn.html#a0cd0a51dfd6dd01d6a2b45f91e537a7c',1,'dcn']]],
-  ['origin_15',['Origin',['../namespacedcn_1_1http.html#aad74d4f2478c6cc863561ebcf03699a9a3edf8ca26a1ec14dd6e91dd277ae1de6',1,'dcn::http']]]
+  ['origin_15',['Origin',['../namespacedcn_1_1http.html#aad74d4f2478c6cc863561ebcf03699a9a3edf8ca26a1ec14dd6e91dd277ae1de6',1,'dcn::http']]],
+  ['out_5fof_5frange_16',['OUT_OF_RANGE',['../structdcn_1_1parse_1_1Error.html#ae823d88aaac796217f02f199c52d3a9aa6feaf66704b269610cff9431d5519cad',1,'dcn::parse::Error']]]
 ];

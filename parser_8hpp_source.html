@@ -106,29 +106,32 @@ $(document).ready(function(){initNavTree('parser_8hpp_source.html',''); initResi
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;google/protobuf/util/json_util.h&gt;</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedcn_1_1parse.html">dcn::parse</a></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span>{   </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno"><a class="line" href="structdcn_1_1parse_1_1use__protobuf__t.html">   10</a></span>    <span class="keyword">struct </span><a class="code hl_struct" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>{};</div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno"><a class="line" href="structdcn_1_1parse_1_1use__json__t.html">   12</a></span>    <span class="keyword">struct </span><a class="code hl_struct" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>{};</div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> <a class="code hl_struct" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a> use_protobuf{};</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> use_json_t use_json{};</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="namespacedcn_1_1parse.html#ae067a4a280db9abf4fb44dd5ccf751e9">   30</a></span>    std::optional&lt;T&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#ae067a4a280db9abf4fb44dd5ccf751e9">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> <a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a>, <a class="code hl_struct" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>);</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="namespacedcn_1_1parse.html#a073739139e61bf31adec6259f25a3b13">   33</a></span>    std::optional&lt;T&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#ae067a4a280db9abf4fb44dd5ccf751e9">parseFromJson</a>(std::string <a class="code hl_enumvalue" href="namespacedcn.html#a48f2ecb6c65ec7f533dea1d2354b844bad57c24f3fe52d16e7169b912dd647f0d">json_str</a>, <a class="code hl_struct" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>);</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>}</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;<a class="code" href="parse__error_8hpp.html">parse_error.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedcn_1_1parse.html">dcn::parse</a></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span>{   </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="structdcn_1_1parse_1_1use__protobuf__t.html">   17</a></span>    <span class="keyword">struct </span><a class="code hl_struct" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>{};</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="structdcn_1_1parse_1_1use__json__t.html">   24</a></span>    <span class="keyword">struct </span><a class="code hl_struct" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>{};</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> <a class="code hl_struct" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a> use_protobuf{};</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> use_json_t use_json{};</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="namespacedcn_1_1parse.html#ae067a4a280db9abf4fb44dd5ccf751e9">   42</a></span>    std::optional&lt;T&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#ae067a4a280db9abf4fb44dd5ccf751e9">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> <a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a>, <a class="code hl_struct" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>);</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="namespacedcn_1_1parse.html#a073739139e61bf31adec6259f25a3b13">   45</a></span>    std::optional&lt;T&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#ae067a4a280db9abf4fb44dd5ccf751e9">parseFromJson</a>(std::string <a class="code hl_enumvalue" href="namespacedcn.html#a48f2ecb6c65ec7f533dea1d2354b844bad57c24f3fe52d16e7169b912dd647f0d">json_str</a>, <a class="code hl_struct" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>);</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>}</div>
 <div class="ttc" id="anamespacedcn_1_1parse_html"><div class="ttname"><a href="namespacedcn_1_1parse.html">dcn::parse</a></div><div class="ttdef"><b>Definition</b> auth.hpp:35</div></div>
 <div class="ttc" id="anamespacedcn_1_1parse_html_ae067a4a280db9abf4fb44dd5ccf751e9"><div class="ttname"><a href="namespacedcn_1_1parse.html#ae067a4a280db9abf4fb44dd5ccf751e9">dcn::parse::parseFromJson</a></div><div class="ttdeci">std::optional&lt; T &gt; parseFromJson(json json, use_json_t)</div><div class="ttdoc">Parses a JSON object to a Transformation object.</div></div>
 <div class="ttc" id="anamespacedcn_html_a48f2ecb6c65ec7f533dea1d2354b844bad57c24f3fe52d16e7169b912dd647f0d"><div class="ttname"><a href="namespacedcn.html#a48f2ecb6c65ec7f533dea1d2354b844bad57c24f3fe52d16e7169b912dd647f0d">dcn::RouteArgRequirement::optional</a></div><div class="ttdeci">@ optional</div></div>
+<div class="ttc" id="aparse__error_8hpp_html"><div class="ttname"><a href="parse__error_8hpp.html">parse_error.hpp</a></div></div>
 <div class="ttc" id="aparser_8hpp_html_ab701e3ac61a85b337ec5c1abaad6742d"><div class="ttname"><a href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a></div><div class="ttdeci">nlohmann::json json</div><div class="ttdef"><b>Definition</b> parser.hpp:4</div></div>
-<div class="ttc" id="astructdcn_1_1parse_1_1use__json__t_html"><div class="ttname"><a href="structdcn_1_1parse_1_1use__json__t.html">dcn::parse::use_json_t</a></div><div class="ttdef"><b>Definition</b> parser.hpp:12</div></div>
-<div class="ttc" id="astructdcn_1_1parse_1_1use__protobuf__t_html"><div class="ttname"><a href="structdcn_1_1parse_1_1use__protobuf__t.html">dcn::parse::use_protobuf_t</a></div><div class="ttdef"><b>Definition</b> parser.hpp:10</div></div>
+<div class="ttc" id="astructdcn_1_1parse_1_1use__json__t_html"><div class="ttname"><a href="structdcn_1_1parse_1_1use__json__t.html">dcn::parse::use_json_t</a></div><div class="ttdoc">A tag type to indicate whether to use Protobuf or JSON for parsing.</div><div class="ttdef"><b>Definition</b> parser.hpp:24</div></div>
+<div class="ttc" id="astructdcn_1_1parse_1_1use__protobuf__t_html"><div class="ttname"><a href="structdcn_1_1parse_1_1use__protobuf__t.html">dcn::parse::use_protobuf_t</a></div><div class="ttdoc">A tag type to indicate whether to use Protobuf or JSON for parsing.</div><div class="ttdef"><b>Definition</b> parser.hpp:17</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

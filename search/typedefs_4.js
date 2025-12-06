@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['userid_0',['UserID',['../namespacedcn.html#ae3767673641ef901bff3ac0abdd31224',1,'dcn']]]
+  ['sessionid_0',['SessionID',['../namespacedcn.html#a1ec4f1fe3877205c6aa2dd06002ef5bd',1,'dcn']]]
 ];

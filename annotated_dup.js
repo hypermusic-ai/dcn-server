@@ -12,6 +12,7 @@ var annotated_dup =
         [ "URL", "classdcn_1_1http_1_1URL.html", "classdcn_1_1http_1_1URL" ]
       ] ],
       [ "parse", "namespacedcn_1_1parse.html", [
+        [ "Error", "structdcn_1_1parse_1_1Error.html", "structdcn_1_1parse_1_1Error" ],
         [ "use_json_t", "structdcn_1_1parse_1_1use__json__t.html", null ],
         [ "use_protobuf_t", "structdcn_1_1parse_1_1use__protobuf__t.html", null ]
       ] ],

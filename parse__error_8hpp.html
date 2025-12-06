@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Decentralised Art Server: dcn::parse::use_json_t Struct Reference</title>
+<title>Decentralised Art Server: src/parser/include/parse_error.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -70,7 +70,7 @@ var searchBox = new SearchBox("searchBox", "search/",'.html');
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(document).ready(function(){initNavTree('structdcn_1_1parse_1_1use__json__t.html',''); initResizable(); });
+$(document).ready(function(){initNavTree('parse__error_8hpp.html',''); initResizable(); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -96,26 +96,43 @@ $(document).ready(function(){initNavTree('structdcn_1_1parse_1_1use__json__t.htm
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">dcn::parse::use_json_t Struct Reference</div></div>
+  <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#namespaces">Namespaces</a> &#124;
+<a href="#typedef-members">Typedefs</a>  </div>
+  <div class="headertitle"><div class="title">parse_error.hpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p>A tag type to indicate whether to use Protobuf or JSON for parsing.  
- <a href="structdcn_1_1parse_1_1use__json__t.html#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="parser_8hpp_source.html">parser.hpp</a>&gt;</code></p>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A tag type to indicate whether to use Protobuf or JSON for parsing. </p>
-<p>This tag type is used to distinguish between Protobuf and JSON parsing. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
-<li>src/parser/include/<a class="el" href="parser_8hpp_source.html">parser.hpp</a></li>
-</ul>
+<div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
+<code>#include &lt;expected&gt;</code><br />
+</div>
+<p><a href="parse__error_8hpp_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1parse_1_1Error.html">dcn::parse::Error</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
+Namespaces</h2></td></tr>
+<tr class="memitem:namespacedcn" id="r_namespacedcn"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html">dcn</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespacedcn_1_1parse" id="r_namespacedcn_1_1parse"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html">dcn::parse</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:a6b896f33a2be7aef4a99608b5462ec94" id="r_a6b896f33a2be7aef4a99608b5462ec94"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespacedcn.html#a48f2ecb6c65ec7f533dea1d2354b844bad57c24f3fe52d16e7169b912dd647f0d">class</a> <a class="el" href="namespacedcn.html#a48f2ecb6c65ec7f533dea1d2354b844bad57c24f3fe52d16e7169b912dd647f0d">T</a> &gt; </td></tr>
+<tr class="memitem:a6b896f33a2be7aef4a99608b5462ec94"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn.html#a48f2ecb6c65ec7f533dea1d2354b844bad57c24f3fe52d16e7169b912dd647f0d">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a6b896f33a2be7aef4a99608b5462ec94">dcn::parse::Result</a> = std::expected&lt; <a class="el" href="namespacedcn.html#a48f2ecb6c65ec7f533dea1d2354b844bad57c24f3fe52d16e7169b912dd647f0d">T</a>, <a class="el" href="structdcn_1_1parse_1_1Error.html">Error</a> &gt;</td></tr>
+<tr class="separator:a6b896f33a2be7aef4a99608b5462ec94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="namespacedcn.html">dcn</a></li><li class="navelem"><a class="el" href="namespacedcn_1_1parse.html">parse</a></li><li class="navelem"><a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a></li>
+    <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_6cd8491d143eb218b70983dbdb3c58bc.html">parser</a></li><li class="navelem"><a class="el" href="dir_11cf11b467f1f53d6eb02ef30c7d14c5.html">include</a></li><li class="navelem"><a class="el" href="parse__error_8hpp.html">parse_error.hpp</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
   </ul>
 </div>
