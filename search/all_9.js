@@ -10,7 +10,7 @@ var searchData=
   ['invalid_5fnonce_7',['INVALID_NONCE',['../structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57caef6afe9f2bc1c5896a3562d5d9656fd4',1,'dcn::auth::AuthError']]],
   ['invalid_5fsignature_8',['INVALID_SIGNATURE',['../structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57cad0eb6b378baae0b4b64c2933674e61fc',1,'dcn::auth::AuthError']]],
   ['invalid_5ftoken_9',['INVALID_TOKEN',['../structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57ca506556a229186f5b45f364032625ff5b',1,'dcn::auth::AuthError']]],
-  ['invalid_5fvalue_10',['INVALID_VALUE',['../structdcn_1_1parse_1_1Error.html#a94e5d27d2c14f25f3636ce09d771ceacad8f24f388e990b9ccf8905b7993b99ae',1,'dcn::parse::Error']]],
+  ['invalid_5fvalue_10',['INVALID_VALUE',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bead8f24f388e990b9ccf8905b7993b99ae',1,'dcn::parse::ParseError']]],
   ['isconditionbucketempty_11',['isConditionBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#afed9f3429f9bda5075ba07fee43698ce',1,'dcn::registry::Registry']]],
   ['isfeaturebucketempty_12',['isFeatureBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#a2bf10417ade06367c790fb82887970af',1,'dcn::registry::Registry']]],
   ['istransformationbucketempty_13',['isTransformationBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#a8af408cd164c32ff17497fc99b901f2c',1,'dcn::registry::Registry']]]

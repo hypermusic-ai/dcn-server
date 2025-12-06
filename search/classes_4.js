@@ -9,7 +9,7 @@ var searchData=
   ['formatter_3c_20dcn_3a_3ahttp_3a_3arequest_20_3e_6',['formatter&lt; dcn::http::Request &gt;',['../structstd_1_1formatter_3_01dcn_1_1http_1_1Request_01_4.html',1,'std']]],
   ['formatter_3c_20dcn_3a_3ahttp_3a_3aresponse_20_3e_7',['formatter&lt; dcn::http::Response &gt;',['../structstd_1_1formatter_3_01dcn_1_1http_1_1Response_01_4.html',1,'std']]],
   ['formatter_3c_20dcn_3a_3ahttp_3a_3aurl_20_3e_8',['formatter&lt; dcn::http::URL &gt;',['../structstd_1_1formatter_3_01dcn_1_1http_1_1URL_01_4.html',1,'std']]],
-  ['formatter_3c_20dcn_3a_3aparse_3a_3aerror_3a_3akind_20_3e_9',['formatter&lt; dcn::parse::Error::Kind &gt;',['../structstd_1_1formatter_3_01dcn_1_1parse_1_1Error_1_1Kind_01_4.html',1,'std']]],
+  ['formatter_3c_20dcn_3a_3aparse_3a_3aparseerror_3a_3akind_20_3e_9',['formatter&lt; dcn::parse::ParseError::Kind &gt;',['../structstd_1_1formatter_3_01dcn_1_1parse_1_1ParseError_1_1Kind_01_4.html',1,'std']]],
   ['formatter_3c_20dcn_3a_3aserver_3a_3aroutearg_20_3e_10',['formatter&lt; dcn::server::RouteArg &gt;',['../structstd_1_1formatter_3_01dcn_1_1server_1_1RouteArg_01_4.html',1,'std']]],
   ['formatter_3c_20dcn_3a_3aserver_3a_3arouteargrequirement_20_3e_11',['formatter&lt; dcn::server::RouteArgRequirement &gt;',['../structstd_1_1formatter_3_01dcn_1_1server_1_1RouteArgRequirement_01_4.html',1,'std']]],
   ['formatter_3c_20dcn_3a_3aserver_3a_3arouteargtype_20_3e_12',['formatter&lt; dcn::server::RouteArgType &gt;',['../structstd_1_1formatter_3_01dcn_1_1server_1_1RouteArgType_01_4.html',1,'std']]],

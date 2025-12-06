@@ -1,12 +1,12 @@
 var namespacedcn_1_1parse =
 [
-    [ "Error", "structdcn_1_1parse_1_1Error.html", "structdcn_1_1parse_1_1Error" ],
+    [ "ParseError", "structdcn_1_1parse_1_1ParseError.html", "structdcn_1_1parse_1_1ParseError" ],
     [ "use_json_t", "structdcn_1_1parse_1_1use__json__t.html", null ],
     [ "use_protobuf_t", "structdcn_1_1parse_1_1use__protobuf__t.html", null ],
     [ "HasValueTypeAndIterator", "conceptdcn_1_1parse_1_1HasValueTypeAndIterator.html", null ],
     [ "IsSequenceContainer", "conceptdcn_1_1parse_1_1IsSequenceContainer.html", null ],
     [ "IsTupleLike", "conceptdcn_1_1parse_1_1IsTupleLike.html", null ],
-    [ "Result", "namespacedcn_1_1parse.html#a6b896f33a2be7aef4a99608b5462ec94", null ],
+    [ "Result", "namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602", null ],
     [ "parseAccessTokenFrom", "namespacedcn_1_1parse.html#a98854c4c7ac51245450cd55a9c039f19", null ],
     [ "parseAccessTokenFrom< http::Header::Authorization >", "namespacedcn_1_1parse.html#a10dd63753e96df5424fe6d2b02c5be35", null ],
     [ "parseAccessTokenFrom< http::Header::Authorization >", "namespacedcn_1_1parse.html#a10dd63753e96df5424fe6d2b02c5be35", null ],

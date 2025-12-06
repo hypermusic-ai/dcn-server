@@ -24,7 +24,7 @@ var annotated_dup =
         [ "URL", "classdcn_1_1http_1_1URL.html", "classdcn_1_1http_1_1URL" ]
       ] ],
       [ "parse", "namespacedcn_1_1parse.html", [
-        [ "Error", "structdcn_1_1parse_1_1Error.html", "structdcn_1_1parse_1_1Error" ],
+        [ "ParseError", "structdcn_1_1parse_1_1ParseError.html", "structdcn_1_1parse_1_1ParseError" ],
         [ "use_json_t", "structdcn_1_1parse_1_1use__json__t.html", null ],
         [ "use_protobuf_t", "structdcn_1_1parse_1_1use__protobuf__t.html", null ]
       ] ],
@@ -50,7 +50,7 @@ var annotated_dup =
       [ "formatter< dcn::http::Request >", "structstd_1_1formatter_3_01dcn_1_1http_1_1Request_01_4.html", "structstd_1_1formatter_3_01dcn_1_1http_1_1Request_01_4" ],
       [ "formatter< dcn::http::Response >", "structstd_1_1formatter_3_01dcn_1_1http_1_1Response_01_4.html", "structstd_1_1formatter_3_01dcn_1_1http_1_1Response_01_4" ],
       [ "formatter< dcn::http::URL >", "structstd_1_1formatter_3_01dcn_1_1http_1_1URL_01_4.html", "structstd_1_1formatter_3_01dcn_1_1http_1_1URL_01_4" ],
-      [ "formatter< dcn::parse::Error::Kind >", "structstd_1_1formatter_3_01dcn_1_1parse_1_1Error_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1parse_1_1Error_1_1Kind_01_4" ],
+      [ "formatter< dcn::parse::ParseError::Kind >", "structstd_1_1formatter_3_01dcn_1_1parse_1_1ParseError_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1parse_1_1ParseError_1_1Kind_01_4" ],
       [ "formatter< dcn::server::RouteArg >", "structstd_1_1formatter_3_01dcn_1_1server_1_1RouteArg_01_4.html", "structstd_1_1formatter_3_01dcn_1_1server_1_1RouteArg_01_4" ],
       [ "formatter< dcn::server::RouteArgRequirement >", "structstd_1_1formatter_3_01dcn_1_1server_1_1RouteArgRequirement_01_4.html", "structstd_1_1formatter_3_01dcn_1_1server_1_1RouteArgRequirement_01_4" ],
       [ "formatter< dcn::server::RouteArgType >", "structstd_1_1formatter_3_01dcn_1_1server_1_1RouteArgType_01_4.html", "structstd_1_1formatter_3_01dcn_1_1server_1_1RouteArgType_01_4" ],

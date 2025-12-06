@@ -1,11 +1,17 @@
 var searchData=
 [
-  ['decodereturnedvalue_0',['decodereturnedvalue',['../namespacedcn_1_1evm.html#a4ea733d30c3821174976e155c69df2a8',1,'dcn::evm::decodeReturnedValue(const std::vector&lt; std::uint8_t &gt; &amp;bytes)'],['../namespacedcn_1_1evm.html#a58861dbff248a6869ffc291a8b543797',1,'dcn::evm::decodeReturnedValue(const std::vector&lt; std::uint8_t &gt; &amp;bytes)'],['../namespacedcn_1_1evm.html#aacb71be9d5eef3426b733cd27b1e37e0',1,'dcn::evm::decodeReturnedValue(const std::vector&lt; std::uint8_t &gt; &amp;bytes)'],['../namespacedcn_1_1evm.html#a3a6c3717fb4f0c02f04646b32f56823a',1,'dcn::evm::decodeReturnedValue(const std::vector&lt; uint8_t &gt; &amp;bytes)'],['../namespacedcn_1_1evm.html#a6fc6d41ee9af34df0ede308831f2f193',1,'dcn::evm::decodeReturnedValue(const std::vector&lt; std::uint8_t &gt; &amp;bytes)'],['../namespacedcn_1_1evm.html#aacb71be9d5eef3426b733cd27b1e37e0',1,'dcn::evm::decodeReturnedValue(const std::vector&lt; std::uint8_t &gt; &amp;bytes)'],['../namespacedcn_1_1evm.html#a07bfccf3448e2fc5dbe7e587f0afc9aa',1,'dcn::evm::decodeReturnedValue(const std::vector&lt; std::uint8_t &gt; &amp;bytes)']]],
-  ['deploy_1',['deploy',['../classdcn_1_1evm_1_1EVM.html#ad231c7c59c34004b27b27d3d0ed3c91a',1,'dcn::evm::EVM::deploy(std::istream &amp;code_stream, Address sender, std::vector&lt; std::uint8_t &gt; constructor_args, std::uint64_t gas_limit, std::uint64_t value) noexcept'],['../classdcn_1_1evm_1_1EVM.html#a7284cf3d9f9c7112dbca39f8f8f0db3c',1,'dcn::evm::EVM::deploy(std::filesystem::path code_path, Address sender, std::vector&lt; uint8_t &gt; constructor_args, std::uint64_t gas_limit, std::uint64_t value) noexcept']]],
-  ['deploy_5fcontract_2',['deploy_contract',['../classdcn_1_1evm_1_1EVMStorage.html#a32da23425836368a09d2957a85e4ceb4',1,'dcn::evm::EVMStorage']]],
-  ['deployfeature_3',['deployFeature',['../namespacedcn_1_1loader.html#a294c3a5a120c0cd2b3cca9fbab301e63',1,'dcn::loader']]],
-  ['deploytransformation_4',['deployTransformation',['../namespacedcn_1_1loader.html#a2c75e2fd2d0cca749e6c7f1fe3c7aa66',1,'dcn::loader']]],
-  ['derive_5fcreate2_5faddress_5',['derive_create2_address',['../classdcn_1_1evm_1_1EVMStorage.html#a6378e01098f73f1d7fe1b54e104ba8dc',1,'dcn::evm::EVMStorage']]],
-  ['derive_5fcreate_5faddress_6',['derive_create_address',['../classdcn_1_1evm_1_1EVMStorage.html#ac49779428554c8eaeef25898c18bb891',1,'dcn::evm::EVMStorage']]],
-  ['doesroutematch_7',['doesRouteMatch',['../classdcn_1_1server_1_1Router.html#a0a185d28218e434b84b0af512e3a299b',1,'dcn::server::Router']]]
+  ['call_0',['call',['../classdcn_1_1evm_1_1EVMStorage.html#a7d174d9c5af790eed2acb44d40228404',1,'dcn::evm::EVMStorage']]],
+  ['checkifsubfeaturesexist_1',['checkIfSubFeaturesExist',['../classdcn_1_1registry_1_1Registry.html#a1288a7b3a8c0c9cddf39dae75fc85f1b',1,'dcn::registry::Registry']]],
+  ['close_2',['close',['../classdcn_1_1server_1_1Server.html#a857966339be8d3b0f05b04db60387a49',1,'dcn::server::Server']]],
+  ['compareaccesstoken_3',['compareAccessToken',['../classdcn_1_1auth_1_1AuthManager.html#a02d8c9fec5655facbc3e87759a59aba1',1,'dcn::auth::AuthManager']]],
+  ['compile_4',['compile',['../classdcn_1_1evm_1_1EVM.html#aee6d85a27a62c7fd4227cf6eb77c4688',1,'dcn::evm::EVM']]],
+  ['constructfeaturesoliditycode_5',['constructFeatureSolidityCode',['../namespacedcn.html#a30e89e0e4b7a8001225150709705697c',1,'dcn']]],
+  ['constructhelpmessage_6',['constructHelpMessage',['../classdcn_1_1cmd_1_1ArgParser.html#a5a4715e8d888ec65ef9e4ae2d705fbb7',1,'dcn::cmd::ArgParser']]],
+  ['constructselector_7',['constructSelector',['../namespacedcn_1_1evm.html#a093d683bece30848be6955e9a55ede4c',1,'dcn::evm']]],
+  ['constructtransformationsoliditycode_8',['constructTransformationSolidityCode',['../namespacedcn.html#a67a11873bbeb568aab7c419a130ce237',1,'dcn']]],
+  ['containsconditionbucket_9',['containsConditionBucket',['../classdcn_1_1registry_1_1Registry.html#afc775ff526f9cba3951a6b19a865ca52',1,'dcn::registry::Registry']]],
+  ['containsfeaturebucket_10',['containsFeatureBucket',['../classdcn_1_1registry_1_1Registry.html#a644ddf8558722530997e1cdc5b3acf6c',1,'dcn::registry::Registry']]],
+  ['containstransformationbucket_11',['containsTransformationBucket',['../classdcn_1_1registry_1_1Registry.html#a50689be3d6c11a75507b9f1f7f5b82d2',1,'dcn::registry::Registry']]],
+  ['copy_5fcode_12',['copy_code',['../classdcn_1_1evm_1_1EVMStorage.html#a6580fd8583b0bac049e7913b08fae77a',1,'dcn::evm::EVMStorage']]],
+  ['currenttimestamp_13',['currentTimestamp',['../namespacedcn_1_1utils.html#a07545fa1ab2d1ccc349667eae8ba746f',1,'dcn::utils']]]
 ];

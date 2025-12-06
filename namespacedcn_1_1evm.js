@@ -4,6 +4,7 @@ var namespacedcn_1_1evm =
     [ "EVM", "classdcn_1_1evm_1_1EVM.html", "classdcn_1_1evm_1_1EVM" ],
     [ "EVMStorage", "classdcn_1_1evm_1_1EVMStorage.html", "classdcn_1_1evm_1_1EVMStorage" ],
     [ "Address", "namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b", null ],
+    [ "_decodeError", "namespacedcn_1_1evm.html#a9bd53593924ae0c04635f36698651beb", null ],
     [ "AbslHashValue", "namespacedcn_1_1evm.html#a371243f232b155fad6cbbc2c54d4843f", null ],
     [ "constructSelector", "namespacedcn_1_1evm.html#a093d683bece30848be6955e9a55ede4c", null ],
     [ "decodeReturnedValue", "namespacedcn_1_1evm.html#a4ea733d30c3821174976e155c69df2a8", null ],

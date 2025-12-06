@@ -1,7 +1,4 @@
 var searchData=
 [
-  ['verifyaccesstoken_0',['verifyAccessToken',['../classdcn_1_1auth_1_1AuthManager.html#a6120a2a41fa17f2ce0244e4faae05655',1,'dcn::auth::AuthManager']]],
-  ['verifynonce_1',['verifyNonce',['../classdcn_1_1auth_1_1AuthManager.html#a4c36816a956b2f2c3487d01612cab8f6',1,'dcn::auth::AuthManager']]],
-  ['verifyrefreshtoken_2',['verifyRefreshToken',['../classdcn_1_1auth_1_1AuthManager.html#a8c6d8f72a6ec838432e276eecd16b886',1,'dcn::auth::AuthManager']]],
-  ['verifysignature_3',['verifySignature',['../classdcn_1_1auth_1_1AuthManager.html#a8b0ed3951c4515fe027ca56fc93330e8',1,'dcn::auth::AuthManager']]]
+  ['url_0',['url',['../classdcn_1_1http_1_1URL.html#a67fd8acc596897f5e8aac17dcfadf9a3',1,'dcn::http::URL::URL()=default'],['../classdcn_1_1http_1_1URL.html#acd28487a5569161421d2775a3c2fa23d',1,'dcn::http::URL::URL(const std::string &amp;url)'],['../classdcn_1_1http_1_1URL.html#aeb73a51ef28c61ac55b169f9fcf145c9',1,'dcn::http::URL::URL(std::string &amp;&amp;url)'],['../classdcn_1_1http_1_1URL.html#ae6d666fbcd2903bd6f89a417e41d0f70',1,'dcn::http::URL::URL(const char *url)'],['../classdcn_1_1http_1_1URL.html#acd73de9acf92be119aedde4ec2e13f5e',1,'dcn::http::URL::URL(const URL &amp;)=default'],['../classdcn_1_1http_1_1URL.html#a8bafbdadea7d1a7cd56746cfdcdb1cf8',1,'dcn::http::URL::URL(URL &amp;&amp;)=default']]]
 ];

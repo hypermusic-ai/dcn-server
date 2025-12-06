@@ -6,5 +6,5 @@ var searchData=
   ['optional_3',['optional',['../namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d',1,'dcn::server']]],
   ['options_4',['OPTIONS',['../namespacedcn_1_1http.html#a4f682cd7b59ded888fa0d767b29cf172a164dd62adb30ca051b5289672a572f9b',1,'dcn::http']]],
   ['origin_5',['Origin',['../namespacedcn_1_1http.html#aad74d4f2478c6cc863561ebcf03699a9a3edf8ca26a1ec14dd6e91dd277ae1de6',1,'dcn::http']]],
-  ['out_5fof_5frange_6',['OUT_OF_RANGE',['../structdcn_1_1parse_1_1Error.html#a94e5d27d2c14f25f3636ce09d771ceaca6feaf66704b269610cff9431d5519cad',1,'dcn::parse::Error']]]
+  ['out_5fof_5frange_6',['OUT_OF_RANGE',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bea6feaf66704b269610cff9431d5519cad',1,'dcn::parse::ParseError']]]
 ];
