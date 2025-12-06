@@ -313,7 +313,7 @@ namespace dcn
         feature_record.set_owner(evmc::hex(address));
         *feature_record.mutable_feature() = std::move(feature);
 
-        const auto deploy_res = co_await deployFeature(evm, registry, feature_record);
+        const auto deploy_res = co_await loader::deployFeature(evm, registry, feature_record);
         if(!deploy_res)
         {
             response.setHeader(http::Header::Connection, "close");

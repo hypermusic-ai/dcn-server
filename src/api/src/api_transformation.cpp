@@ -320,7 +320,7 @@ namespace dcn
         transformation_record.set_owner(evmc::hex(address));
         *transformation_record.mutable_transformation() = std::move(transformation);
 
-        const auto deploy_res = co_await deployTransformation(evm, registry, transformation_record);
+        const auto deploy_res = co_await loader::deployTransformation(evm, registry, transformation_record);
         if(!deploy_res)
         {
             spdlog::error("Failed to deploy transformation");

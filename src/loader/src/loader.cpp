@@ -1,6 +1,6 @@
 #include "loader.hpp"
 
-namespace dcn
+namespace dcn::loader
 {
     template<class T>
     static absl::flat_hash_map<std::string, T> _loadJSONRecords(std::filesystem::path dir)
