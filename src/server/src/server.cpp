@@ -4,7 +4,6 @@ namespace dcn
 {
     Server::Server(asio::io_context & io_context, asio::ip::tcp::endpoint endpoint)
     :   _io_context(io_context),
-        _session_mgr(io_context), 
         _strand(asio::make_strand(io_context)),
         _close(false),
         _acceptor(_strand, std::move(endpoint)),

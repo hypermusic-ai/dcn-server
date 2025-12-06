@@ -11,8 +11,6 @@ using namespace asio::experimental::awaitable_operators;
 #include <spdlog/spdlog.h>
 
 #include "utils.hpp"
-#include "session_manager.hpp"
-#include "session.hpp"
 #include "http.hpp"
 #include "route.hpp"
 
@@ -145,8 +143,6 @@ namespace dcn
 
             asio::ip::tcp::acceptor _acceptor;
             Router _router;
-
-            SessionManager _session_mgr;
 
             std::chrono::milliseconds _idle_interval;
     };

@@ -16,7 +16,6 @@ using namespace asio::experimental::awaitable_operators;
 #include "cmd.hpp"
 #include "server.hpp"
 #include "http.hpp"
-#include "session.hpp"
 #include "evm.hpp"
 #include "pt.hpp"
 #include "file.hpp"

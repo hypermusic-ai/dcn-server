@@ -4,7 +4,6 @@ add_module(NAME "Server"
     DEPENDENCIES
         "${PROJECT_PREFIX}::Native"
         "${PROJECT_PREFIX}::Utils"
-        "${PROJECT_PREFIX}::Session"
         "${PROJECT_PREFIX}::HTTP"
         "${PROJECT_PREFIX}::Parser"
         absl::hash
