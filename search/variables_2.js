@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['default_5fgas_5flimit_0',['DEFAULT_GAS_LIMIT',['../namespacedcn.html#affcf2d5172ca7f658b5a8e4b8301073c',1,'dcn']]],
-  ['default_5fport_1',['DEFAULT_PORT',['../namespacedcn.html#a10825d7e3806e0d75a98f30f69cde494',1,'dcn']]],
-  ['default_5ftls_5fport_2',['DEFAULT_TLS_PORT',['../namespacedcn.html#a84f601d5d12f5c2e3369eb95be0adaf1',1,'dcn']]],
-  ['desc_3',['desc',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a737fff6e4bec8f16b6e7d649a73d9903',1,'dcn::cmd::CommandLineArgDef']]]
+  ['children_0',['children',['../structdcn_1_1server_1_1RouteArgDef.html#a9afa1ba234bcdc264710072079ae30d6',1,'dcn::server::RouteArgDef']]],
+  ['code_1',['code',['../structdcn_1_1evm_1_1DeployError.html#ad55f33be96d74c8a65530dd06a8033f7',1,'dcn::evm::DeployError::code'],['../structdcn_1_1evm_1_1EVMStorage_1_1Account.html#a8f47dc01cc6fb2e9e5eb37abfe466123',1,'dcn::evm::EVMStorage::Account::code']]],
+  ['creator_2',['creator',['../structdcn_1_1evm_1_1EVMStorage_1_1Account.html#a7da4cddc4c2293c0215e45df96525258',1,'dcn::evm::EVMStorage::Account']]]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['value_0',['value',['../structdcn_1_1Registry_1_1Node.html#aac2c160a86b46cb41c104298beea764a',1,'dcn::Registry::Node']]]
+  ['storage_0',['storage',['../structdcn_1_1evm_1_1EVMStorage_1_1Account.html#aeb805928d10d7344c967c76554a20527',1,'dcn::evm::EVMStorage::Account']]]
 ];

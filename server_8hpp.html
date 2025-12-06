@@ -109,8 +109,6 @@ $(document).ready(function(){initNavTree('server_8hpp.html',''); initResizable()
 <code>#include &lt;asio/experimental/awaitable_operators.hpp&gt;</code><br />
 <code>#include &lt;spdlog/spdlog.h&gt;</code><br />
 <code>#include &quot;<a class="el" href="utils_8hpp_source.html">utils.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="session__manager_8hpp_source.html">session_manager.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="session_8hpp_source.html">session.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="http_8hpp_source.html">http.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="route_8hpp_source.html">route.hpp</a>&quot;</code><br />
 </div>
@@ -118,20 +116,22 @@ $(document).ready(function(){initNavTree('server_8hpp.html',''); initResizable()
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1Server.html">dcn::Server</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class representing a server for handling HTTP requests.  <a href="classdcn_1_1Server.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1server_1_1Server.html">dcn::server::Server</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class representing a server for handling HTTP requests.  <a href="classdcn_1_1server_1_1Server.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacedcn" id="r_namespacedcn"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html">dcn</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespacedcn_1_1server" id="r_namespacedcn_1_1server"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1server.html">dcn::server</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:ac0e29d26497dbd2dd65c634051978701" id="r_ac0e29d26497dbd2dd65c634051978701"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn.html#a48f2ecb6c65ec7f533dea1d2354b844bad57c24f3fe52d16e7169b912dd647f0d">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#ac0e29d26497dbd2dd65c634051978701">dcn::HandlerDefinition</a> = std::function&lt; asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">dcn::http::Response</a> &gt;(<a class="el" href="namespacedcn.html#a48f2ecb6c65ec7f533dea1d2354b844bad57c24f3fe52d16e7169b912dd647f0d">const</a> <a class="el" href="classdcn_1_1http_1_1Request.html">dcn::http::Request</a> &amp;, std::vector&lt; <a class="el" href="classdcn_1_1RouteArg.html">RouteArg</a> &gt;, <a class="el" href="namespacedcn.html#a9688ae9214c78e0cd672bc0fdd50c6e7">QueryArgsList</a>)&gt;</td></tr>
-<tr class="memdesc:ac0e29d26497dbd2dd65c634051978701"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type representing a route handler function.  <br /></td></tr>
-<tr class="separator:ac0e29d26497dbd2dd65c634051978701"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1b911fe729d02d6eb0ad5460e3ee8ad" id="r_ab1b911fe729d02d6eb0ad5460e3ee8ad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1server.html#ab1b911fe729d02d6eb0ad5460e3ee8ad">dcn::server::HandlerDefinition</a> = std::function&lt; asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">dcn::http::Response</a> &gt;(<a class="el" href="namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d">const</a> <a class="el" href="classdcn_1_1http_1_1Request.html">dcn::http::Request</a> &amp;, std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">RouteArg</a> &gt;, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">QueryArgsList</a>)&gt;</td></tr>
+<tr class="memdesc:ab1b911fe729d02d6eb0ad5460e3ee8ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type representing a route handler function.  <br /></td></tr>
+<tr class="separator:ab1b911fe729d02d6eb0ad5460e3ee8ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->

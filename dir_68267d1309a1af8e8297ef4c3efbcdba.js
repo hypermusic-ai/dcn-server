@@ -11,8 +11,8 @@ var dir_68267d1309a1af8e8297ef4c3efbcdba =
     [ "native", "dir_f511ba0178b53c726d0a84462dac4106.html", "dir_f511ba0178b53c726d0a84462dac4106" ],
     [ "parser", "dir_6cd8491d143eb218b70983dbdb3c58bc.html", "dir_6cd8491d143eb218b70983dbdb3c58bc" ],
     [ "pt", "dir_bc9eead6ec2870f7e5588680a36ec65c.html", "dir_bc9eead6ec2870f7e5588680a36ec65c" ],
+    [ "registry", "dir_cb3c39cc4ab347a95dfc53ab4ca55b3c.html", "dir_cb3c39cc4ab347a95dfc53ab4ca55b3c" ],
     [ "server", "dir_075bb3ff235063c77951cd176d15a741.html", "dir_075bb3ff235063c77951cd176d15a741" ],
-    [ "session", "dir_53e88f7fa585331171beac223e0e5b81.html", "dir_53e88f7fa585331171beac223e0e5b81" ],
     [ "utils", "dir_313caf1132e152dd9b58bea13a4052ca.html", "dir_313caf1132e152dd9b58bea13a4052ca" ],
     [ "version", "dir_f208d550dbffb9fb7a9061b68ff675d7.html", "dir_f208d550dbffb9fb7a9061b68ff675d7" ],
     [ "main.cpp", "main_8cpp.html", "main_8cpp" ]

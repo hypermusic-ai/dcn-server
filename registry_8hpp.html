@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Decentralised Art Server: src/pt/include/registry.hpp File Reference</title>
+<title>Decentralised Art Server: src/registry/include/registry.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -98,8 +98,7 @@ $(document).ready(function(){initNavTree('registry_8hpp.html',''); initResizable
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#namespaces">Namespaces</a> &#124;
-<a href="#define-members">Macros</a>  </div>
+<a href="#namespaces">Namespaces</a>  </div>
   <div class="headertitle"><div class="title">registry.hpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -110,54 +109,34 @@ $(document).ready(function(){initNavTree('registry_8hpp.html',''); initResizable
 <code>#include &lt;asio.hpp&gt;</code><br />
 <code>#include &lt;absl/container/flat_hash_map.h&gt;</code><br />
 <code>#include &lt;spdlog/spdlog.h&gt;</code><br />
-<code>#include &lt;evmc/evmc.hpp&gt;</code><br />
 <code>#include &quot;<a class="el" href="utils_8hpp_source.html">utils.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="feature_8hpp_source.html">feature.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="transformation_8hpp_source.html">transformation.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="condition_8hpp_source.html">condition.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="file_8hpp_source.html">file.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="pt_8hpp_source.html">pt.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="evm_8hpp_source.html">evm.hpp</a>&quot;</code><br />
 </div>
 <p><a href="registry_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1Registry.html">dcn::Registry</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class that represents a registry of features, transformations, and conditions.  <a href="classdcn_1_1Registry.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html">dcn::registry::Registry</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class that represents a registry of features, transformations, and conditions.  <a href="classdcn_1_1registry_1_1Registry.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1Registry_1_1Node.html">dcn::Registry::Node&lt; T &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1registry_1_1Registry_1_1Node.html">dcn::registry::Registry::Node&lt; T &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacedcn" id="r_namespacedcn"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html">dcn</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
-Macros</h2></td></tr>
-<tr class="memitem:a8f8bdbe5685d2ab60ca313c61017b92a" id="r_a8f8bdbe5685d2ab60ca313c61017b92a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="registry_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a">interface</a>&#160;&#160;&#160;__STRUCT__</td></tr>
-<tr class="separator:a8f8bdbe5685d2ab60ca313c61017b92a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespacedcn_1_1registry" id="r_namespacedcn_1_1registry"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1registry.html">dcn::registry</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Macro Definition Documentation</h2>
-<a id="a8f8bdbe5685d2ab60ca313c61017b92a" name="a8f8bdbe5685d2ab60ca313c61017b92a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8f8bdbe5685d2ab60ca313c61017b92a">&#9670;&#160;</a></span>interface</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define interface&#160;&#160;&#160;__STRUCT__</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_bc9eead6ec2870f7e5588680a36ec65c.html">pt</a></li><li class="navelem"><a class="el" href="dir_3b5614aeeb7baf817bb4424562a73808.html">include</a></li><li class="navelem"><a class="el" href="registry_8hpp.html">registry.hpp</a></li>
+    <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_cb3c39cc4ab347a95dfc53ab4ca55b3c.html">registry</a></li><li class="navelem"><a class="el" href="dir_b6679cb0fa5ebc2c366f75ec38c9fddd.html">include</a></li><li class="navelem"><a class="el" href="registry_8hpp.html">registry.hpp</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
   </ul>
 </div>

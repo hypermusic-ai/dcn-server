@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['storage_0',['storage',['../structdcn_1_1EVMStorage_1_1Account.html#a1c39f3db0f956022f88e409049f7a800',1,'dcn::EVMStorage::Account']]]
+  ['patch_5fversion_0',['PATCH_VERSION',['../namespacedcn.html#a97b781d3fe9573a23ed6606389674f3c',1,'dcn']]]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['authenticationerror_0',['AuthenticationError',['../namespacedcn.html#af3418672c6c7daf5f09a7155aaf54d10',1,'dcn']]]
+  ['code_0',['Code',['../namespacedcn_1_1http.html#a85103dcaf4539b1939d3a039e2f7e4ff',1,'dcn::http']]]
 ];

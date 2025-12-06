@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['isconditionbucketempty_0',['isConditionBucketEmpty',['../classdcn_1_1Registry.html#a1eef4f7eef6c38b4751388f2d04bfe6f',1,'dcn::Registry']]],
-  ['isfeaturebucketempty_1',['isFeatureBucketEmpty',['../classdcn_1_1Registry.html#a6eb9a205660509f44390bf7d8a38f703',1,'dcn::Registry']]],
-  ['istransformationbucketempty_2',['isTransformationBucketEmpty',['../classdcn_1_1Registry.html#a7f569dfdfb18ee84fd5458135eda54b1',1,'dcn::Registry']]]
+  ['isconditionbucketempty_0',['isConditionBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#afed9f3429f9bda5075ba07fee43698ce',1,'dcn::registry::Registry']]],
+  ['isfeaturebucketempty_1',['isFeatureBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#a2bf10417ade06367c790fb82887970af',1,'dcn::registry::Registry']]],
+  ['istransformationbucketempty_2',['isTransformationBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#a8af408cd164c32ff17497fc99b901f2c',1,'dcn::registry::Registry']]]
 ];

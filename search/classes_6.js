@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['node_0',['Node',['../structdcn_1_1Registry_1_1Node.html',1,'dcn::Registry']]]
+  ['messagebase_0',['MessageBase',['../classdcn_1_1http_1_1MessageBase.html',1,'dcn::http']]]
 ];

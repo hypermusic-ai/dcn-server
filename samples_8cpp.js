@@ -1,5 +1,5 @@
 var samples_8cpp =
 [
-    [ "parseFromJson", "samples_8cpp.html#a4c0199fa5d6dedef5063cb14ba3dc599", null ],
-    [ "parseToJson", "samples_8cpp.html#ac9e3d066ecde2666aed3f2325a4bc889", null ]
+    [ "parseFromJson", "samples_8cpp.html#ab40829b76c4b5c76f1bbdda15351d4cd", null ],
+    [ "parseToJson", "samples_8cpp.html#ab72fa0cc35a3183e3595d398868265eb", null ]
 ];

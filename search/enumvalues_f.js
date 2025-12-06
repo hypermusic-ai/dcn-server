@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['unauthorized_0',['Unauthorized',['../namespacedcn_1_1http.html#a85103dcaf4539b1939d3a039e2f7e4ffae06d1ba70f1331e9f9a113cc2f887d3f',1,'dcn::http']]],
-  ['unknown_1',['unknown',['../structdcn_1_1parse_1_1Error.html#ae823d88aaac796217f02f199c52d3a9aa696b031073e74bf2cb98e5ef201d4aa3',1,'dcn::parse::Error::UNKNOWN'],['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053ba88183b946cc5f0e8c96b2e66e1c74a7e',1,'dcn::cmd::CommandLineArgDef::Unknown'],['../namespacedcn.html#af3418672c6c7daf5f09a7155aaf54d10a88183b946cc5f0e8c96b2e66e1c74a7e',1,'dcn::Unknown'],['../namespacedcn_1_1http.html#a85103dcaf4539b1939d3a039e2f7e4ffa88183b946cc5f0e8c96b2e66e1c74a7e',1,'dcn::http::Unknown'],['../namespacedcn_1_1http.html#aad74d4f2478c6cc863561ebcf03699a9a88183b946cc5f0e8c96b2e66e1c74a7e',1,'dcn::http::Unknown'],['../namespacedcn_1_1http.html#a4f682cd7b59ded888fa0d767b29cf172a88183b946cc5f0e8c96b2e66e1c74a7e',1,'dcn::http::Unknown'],['../namespacedcn.html#a73f6cd1f34fc64548d4b6b8749ed6f68a88183b946cc5f0e8c96b2e66e1c74a7e',1,'dcn::Unknown'],['../namespacedcn.html#a48f2ecb6c65ec7f533dea1d2354b844ba88183b946cc5f0e8c96b2e66e1c74a7e',1,'dcn::Unknown']]],
-  ['unsigned_5finteger_2',['unsigned_integer',['../namespacedcn.html#a73f6cd1f34fc64548d4b6b8749ed6f68a7383104b83254a99f5991d0ac77a6666',1,'dcn']]]
+  ['transformation_5falready_5fregistered_0',['TRANSFORMATION_ALREADY_REGISTERED',['../structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a86450e1895931d1c1b1547c93993e5e7',1,'dcn::evm::DeployError']]],
+  ['transformation_5farguments_5fmismatch_1',['TRANSFORMATION_ARGUMENTS_MISMATCH',['../structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a59b243b01295e0c1e55ccabd751b3fb1',1,'dcn::evm::DeployError']]],
+  ['transformation_5fmissing_2',['TRANSFORMATION_MISSING',['../structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a4c2c0dc6f56d831a44db6e61704b1946',1,'dcn::evm::DeployError']]],
+  ['type_5fmismatch_3',['TYPE_MISMATCH',['../structdcn_1_1parse_1_1Error.html#a94e5d27d2c14f25f3636ce09d771ceaca2f93918ef99e03b7b8e7230b2a28fb52',1,'dcn::parse::Error']]]
 ];

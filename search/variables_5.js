@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['name_0',['name',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a7b193d80a76eccb5c293dabfd8576c2c',1,'dcn::cmd::CommandLineArgDef']]],
-  ['nargs_1',['nargs',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a1a2cfc4898bb654d19e82ac3ad9394ad',1,'dcn::cmd::CommandLineArgDef']]],
-  ['nonce_2',['nonce',['../structdcn_1_1EVMStorage_1_1Account.html#a580e317b04d6f8a7d48cbf5a57a35f7b',1,'dcn::EVMStorage::Account']]]
+  ['kind_0',['kind',['../structdcn_1_1AuthError.html#a1d77ad44c87c53a01284948848705d3b',1,'dcn::AuthError::kind'],['../structdcn_1_1evm_1_1DeployError.html#a197f4c088854a69f154ae4bdd8d45325',1,'dcn::evm::DeployError::kind'],['../structdcn_1_1parse_1_1Error.html#abb935720d273faaedb978594bcefd882',1,'dcn::parse::Error::kind']]]
 ];
