@@ -235,8 +235,8 @@ namespace dcn::parse
     {
         parse::Result<TupleT> operator()(const std::vector<std::unique_ptr<dcn::server::RouteArgDef>> &defs, const std::vector<std::string> & values_str)
         {
-            if(values_str.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
-            if(defs.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+            if(values_str.size() != std::tuple_size<TupleT>::value) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
+            if(defs.size() != std::tuple_size<TupleT>::value) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
 
             auto t0 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(server::RouteArg(*defs.at(0), values_str.at(0)));
             if(!t0) return std::unexpected(t0.error());
@@ -253,8 +253,8 @@ namespace dcn::parse
     {
         parse::Result<TupleT> operator()(const std::vector<std::unique_ptr<dcn::server::RouteArgDef>> &defs, const std::vector<std::string> & values_str)
         {
-            if(values_str.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
-            if(defs.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+            if(values_str.size() != std::tuple_size<TupleT>::value) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
+            if(defs.size() != std::tuple_size<TupleT>::value) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
 
             auto t0 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(server::RouteArg(*defs.at(0), values_str.at(0)));
             if(!t0) return std::unexpected(t0.error());
@@ -274,8 +274,8 @@ namespace dcn::parse
     {
         parse::Result<TupleT> operator()(const std::vector<std::unique_ptr<dcn::server::RouteArgDef>> &defs, const std::vector<std::string> & values_str)
         {
-            if(values_str.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
-            if(defs.size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+            if(values_str.size() != std::tuple_size<TupleT>::value) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
+            if(defs.size() != std::tuple_size<TupleT>::value) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
 
             auto t0 = parseRouteArgAs<typename std::tuple_element<0, TupleT>::type>(server::RouteArg(*defs.at(0), values_str.at(0)));
             if(!t0) return std::unexpected(t0.error());
@@ -297,14 +297,14 @@ namespace dcn::parse
     template<IsTupleLike TupleT>
     parse::Result<TupleT> parseRouteArgAs(const server::RouteArg& arg)
     {
-        if(arg.getType() != server::RouteArgType::object) return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH});
-        if(std::tuple_size<TupleT>::value == 0) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
-        if(arg.getChildren().size() != std::tuple_size<TupleT>::value) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+        if(arg.getType() != server::RouteArgType::object) return std::unexpected(ParseError{ParseError::Kind::TYPE_MISMATCH});
+        if(std::tuple_size<TupleT>::value == 0) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
+        if(arg.getChildren().size() != std::tuple_size<TupleT>::value) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
         
         std::string data = arg.getData();
-        if(data.empty()) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
-        if(data.front() != OBJECT_START_IDENTIFIER) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
-        if(data.back() != OBJECT_END_IDENTIFIER) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+        if(data.empty()) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
+        if(data.front() != OBJECT_START_IDENTIFIER) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
+        if(data.back() != OBJECT_END_IDENTIFIER) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
         
         // remove delimiters
         data = data.substr(1, data.size() - 2);
@@ -329,14 +329,14 @@ namespace dcn::parse
     {
         using T = typename ContainerT::value_type;
 
-        if(arg.getType() != server::RouteArgType::array) return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH});
-        if(arg.getChildren().size() != 1) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
-        if(arg.getChildren().at(0) == nullptr) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+        if(arg.getType() != server::RouteArgType::array) return std::unexpected(ParseError{ParseError::Kind::TYPE_MISMATCH});
+        if(arg.getChildren().size() != 1) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
+        if(arg.getChildren().at(0) == nullptr) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
 
         std::string data = arg.getData();
-        if(data.empty()) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
-        if(data.front() != ARRAY_START_IDENTIFIER) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
-        if(data.back() != ARRAY_END_IDENTIFIER) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+        if(data.empty()) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
+        if(data.front() != ARRAY_START_IDENTIFIER) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
+        if(data.back() != ARRAY_END_IDENTIFIER) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
 
         // remove delimiters
         data = data.substr(1, data.size() - 2);

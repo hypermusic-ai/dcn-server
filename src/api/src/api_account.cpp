@@ -87,7 +87,7 @@ namespace dcn
         const auto limit_res = parse::parseRouteArgAs<std::size_t>(query_args.at("limit"))  
             .and_then([](std::size_t limit) -> parse::Result<std::size_t>
             {
-                if(limit > MAX_LIMIT) return std::unexpected(parse::Error{parse::Error::Kind::OUT_OF_RANGE});
+                if(limit > MAX_LIMIT) return std::unexpected(parse::ParseError{parse::ParseError::Kind::OUT_OF_RANGE});
                 return limit;
             });
 

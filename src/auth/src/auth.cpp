@@ -19,11 +19,11 @@ namespace dcn::parse
         const std::string prefix = "Login nonce: ";
         // Check that str is at least as long as the prefix
         if (nonce_str.size() <= prefix.size()) {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Nonce too short"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Nonce too short"});
         }
         // Does it start with prefix?
         if (nonce_str.compare(0, prefix.size(), prefix) != 0) {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Nonce does not start with prefix"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Nonce does not start with prefix"});
         }
         // Extract everything after prefix
         return nonce_str.substr(prefix.size());
@@ -37,12 +37,12 @@ namespace dcn::parse
         static const std::regex token_regex(ACCESS_TOKEN_PREFIX+"([^;]+)");
         // Check if the cookie string is empty
         if (cookie_str.empty()) {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Cookie string is empty"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Cookie string is empty"});
         }
         // Use regex to find the token in the cookie string
         std::smatch match;
         if (std::regex_search(cookie_str, match, token_regex) == false) {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Token not found in cookie"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Token not found in cookie"});
         }
         return match[1].str();
     }
@@ -53,12 +53,12 @@ namespace dcn::parse
         static const std::regex token_regex(R"(Bearer\s+([^\s]+))");
 
         if (header_str.empty()) {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Header string is empty"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Header string is empty"});
         }
 
         std::smatch match;
         if (std::regex_search(header_str, match, token_regex) == false) {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Token not found in header"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Token not found in header"});
         }
 
         return match[1].str();
@@ -85,12 +85,12 @@ namespace dcn::parse
         static const std::regex token_regex(REFRESH_TOKEN_PREFIX+"([^;]+)");
         // Check if the cookie string is empty
         if (cookie_str.empty()) {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Cookie string is empty"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Cookie string is empty"});
         }
         // Use regex to find the token in the cookie string
         std::smatch match;
         if (std::regex_search(cookie_str, match, token_regex) == false) {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Token not found in cookie"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Token not found in cookie"});
         }
         return match[1].str();
     }
@@ -99,7 +99,7 @@ namespace dcn::parse
     Result<std::string> parseRefreshTokenFrom<http::Header::XRefreshToken>(const std::string& header_str)
     {
         if (header_str.empty()) {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Header string is empty"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Header string is empty"});
         }
 
         // Optionally, trim whitespace
@@ -107,7 +107,7 @@ namespace dcn::parse
         auto end = header_str.find_last_not_of(" \t");
 
         if (start == std::string::npos || end == std::string::npos) {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Token not found in header"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Token not found in header"});
         }
 
         return header_str.substr(start, end - start + 1);

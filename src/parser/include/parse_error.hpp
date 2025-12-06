@@ -7,7 +7,7 @@
 
 namespace dcn::parse
 {   
-    struct Error
+    struct ParseError
     {
         enum class Kind : std::uint8_t
         {
@@ -23,17 +23,17 @@ namespace dcn::parse
     };
 
     template<class T>
-    using Result = std::expected<T, Error>;
+    using Result = std::expected<T, ParseError>;
 }
 
 template <>
-struct std::formatter<dcn::parse::Error::Kind> : std::formatter<std::string> {
-    auto format(const dcn::parse::Error::Kind & err, format_context& ctx) const {
+struct std::formatter<dcn::parse::ParseError::Kind> : std::formatter<std::string> {
+    auto format(const dcn::parse::ParseError::Kind & err, format_context& ctx) const {
         switch(err)
         {
-            case dcn::parse::Error::Kind::INVALID_VALUE : return formatter<string>::format("Invalid value", ctx);
-            case dcn::parse::Error::Kind::OUT_OF_RANGE : return formatter<string>::format("Out of range", ctx);
-            case dcn::parse::Error::Kind::TYPE_MISMATCH : return formatter<string>::format("Type mismatch", ctx);
+            case dcn::parse::ParseError::Kind::INVALID_VALUE : return formatter<string>::format("Invalid value", ctx);
+            case dcn::parse::ParseError::Kind::OUT_OF_RANGE : return formatter<string>::format("Out of range", ctx);
+            case dcn::parse::ParseError::Kind::TYPE_MISMATCH : return formatter<string>::format("Type mismatch", ctx);
 
             default:  return formatter<string>::format("Unknown", ctx);
         }

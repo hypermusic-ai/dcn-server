@@ -83,13 +83,13 @@ namespace dcn::parse
         if (json_obj.contains("name")) {
             transformation.set_name(json_obj["name"].get<std::string>());
         }
-        else return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid name"});
+        else return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid name"});
         
 
         if (json_obj.contains("sol_src")) {
             transformation.set_sol_src(json_obj["sol_src"].get<std::string>());
         }
-        else return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid sol_src"});
+        else return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid sol_src"});
         
 
         return transformation;
@@ -106,7 +106,7 @@ namespace dcn::parse
         std::string json_str;
         auto status = google::protobuf::util::MessageToJsonString(transformation, &json_str, options);
 
-        if (!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
+        if (!status.ok()) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid transformation"});
 
         return json_str;
     }
@@ -120,7 +120,7 @@ namespace dcn::parse
 
         auto status = google::protobuf::util::JsonStringToMessage(json_str, &transformation, options);
 
-        if(!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
+        if(!status.ok()) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid transformation"});
 
         return transformation;
     }
@@ -131,7 +131,7 @@ namespace dcn::parse
         json json_obj = json::object();
 
         auto transformation_result = parseToJson(transformation_record.transformation(), use_json);
-        if(!transformation_result) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
+        if(!transformation_result) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid transformation"});
 
         json_obj["transformation"] = std::move(*transformation_result);
         json_obj["owner"] = transformation_record.owner();
@@ -149,7 +149,7 @@ namespace dcn::parse
         std::string json_str;
         auto status = google::protobuf::util::MessageToJsonString(transformation_record, &json_str, options);
 
-        if (!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation record"});
+        if (!status.ok()) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid transformation record"});
 
         return json_str;
     }
@@ -159,17 +159,17 @@ namespace dcn::parse
     {
         TransformationRecord transformation_record;
         if (json_obj.contains("transformation") == false)
-            return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid transformation"});
 
         auto transformation = parseFromJson<Transformation>(json_obj["transformation"], use_json);
 
         if(!transformation)
-            return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid transformation"});
 
         *transformation_record.mutable_transformation() = std::move(*transformation);
 
         if (json_obj.contains("owner") == false)
-            return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid owner"});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid owner"});
         
         transformation_record.set_owner(json_obj["owner"].get<std::string>());
 
@@ -186,7 +186,7 @@ namespace dcn::parse
 
         auto status = google::protobuf::util::JsonStringToMessage(json_str, &transformation_record, options);
 
-        if(!status.ok()) return std::unexpected(Error{Error::Kind::INVALID_VALUE, "invalid transformation record"});
+        if(!status.ok()) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid transformation record"});
 
         return transformation_record;
     }

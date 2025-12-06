@@ -51,15 +51,15 @@ namespace dcn::parse
         constexpr static const char optional_identifier = '~';
         
         const auto it_start = str.find(start_delimeter);
-        if (it_start == std::string::npos) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Missing start delimeter"});
+        if (it_start == std::string::npos) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Missing start delimeter"});
          
         const auto it_end = str.rfind(end_delimeter);
-        if (it_end == std::string::npos) return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Missing end delimeter"});
+        if (it_end == std::string::npos) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Missing end delimeter"});
         
         assert(it_start < it_end);
         std::string arg = str.substr(it_start + 1, it_end - it_start - 1);
          
-        if(arg.size() == 0)return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Empty argument"});
+        if(arg.size() == 0)return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Empty argument"});
             
         server::RouteArgRequirement requirement = server::RouteArgRequirement::required;
         server::RouteArgType type;
@@ -88,7 +88,7 @@ namespace dcn::parse
             if(it_array_end == std::string::npos)
             {
                 spdlog::error("parseRouteArg - cannot find array end identifier : {}", arg);
-                return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Cannot find array end identifier"});
+                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Cannot find array end identifier"});
             }
 
             // array type
@@ -101,13 +101,13 @@ namespace dcn::parse
             if(!array_type)
             {
                 spdlog::error("parseRouteArg - cannot find array type definition : {}", arg);
-                return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH, "Cannot find array type definition"});
+                return std::unexpected(ParseError{ParseError::Kind::TYPE_MISMATCH, "Cannot find array type definition"});
             }
 
             if(array_type->requirement == server::RouteArgRequirement::optional)
             {
                 spdlog::error("parseRouteArg - array type cannot be optional : {}", arg);
-                return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH, "Array type cannot be optional"});
+                return std::unexpected(ParseError{ParseError::Kind::TYPE_MISMATCH, "Array type cannot be optional"});
             }
 
             additional_fields.emplace_back(std::make_unique<server::RouteArgDef>(std::move(*array_type)));
@@ -118,7 +118,7 @@ namespace dcn::parse
             if(it_object_end == std::string::npos)
             {
                 spdlog::error("parseRouteArg - cannot find object end identifier : {}", arg);
-                return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Cannot find object end identifier"});
+                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Cannot find object end identifier"});
             }
 
             // object type
@@ -132,7 +132,7 @@ namespace dcn::parse
             if(object_fields.empty())
             {
                 spdlog::error("parseRouteArg - cannot find object fields : {}", arg);
-                return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Cannot find object fields"});
+                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Cannot find object fields"});
             }
 
             // we need to split the object fields by comma
@@ -147,7 +147,7 @@ namespace dcn::parse
             if(fields.size() == 0)
             {
                 spdlog::error("parseRouteArg - cannot find object fields : {}", arg);
-                return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE, "Cannot find object fields"});
+                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Cannot find object fields"});
             }
 
             // for every field we need to parse it
@@ -157,13 +157,13 @@ namespace dcn::parse
                 if(!field_type)
                 {
                     spdlog::error("parseRouteArg - cannot find object field type definition : {}", field);
-                    return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH, "Cannot find object field type definition"});
+                    return std::unexpected(ParseError{ParseError::Kind::TYPE_MISMATCH, "Cannot find object field type definition"});
                 }
 
                 if(field_type->requirement == server::RouteArgRequirement::optional)
                 {
                     spdlog::error("parseRouteArg - object field type cannot be optional : {}", arg);
-                    return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH, "Object field type cannot be optional"});
+                    return std::unexpected(ParseError{ParseError::Kind::TYPE_MISMATCH, "Object field type cannot be optional"});
                 }
 
                 additional_fields.emplace_back(std::make_unique<server::RouteArgDef>(std::move(*field_type)));
@@ -178,7 +178,7 @@ namespace dcn::parse
         if(type == server::RouteArgType::Unknown)
         {
             spdlog::error("parseRouteArg - cannot find type definition : {}", arg);
-            return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH, "Cannot find type definition"});
+            return std::unexpected(ParseError{ParseError::Kind::TYPE_MISMATCH, "Cannot find type definition"});
         }
 
         return server::RouteArgDef(type, requirement, std::move(additional_fields));
@@ -187,7 +187,7 @@ namespace dcn::parse
     template<>
     parse::Result<std::size_t> parseRouteArgAs<std::size_t>(const server::RouteArg & arg) 
     {
-        if(arg.getType() != server::RouteArgType::unsigned_integer)return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH});
+        if(arg.getType() != server::RouteArgType::unsigned_integer)return std::unexpected(ParseError{ParseError::Kind::TYPE_MISMATCH});
         
         try {
             std::size_t pos = 0;
@@ -195,34 +195,34 @@ namespace dcn::parse
 
             // Ensure the whole string was parsed
             if(pos != arg.getData().size())
-                return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
 
             // Ensure the value fits in size_t
             if (val > std::numeric_limits<std::size_t>::max())
-                return std::unexpected(parse::Error{Error::Kind::OUT_OF_RANGE});
+                return std::unexpected(ParseError{ParseError::Kind::OUT_OF_RANGE});
 
             return val;
         }
         catch(const std::out_of_range & e)
         {
-            return std::unexpected(parse::Error{Error::Kind::OUT_OF_RANGE});
+            return std::unexpected(ParseError{ParseError::Kind::OUT_OF_RANGE});
         }
         catch(const std::invalid_argument & e)
         {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
         }
         catch(...)
         {
-            return std::unexpected(parse::Error{Error::Kind::UNKNOWN});
+            return std::unexpected(ParseError{ParseError::Kind::UNKNOWN});
         }
-        return std::unexpected(parse::Error{Error::Kind::UNKNOWN});
+        return std::unexpected(ParseError{ParseError::Kind::UNKNOWN});
     }
 
 
     template<>
     parse::Result<std::uint32_t> parseRouteArgAs<std::uint32_t>(const server::RouteArg & arg) 
     {
-        if(arg.getType() != server::RouteArgType::unsigned_integer)return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH});
+        if(arg.getType() != server::RouteArgType::unsigned_integer)return std::unexpected(ParseError{ParseError::Kind::TYPE_MISMATCH});
 
         try {
             std::size_t pos = 0;
@@ -230,33 +230,33 @@ namespace dcn::parse
 
             // Ensure the whole string was parsed
             if (pos != arg.getData().size())
-                return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
             
             // Ensure the value fits in uint32_t
             if (val > std::numeric_limits<std::uint32_t>::max())
-                return std::unexpected(parse::Error{Error::Kind::OUT_OF_RANGE});
+                return std::unexpected(ParseError{ParseError::Kind::OUT_OF_RANGE});
 
             return static_cast<std::uint32_t>(val);
         } 
         catch (const std::out_of_range & e) 
         {
-            return std::unexpected(parse::Error{Error::Kind::OUT_OF_RANGE});
+            return std::unexpected(ParseError{ParseError::Kind::OUT_OF_RANGE});
         }
         catch (const std::invalid_argument & e)
         {
-            return std::unexpected(parse::Error{Error::Kind::INVALID_VALUE});
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE});
         }
         catch (...)
         {
-            return std::unexpected(parse::Error{Error::Kind::UNKNOWN});
+            return std::unexpected(ParseError{ParseError::Kind::UNKNOWN});
         }
-        return std::unexpected(parse::Error{Error::Kind::UNKNOWN});
+        return std::unexpected(ParseError{ParseError::Kind::UNKNOWN});
     }
 
     template<>
     parse::Result<std::string> parseRouteArgAs<std::string>(const server::RouteArg & arg) 
     {
-        if(arg.getType() != server::RouteArgType::string)return std::unexpected(parse::Error{Error::Kind::TYPE_MISMATCH});
+        if(arg.getType() != server::RouteArgType::string)return std::unexpected(ParseError{ParseError::Kind::TYPE_MISMATCH});
         return arg.getData();
     }
 }

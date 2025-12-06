@@ -160,7 +160,7 @@ namespace dcn::evm
     static E _decodeError(const evmc::Result& r);
 
     template<>
-    static DeployError _decodeError(const evmc::Result& r)
+    DeployError _decodeError(const evmc::Result& r)
     {
         std::vector<std::uint8_t> selector;
 

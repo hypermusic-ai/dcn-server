@@ -21,13 +21,13 @@ namespace dcn::parse
     Result<std::vector<Samples>> parseFromJson(json json_val, use_json_t) 
     {
         if (!json_val.is_array())
-            return std::unexpected(Error{Error::Kind::TYPE_MISMATCH, "Invalid JSON object"});
+            return std::unexpected(ParseError{ParseError::Kind::TYPE_MISMATCH, "Invalid JSON object"});
 
         std::vector<Samples> result;
 
         for (const auto& item : json_val) {
             if (!item.contains("feature_path") || !item.contains("data"))
-                return std::unexpected(Error{Error::Kind::INVALID_VALUE, "feature_path or data not found"});
+                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "feature_path or data not found"});
 
             Samples s;
             s.set_feature_path(item["feature_path"].get<std::string>());
