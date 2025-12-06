@@ -12,6 +12,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include "parse_error.hpp"
+
 namespace dcn
 {
     /**

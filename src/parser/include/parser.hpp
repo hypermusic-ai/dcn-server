@@ -5,10 +5,22 @@ using json = nlohmann::json;
 
 #include <google/protobuf/util/json_util.h>
 
+#include "parse_error.hpp"
+
 namespace dcn::parse
 {   
+    /**
+     * @brief A tag type to indicate whether to use Protobuf or JSON for parsing.
+     * 
+     * This tag type is used to distinguish between Protobuf and JSON parsing.
+     */
     struct use_protobuf_t{};
 
+    /**
+     * @brief A tag type to indicate whether to use Protobuf or JSON for parsing.
+     * 
+     * This tag type is used to distinguish between Protobuf and JSON parsing.
+     */
     struct use_json_t{};
 
     /**

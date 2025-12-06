@@ -6,6 +6,7 @@ add_module(NAME "Server"
         "${PROJECT_PREFIX}::Utils"
         "${PROJECT_PREFIX}::Session"
         "${PROJECT_PREFIX}::HTTP"
+        "${PROJECT_PREFIX}::Parser"
         absl::hash
         absl::flat_hash_map
         spdlog::spdlog

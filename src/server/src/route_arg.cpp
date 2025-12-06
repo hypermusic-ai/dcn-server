@@ -191,7 +191,16 @@ namespace dcn::parse
         std::size_t val;
         try{
             val = std::stoull(arg.getData());
-        }catch(...)
+        }
+        catch(const std::out_of_range & e)
+        {
+            return std::nullopt;
+        }
+        catch(const std::invalid_argument & e)
+        {
+            return std::nullopt;
+        }
+        catch(...)
         {
             return std::nullopt;
         }

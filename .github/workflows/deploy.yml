@@ -41,7 +41,16 @@ jobs:
         unzip artifact.zip -d artifact
         mkdir install
         tar -xzf artifact/decentralised-art-server.tar.gz -C install
-
+    
+    - name: Stop server service
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: 34.118.118.250
+        username: hypermusic
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          sudo systemctl stop decentralised-art-server
+    
     - name: Clear remote install directory
       uses: appleboy/ssh-action@v1.0.3
       with:
