@@ -1,3 +1,6 @@
 [submodule "submodule/pt"]
 	path = submodule/pt
 	url = https://github.com/hypermusic-ai/PT.git
+[submodule "submodule/dcn-api-spec"]
+	path = submodule/dcn-api-spec
+	url = https://github.com/hypermusic-ai/dcn-api-spec.git
