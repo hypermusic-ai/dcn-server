@@ -9,18 +9,16 @@ var http__headers_8hpp =
       [ "AccessControlAllowOrigin", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9abbf70f4130c22de6b46dd3d053bfbf7d", null ],
       [ "AccessControlAllowMethods", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a3b2d53ac5f0d8b406e5297d82b61ce8d", null ],
       [ "AccessControlAllowHeaders", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9ac75e58fa03efd4a144123513dabd4c6a", null ],
-      [ "AccessControlAllowCredentials", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9ae52e605fe101fb00778715dbe2378e98", null ],
+      [ "AccessControlMaxAge", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a399251c4e7f44b72d5215e6c6cdee5bf", null ],
       [ "Authorization", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a9cd8a2455b1839ff98ef70c05b9b5983", null ],
       [ "Connection", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9ac2cc7082a89c1ad6631a2f66af5f00c0", null ],
       [ "ContentEncoding", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a94b393cfdfb356ba5e95a9f0f552e5f4", null ],
       [ "ContentLength", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a132d1f967127cbce22710ae8939b0ad3", null ],
       [ "ContentType", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9ab8178dd7819d7531e93b9d8112c16e11", null ],
-      [ "Cookie", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a706f10887bbeb729378c706eee126fa7", null ],
+      [ "CacheControl", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a9499572d046f5c2faebd1050147d7a68", null ],
       [ "Date", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a44749712dbec183e983dcd78a7736c41", null ],
       [ "Expect", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a7f036407d75c774176a7effbe959366b", null ],
-      [ "Origin", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a3edf8ca26a1ec14dd6e91dd277ae1de6", null ],
-      [ "SetCookie", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a2b6a91a2252e822b24c4aca7c30af865", null ],
-      [ "XRefreshToken", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9abf6d592fabee2a2de7f07b6dfa287ecc", null ]
+      [ "Origin", "http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a3edf8ca26a1ec14dd6e91dd277ae1de6", null ]
     ] ],
     [ "parseHeaderFromString", "http__headers_8hpp.html#a23b7828fd641751e92aefd8569c06b88", null ]
 ];

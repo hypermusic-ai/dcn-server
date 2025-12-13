@@ -134,70 +134,66 @@ $(document).ready(function(){initNavTree('utils_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    asio::awaitable&lt;void&gt; <a class="code hl_function" href="namespacedcn_1_1utils.html#aae9b2c4db93b9f4d05974a60179eb86a">ensureOnStrand</a>(<span class="keyword">const</span> asio::strand&lt;asio::io_context::executor_type&gt; &amp; strand);</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    std::string <a class="code hl_function" href="namespacedcn_1_1utils.html#ad50838f255d0cc53abf48456e8a1ec8c">escapeSolSrcQuotes</a>(<span class="keyword">const</span> std::string&amp; <a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a>);</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="keyword">template</span>&lt;<span class="keyword">class </span>DataT, <span class="keyword">class </span>ChildT, <span class="keyword">template</span>&lt;<span class="keyword">typename</span>...&gt; <span class="keyword">class </span>ChildListT&gt;</div>
-<div class="foldopen" id="foldopen00048" data-start="{" data-end="}">
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno"><a class="line" href="namespacedcn_1_1utils.html#a213229fb0c30f9ca92e2d1c60f550442">   48</a></span>    std::vector&lt;std::string&gt; <a class="code hl_function" href="namespacedcn_1_1utils.html#a213229fb0c30f9ca92e2d1c60f550442">topologicalSort</a>(   </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        <span class="keyword">const</span> absl::flat_hash_map&lt;std::string, DataT&gt; &amp; data,</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        std::function&lt;ChildListT&lt;ChildT&gt;(<span class="keyword">const</span> DataT &amp;)&gt; get_childreen,</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        std::function&lt;std::string(<span class="keyword">const</span> ChildT &amp;)&gt; get_child_name)</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    {</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        std::vector&lt;std::string&gt; sorted;</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        absl::flat_hash_set&lt;std::string&gt; visited;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        absl::flat_hash_set&lt;std::string&gt; on_stack;</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        std::function&lt;void(<span class="keyword">const</span> std::string&amp;)&gt; visit = [&amp;](<span class="keyword">const</span> std::string&amp; name)  {</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>            <span class="keywordflow">if</span> (visited.contains(name)) <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            <span class="keywordflow">if</span> (on_stack.contains(name)) {</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>                spdlog::error(std::format(<span class="stringliteral">&quot;Cycle detected involving : {}&quot;</span>, name));</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Cyclic dependency&quot;</span>);</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>            }</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="keyword">template</span>&lt;<span class="keyword">class </span>DataT, <span class="keyword">class </span>ChildT, <span class="keyword">template</span>&lt;<span class="keyword">typename</span>...&gt; <span class="keyword">class </span>ChildListT&gt;</div>
+<div class="foldopen" id="foldopen00046" data-start="{" data-end="}">
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="namespacedcn_1_1utils.html#a213229fb0c30f9ca92e2d1c60f550442">   46</a></span>    std::vector&lt;std::string&gt; <a class="code hl_function" href="namespacedcn_1_1utils.html#a213229fb0c30f9ca92e2d1c60f550442">topologicalSort</a>(   </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        <span class="keyword">const</span> absl::flat_hash_map&lt;std::string, DataT&gt; &amp; data,</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        std::function&lt;ChildListT&lt;ChildT&gt;(<span class="keyword">const</span> DataT &amp;)&gt; get_childreen,</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        std::function&lt;std::string(<span class="keyword">const</span> ChildT &amp;)&gt; get_child_name)</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    {</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        std::vector&lt;std::string&gt; sorted;</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        absl::flat_hash_set&lt;std::string&gt; visited;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        absl::flat_hash_set&lt;std::string&gt; on_stack;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        std::function&lt;void(<span class="keyword">const</span> std::string&amp;)&gt; visit = [&amp;](<span class="keyword">const</span> std::string&amp; name)  {</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>            <span class="keywordflow">if</span> (visited.contains(name)) <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>            <span class="keywordflow">if</span> (on_stack.contains(name)) {</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                spdlog::error(std::format(<span class="stringliteral">&quot;Cycle detected involving : {}&quot;</span>, name));</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>                <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Cyclic dependency&quot;</span>);</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>            }</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span> </div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>            on_stack.insert(name);</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>            on_stack.insert(name);</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>            <span class="keyword">auto</span> it = data.find(name);</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>            <span class="keywordflow">if</span> (it == data.end()) {</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                spdlog::warn(std::format(<span class="stringliteral">&quot;Missing dependency: {}&quot;</span>, name));</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                on_stack.erase(name);</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>            }</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>            std::string child_name;</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>            <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; child : get_childreen(it-&gt;second)) </div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>            {</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                child_name = get_child_name(child);</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                <span class="keywordflow">if</span>(child_name.empty()) <span class="keywordflow">continue</span>;</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                visit(child_name);</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>            }</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>            visited.insert(name);</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>            on_stack.erase(name);</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>            sorted.push_back(name);</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        };</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        <span class="comment">// perform the sort</span></div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; [name, _] : data) {</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>            visit(name);</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        }</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>        <span class="keywordflow">return</span> sorted;</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    }</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>            <span class="keyword">auto</span> it = data.find(name);</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>            <span class="keywordflow">if</span> (it == data.end()) {</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                spdlog::warn(std::format(<span class="stringliteral">&quot;Missing dependency: {}&quot;</span>, name));</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                on_stack.erase(name);</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>                <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>            }</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>            std::string child_name;</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>            <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; child : get_childreen(it-&gt;second)) </div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>            {</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                child_name = get_child_name(child);</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                <span class="keywordflow">if</span>(child_name.empty()) <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                visit(child_name);</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>            }</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>            visited.insert(name);</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>            on_stack.erase(name);</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>            sorted.push_back(name);</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        };</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        <span class="comment">// perform the sort</span></div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; [name, _] : data) {</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>            visit(name);</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        }</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        <span class="keywordflow">return</span> sorted;</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    }</div>
 </div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="namespacedcn_1_1utils.html#ac5be949d9e1bfe957e75587b3ef85c4e">equalsIgnoreCase</a>(<span class="keyword">const</span> std::string&amp; a, <span class="keyword">const</span> std::string&amp; b);</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>}</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="namespacedcn_1_1utils.html#ac5be949d9e1bfe957e75587b3ef85c4e">equalsIgnoreCase</a>(<span class="keyword">const</span> std::string&amp; a, <span class="keyword">const</span> std::string&amp; b);</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>}</div>
 <div class="ttc" id="alogo_8hpp_html"><div class="ttname"><a href="logo_8hpp.html">logo.hpp</a></div></div>
 <div class="ttc" id="anamespacedcn_1_1utils_html"><div class="ttname"><a href="namespacedcn_1_1utils.html">dcn::utils</a></div><div class="ttdef"><b>Definition</b> logo.hpp:6</div></div>
 <div class="ttc" id="anamespacedcn_1_1utils_html_a07545fa1ab2d1ccc349667eae8ba746f"><div class="ttname"><a href="namespacedcn_1_1utils.html#a07545fa1ab2d1ccc349667eae8ba746f">dcn::utils::currentTimestamp</a></div><div class="ttdeci">std::string currentTimestamp()</div><div class="ttdef"><b>Definition</b> utils.cpp:14</div></div>
-<div class="ttc" id="anamespacedcn_1_1utils_html_a213229fb0c30f9ca92e2d1c60f550442"><div class="ttname"><a href="namespacedcn_1_1utils.html#a213229fb0c30f9ca92e2d1c60f550442">dcn::utils::topologicalSort</a></div><div class="ttdeci">std::vector&lt; std::string &gt; topologicalSort(const absl::flat_hash_map&lt; std::string, DataT &gt; &amp;data, std::function&lt; ChildListT&lt; ChildT &gt;(const DataT &amp;)&gt; get_childreen, std::function&lt; std::string(const ChildT &amp;)&gt; get_child_name)</div><div class="ttdef"><b>Definition</b> utils.hpp:48</div></div>
+<div class="ttc" id="anamespacedcn_1_1utils_html_a213229fb0c30f9ca92e2d1c60f550442"><div class="ttname"><a href="namespacedcn_1_1utils.html#a213229fb0c30f9ca92e2d1c60f550442">dcn::utils::topologicalSort</a></div><div class="ttdeci">std::vector&lt; std::string &gt; topologicalSort(const absl::flat_hash_map&lt; std::string, DataT &gt; &amp;data, std::function&lt; ChildListT&lt; ChildT &gt;(const DataT &amp;)&gt; get_childreen, std::function&lt; std::string(const ChildT &amp;)&gt; get_child_name)</div><div class="ttdef"><b>Definition</b> utils.hpp:46</div></div>
 <div class="ttc" id="anamespacedcn_1_1utils_html_a3d90cd25bc6985e0d5d00227bf125b3e"><div class="ttname"><a href="namespacedcn_1_1utils.html#a3d90cd25bc6985e0d5d00227bf125b3e">dcn::utils::watchdog</a></div><div class="ttdeci">asio::awaitable&lt; void &gt; watchdog(std::chrono::steady_clock::time_point &amp;deadline)</div><div class="ttdoc">Suspends the coroutine until the given deadline is reached.</div><div class="ttdef"><b>Definition</b> utils.cpp:24</div></div>
 <div class="ttc" id="anamespacedcn_1_1utils_html_aae9b2c4db93b9f4d05974a60179eb86a"><div class="ttname"><a href="namespacedcn_1_1utils.html#aae9b2c4db93b9f4d05974a60179eb86a">dcn::utils::ensureOnStrand</a></div><div class="ttdeci">asio::awaitable&lt; void &gt; ensureOnStrand(const asio::strand&lt; asio::io_context::executor_type &gt; &amp;strand)</div><div class="ttdef"><b>Definition</b> utils.cpp:37</div></div>
-<div class="ttc" id="anamespacedcn_1_1utils_html_ac5be949d9e1bfe957e75587b3ef85c4e"><div class="ttname"><a href="namespacedcn_1_1utils.html#ac5be949d9e1bfe957e75587b3ef85c4e">dcn::utils::equalsIgnoreCase</a></div><div class="ttdeci">bool equalsIgnoreCase(const std::string &amp;a, const std::string &amp;b)</div><div class="ttdef"><b>Definition</b> utils.cpp:85</div></div>
-<div class="ttc" id="anamespacedcn_1_1utils_html_ad50838f255d0cc53abf48456e8a1ec8c"><div class="ttname"><a href="namespacedcn_1_1utils.html#ad50838f255d0cc53abf48456e8a1ec8c">dcn::utils::escapeSolSrcQuotes</a></div><div class="ttdeci">std::string escapeSolSrcQuotes(const std::string &amp;json)</div><div class="ttdef"><b>Definition</b> utils.cpp:46</div></div>
+<div class="ttc" id="anamespacedcn_1_1utils_html_ac5be949d9e1bfe957e75587b3ef85c4e"><div class="ttname"><a href="namespacedcn_1_1utils.html#ac5be949d9e1bfe957e75587b3ef85c4e">dcn::utils::equalsIgnoreCase</a></div><div class="ttdeci">bool equalsIgnoreCase(const std::string &amp;a, const std::string &amp;b)</div><div class="ttdef"><b>Definition</b> utils.cpp:46</div></div>
 <div class="ttc" id="anamespacedcn_1_1utils_html_afe5529604b645836efa07f3d4d662540"><div class="ttname"><a href="namespacedcn_1_1utils.html#afe5529604b645836efa07f3d4d662540">dcn::utils::loadBuildTimestamp</a></div><div class="ttdeci">std::string loadBuildTimestamp(const std::filesystem::path &amp;path)</div><div class="ttdef"><b>Definition</b> utils.cpp:5</div></div>
 <div class="ttc" id="anative_8h_html"><div class="ttname"><a href="native_8h.html">native.h</a></div></div>
-<div class="ttc" id="aparser_8hpp_html_ab701e3ac61a85b337ec5c1abaad6742d"><div class="ttname"><a href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a></div><div class="ttdeci">nlohmann::json json</div><div class="ttdef"><b>Definition</b> parser.hpp:4</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

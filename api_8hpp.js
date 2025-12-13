@@ -2,7 +2,6 @@ var api_8hpp =
 [
     [ "authenticate", "api_8hpp.html#a84b0570154c9b68b554f6cf40f0e37a0", null ],
     [ "GET_accountInfo", "api_8hpp.html#a3c6681bb79f21d75c954d0f5f71388dc", null ],
-    [ "GET_execute", "api_8hpp.html#af56fc9326a426e4fbd5faf556ffa6404", null ],
     [ "GET_feature", "api_8hpp.html#a9d81814e7e867eab74b53315a12b4f50", null ],
     [ "GET_nonce", "api_8hpp.html#a97630b7e1e5883727e6442a0ec593667", null ],
     [ "GET_serveBinaryFile", "api_8hpp.html#ac7263500248aba49d58d7c4dd862a8fa", null ],
@@ -16,12 +15,10 @@ var api_8hpp =
     [ "OPTIONS_auth", "api_8hpp.html#afd4339672d36de05fff428e92fdb5962", null ],
     [ "OPTIONS_execute", "api_8hpp.html#ac9f1a19ea3c228413c1a650f9e3afe18", null ],
     [ "OPTIONS_feature", "api_8hpp.html#aec5a63e57a327fa96864846c1429904d", null ],
-    [ "OPTIONS_refresh", "api_8hpp.html#a24d5f88fcdb6fe3e7acbea2443ae7fba", null ],
     [ "OPTIONS_serveFile", "api_8hpp.html#a8f570f78f941a9f58cc6ca52e52b5fea", null ],
     [ "OPTIONS_transformation", "api_8hpp.html#ae47b5ab3cbc895b27c1082db71b4e3a5", null ],
     [ "POST_auth", "api_8hpp.html#a3d8f5870182c1166c8cb064b8f269768", null ],
+    [ "POST_execute", "api_8hpp.html#a5f620238aad3df9f706a802c1cb935f8", null ],
     [ "POST_feature", "api_8hpp.html#a03a9e65e1f580cd0d7f3283ddb473624", null ],
-    [ "POST_refresh", "api_8hpp.html#aa8bedd0912bf5b900759192ff3b0fa0b", null ],
-    [ "POST_transformation", "api_8hpp.html#abe6e9efd44089b8c16a862dbd6539011", null ],
-    [ "setCORSHeaders", "api_8hpp.html#a8eb997e707a12cc1254162b0fb9c111f", null ]
+    [ "POST_transformation", "api_8hpp.html#abe6e9efd44089b8c16a862dbd6539011", null ]
 ];

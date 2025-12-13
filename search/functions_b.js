@@ -7,7 +7,6 @@ var searchData=
   ['options_5fauth_4',['OPTIONS_auth',['../namespacedcn.html#afd4339672d36de05fff428e92fdb5962',1,'dcn']]],
   ['options_5fexecute_5',['OPTIONS_execute',['../namespacedcn.html#ac9f1a19ea3c228413c1a650f9e3afe18',1,'dcn']]],
   ['options_5ffeature_6',['OPTIONS_feature',['../namespacedcn.html#aec5a63e57a327fa96864846c1429904d',1,'dcn']]],
-  ['options_5frefresh_7',['OPTIONS_refresh',['../namespacedcn.html#a24d5f88fcdb6fe3e7acbea2443ae7fba',1,'dcn']]],
-  ['options_5fservefile_8',['OPTIONS_serveFile',['../namespacedcn.html#a8f570f78f941a9f58cc6ca52e52b5fea',1,'dcn']]],
-  ['options_5ftransformation_9',['OPTIONS_transformation',['../namespacedcn.html#ae47b5ab3cbc895b27c1082db71b4e3a5',1,'dcn']]]
+  ['options_5fservefile_7',['OPTIONS_serveFile',['../namespacedcn.html#a8f570f78f941a9f58cc6ca52e52b5fea',1,'dcn']]],
+  ['options_5ftransformation_8',['OPTIONS_transformation',['../namespacedcn.html#ae47b5ab3cbc895b27c1082db71b4e3a5',1,'dcn']]]
 ];

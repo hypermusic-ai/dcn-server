@@ -5,6 +5,7 @@ var http__codes_8hpp =
       [ "Unknown", "http__codes_8hpp.html#a85103dcaf4539b1939d3a039e2f7e4ffa88183b946cc5f0e8c96b2e66e1c74a7e", null ],
       [ "OK", "http__codes_8hpp.html#a85103dcaf4539b1939d3a039e2f7e4ffae0aa021e21dddbd6d8cecec71e9cf564", null ],
       [ "Created", "http__codes_8hpp.html#a85103dcaf4539b1939d3a039e2f7e4ffa0eceeb45861f9585dd7a97a3e36f85c6", null ],
+      [ "NoContent", "http__codes_8hpp.html#a85103dcaf4539b1939d3a039e2f7e4ffacd447f1ec89f564ebac583d60087df12", null ],
       [ "BadRequest", "http__codes_8hpp.html#a85103dcaf4539b1939d3a039e2f7e4ffa9edf8fbf00a57d95a0af4923c9a1ec6f", null ],
       [ "Unauthorized", "http__codes_8hpp.html#a85103dcaf4539b1939d3a039e2f7e4ffae06d1ba70f1331e9f9a113cc2f887d3f", null ],
       [ "Forbidden", "http__codes_8hpp.html#a85103dcaf4539b1939d3a039e2f7e4ffa722969577a96ca3953e84e3d949dee81", null ],

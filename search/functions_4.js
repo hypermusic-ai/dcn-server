@@ -9,8 +9,7 @@ var searchData=
   ['encodeasarg_3c_20std_3a_3avector_3c_20std_3a_3auint32_5ft_20_3e_20_3e_6',['encodeasarg&lt; std::vector&lt; std::uint32_t &gt; &gt;',['../namespacedcn_1_1evm.html#ac211def2599ca121235b25eb193749af',1,'dcn::evm::encodeAsArg&lt; std::vector&lt; std::uint32_t &gt; &gt;(const std::vector&lt; std::uint32_t &gt; &amp;vec)'],['../namespacedcn_1_1evm.html#ac211def2599ca121235b25eb193749af',1,'dcn::evm::encodeAsArg&lt; std::vector&lt; std::uint32_t &gt; &gt;(const std::vector&lt; std::uint32_t &gt; &amp;vec)']]],
   ['ensureonstrand_7',['ensureOnStrand',['../namespacedcn_1_1utils.html#aae9b2c4db93b9f4d05974a60179eb86a',1,'dcn::utils']]],
   ['equalsignorecase_8',['equalsIgnoreCase',['../namespacedcn_1_1utils.html#ac5be949d9e1bfe957e75587b3ef85c4e',1,'dcn::utils']]],
-  ['escapesolsrcquotes_9',['escapeSolSrcQuotes',['../namespacedcn_1_1utils.html#ad50838f255d0cc53abf48456e8a1ec8c',1,'dcn::utils']]],
-  ['evm_10',['evm',['../classdcn_1_1evm_1_1EVM.html#a989874595effa3e7c1593e3a9862874e',1,'dcn::evm::EVM::EVM(EVM &amp;&amp;)=delete'],['../classdcn_1_1evm_1_1EVM.html#ae6e14e66ea643ae3771d55ccfc63cfc0',1,'dcn::evm::EVM::EVM(const EVM &amp;)=delete'],['../classdcn_1_1evm_1_1EVM.html#af7b672287fa04929480f831c0400d6f9',1,'dcn::evm::EVM::EVM(asio::io_context &amp;io_context, evmc_revision rev, std::filesystem::path solc_path)']]],
-  ['evmstorage_11',['EVMStorage',['../classdcn_1_1evm_1_1EVMStorage.html#a08b1c36e82deb5eb191d95cb56ba1471',1,'dcn::evm::EVMStorage']]],
-  ['execute_12',['execute',['../classdcn_1_1evm_1_1EVM.html#ab46ab6c4c180a7811f4b65e703c9ce9f',1,'dcn::evm::EVM']]]
+  ['evm_9',['evm',['../classdcn_1_1evm_1_1EVM.html#a989874595effa3e7c1593e3a9862874e',1,'dcn::evm::EVM::EVM(EVM &amp;&amp;)=delete'],['../classdcn_1_1evm_1_1EVM.html#ae6e14e66ea643ae3771d55ccfc63cfc0',1,'dcn::evm::EVM::EVM(const EVM &amp;)=delete'],['../classdcn_1_1evm_1_1EVM.html#af7b672287fa04929480f831c0400d6f9',1,'dcn::evm::EVM::EVM(asio::io_context &amp;io_context, evmc_revision rev, std::filesystem::path solc_path)']]],
+  ['evmstorage_10',['EVMStorage',['../classdcn_1_1evm_1_1EVMStorage.html#a08b1c36e82deb5eb191d95cb56ba1471',1,'dcn::evm::EVMStorage']]],
+  ['execute_11',['execute',['../classdcn_1_1evm_1_1EVM.html#ab46ab6c4c180a7811f4b65e703c9ce9f',1,'dcn::evm::EVM']]]
 ];

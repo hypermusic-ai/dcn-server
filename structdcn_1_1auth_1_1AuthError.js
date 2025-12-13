@@ -2,8 +2,6 @@ var structdcn_1_1auth_1_1AuthError =
 [
     [ "Kind", "structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57c", [
       [ "UNKNOWN", "structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57ca696b031073e74bf2cb98e5ef201d4aa3", null ],
-      [ "MISSING_COOKIE", "structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57ca2c4b4ac87a36b2ad47d78884360aed31", null ],
-      [ "INVALID_COOKIE", "structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57ca3e7f0e889fee2e626a11945fc6489118", null ],
       [ "MISSING_TOKEN", "structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57caec48a8d732016127cb8abee5ffc3777d", null ],
       [ "INVALID_TOKEN", "structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57ca506556a229186f5b45f364032625ff5b", null ],
       [ "INVALID_SIGNATURE", "structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57cad0eb6b378baae0b4b64c2933674e61fc", null ],
