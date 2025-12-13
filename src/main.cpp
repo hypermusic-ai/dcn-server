@@ -93,21 +93,31 @@ int main(int argc, char* argv[])
     server.setIdleInterval(5000ms);
     
     const auto ico = dcn::file::loadBinaryFile(std::filesystem::path{"media"} / "img" / "DCN.ico");
-
-    const auto simple_form = dcn::file::loadTextFile(std::filesystem::path{"html"} / "simple_form.html");
+    
+    // HTML
+    const auto simple_form_html = dcn::file::loadTextFile(std::filesystem::path{"html"} / "simple_form.html");
+    
+    // JS
     const auto simple_form_js = dcn::file::loadTextFile(std::filesystem::path{"js"} / "simple_form.js");
+    const auto auth_js = dcn::file::loadTextFile(std::filesystem::path{"js"} / "auth.js");
+
+    // CSS
     const auto simple_form_css = dcn::file::loadTextFile(std::filesystem::path{"styles"} / "simple_form.css");
 
-    if(simple_form && simple_form_js && simple_form_css)
+    if(simple_form_html && simple_form_js && auth_js && simple_form_css)
     {
         server.addRoute({dcn::http::Method::HEAD, "/"},     dcn::HEAD_serveFile);
         server.addRoute({dcn::http::Method::OPTIONS, "/"},  dcn::OPTIONS_serveFile);
-        server.addRoute({dcn::http::Method::GET, "/"},      dcn::GET_serveFile, "text/html; charset=utf-8", std::cref(simple_form.value()));
+        server.addRoute({dcn::http::Method::GET, "/"},      dcn::GET_serveFile, "text/html; charset=utf-8", std::cref(simple_form_html.value()));
 
-        server.addRoute({dcn::http::Method::HEAD, "/js/simple_form.js"},    dcn::HEAD_serveFile);
-        server.addRoute({dcn::http::Method::OPTIONS, "/js/simple_form.js"}, dcn::OPTIONS_serveFile);
-        server.addRoute({dcn::http::Method::GET, "/js/simple_form.js"},     dcn::GET_serveFile, "text/javascript; charset=utf-8", std::cref(simple_form_js.value()));
+        server.addRoute({dcn::http::Method::HEAD, "/js/simple_form"},    dcn::HEAD_serveFile);
+        server.addRoute({dcn::http::Method::OPTIONS, "/js/simple_form"}, dcn::OPTIONS_serveFile);
+        server.addRoute({dcn::http::Method::GET, "/js/simple_form"},     dcn::GET_serveFile, "text/javascript; charset=utf-8", std::cref(simple_form_js.value()));
     
+        server.addRoute({dcn::http::Method::HEAD, "/js/auth"},    dcn::HEAD_serveFile);
+        server.addRoute({dcn::http::Method::OPTIONS, "/js/auth"}, dcn::OPTIONS_serveFile);
+        server.addRoute({dcn::http::Method::GET, "/js/auth"},     dcn::GET_serveFile, "text/javascript; charset=utf-8", std::cref(auth_js.value()));
+
         server.addRoute({dcn::http::Method::HEAD, "/styles/simple_form.css"},       dcn::HEAD_serveFile);
         server.addRoute({dcn::http::Method::OPTIONS, "/styles/simple_form.css"},    dcn::OPTIONS_serveFile);
         server.addRoute({dcn::http::Method::GET, "/styles/simple_form.css"},        dcn::GET_serveFile, "text/css; charset=utf-8", std::cref(simple_form_css.value()));
@@ -127,9 +137,6 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::OPTIONS, "/auth"},  dcn::OPTIONS_auth);
     server.addRoute({dcn::http::Method::POST, "/auth"},     dcn::POST_auth, std::ref(auth_manager));
 
-    server.addRoute({dcn::http::Method::OPTIONS, "/refresh"},   dcn::OPTIONS_refresh);
-    server.addRoute({dcn::http::Method::POST, "/refresh"},      dcn::POST_refresh, std::ref(auth_manager));
-
     server.addRoute({dcn::http::Method::OPTIONS, "/account/<string>?limit=<uint>&page=<uint>"}, dcn::OPTIONS_accountInfo);
     server.addRoute({dcn::http::Method::GET,    "/account/<string>?limit=<uint>&page=<uint>"},  dcn::GET_accountInfo, std::ref(registry));
 
@@ -146,8 +153,8 @@ int main(int argc, char* argv[])
 
     //server.addRoute({dcn::http::Method::GET, "/condition"},                          dcn::GET_condition);
     //server.addRoute({dcn::http::Method::POST, "/condition"},                         dcn::POST_condition);
-    server.addRoute({dcn::http::Method::OPTIONS, "/execute/<string>/<uint>/<~[<(<uint>;<uint>)>]>"},    dcn::OPTIONS_execute);
-    server.addRoute({dcn::http::Method::GET, "/execute/<string>/<uint>/<~[<(<uint>;<uint>)>]>"},        dcn::GET_execute, std::cref(auth_manager), std::cref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::OPTIONS, "/execute"},   dcn::OPTIONS_execute);
+    server.addRoute({dcn::http::Method::POST, "/execute"},      dcn::POST_execute, std::cref(auth_manager), std::ref(evm));
 
     // create directories
     std::filesystem::create_directory(dcn::file::getStoragePath());

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package dcn;
+
+// Represents a pair (uint32, uint32)
+message RunningInstance 
+{
+  uint32 start_point  = 1;
+  uint32 transformation_shift = 2;
+}
+
+// Execute request payload
+message ExecuteRequest 
+{
+  string feature_name = 1;
+  uint32 n = 2;
+  repeated RunningInstance running_instances = 3;
+}

@@ -26,7 +26,7 @@ namespace dcn::http
         AccessControlAllowOrigin,
         AccessControlAllowMethods,
         AccessControlAllowHeaders,
-        AccessControlAllowCredentials,
+        AccessControlMaxAge,
 
         Authorization,
 
@@ -34,16 +34,13 @@ namespace dcn::http
         ContentEncoding,
         ContentLength,
         ContentType,
+
+        CacheControl,
         
-        Cookie,
         Date,
         Expect,
 
-        Origin,
-
-        SetCookie,
-
-        XRefreshToken
+        Origin
     };
 
     /**
@@ -74,7 +71,7 @@ struct std::formatter<dcn::http::Header> : std::formatter<std::string> {
         case dcn::http::Header::AccessControlAllowOrigin:       return formatter<string>::format("Access-Control-Allow-Origin", ctx);
         case dcn::http::Header::AccessControlAllowMethods:      return formatter<string>::format("Access-Control-Allow-Methods", ctx);
         case dcn::http::Header::AccessControlAllowHeaders:      return formatter<string>::format("Access-Control-Allow-Headers", ctx);
-        case dcn::http::Header::AccessControlAllowCredentials:  return formatter<string>::format("Access-Control-Allow-Credentials", ctx);
+        case dcn::http::Header::AccessControlMaxAge:            return formatter<string>::format("Access-Control-Max-Age", ctx);
         case dcn::http::Header::Authorization:                  return formatter<string>::format("Authorization", ctx);
 
         // B
@@ -84,19 +81,13 @@ struct std::formatter<dcn::http::Header> : std::formatter<std::string> {
         case dcn::http::Header::ContentEncoding:    return formatter<string>::format("Content-Encoding", ctx);
         case dcn::http::Header::ContentLength:      return formatter<string>::format("Content-Length", ctx);
         case dcn::http::Header::ContentType:        return formatter<string>::format("Content-Type", ctx);
-        case dcn::http::Header::Cookie:             return formatter<string>::format("Cookie", ctx);
+        case dcn::http::Header::CacheControl:        return formatter<string>::format("Cache-Control", ctx);
 
         // D
         case dcn::http::Header::Date:   return formatter<string>::format("Date", ctx);
 
         // O
         case dcn::http::Header::Origin: return formatter<string>::format("Origin", ctx);
-
-        // S
-        case dcn::http::Header::SetCookie:  return formatter<string>::format("Set-Cookie", ctx);
-
-        //X
-        case dcn::http::Header::XRefreshToken:  return formatter<string>::format("X-Refresh-Token", ctx);
 
         // Unknown
         case dcn::http::Header::Unknown:    return formatter<string>::format("Unknown", ctx);

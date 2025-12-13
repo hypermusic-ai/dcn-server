@@ -1,30 +1,33 @@
 #include "api.hpp"
 
+// TODO
+// ABI offset encoding (correctness)
+// Add size limits (DoS protection)
+// Define a real execution budget / gas policy
+
 namespace dcn
 {
 
     asio::awaitable<http::Response> HEAD_transformation(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry)
     {
         http::Response response;
-        response.setVersion("HTTP/1.1");
-        response.setHeader(http::Header::Connection, "close");
-
-        setCORSHeaders(request, response);
+        response.setCode(http::Code::Unknown)
+                .setVersion("HTTP/1.1")
+                .setHeader(http::Header::AccessControlAllowOrigin, "*")
+                .setHeader(http::Header::CacheControl, "no-store")
+                .setHeader(http::Header::ContentLength, "0")
+                .setHeader(http::Header::Connection, "close");
 
         // Expect /transformation/<name> or /transformation/<name>/<address>
         if (args.size() > 2 || args.size() == 0) {
             response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-            response.setHeader(http::Header::ContentLength, "0");
             co_return response;
         }
 
-        auto transformation_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
+        const auto transformation_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
 
         if (!transformation_name_result) {
             response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-            response.setHeader(http::Header::ContentLength, "0");
             co_return response;
         }
 
@@ -38,8 +41,6 @@ namespace dcn
 
             if (!transformation_address_arg) {
                 response.setCode(http::Code::BadRequest);
-                response.setHeader(http::Header::ContentType, "application/json");
-                response.setHeader(http::Header::ContentLength, "0");
                 co_return response;
             }
 
@@ -47,8 +48,6 @@ namespace dcn
 
             if (!transformation_address_result) {
                 response.setCode(http::Code::BadRequest);
-                response.setHeader(http::Header::ContentType, "application/json");
-                response.setHeader(http::Header::ContentLength, "0");
                 co_return response;
             }
 
@@ -66,67 +65,56 @@ namespace dcn
         if (!transformation_res) {
             // Transformation not found
             response.setCode(http::Code::NotFound);
-            response.setHeader(http::Header::ContentType, "application/json");
-            response.setHeader(http::Header::ContentLength, "0");
             co_return response;
         }
 
         // Transformation exists
         response.setCode(http::Code::OK);
-        response.setHeader(http::Header::ContentType, "application/json");
-        response.setHeader(http::Header::ContentLength, "0");
         co_return response;
     }
 
     asio::awaitable<http::Response> OPTIONS_transformation(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
-        response.setVersion("HTTP/1.1");
+        response.setCode(http::Code::NoContent)
+                .setVersion("HTTP/1.1")
+                .setHeader(http::Header::AccessControlAllowOrigin, "*")
+                .setHeader(http::Header::AccessControlAllowMethods, "HEAD, GET, POST, OPTIONS")
+                .setHeader(http::Header::AccessControlAllowHeaders, "Authorization, Content-Type")
+                .setHeader(http::Header::AccessControlMaxAge, "600")
+                .setHeader(http::Header::Connection, "close");
 
-        setCORSHeaders(request, response);
-
-        response.setHeader(http::Header::AccessControlAllowMethods, "HEAD, GET, POST, OPTIONS");
-        response.setHeader(http::Header::AccessControlAllowHeaders, "authorization, content-type");
-        response.setHeader(http::Header::Connection, "close");
-        response.setHeader(http::Header::ContentType, "text/plain");
-        response.setHeader(http::Header::AccessControlAllowCredentials, "true");
-        response.setCode(http::Code::OK);
-        response.setBodyWithContentLength("OK");
         co_return response;
     }
 
     asio::awaitable<http::Response> GET_transformation(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry, evm::EVM & evm)
     {
         http::Response response;
-        response.setVersion("HTTP/1.1");
-        response.setHeader(http::Header::Connection, "close");
-
-        setCORSHeaders(request, response);
+        response.setCode(http::Code::Unknown)
+                .setVersion("HTTP/1.1")
+                .setHeader(http::Header::AccessControlAllowOrigin, "*")
+                .setHeader(http::Header::ContentType, "application/json")
+                .setHeader(http::Header::CacheControl, "no-store")
+                .setHeader(http::Header::Connection, "close");
 
         if(args.size() > 2 || args.size() == 0)
         {
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Invalid url";
-            response.setBodyWithContentLength(error_output.dump());
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", "Invalid number of arguments. Expected 1 or 2 arguments."}
+                }.dump());
 
             co_return response;
         }
 
-        auto transformation_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
+        const auto transformation_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
 
         if(!transformation_name_result)
         {
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Invalid url";
-            response.setBodyWithContentLength(error_output.dump());
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", "Invalid transformation name"}
+                }.dump());
 
             co_return response;
         }
@@ -140,13 +128,10 @@ namespace dcn
 
             if(!transformation_address_arg)
             {
-                response.setCode(http::Code::BadRequest);
-                response.setHeader(http::Header::ContentType, "application/json");
-
-                json error_output;
-                error_output["error"] = std::format("{}", response.getCode());
-                error_output["message"] = "Invalid url";
-                response.setBodyWithContentLength(error_output.dump());
+                response.setCode(http::Code::BadRequest)
+                    .setBodyWithContentLength(json {
+                        {"message", "Invalid transformation address"}
+                    }.dump());
 
                 co_return response;
             }
@@ -155,13 +140,10 @@ namespace dcn
 
             if(!transformation_address_result)
             {
-                response.setCode(http::Code::BadRequest);
-                response.setHeader(http::Header::ContentType, "application/json");
-
-                json error_output;
-                error_output["error"] = std::format("{}", response.getCode());
-                error_output["message"] = "Invalid url";
-                response.setBodyWithContentLength(error_output.dump());
+                response.setCode(http::Code::BadRequest)
+                    .setBodyWithContentLength(json {
+                        {"message", "Invalid transformation address value"}
+                    }.dump());
 
                 co_return response;
             }
@@ -175,27 +157,22 @@ namespace dcn
 
         if(!transformation_res) 
         {
-            response.setCode(http::Code::NotFound);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Transformation not found";
-            response.setBodyWithContentLength(error_output.dump());
+            response.setCode(http::Code::NotFound)
+                .setBodyWithContentLength(json {
+                    {"message", "Transformation not found"}
+                }.dump());
 
             co_return response;
         }
+        
         auto json_res = parse::parseToJson(*transformation_res, parse::use_json);
 
         if(!json_res)
         {
-            response.setCode(http::Code::InternalServerError);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Internal server error";
-            response.setBodyWithContentLength(error_output.dump());
+            response.setCode(http::Code::InternalServerError)
+                .setBodyWithContentLength(json {
+                    {"message", "Cannot parse transformation to JSON"}
+                }.dump());
 
             co_return response;
         }
@@ -219,7 +196,7 @@ namespace dcn
         input_data.insert(input_data.end(), transformation_name.begin(), transformation_name.end());
 
         // Step 5: Padding to 32-byte boundary
-        size_t padding = (32 - (transformation_name.size() % 32)) % 32;
+        const std::size_t padding = (32 - (transformation_name.size() % 32)) % 32;
         input_data.insert(input_data.end(), padding, 0);
 
         co_await evm.setGas(evm.getRegistryAddress(), evm::DEFAULT_GAS_LIMIT);
@@ -228,34 +205,24 @@ namespace dcn
         // check execution status
         if(!exec_result)
         {
-            spdlog::error("Failed to fetch transformation {}", exec_result.error());
-            response.setHeader(http::Header::Connection, "close");
-            response.setCode(http::Code::InternalServerError);
-            response.setHeader(http::Header::ContentType, "application/json");
+            response.setCode(http::Code::InternalServerError)
+                .setBodyWithContentLength(json {
+                    {"message", std::format("Failed to fetch transformation : {}", exec_result.error())}
+                }.dump());
 
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = std::format("Failed to fetch transformation : {}", exec_result.error());
-            response.setBodyWithContentLength(error_output.dump());
-
-            co_return std::move(response);
+            co_return response;
         }
 
         const auto transformation_address = evm::decodeReturnedValue<evm::Address>(exec_result.value());
         const auto owner_result = co_await fetchOwner(evm, transformation_address);
         if(!owner_result)
         {
-            spdlog::error("Failed to fetch owner {}", owner_result.error());
-            response.setHeader(http::Header::Connection, "close");
-            response.setCode(http::Code::InternalServerError);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = std::format("Failed to fetch owner : {}", owner_result.error());
-            response.setBodyWithContentLength(error_output.dump());
+            response.setCode(http::Code::InternalServerError)
+                .setBodyWithContentLength(json {
+                    {"message", std::format("Failed to fetch owner: {}", owner_result.error())}
+                }.dump());
             
-            co_return std::move(response);
+            co_return response;
         }
 
         const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
@@ -264,54 +231,56 @@ namespace dcn
         (*json_res)["local_address"] = evmc::hex(transformation_address);
         (*json_res)["address"] = "0x0";
 
-        response.setHeader(http::Header::ContentType, "application/json");
-        response.setCode(http::Code::OK);
-        response.setBodyWithContentLength(json_res->dump());
-        co_return std::move(response);
+        response.setCode(http::Code::OK)
+            .setBodyWithContentLength(json_res->dump());
+        
+        co_return response;
     }
 
     asio::awaitable<http::Response> POST_transformation(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm)
     {
         http::Response response;
-        response.setVersion("HTTP/1.1");
-        
-        setCORSHeaders(request, response);
+        response.setCode(http::Code::Unknown)
+                .setVersion("HTTP/1.1")
+                .setHeader(http::Header::AccessControlAllowOrigin, "*")
+                .setHeader(http::Header::ContentType, "application/json")
+                .setHeader(http::Header::Connection, "close");
+
+        if(!args.empty())
+        {
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", "Unexpected arguments"}
+                }.dump());
+
+            co_return response;
+        }
 
         const auto auth_result = co_await authenticate(request, auth_manager);
 
         if(!auth_result)
         {
-            response.setHeader(http::Header::Connection, "close");
-            response.setCode(http::Code::Unauthorized);
-            response.setHeader(http::Header::ContentType, "application/json");
+            response.setCode(http::Code::Unauthorized)
+                .setBodyWithContentLength(json {
+                    {"message", std::format("Authentication error: {}", auth_result.error().kind)}
+                }.dump());
 
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = std::format("Error: {}", auth_result.error().kind);
-            response.setBodyWithContentLength(error_output.dump());
-
-            co_return std::move(response);
+            co_return response;
         }
         const auto & address = auth_result.value();
 
         spdlog::debug(std::format("token verified address: {}", address));
         
-        // every double-quote character (") is escaped with a backslash (\)
-        auto transformation_res = parse::parseFromJson<Transformation>(utils::escapeSolSrcQuotes(request.getBody()), parse::use_protobuf);
+        const auto transformation_res = parse::parseFromJson<Transformation>(request.getBody(), parse::use_protobuf);
 
         if(!transformation_res) 
         {
-            spdlog::error("Failed to parse transformation");
-            response.setHeader(http::Header::Connection, "close");
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", std::format("Failed to parse transformation: {}", transformation_res.error().kind)}
+                }.dump());
 
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Failed to parse transformation";
-            response.setBodyWithContentLength(error_output.dump());
-
-            co_return std::move(response);
+            co_return response;
         }
 
         const Transformation & transformation = *transformation_res;
@@ -323,17 +292,12 @@ namespace dcn
         const auto deploy_res = co_await loader::deployTransformation(evm, registry, transformation_record);
         if(!deploy_res)
         {
-            spdlog::error("Failed to deploy transformation");
-            response.setHeader(http::Header::Connection, "close");
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", std::format("Failed to deploy transformation. Error: {}", deploy_res.error().kind)}
+                }.dump());
 
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = std::format("Failed to deploy transformation. Error: {}", deploy_res.error().kind);
-            response.setBodyWithContentLength(error_output.dump());
-
-            co_return std::move(response);
+            co_return response;
         }
 
         json json_output;
@@ -342,11 +306,9 @@ namespace dcn
         json_output["local_address"] = evmc::hex(deploy_res.value());
         json_output["address"] = "0x0";
 
-        response.setHeader(http::Header::Connection, "close");
-        response.setHeader(http::Header::ContentType, "application/json");
-        response.setCode(http::Code::Created);
-        response.setBodyWithContentLength(json_output.dump());
+        response.setCode(http::Code::Created)
+            .setBodyWithContentLength(json_output.dump());
 
-        co_return std::move(response);
+        co_return response;
     }
 }

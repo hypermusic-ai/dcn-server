@@ -1,41 +1,42 @@
 #include "api.hpp"
 
+// TODO
+// ABI offset encoding (correctness)
+// Add size limits (DoS protection)
+// Define a real execution budget / gas policy
+
 namespace dcn
 {
     asio::awaitable<http::Response> OPTIONS_execute(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
-        response.setVersion("HTTP/1.1");
-
-        setCORSHeaders(request, response);
-
-        response.setHeader(http::Header::AccessControlAllowMethods, "GET, POST, OPTIONS");
-        response.setHeader(http::Header::AccessControlAllowHeaders, "authorization, content-type");
-        response.setHeader(http::Header::Connection, "close");
-        response.setHeader(http::Header::ContentType, "text/plain");
-        response.setHeader(http::Header::AccessControlAllowCredentials, "true");
-        response.setCode(http::Code::OK);
-        response.setBodyWithContentLength("OK");
+        response.setCode(http::Code::NoContent)
+                .setVersion("HTTP/1.1")
+                .setHeader(http::Header::AccessControlAllowOrigin, "*")
+                .setHeader(http::Header::AccessControlAllowMethods, "POST, OPTIONS")
+                .setHeader(http::Header::AccessControlAllowHeaders, "Authorization, Content-Type")
+                .setHeader(http::Header::AccessControlMaxAge, "600")
+                .setHeader(http::Header::Connection, "close");
+        
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_execute(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, const auth::AuthManager & auth_manager, const registry::Registry & registry, evm::EVM & evm)
+    asio::awaitable<http::Response> POST_execute(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, const auth::AuthManager & auth_manager, evm::EVM & evm)
     {
         http::Response response;
-        response.setVersion("HTTP/1.1");
-        response.setHeader(http::Header::Connection, "close");
-        
-        setCORSHeaders(request, response);
+        response.setCode(http::Code::Unknown)
+                .setVersion("HTTP/1.1")
+                .setHeader(http::Header::AccessControlAllowOrigin, "*")
+                .setHeader(http::Header::ContentType, "application/json")
+                .setHeader(http::Header::CacheControl, "no-store")
+                .setHeader(http::Header::Connection, "close");
 
-        if(args.size() != 2 && args.size() != 3)
+        if(!args.empty())
         {
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "invalid url";
-            response.setBodyWithContentLength(error_output.dump());
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", "Unexpected arguments"}
+                }.dump());
 
             co_return response;
         }
@@ -44,74 +45,39 @@ namespace dcn
 
         if(!auth_result)
         {
-            response.setHeader(http::Header::Connection, "close");
-            response.setCode(http::Code::Unauthorized);
-            response.setHeader(http::Header::ContentType, "application/json");
+            response.setCode(http::Code::Unauthorized)
+                .setBodyWithContentLength(json {
+                    {"message", std::format("Authentication error: {}", auth_result.error().kind)}
+                }.dump());
 
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = std::format("Error: {}", auth_result.error().kind);
-            response.setBodyWithContentLength(error_output.dump());
-
-            co_return std::move(response);
+            co_return response;
         }
         const auto & address = auth_result.value();
 
-        // input arguments - from url
+        // parse execution request from json_string
+        const auto execute_request_res = parse::parseFromJson<ExecuteRequest>(request.getBody(), parse::use_protobuf);
 
-        // name
-        auto feature_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
-        if(!feature_name_result)
+        if(!execute_request_res) 
         {
-            spdlog::error("invalid feature name");
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "invalid feature name";
-            response.setBodyWithContentLength(error_output.dump());
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", "Failed to parse execute request"}
+                }.dump());
 
             co_return response;
         }
-        const auto & feature_name = feature_name_result.value();
+        const ExecuteRequest & execute_request = *execute_request_res;
 
-        // N
-        const auto N_result = parse::parseRouteArgAs<std::uint32_t>(args.at(1));
-        if(!N_result)
+        static constexpr uint32_t MAX_N = 65536;
+
+        if(execute_request.n() > MAX_N)
         {
-            spdlog::error("invalid number of samples");
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "invalid number of samples";
-            response.setBodyWithContentLength(error_output.dump());
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", "N is too large"}
+                }.dump());
 
             co_return response;
-        }
-        const std::uint32_t & N = N_result.value();
-
-        // running instaces
-        std::vector<std::tuple<std::uint32_t, std::uint32_t>> running_instances;
-        if(args.size() == 3)
-        {
-            auto running_instances_result = parse::parseRouteArgAs<std::vector<std::tuple<std::uint32_t, std::uint32_t>>>(args.at(2));
-            if(!running_instances_result)
-            {
-                spdlog::error("invalid running instaces");
-                response.setCode(http::Code::BadRequest);
-                response.setHeader(http::Header::ContentType, "application/json");
-
-                json error_output;
-                error_output["error"] = std::format("{}", response.getCode());
-                error_output["message"] = "invalid running instaces";
-                response.setBodyWithContentLength(error_output.dump());
-
-                co_return response;
-            }
-            running_instances = running_instances_result.value();
         }
 
         std::vector<uint8_t> input_data;
@@ -125,15 +91,15 @@ namespace dcn
         input_data.insert(input_data.end(), offset_to_string.begin(), offset_to_string.end());
 
         // 2. uint32 argument, properly encoded as a 32-byte word
-        std::vector<std::uint8_t> N_bytes = evm::encodeAsArg(N);
+        const std::vector<std::uint8_t> N_bytes = evm::encodeAsArg(execute_request.n());
         input_data.insert(input_data.end(), N_bytes.begin(), N_bytes.end());
 
         // (String encoding)
-        std::vector<std::uint8_t> name_bytes = evm::encodeAsArg(feature_name);
+        const std::vector<std::uint8_t> name_bytes = evm::encodeAsArg(execute_request.feature_name());
 
         // 3. Offset to vector<tuple>, will be right after string
         std::vector<uint8_t> offset_tuple_vec(32, 0);
-        size_t offset_to_tuple_vec = 0x60 + name_bytes.size();  // string offset + string dynamic payload
+        const size_t offset_to_tuple_vec = 0x60 + name_bytes.size();  // string offset + string dynamic payload
         offset_tuple_vec[28] = (offset_to_tuple_vec >> 24) & 0xFF;
         offset_tuple_vec[29] = (offset_to_tuple_vec >> 16) & 0xFF;
         offset_tuple_vec[30] = (offset_to_tuple_vec >> 8) & 0xFF;
@@ -143,8 +109,15 @@ namespace dcn
         // 4. Append the string bytes (dynamic)
         input_data.insert(input_data.end(), name_bytes.begin(), name_bytes.end());
         
+        // convert google::protobuf::RepeatedPtrField<dcn::RunningInstance> into vector<tuple<uint32_t, uint32_t>>
+        std::vector<std::tuple<std::uint32_t, std::uint32_t>> running_instance;
+        for (const auto& running_instance_item : execute_request.running_instances())
+        {
+            running_instance.push_back(std::make_tuple(running_instance_item.start_point(), running_instance_item.transformation_shift()));
+        }
+
         // 5. Append vector<tuple<uint32_t, uint32_t>> bytes (dynamic)
-        std::vector<uint8_t> tuple_vec_bytes = evm::encodeAsArg(running_instances);
+        const std::vector<uint8_t> tuple_vec_bytes = evm::encodeAsArg(running_instance);
         input_data.insert(input_data.end(), tuple_vec_bytes.begin(), tuple_vec_bytes.end());
 
         // execute call to runner
@@ -155,41 +128,30 @@ namespace dcn
         // check execution status
         if(!exec_result)
         {
-            spdlog::error("Failed to execute code {}", exec_result.error());
-            response.setHeader(http::Header::Connection, "close");
-            response.setCode(http::Code::InternalServerError);
-            response.setHeader(http::Header::ContentType, "application/json");
+            response.setCode(http::Code::InternalServerError)          
+                .setBodyWithContentLength(json {
+                    {"message", std::format("Failed to execute code : {}", exec_result.error())}
+                }.dump());
 
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = std::format("Failed to execute code : {}", exec_result.error());
-            response.setBodyWithContentLength(error_output.dump());
-
-            co_return std::move(response);
+            co_return response;
         }
 
-        auto samples = evm::decodeReturnedValue<std::vector<Samples>>(exec_result.value());
+        const auto samples = evm::decodeReturnedValue<std::vector<Samples>>(exec_result.value());
+        const auto json_output = parse::parseToJson(samples, parse::use_json);
 
-        auto json_output = parse::parseToJson(samples, parse::use_json);
         if(!json_output)
         {
-            spdlog::error("Failed to parse json output");
-            response.setHeader(http::Header::Connection, "close");
-            response.setCode(http::Code::InternalServerError);
-            response.setHeader(http::Header::ContentType, "application/json");
+            response.setCode(http::Code::InternalServerError)
+                .setBodyWithContentLength(json {
+                    {"message", "Failed to parse json output"}
+                }.dump());
 
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Failed to parse json output";
-            response.setBodyWithContentLength(error_output.dump());
-
-            co_return std::move(response);
+            co_return response;
         }
 
-        response.setHeader(http::Header::Connection, "close");
-        response.setHeader(http::Header::ContentType, "application/json");
-        response.setCode(http::Code::OK);
-        response.setBodyWithContentLength(json_output->dump());
-        co_return std::move(response);
+        response.setCode(http::Code::OK)
+            .setBodyWithContentLength(json_output->dump());
+        
+        co_return response;
     }
 }

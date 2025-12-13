@@ -5,37 +5,32 @@ namespace dcn
     asio::awaitable<http::Response> OPTIONS_accountInfo(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
-        response.setVersion("HTTP/1.1");
+        response.setCode(http::Code::NoContent)
+                .setVersion("HTTP/1.1")
+                .setHeader(http::Header::AccessControlAllowOrigin, "*")
+                .setHeader(http::Header::AccessControlAllowMethods, "GET, OPTIONS")
+                .setHeader(http::Header::AccessControlAllowHeaders, "Content-Type")
+                .setHeader(http::Header::AccessControlMaxAge, "600")
+                .setHeader(http::Header::Connection, "close");
 
-        setCORSHeaders(request, response);
-
-        response.setHeader(http::Header::AccessControlAllowMethods, "GET, OPTIONS");
-        response.setHeader(http::Header::AccessControlAllowHeaders, "authorization, content-type");
-        response.setHeader(http::Header::Connection, "close");
-        response.setHeader(http::Header::ContentType, "text/plain");
-        response.setHeader(http::Header::AccessControlAllowCredentials, "true");
-        response.setCode(http::Code::OK);
-        response.setBodyWithContentLength("OK");
         co_return response;
     }
 
     asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList query_args, registry::Registry & registry)
     {
         http::Response response;
-        response.setVersion("HTTP/1.1")
-                .setHeader(http::Header::Connection, "close");
-
-        setCORSHeaders(request, response);
+        response.setCode(http::Code::Unknown)
+                .setVersion("HTTP/1.1")
+                .setHeader(http::Header::AccessControlAllowOrigin, "*")
+                .setHeader(http::Header::Connection, "close")
+                .setHeader(http::Header::ContentType, "application/json");
 
         if(args.size() != 1 || query_args.size() != 2)
         {
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Invalid number of arguments";
-            response.setBodyWithContentLength(error_output.dump());
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json{
+                    {"message", "Invalid number of arguments"}
+                }.dump());
 
             co_return response;
         }
@@ -43,41 +38,32 @@ namespace dcn
 
         if(!address_arg)
         {
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Invalid address argument";
-            response.setBodyWithContentLength(error_output.dump());
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json{
+                    {"message", "Invalid address argument"}
+                }.dump());
 
             co_return response;
         }
 
         if(query_args.contains("limit") == false || query_args.contains("page") == false)
         {
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Missing arguments limit or page";
-            response.setBodyWithContentLength(error_output.dump());
-
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", "Missing arguments limit or page"}
+                }.dump());
+            
             co_return response;
         }
 
         std::optional<evm::Address> address_res = evmc::from_hex<evm::Address>(address_arg.value());
         if(!address_res)
         {
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-            error_output["message"] = "Invalid address";
-            response.setBodyWithContentLength(error_output.dump());
-
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json{
+                    {"message", "Invalid address"}
+                }.dump());
+            
             co_return response;
         }
         const auto & address = address_res.value();
@@ -95,17 +81,14 @@ namespace dcn
 
         if(!limit_res || !page_res)
         {
-            response.setCode(http::Code::BadRequest);
-            response.setHeader(http::Header::ContentType, "application/json");
-
-            json error_output;
-            error_output["error"] = std::format("{}", response.getCode());
-
             std::string msg_str = "Invalid arguments limit or page.";
             if(!limit_res) msg_str += std::format(" limit error: {}.", limit_res.error().kind);
             if(!page_res) msg_str += std::format(" page error: {}.", page_res.error().kind);
-            error_output["message"] = msg_str;
-            response.setBodyWithContentLength(error_output.dump());
+
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", msg_str}
+                }.dump());
 
             co_return response;
         }
@@ -141,10 +124,9 @@ namespace dcn
         json_output["total_features"] = features.size();
         json_output["total_transformations"] = transformations.size();
 
-        response.setHeader(http::Header::ContentType, "application/json");
-        response.setCode(http::Code::OK);
-        response.setBodyWithContentLength(json_output.dump());
-    
+        response.setCode(http::Code::OK)
+            .setBodyWithContentLength(json_output.dump());
+        
         co_return response;
     }
 }

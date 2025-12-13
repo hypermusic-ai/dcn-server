@@ -42,8 +42,6 @@ namespace dcn::utils
 
     asio::awaitable<void> ensureOnStrand(const asio::strand<asio::io_context::executor_type> & strand);
 
-    std::string escapeSolSrcQuotes(const std::string& json);
-
     template<class DataT, class ChildT, template<typename...> class ChildListT>
     std::vector<std::string> topologicalSort(   
         const absl::flat_hash_map<std::string, DataT> & data,

@@ -21,11 +21,6 @@ using namespace asio::experimental::awaitable_operators;
 namespace dcn
 {
     /**
-     * @brief Helper function to set CORS headers for the response.
-     */
-    void setCORSHeaders(const http::Request & request, http::Response& response);
-
-    /**
      * @brief Helper function to handle authentication.
      */
     asio::awaitable<std::expected<evm::Address, auth::AuthError>> authenticate(const http::Request & request, const auth::AuthManager & auth_manager);
@@ -104,37 +99,6 @@ namespace dcn
      * @return http::Response The response object
      */
     asio::awaitable<http::Response> POST_auth(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, auth::AuthManager &);
-
-
-    asio::awaitable<http::Response> OPTIONS_refresh(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList);
-    /**
-     * @brief Handles a POST request to /auth/refresh
-     * 
-     * The url must be in the following format:
-     * 
-     * - /auth/refresh
-     * 
-     * The request body must be a json string in format
-     * 
-     * {
-     *      "refresh_token": "<refresh_token>"
-     * }
-     * 
-     * Where `<refresh_token>` is the refresh token of the user who is trying to refresh their access token.
-     * 
-     * The response body will be a json string in format
-     * 
-     * {
-     *      "success": "true/false"
-     * }
-     * 
-     * @param request The request object
-     * @param args The arguments of the request
-     * @param auth_manager The authentication manager
-     * @return http::Response The response object
-     */
-    asio::awaitable<http::Response> POST_refresh(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, auth::AuthManager &);
-
 
     asio::awaitable<http::Response> OPTIONS_accountInfo(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList);
     asio::awaitable<http::Response> GET_accountInfo(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList, registry::Registry & registry);
@@ -240,5 +204,5 @@ namespace dcn
     //asio::awaitable<http::Response> POST_condition(const http::Request &);
 
     asio::awaitable<http::Response> OPTIONS_execute(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList);
-    asio::awaitable<http::Response> GET_execute(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, const auth::AuthManager & auth_manager, const registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> POST_execute(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, const auth::AuthManager & auth_manager, evm::EVM & evm);
 }

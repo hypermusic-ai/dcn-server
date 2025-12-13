@@ -43,6 +43,7 @@ namespace dcn::http
         // level 200
         OK = 200,
         Created = 201,
+        NoContent = 204,
 
         // LEVEL 400
         BadRequest = 400,
@@ -65,6 +66,7 @@ struct std::formatter<dcn::http::Code> : std::formatter<std::string> {
         // level 200
         case dcn::http::Code::OK:                  return formatter<string>::format("200 OK", ctx);
         case dcn::http::Code::Created:             return formatter<string>::format("201 Created", ctx);
+        case dcn::http::Code::NoContent:           return formatter<string>::format("204 No Content", ctx);
 
         // LEVEL 400
         case dcn::http::Code::BadRequest:          return formatter<string>::format("400 Bad Request", ctx);

@@ -1,15 +1,16 @@
+import { setAccessToken, getAccessToken } from "./auth";
+
 let rootFeatureName;
-let executeResultData = []; // populated during execute()
 
 // --------------------------------------------------------------------------
 // Running Instances
 // --------------------------------------------------------------------------
-let runningInstanceData = []; // indexed by node.id
+let runningInstanceData = [];
 let currentNodeEditing = null;
 
-function openRIPopup(nodeId, label) {
+function openRIPopup(nodeId, nodeData) {
     currentNodeEditing = nodeId;
-    document.getElementById("popupFeatureLabel").textContent = label;
+    document.getElementById("popupFeatureLabel").textContent = nodeData.name;
     const existing = runningInstanceData[nodeId] || [0, 0];
     document.getElementById("popupStartPoint").value = existing[0];
     document.getElementById("popupTransformShift").value = existing[1];
@@ -32,13 +33,11 @@ export function saveInstanceEdit() {
 }
 
 function updateRunningInstanceList() {
-    const result = runningInstanceData
-        .map((v, i) => v ? `(${v[0]};${v[1]})` : null)
-        .filter(v => v !== null);
+    const jsonString = JSON.stringify({
+        running_instances: runningInstanceData.map(([s, t]) => ({ start_point: s, transformation_shift: t }))
+    }, null, 2);
 
-    document.getElementById('executeRunningInstances').textContent = result.length > 0
-        ? `[${result.join(',')}]`
-        : '';
+    document.getElementById('executeRunningInstances').textContent = jsonString;
 }
 
 function clearRunningInstances() {
@@ -84,12 +83,12 @@ function drawFeatureTree(treeData) {
             const nodeId = params.nodes[0];
             const nodeData = treeData.find(n => n.id === nodeId);
             if (nodeData) {
-                openRIPopup(nodeId, nodeData.name);
+                openRIPopup(nodeId, nodeData);
             }
         }
     });
 
-    document.getElementById('treeContainer').style.display = 'block';
+    container.style.display = 'block';
     network.fit();
 }
 
@@ -132,7 +131,8 @@ async function fetchFeatureDepthFirst(rootFeatureName) {
                 });
             }
         } catch (e) {
-            console.error(`Error fetching ${name}:, e`);
+            console.error(`Error fetching ${name}, ${e.message}`);
+            throw e;
         }
     }
 
@@ -148,42 +148,43 @@ export async function fetchBeforeExecute() {
         return;
     }
 
-    const features = await fetchFeatureDepthFirst(rootFeatureName);
+    try{
+        const features = await fetchFeatureDepthFirst(rootFeatureName);
+        drawFeatureTree(features);
+    }catch(e){
+        console.error(e);
 
-    drawFeatureTree(features);
+        const container = document.getElementById('treeContainer');
+        container.style.display = 'block';
+        container.innerHTML = `<p>Failed to fetch features. ${e.message} </p>`;
+    }
 }
 
 export async function execute() {
-    const name = document.getElementById('executeName').value.trim();
-    const N = document.getElementById('executeN').value.trim();
-    const runningInstances = document.getElementById('executeRunningInstances').textContent.trim();
+    const feature_name = document.getElementById('executeName').value.trim();
+    const n = document.getElementById('executeN').value.trim();
+    const running_instances = runningInstanceData.map(([start_point, transformation_shift]) => ({ start_point, transformation_shift }));
 
     const codeDiv = document.getElementById('executeCode');
     const bodyDiv = document.getElementById('executeBody');
-    if (!name) {
+    if (!feature_name) {
         alert("Contract name is required.");
         return;
     }
     const apiBase = window.location.origin;
-    const url = runningInstances === '' ? `${apiBase}/execute/${name}/${N}` : `${apiBase}/execute/${name}/${N}/${runningInstances}`;
     try {
-        const res = await requestWithRefresh(url,
+        const res = await requestWithLogin(`${apiBase}/execute`,
             {
-                method: 'GET',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                body: JSON.stringify({ feature_name, n, running_instances }),
             }
         );
         const text = await res.text();
         codeDiv.textContent = res.status;
         bodyDiv.textContent = formatJSON(text);
-        // Store feature data for MIDI use
-        const parsed = JSON.parse(text);
-        if (Array.isArray(parsed)) {
-            executeResultData = parsed;
-        }
     } catch (error) {
         codeDiv.textContent = 'Error';
         bodyDiv.textContent = error.message;
@@ -396,11 +397,10 @@ export async function sendStructuredFeature() {
 
     try {
         const apiBase = window.location.origin;
-        const res = await requestWithRefresh(`${apiBase}/feature`, {
+        const res = await requestWithLogin(`${apiBase}/feature`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: requestBody,
-            credentials: 'include',
         });
         const text = await res.text();
         responseCodeDiv.textContent = res.status;
@@ -502,13 +502,12 @@ export async function sendStructuredTransformation() {
 
     try {
         const apiBase = window.location.origin;
-        const res = await requestWithRefresh(`${apiBase}/transformation`, {
+        const res = await requestWithLogin(`${apiBase}/transformation`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ name, sol_src }),
-            credentials: 'include'
         });
         const text = await res.text();
         responseCodeDiv.textContent = res.status;
@@ -576,7 +575,7 @@ export async function fetchAccountResources() {
 
     try {
         const apiBase = window.location.origin;
-        const res = await requestWithRefresh(`${apiBase}/account/${address}?limit=${accountPageSize}&page=${currentAccountPage}`, {
+        const res = await requestWithLogin(`${apiBase}/account/${address}?limit=${accountPageSize}&page=${currentAccountPage}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -627,8 +626,9 @@ export async function loginWithMetaMask()
 
     if (typeof window.ethereum === 'undefined') {
         alert("MetaMask is not installed!");
-        return;
+        return false;
     }
+
     try {
         const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const apiBase = window.location.origin;
@@ -651,6 +651,8 @@ export async function loginWithMetaMask()
 
         if (result.access_token) {
             loginStatusDiv.innerHTML = `<p style="color: green;">✅ Authenticated as ${address}</p>`;
+            setAccessToken(result.access_token);
+            return true;
         }
         else {
             loginStatusDiv.innerHTML = `<p style="color: red;">❌ Authentication failed</p>`;
@@ -659,6 +661,8 @@ export async function loginWithMetaMask()
         console.error(err);
         loginStatusDiv.innerHTML = `<p style="color: red;">⚠️ Error: ${err.message}</p>`;
     }
+
+    return false;
 }
 
 // --------------------------------------------------------------------------
@@ -676,14 +680,9 @@ export function copyTextFromElement(elementId) {
       .catch(err => {
         alert("Failed to copy: " + err);
       });
-  }
-
-function getFeatureArray(path) {
-    const entry = executeResultData.find(f => f.feature_path === path);
-    return entry?.data ?? [];
 }
 
-// Function to format the JSON response nicely
+  // Function to format the JSON response nicely
 function formatJSON(text) {
     try {
         const json = JSON.parse(text);
@@ -693,32 +692,41 @@ function formatJSON(text) {
     }
 }
 
-function hexToRgba(hex, alpha = 1.0) {
-    const r = parseInt(hex.substr(1, 2), 16);
-    const g = parseInt(hex.substr(3, 2), 16);
-    const b = parseInt(hex.substr(5, 2), 16);
-    return `rgba(${r},${g},${b},${alpha})`;
-}
+export async function requestWithLogin(url, options = {}) {
+  // clone options to avoid mutating caller object
+  const opts = { ...options };
+  const headers = new Headers(opts.headers || {});
 
-export async function requestWithRefresh(url, options = {}) {
-    // always include cookies
-    options.credentials = 'include';
+  // attach Authorization header if we have an access token
+  let token = getAccessToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
 
-    // first attempt
-    let res = await fetch(url, options);
-    if (res.status !== 401) {
-        return res;
-    }
+  opts.headers = headers;
 
-    // 401 → try to refresh
-    const apiBase = window.location.origin;
-    const refreshRes = await fetch(`${apiBase}/refresh`, {
-        method: 'POST',
-        credentials: 'include'
-    });
-    if (refreshRes.ok) {
-        // retry original request once
-        res = await fetch(url, options);
-    }
+  // DO NOT include cookies on normal API calls unless needed
+  // (keeps CSRF surface minimal)
+  opts.credentials ??= "omit";
+
+  // first attempt
+  let res = await fetch(url, opts);
+  if (res.status !== 401) {
     return res;
+  }
+
+  // 401 → try login once more
+  if (!await loginWithMetaMask()) {
+    return res; // refresh failed → propagate 401
+  }
+
+  // retry original request ONCE with new token
+  token = getAccessToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  opts.headers = headers;
+
+  return fetch(url, opts);
 }
