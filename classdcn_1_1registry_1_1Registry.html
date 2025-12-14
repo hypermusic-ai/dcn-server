@@ -97,7 +97,6 @@ $(document).ready(function(){initNavTree('classdcn_1_1registry_1_1Registry.html'
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classdcn_1_1registry_1_1Registry-members.html">List of all members</a>  </div>
@@ -110,11 +109,6 @@ $(document).ready(function(){initNavTree('classdcn_1_1registry_1_1Registry.html'
 
 <p><code>#include &lt;<a class="el" href="registry_8hpp_source.html">registry.hpp</a>&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1registry_1_1Registry_1_1Node.html">Node</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a75910a1ae1bf81674de609428e36ddfd" id="r_a75910a1ae1bf81674de609428e36ddfd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a75910a1ae1bf81674de609428e36ddfd">Registry</a> ()=delete</td></tr>
@@ -145,9 +139,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5e4cca42d19eb4d80d98c55b4726898e" id="r_a5e4cca42d19eb4d80d98c55b4726898e"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Transformation &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a5e4cca42d19eb4d80d98c55b4726898e">getTransformation</a> (const std::string &amp;name, const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;address) const</td></tr>
 <tr class="memdesc:a5e4cca42d19eb4d80d98c55b4726898e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves a specific transformation by name and address.  <br /></td></tr>
 <tr class="separator:a5e4cca42d19eb4d80d98c55b4726898e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af3a27ff260ee2e2a19150c796ecf9abb" id="r_af3a27ff260ee2e2a19150c796ecf9abb"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#af3a27ff260ee2e2a19150c796ecf9abb">addCondition</a> (<a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> address, Condition condition)</td></tr>
-<tr class="memdesc:af3a27ff260ee2e2a19150c796ecf9abb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a condition to the registry.  <br /></td></tr>
-<tr class="separator:af3a27ff260ee2e2a19150c796ecf9abb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade21641866218540d5e5bab300e4162a" id="r_ade21641866218540d5e5bab300e4162a"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#ade21641866218540d5e5bab300e4162a">addCondition</a> (<a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> address, ConditionRecord condition)</td></tr>
+<tr class="memdesc:ade21641866218540d5e5bab300e4162a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a condition to the registry.  <br /></td></tr>
+<tr class="separator:ade21641866218540d5e5bab300e4162a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a51b383c551b8814aef2d870e5680f27d" id="r_a51b383c551b8814aef2d870e5680f27d"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Condition &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a51b383c551b8814aef2d870e5680f27d">getNewestCondition</a> (const std::string &amp;name) const</td></tr>
 <tr class="memdesc:a51b383c551b8814aef2d870e5680f27d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the newest condition by name.  <br /></td></tr>
 <tr class="separator:a51b383c551b8814aef2d870e5680f27d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -161,6 +155,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a6fc9193483c9c266ed5f40921f01eea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1065a11367175fb975621e0a97ce367c" id="r_a1065a11367175fb975621e0a97ce367c"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a1065a11367175fb975621e0a97ce367c">getOwnedTransformations</a> (const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;address) const</td></tr>
 <tr class="separator:a1065a11367175fb975621e0a97ce367c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a635db8be352538509e31bdba9db76a9b" id="r_a635db8be352538509e31bdba9db76a9b"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a635db8be352538509e31bdba9db76a9b">getOwnedConditions</a> (const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;address) const</td></tr>
+<tr class="separator:a635db8be352538509e31bdba9db76a9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -282,8 +278,8 @@ Protected Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="af3a27ff260ee2e2a19150c796ecf9abb" name="af3a27ff260ee2e2a19150c796ecf9abb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af3a27ff260ee2e2a19150c796ecf9abb">&#9670;&#160;</a></span>addCondition()</h2>
+<a id="ade21641866218540d5e5bab300e4162a" name="ade21641866218540d5e5bab300e4162a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade21641866218540d5e5bab300e4162a">&#9670;&#160;</a></span>addCondition()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -297,7 +293,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Condition&#160;</td>
+          <td class="paramtype">ConditionRecord&#160;</td>
           <td class="paramname"><em>condition</em>&#160;</td>
         </tr>
         <tr>
@@ -685,6 +681,24 @@ Protected Member Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>An <code>std::optional&lt;Transformation&gt;</code> containing the transformation if found, or <code>std::nullopt</code> if the transformation does not exist.</dd></dl>
 <p>This function searches for the newest transformation by name in the registry. If the transformation does not exist, it returns <code>std::nullopt</code>. </p>
+
+</div>
+</div>
+<a id="a635db8be352538509e31bdba9db76a9b" name="a635db8be352538509e31bdba9db76a9b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a635db8be352538509e31bdba9db76a9b">&#9670;&#160;</a></span>getOwnedConditions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt; dcn::registry::Registry::getOwnedConditions </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;&#160;</td>
+          <td class="paramname"><em>address</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>

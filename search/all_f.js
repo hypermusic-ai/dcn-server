@@ -8,12 +8,13 @@ var searchData=
   ['operator_3d_3d_5',['operator==',['../classdcn_1_1http_1_1URL.html#a121543551fa83295091ed936e474a730',1,'dcn::http::URL::operator==()'],['../classdcn_1_1server_1_1RouteKey.html#a35e2b928b2f4a7cc212705264b20b43a',1,'dcn::server::RouteKey::operator==()']]],
   ['optional_6',['optional',['../namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d',1,'dcn::server']]],
   ['options_7',['OPTIONS',['../namespacedcn_1_1http.html#a4f682cd7b59ded888fa0d767b29cf172a164dd62adb30ca051b5289672a572f9b',1,'dcn::http']]],
-  ['options_5faccountinfo_8',['OPTIONS_accountInfo',['../namespacedcn.html#a92017396106c179a2178458729e921b1',1,'dcn']]],
-  ['options_5fauth_9',['OPTIONS_auth',['../namespacedcn.html#afd4339672d36de05fff428e92fdb5962',1,'dcn']]],
-  ['options_5fexecute_10',['OPTIONS_execute',['../namespacedcn.html#ac9f1a19ea3c228413c1a650f9e3afe18',1,'dcn']]],
-  ['options_5ffeature_11',['OPTIONS_feature',['../namespacedcn.html#aec5a63e57a327fa96864846c1429904d',1,'dcn']]],
-  ['options_5fservefile_12',['OPTIONS_serveFile',['../namespacedcn.html#a8f570f78f941a9f58cc6ca52e52b5fea',1,'dcn']]],
-  ['options_5ftransformation_13',['OPTIONS_transformation',['../namespacedcn.html#ae47b5ab3cbc895b27c1082db71b4e3a5',1,'dcn']]],
-  ['origin_14',['Origin',['../namespacedcn_1_1http.html#aad74d4f2478c6cc863561ebcf03699a9a3edf8ca26a1ec14dd6e91dd277ae1de6',1,'dcn::http']]],
-  ['out_5fof_5frange_15',['OUT_OF_RANGE',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bea6feaf66704b269610cff9431d5519cad',1,'dcn::parse::ParseError']]]
+  ['options_5faccountinfo_8',['OPTIONS_accountInfo',['../namespacedcn.html#ac704b8ac290f947ad74d0b7892706867',1,'dcn']]],
+  ['options_5fauth_9',['OPTIONS_auth',['../namespacedcn.html#a76e97d279e1df38ef0192ed9d331dda2',1,'dcn']]],
+  ['options_5fcondition_10',['OPTIONS_condition',['../namespacedcn.html#a904e9f3837f9a97930b5c9c51c8eaf8f',1,'dcn']]],
+  ['options_5fexecute_11',['OPTIONS_execute',['../namespacedcn.html#ae80aef70056ddf10141946bff365b30c',1,'dcn']]],
+  ['options_5ffeature_12',['OPTIONS_feature',['../namespacedcn.html#ade7694d84c751667d22ba357fe0654b4',1,'dcn']]],
+  ['options_5fservefile_13',['OPTIONS_serveFile',['../namespacedcn.html#a003883cd0e94a60ab953276fb19c1735',1,'dcn']]],
+  ['options_5ftransformation_14',['OPTIONS_transformation',['../namespacedcn.html#aa6d7a2272298dad645e6ffce70bb7112',1,'dcn']]],
+  ['origin_15',['Origin',['../namespacedcn_1_1http.html#aad74d4f2478c6cc863561ebcf03699a9a3edf8ca26a1ec14dd6e91dd277ae1de6',1,'dcn::http']]],
+  ['out_5fof_5frange_16',['OUT_OF_RANGE',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bea6feaf66704b269610cff9431d5519cad',1,'dcn::parse::ParseError']]]
 ];

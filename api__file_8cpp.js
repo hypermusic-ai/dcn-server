@@ -1,7 +1,7 @@
 var api__file_8cpp =
 [
-    [ "GET_serveBinaryFile", "api__file_8cpp.html#ac7263500248aba49d58d7c4dd862a8fa", null ],
-    [ "GET_serveFile", "api__file_8cpp.html#a117d40bb4491cc38e61535857b151b60", null ],
-    [ "HEAD_serveFile", "api__file_8cpp.html#a68966584f21ce877f885530adac1cd26", null ],
-    [ "OPTIONS_serveFile", "api__file_8cpp.html#a8f570f78f941a9f58cc6ca52e52b5fea", null ]
+    [ "GET_serveBinaryFile", "api__file_8cpp.html#a263b7b5402913fb30342ec93193235ec", null ],
+    [ "GET_serveFile", "api__file_8cpp.html#af6f50c527afad46903b60a9d2064cc90", null ],
+    [ "HEAD_serveFile", "api__file_8cpp.html#a218fd3681c3c254f43dd075ac0022902", null ],
+    [ "OPTIONS_serveFile", "api__file_8cpp.html#a003883cd0e94a60ab953276fb19c1735", null ]
 ];

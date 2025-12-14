@@ -135,9 +135,13 @@ $(document).ready(function(){initNavTree('evm_8hpp.html',''); initResizable(); }
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1evm_1_1DeployError.html">dcn::evm::DeployError</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1evm_1_1ExecuteError.html">dcn::evm::ExecuteError</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1evm_1_1EVM.html">dcn::evm::EVM</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structstd_1_1formatter_3_01dcn_1_1evm_1_1DeployError_1_1Kind_01_4.html">std::formatter&lt; dcn::evm::DeployError::Kind &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structstd_1_1formatter_3_01dcn_1_1evm_1_1ExecuteError_1_1Kind_01_4.html">std::formatter&lt; dcn::evm::ExecuteError::Kind &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
@@ -159,8 +163,8 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a5ac5b53de448c83d8e0157114d546fe2" id="r_a5ac5b53de448c83d8e0157114d546fe2"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; std::vector&lt; std::uint8_t &gt;, evmc_status_code &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1evm.html#a5ac5b53de448c83d8e0157114d546fe2">dcn::evm::fetchOwner</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">EVM</a> &amp;evm, const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a> &amp;address)</td></tr>
-<tr class="separator:a5ac5b53de448c83d8e0157114d546fe2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adcb9f46341b40a32b745810ea03537c1" id="r_adcb9f46341b40a32b745810ea03537c1"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; std::vector&lt; std::uint8_t &gt;, <a class="el" href="structdcn_1_1evm_1_1ExecuteError.html">ExecuteError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1evm.html#adcb9f46341b40a32b745810ea03537c1">dcn::evm::fetchOwner</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">EVM</a> &amp;evm, const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a> &amp;address)</td></tr>
+<tr class="separator:adcb9f46341b40a32b745810ea03537c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a093d683bece30848be6955e9a55ede4c" id="r_a093d683bece30848be6955e9a55ede4c"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::uint8_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1evm.html#a093d683bece30848be6955e9a55ede4c">dcn::evm::constructSelector</a> (std::string signature)</td></tr>
 <tr class="separator:a093d683bece30848be6955e9a55ede4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa88951e933376af73442cbf316aaba1f" id="r_aa88951e933376af73442cbf316aaba1f"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>

@@ -1,5 +1,5 @@
 var api__account_8cpp =
 [
-    [ "GET_accountInfo", "api__account_8cpp.html#a3c6681bb79f21d75c954d0f5f71388dc", null ],
-    [ "OPTIONS_accountInfo", "api__account_8cpp.html#a92017396106c179a2178458729e921b1", null ]
+    [ "GET_accountInfo", "api__account_8cpp.html#af3a90f934f9644e2fb1446e1cbad854c", null ],
+    [ "OPTIONS_accountInfo", "api__account_8cpp.html#ac704b8ac290f947ad74d0b7892706867", null ]
 ];

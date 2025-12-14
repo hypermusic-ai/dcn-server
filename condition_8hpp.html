@@ -102,14 +102,21 @@ $(document).ready(function(){initNavTree('condition_8hpp.html',''); initResizabl
   <div class="headertitle"><div class="title">condition.hpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;absl/hash/hash.h&gt;</code><br />
+<div class="textblock"><code>#include &lt;string&gt;</code><br />
+<code>#include &lt;regex&gt;</code><br />
+<code>#include &lt;algorithm&gt;</code><br />
+<code>#include &lt;absl/hash/hash.h&gt;</code><br />
+<code>#include &lt;spdlog/spdlog.h&gt;</code><br />
 <code>#include &quot;condition.pb.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="parser_8hpp_source.html">parser.hpp</a>&quot;</code><br />
 </div>
 <p><a href="condition_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacedcn" id="r_namespacedcn"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html">dcn</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespacedcn_1_1parse" id="r_namespacedcn_1_1parse"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html">dcn::parse</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
@@ -118,6 +125,40 @@ Functions</h2></td></tr>
 <tr class="memitem:a9cf5a424396b387e6a9fd155e8fe1f4d"><td class="memTemplItemLeft" align="right" valign="top">H&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a9cf5a424396b387e6a9fd155e8fe1f4d">dcn::AbslHashValue</a> (H h, const Condition &amp;c)</td></tr>
 <tr class="memdesc:a9cf5a424396b387e6a9fd155e8fe1f4d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combines hash values for a Condition object.  <br /></td></tr>
 <tr class="separator:a9cf5a424396b387e6a9fd155e8fe1f4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf7c08b4477babc0797344c7ad1b28af" id="r_abf7c08b4477babc0797344c7ad1b28af"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#abf7c08b4477babc0797344c7ad1b28af">dcn::constructConditionSolidityCode</a> (const Condition &amp;condition)</td></tr>
+<tr class="separator:abf7c08b4477babc0797344c7ad1b28af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01251d226360d607dacf42d683174913" id="r_a01251d226360d607dacf42d683174913"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:a01251d226360d607dacf42d683174913"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a01251d226360d607dacf42d683174913">dcn::parse::parseToJson</a> (Condition condition, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
+<tr class="memdesc:a01251d226360d607dacf42d683174913"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a condition object to a JSON object.  <br /></td></tr>
+<tr class="separator:a01251d226360d607dacf42d683174913"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0a0de33d923210e08a8644f162c2fda" id="r_ac0a0de33d923210e08a8644f162c2fda"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:ac0a0de33d923210e08a8644f162c2fda"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; Condition &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#ac0a0de33d923210e08a8644f162c2fda">dcn::parse::parseFromJson</a> (<a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> json_obj, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
+<tr class="memdesc:ac0a0de33d923210e08a8644f162c2fda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a JSON object to a condition object.  <br /></td></tr>
+<tr class="separator:ac0a0de33d923210e08a8644f162c2fda"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8974a5dd5e18be950d75178969f221d2" id="r_a8974a5dd5e18be950d75178969f221d2"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:a8974a5dd5e18be950d75178969f221d2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::string &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a8974a5dd5e18be950d75178969f221d2">dcn::parse::parseToJson</a> (Condition condition, <a class="el" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>)</td></tr>
+<tr class="memdesc:a8974a5dd5e18be950d75178969f221d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a condition object to a JSON string using protobuf.  <br /></td></tr>
+<tr class="separator:a8974a5dd5e18be950d75178969f221d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1fbf23c881ecdf9403b786d3d5427f7e" id="r_a1fbf23c881ecdf9403b786d3d5427f7e"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:a1fbf23c881ecdf9403b786d3d5427f7e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; Condition &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a1fbf23c881ecdf9403b786d3d5427f7e">dcn::parse::parseFromJson</a> (std::string json_str, <a class="el" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>)</td></tr>
+<tr class="memdesc:a1fbf23c881ecdf9403b786d3d5427f7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a JSON string to a condition object using Protobuf.  <br /></td></tr>
+<tr class="separator:a1fbf23c881ecdf9403b786d3d5427f7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a264ce281829b61102841c4fde04bb42b" id="r_a264ce281829b61102841c4fde04bb42b"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:a264ce281829b61102841c4fde04bb42b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a264ce281829b61102841c4fde04bb42b">dcn::parse::parseToJson</a> (ConditionRecord condition_record, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
+<tr class="memdesc:a264ce281829b61102841c4fde04bb42b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a ConditionRecord object to a JSON object.  <br /></td></tr>
+<tr class="separator:a264ce281829b61102841c4fde04bb42b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a860a75d6aad5a66a257f4dd17735841d" id="r_a860a75d6aad5a66a257f4dd17735841d"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:a860a75d6aad5a66a257f4dd17735841d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::string &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a860a75d6aad5a66a257f4dd17735841d">dcn::parse::parseToJson</a> (ConditionRecord condition_record, <a class="el" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>)</td></tr>
+<tr class="memdesc:a860a75d6aad5a66a257f4dd17735841d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a ConditionRecord object to a JSON string using Protobuf.  <br /></td></tr>
+<tr class="separator:a860a75d6aad5a66a257f4dd17735841d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfc2a2d49e50d5423a85f3124434f0f4" id="r_adfc2a2d49e50d5423a85f3124434f0f4"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:adfc2a2d49e50d5423a85f3124434f0f4"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; ConditionRecord &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#adfc2a2d49e50d5423a85f3124434f0f4">dcn::parse::parseFromJson</a> (<a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> json_obj, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
+<tr class="memdesc:adfc2a2d49e50d5423a85f3124434f0f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a JSON object to a ConditionRecord object.  <br /></td></tr>
+<tr class="separator:adfc2a2d49e50d5423a85f3124434f0f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d3ec1879a6be9a9b61ee665f722cde9" id="r_a5d3ec1879a6be9a9b61ee665f722cde9"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:a5d3ec1879a6be9a9b61ee665f722cde9"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; ConditionRecord &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a5d3ec1879a6be9a9b61ee665f722cde9">dcn::parse::parseFromJson</a> (std::string json_str, <a class="el" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>)</td></tr>
+<tr class="memdesc:a5d3ec1879a6be9a9b61ee665f722cde9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a JSON string to a ConditionRecord object using Protobuf.  <br /></td></tr>
+<tr class="separator:a5d3ec1879a6be9a9b61ee665f722cde9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->

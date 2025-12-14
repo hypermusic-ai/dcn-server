@@ -7,7 +7,7 @@ var searchData=
   ['add_5faccount_4',['add_account',['../classdcn_1_1evm_1_1EVMStorage.html#ad347d4c7948317b90a6a1b5f0af4d8df',1,'dcn::evm::EVMStorage']]],
   ['addaccount_5',['addAccount',['../classdcn_1_1evm_1_1EVM.html#aaafc7e5ac6c687231a6d000783e2cd38',1,'dcn::evm::EVM']]],
   ['addarg_6',['addArg',['../classdcn_1_1cmd_1_1ArgParser.html#a66f2e70b4b3706b134d4a7b3b10afb77',1,'dcn::cmd::ArgParser']]],
-  ['addcondition_7',['addCondition',['../classdcn_1_1registry_1_1Registry.html#af3a27ff260ee2e2a19150c796ecf9abb',1,'dcn::registry::Registry']]],
+  ['addcondition_7',['addCondition',['../classdcn_1_1registry_1_1Registry.html#ade21641866218540d5e5bab300e4162a',1,'dcn::registry::Registry']]],
   ['addfeature_8',['addFeature',['../classdcn_1_1registry_1_1Registry.html#afb54a937e64a92d5b755ec899b3b9f99',1,'dcn::registry::Registry']]],
   ['addheader_9',['addHeader',['../classdcn_1_1http_1_1MessageBase.html#a025d7be859bf9aa933c43a13ef3c92e8',1,'dcn::http::MessageBase']]],
   ['addroute_10',['addroute',['../classdcn_1_1server_1_1Server.html#afa94b51405a939843129e02ec374748d',1,'dcn::server::Server::addRoute(RouteKey route, F &amp;&amp;handler)'],['../classdcn_1_1server_1_1Server.html#aaaf32d78ae3072fe426d94f9adf14592',1,'dcn::server::Server::addRoute(RouteKey route, F &amp;&amp;handler, Args &amp;&amp;... binded_args)'],['../classdcn_1_1server_1_1Router.html#a7fd268c5d92d7e3cda55236d3cbbc141',1,'dcn::server::Router::addRoute()']]],

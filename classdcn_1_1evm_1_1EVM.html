@@ -130,8 +130,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ad231c7c59c34004b27b27d3d0ed3c91a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7284cf3d9f9c7112dbca39f8f8f0db3c" id="r_a7284cf3d9f9c7112dbca39f8f8f0db3c"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a>, <a class="el" href="structdcn_1_1evm_1_1DeployError.html">DeployError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1evm_1_1EVM.html#a7284cf3d9f9c7112dbca39f8f8f0db3c">deploy</a> (std::filesystem::path code_path, <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a> sender, std::vector&lt; uint8_t &gt; constructor_args, std::uint64_t gas_limit, std::uint64_t value) noexcept</td></tr>
 <tr class="separator:a7284cf3d9f9c7112dbca39f8f8f0db3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab46ab6c4c180a7811f4b65e703c9ce9f" id="r_ab46ab6c4c180a7811f4b65e703c9ce9f"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; std::vector&lt; std::uint8_t &gt;, evmc_status_code &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1evm_1_1EVM.html#ab46ab6c4c180a7811f4b65e703c9ce9f">execute</a> (<a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a> sender, <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a> recipient, std::vector&lt; std::uint8_t &gt; input_bytes, std::uint64_t gas_limit, std::uint64_t value) noexcept</td></tr>
-<tr class="separator:ab46ab6c4c180a7811f4b65e703c9ce9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25aa42c722110a704fc846aa9f632446" id="r_a25aa42c722110a704fc846aa9f632446"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; std::vector&lt; std::uint8_t &gt;, <a class="el" href="structdcn_1_1evm_1_1ExecuteError.html">ExecuteError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1evm_1_1EVM.html#a25aa42c722110a704fc846aa9f632446">execute</a> (<a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a> sender, <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a> recipient, std::vector&lt; std::uint8_t &gt; input_bytes, std::uint64_t gas_limit, std::uint64_t value) noexcept</td></tr>
+<tr class="separator:a25aa42c722110a704fc846aa9f632446"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec3801f34ba53de151aee4bf50fa7949" id="r_aec3801f34ba53de151aee4bf50fa7949"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1evm_1_1EVM.html#aec3801f34ba53de151aee4bf50fa7949">getRegistryAddress</a> () const</td></tr>
 <tr class="separator:aec3801f34ba53de151aee4bf50fa7949"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a32548a936206503efede141ded5bb7d2" id="r_a32548a936206503efede141ded5bb7d2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1evm_1_1EVM.html#a32548a936206503efede141ded5bb7d2">getRunnerAddress</a> () const</td></tr>
@@ -447,8 +447,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ab46ab6c4c180a7811f4b65e703c9ce9f" name="ab46ab6c4c180a7811f4b65e703c9ce9f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab46ab6c4c180a7811f4b65e703c9ce9f">&#9670;&#160;</a></span>execute()</h2>
+<a id="a25aa42c722110a704fc846aa9f632446" name="a25aa42c722110a704fc846aa9f632446"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a25aa42c722110a704fc846aa9f632446">&#9670;&#160;</a></span>execute()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -457,7 +457,7 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">asio::awaitable&lt; std::expected&lt; std::vector&lt; std::uint8_t &gt;, evmc_status_code &gt; &gt; dcn::evm::EVM::execute </td>
+          <td class="memname">asio::awaitable&lt; std::expected&lt; std::vector&lt; std::uint8_t &gt;, <a class="el" href="structdcn_1_1evm_1_1ExecuteError.html">ExecuteError</a> &gt; &gt; dcn::evm::EVM::execute </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a>&#160;</td>
           <td class="paramname"><em>sender</em>, </td>

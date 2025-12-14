@@ -3,8 +3,10 @@ var namespacedcn_1_1evm =
     [ "DeployError", "structdcn_1_1evm_1_1DeployError.html", "structdcn_1_1evm_1_1DeployError" ],
     [ "EVM", "classdcn_1_1evm_1_1EVM.html", "classdcn_1_1evm_1_1EVM" ],
     [ "EVMStorage", "classdcn_1_1evm_1_1EVMStorage.html", "classdcn_1_1evm_1_1EVMStorage" ],
+    [ "ExecuteError", "structdcn_1_1evm_1_1ExecuteError.html", "structdcn_1_1evm_1_1ExecuteError" ],
     [ "Address", "namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b", null ],
-    [ "_decodeError", "namespacedcn_1_1evm.html#a9bd53593924ae0c04635f36698651beb", null ],
+    [ "_decodeDeployError", "namespacedcn_1_1evm.html#a5772f009264f8426cfe3ad4f02f3f3ea", null ],
+    [ "_decodeExecuteError", "namespacedcn_1_1evm.html#aae49f1145fddb7366304d428a42080dc", null ],
     [ "AbslHashValue", "namespacedcn_1_1evm.html#a371243f232b155fad6cbbc2c54d4843f", null ],
     [ "constructSelector", "namespacedcn_1_1evm.html#a093d683bece30848be6955e9a55ede4c", null ],
     [ "decodeReturnedValue", "namespacedcn_1_1evm.html#a4ea733d30c3821174976e155c69df2a8", null ],
@@ -25,6 +27,6 @@ var namespacedcn_1_1evm =
     [ "encodeAsArg< std::vector< std::tuple< std::uint32_t, std::uint32_t > > >", "namespacedcn_1_1evm.html#a148e09e679879ff2e8ca5ece37a45400", null ],
     [ "encodeAsArg< std::vector< std::uint32_t > >", "namespacedcn_1_1evm.html#ac211def2599ca121235b25eb193749af", null ],
     [ "encodeAsArg< std::vector< std::uint32_t > >", "namespacedcn_1_1evm.html#ac211def2599ca121235b25eb193749af", null ],
-    [ "fetchOwner", "namespacedcn_1_1evm.html#a5ac5b53de448c83d8e0157114d546fe2", null ],
+    [ "fetchOwner", "namespacedcn_1_1evm.html#adcb9f46341b40a32b745810ea03537c1", null ],
     [ "DEFAULT_GAS_LIMIT", "namespacedcn_1_1evm.html#a0f6b7cd4991ade177b52076377319eef", null ]
 ];

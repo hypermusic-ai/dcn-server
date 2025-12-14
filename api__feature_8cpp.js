@@ -1,7 +1,7 @@
 var api__feature_8cpp =
 [
-    [ "GET_feature", "api__feature_8cpp.html#a9d81814e7e867eab74b53315a12b4f50", null ],
-    [ "HEAD_feature", "api__feature_8cpp.html#a25a11a9706884d7e4c8384a29eb6dc19", null ],
-    [ "OPTIONS_feature", "api__feature_8cpp.html#aec5a63e57a327fa96864846c1429904d", null ],
-    [ "POST_feature", "api__feature_8cpp.html#a03a9e65e1f580cd0d7f3283ddb473624", null ]
+    [ "GET_feature", "api__feature_8cpp.html#a6b4174c793664be8490d49148dcf5ac9", null ],
+    [ "HEAD_feature", "api__feature_8cpp.html#a137b4c4019526ceaa6f245535501be5f", null ],
+    [ "OPTIONS_feature", "api__feature_8cpp.html#ade7694d84c751667d22ba357fe0654b4", null ],
+    [ "POST_feature", "api__feature_8cpp.html#a9d7b33158f8a44f2791b90c8764b4768", null ]
 ];

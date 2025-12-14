@@ -15,7 +15,8 @@ var annotated_dup =
       [ "evm", "namespacedcn_1_1evm.html", [
         [ "DeployError", "structdcn_1_1evm_1_1DeployError.html", "structdcn_1_1evm_1_1DeployError" ],
         [ "EVM", "classdcn_1_1evm_1_1EVM.html", "classdcn_1_1evm_1_1EVM" ],
-        [ "EVMStorage", "classdcn_1_1evm_1_1EVMStorage.html", "classdcn_1_1evm_1_1EVMStorage" ]
+        [ "EVMStorage", "classdcn_1_1evm_1_1EVMStorage.html", "classdcn_1_1evm_1_1EVMStorage" ],
+        [ "ExecuteError", "structdcn_1_1evm_1_1ExecuteError.html", "structdcn_1_1evm_1_1ExecuteError" ]
       ] ],
       [ "http", "namespacedcn_1_1http.html", [
         [ "MessageBase", "classdcn_1_1http_1_1MessageBase.html", "classdcn_1_1http_1_1MessageBase" ],
@@ -43,6 +44,7 @@ var annotated_dup =
     [ "std", null, [
       [ "formatter< dcn::auth::AuthError::Kind >", "structstd_1_1formatter_3_01dcn_1_1auth_1_1AuthError_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1auth_1_1AuthError_1_1Kind_01_4" ],
       [ "formatter< dcn::evm::DeployError::Kind >", "structstd_1_1formatter_3_01dcn_1_1evm_1_1DeployError_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1evm_1_1DeployError_1_1Kind_01_4" ],
+      [ "formatter< dcn::evm::ExecuteError::Kind >", "structstd_1_1formatter_3_01dcn_1_1evm_1_1ExecuteError_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1evm_1_1ExecuteError_1_1Kind_01_4" ],
       [ "formatter< dcn::http::Code >", "structstd_1_1formatter_3_01dcn_1_1http_1_1Code_01_4.html", "structstd_1_1formatter_3_01dcn_1_1http_1_1Code_01_4" ],
       [ "formatter< dcn::http::Header >", "structstd_1_1formatter_3_01dcn_1_1http_1_1Header_01_4.html", "structstd_1_1formatter_3_01dcn_1_1http_1_1Header_01_4" ],
       [ "formatter< dcn::http::HeadersList >", "structstd_1_1formatter_3_01dcn_1_1http_1_1HeadersList_01_4.html", "structstd_1_1formatter_3_01dcn_1_1http_1_1HeadersList_01_4" ],

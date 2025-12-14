@@ -1,6 +1,7 @@
 var evm_8cpp =
 [
-    [ "_decodeError", "evm_8cpp.html#a9bd53593924ae0c04635f36698651beb", null ],
+    [ "_decodeDeployError", "evm_8cpp.html#a5772f009264f8426cfe3ad4f02f3f3ea", null ],
+    [ "_decodeExecuteError", "evm_8cpp.html#aae49f1145fddb7366304d428a42080dc", null ],
     [ "constructSelector", "evm_8cpp.html#a093d683bece30848be6955e9a55ede4c", null ],
     [ "decodeReturnedValue", "evm_8cpp.html#a6fc6d41ee9af34df0ede308831f2f193", null ],
     [ "decodeReturnedValue", "evm_8cpp.html#aacb71be9d5eef3426b733cd27b1e37e0", null ],
@@ -10,5 +11,5 @@ var evm_8cpp =
     [ "encodeAsArg< std::uint32_t >", "evm_8cpp.html#aad03db9e4d5e5dc6c2a17a6d88013b99", null ],
     [ "encodeAsArg< std::vector< std::tuple< std::uint32_t, std::uint32_t > > >", "evm_8cpp.html#a148e09e679879ff2e8ca5ece37a45400", null ],
     [ "encodeAsArg< std::vector< std::uint32_t > >", "evm_8cpp.html#ac211def2599ca121235b25eb193749af", null ],
-    [ "fetchOwner", "evm_8cpp.html#a5ac5b53de448c83d8e0157114d546fe2", null ]
+    [ "fetchOwner", "evm_8cpp.html#adcb9f46341b40a32b745810ea03537c1", null ]
 ];

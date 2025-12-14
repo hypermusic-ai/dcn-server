@@ -1,11 +1,10 @@
 var classdcn_1_1registry_1_1Registry =
 [
-    [ "Node", "structdcn_1_1registry_1_1Registry_1_1Node.html", "structdcn_1_1registry_1_1Registry_1_1Node" ],
     [ "Registry", "classdcn_1_1registry_1_1Registry.html#a75910a1ae1bf81674de609428e36ddfd", null ],
     [ "Registry", "classdcn_1_1registry_1_1Registry.html#aad084850c4de6cae9497995b42137684", null ],
     [ "Registry", "classdcn_1_1registry_1_1Registry.html#aab4d0dc078a3fd67e77eda0eb7e0603f", null ],
     [ "~Registry", "classdcn_1_1registry_1_1Registry.html#a93aef24aa32941e6aa82cd2f31781935", null ],
-    [ "addCondition", "classdcn_1_1registry_1_1Registry.html#af3a27ff260ee2e2a19150c796ecf9abb", null ],
+    [ "addCondition", "classdcn_1_1registry_1_1Registry.html#ade21641866218540d5e5bab300e4162a", null ],
     [ "addFeature", "classdcn_1_1registry_1_1Registry.html#afb54a937e64a92d5b755ec899b3b9f99", null ],
     [ "addTransformation", "classdcn_1_1registry_1_1Registry.html#acb1eabbf7f111ac2dc7622bb7922e8f7", null ],
     [ "checkIfSubFeaturesExist", "classdcn_1_1registry_1_1Registry.html#a1288a7b3a8c0c9cddf39dae75fc85f1b", null ],
@@ -17,6 +16,7 @@ var classdcn_1_1registry_1_1Registry =
     [ "getNewestCondition", "classdcn_1_1registry_1_1Registry.html#a51b383c551b8814aef2d870e5680f27d", null ],
     [ "getNewestFeature", "classdcn_1_1registry_1_1Registry.html#aeec51a913d00bc2b228555eb17310495", null ],
     [ "getNewestTransformation", "classdcn_1_1registry_1_1Registry.html#a5571e885cac805e52c7166b5205c1ba2", null ],
+    [ "getOwnedConditions", "classdcn_1_1registry_1_1Registry.html#a635db8be352538509e31bdba9db76a9b", null ],
     [ "getOwnedFeatures", "classdcn_1_1registry_1_1Registry.html#a6fc9193483c9c266ed5f40921f01eea1", null ],
     [ "getOwnedTransformations", "classdcn_1_1registry_1_1Registry.html#a1065a11367175fb975621e0a97ce367c", null ],
     [ "getTransformation", "classdcn_1_1registry_1_1Registry.html#a5e4cca42d19eb4d80d98c55b4726898e", null ],

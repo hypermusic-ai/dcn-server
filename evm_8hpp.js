@@ -1,8 +1,10 @@
 var evm_8hpp =
 [
     [ "dcn::evm::DeployError", "structdcn_1_1evm_1_1DeployError.html", "structdcn_1_1evm_1_1DeployError" ],
+    [ "dcn::evm::ExecuteError", "structdcn_1_1evm_1_1ExecuteError.html", "structdcn_1_1evm_1_1ExecuteError" ],
     [ "dcn::evm::EVM", "classdcn_1_1evm_1_1EVM.html", "classdcn_1_1evm_1_1EVM" ],
     [ "std::formatter< dcn::evm::DeployError::Kind >", "structstd_1_1formatter_3_01dcn_1_1evm_1_1DeployError_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1evm_1_1DeployError_1_1Kind_01_4" ],
+    [ "std::formatter< dcn::evm::ExecuteError::Kind >", "structstd_1_1formatter_3_01dcn_1_1evm_1_1ExecuteError_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1evm_1_1ExecuteError_1_1Kind_01_4" ],
     [ "interface", "evm_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a", null ],
     [ "Address", "evm_8hpp.html#ac26a2f64103f6db9c14cfb2af683f41b", null ],
     [ "constructSelector", "evm_8hpp.html#a093d683bece30848be6955e9a55ede4c", null ],
@@ -16,5 +18,5 @@ var evm_8hpp =
     [ "encodeAsArg< std::uint32_t >", "evm_8hpp.html#aad03db9e4d5e5dc6c2a17a6d88013b99", null ],
     [ "encodeAsArg< std::vector< std::tuple< std::uint32_t, std::uint32_t > > >", "evm_8hpp.html#a148e09e679879ff2e8ca5ece37a45400", null ],
     [ "encodeAsArg< std::vector< std::uint32_t > >", "evm_8hpp.html#ac211def2599ca121235b25eb193749af", null ],
-    [ "fetchOwner", "evm_8hpp.html#a5ac5b53de448c83d8e0157114d546fe2", null ]
+    [ "fetchOwner", "evm_8hpp.html#adcb9f46341b40a32b745810ea03537c1", null ]
 ];

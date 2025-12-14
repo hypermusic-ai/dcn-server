@@ -11,12 +11,12 @@ var structdcn_1_1evm_1_1DeployError =
       [ "TRANSFORMATION_ALREADY_REGISTERED", "structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a86450e1895931d1c1b1547c93993e5e7", null ],
       [ "TRANSFORMATION_ARGUMENTS_MISMATCH", "structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a59b243b01295e0c1e55ccabd751b3fb1", null ],
       [ "TRANSFORMATION_MISSING", "structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a4c2c0dc6f56d831a44db6e61704b1946", null ],
-      [ "RUN_INSTANCE_ALREADY_REGISTERED", "structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6adcc0a26490afcbe0ef5181a0740b4c30", null ],
-      [ "RUN_INSTANCE_MISSING", "structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6abc8e8bb6dedc9c703cd4dcd7eb5b278f", null ],
+      [ "CONDITION_ALREADY_REGISTERED", "structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a73d3a88eda6fa0c5f31d733fc8b5e907", null ],
+      [ "CONDITION_ARGUMENTS_MISMATCH", "structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a4c075bb07452e54bd1f20ddd34a4d6b8", null ],
+      [ "CONDITION_MISSING", "structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a3eaa12e11502d793740721d0d8d83404", null ],
       [ "REGISTRY_ERROR", "structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a94c037a649a0e6ed76bcb582d849e0cb", null ]
     ] ],
     [ "a", "structdcn_1_1evm_1_1DeployError.html#ae411edabb6e8b86ed9fede32cf793080", null ],
-    [ "b", "structdcn_1_1evm_1_1DeployError.html#a306906977b9519cd54926fd315c494f2", null ],
     [ "code", "structdcn_1_1evm_1_1DeployError.html#ad55f33be96d74c8a65530dd06a8033f7", null ],
     [ "kind", "structdcn_1_1evm_1_1DeployError.html#a197f4c088854a69f154ae4bdd8d45325", null ]
 ];

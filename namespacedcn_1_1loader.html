@@ -108,12 +108,50 @@ Functions</h2></td></tr>
 <tr class="separator:a294c3a5a120c0cd2b3cca9fbab301e63"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2c75e2fd2d0cca749e6c7f1fe3c7aa66" id="r_a2c75e2fd2d0cca749e6c7f1fe3c7aa66"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a>, <a class="el" href="structdcn_1_1evm_1_1DeployError.html">evm::DeployError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a2c75e2fd2d0cca749e6c7f1fe3c7aa66">deployTransformation</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry, TransformationRecord transformation)</td></tr>
 <tr class="separator:a2c75e2fd2d0cca749e6c7f1fe3c7aa66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5692b4e583a1eeb93f37666f8a979c82" id="r_a5692b4e583a1eeb93f37666f8a979c82"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a>, <a class="el" href="structdcn_1_1evm_1_1DeployError.html">evm::DeployError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a5692b4e583a1eeb93f37666f8a979c82">deployCondition</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry, ConditionRecord condition)</td></tr>
+<tr class="separator:a5692b4e583a1eeb93f37666f8a979c82"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af1b65f7051982f6368fb0df43e4768ca" id="r_af1b65f7051982f6368fb0df43e4768ca"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#af1b65f7051982f6368fb0df43e4768ca">loadStoredConditions</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry)</td></tr>
+<tr class="separator:af1b65f7051982f6368fb0df43e4768ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade1a9e4f4742df607f54f74a3923df33" id="r_ade1a9e4f4742df607f54f74a3923df33"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#ade1a9e4f4742df607f54f74a3923df33">loadStoredTransformations</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry)</td></tr>
 <tr class="separator:ade1a9e4f4742df607f54f74a3923df33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5999fc6f8c6847b1e969f33bc5a83dae" id="r_a5999fc6f8c6847b1e969f33bc5a83dae"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a5999fc6f8c6847b1e969f33bc5a83dae">loadStoredFeatures</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry)</td></tr>
 <tr class="separator:a5999fc6f8c6847b1e969f33bc5a83dae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="a5692b4e583a1eeb93f37666f8a979c82" name="a5692b4e583a1eeb93f37666f8a979c82"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5692b4e583a1eeb93f37666f8a979c82">&#9670;&#160;</a></span>deployCondition()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a>, <a class="el" href="structdcn_1_1evm_1_1DeployError.html">evm::DeployError</a> &gt; &gt; dcn::loader::deployCondition </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
+          <td class="paramname"><em>evm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;&#160;</td>
+          <td class="paramname"><em>registry</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ConditionRecord&#160;</td>
+          <td class="paramname"><em>condition</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a294c3a5a120c0cd2b3cca9fbab301e63" name="a294c3a5a120c0cd2b3cca9fbab301e63"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a294c3a5a120c0cd2b3cca9fbab301e63">&#9670;&#160;</a></span>deployFeature()</h2>
 
@@ -171,6 +209,34 @@ Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">TransformationRecord&#160;</td>
           <td class="paramname"><em>transformation</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af1b65f7051982f6368fb0df43e4768ca" name="af1b65f7051982f6368fb0df43e4768ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af1b65f7051982f6368fb0df43e4768ca">&#9670;&#160;</a></span>loadStoredConditions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::loader::loadStoredConditions </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
+          <td class="paramname"><em>evm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;&#160;</td>
+          <td class="paramname"><em>registry</em>&#160;</td>
         </tr>
         <tr>
           <td></td>

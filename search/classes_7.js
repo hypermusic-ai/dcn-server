@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['node_0',['Node',['../structdcn_1_1registry_1_1Registry_1_1Node.html',1,'dcn::registry::Registry']]]
+  ['parseerror_0',['ParseError',['../structdcn_1_1parse_1_1ParseError.html',1,'dcn::parse']]]
 ];

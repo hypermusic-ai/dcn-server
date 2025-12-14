@@ -113,6 +113,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1evm_1_1EVMStorage.html">EVMStorage</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1evm_1_1ExecuteError.html">ExecuteError</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -121,8 +123,8 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a5ac5b53de448c83d8e0157114d546fe2" id="r_a5ac5b53de448c83d8e0157114d546fe2"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; std::vector&lt; std::uint8_t &gt;, evmc_status_code &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1evm.html#a5ac5b53de448c83d8e0157114d546fe2">fetchOwner</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">EVM</a> &amp;evm, const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a> &amp;address)</td></tr>
-<tr class="separator:a5ac5b53de448c83d8e0157114d546fe2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adcb9f46341b40a32b745810ea03537c1" id="r_adcb9f46341b40a32b745810ea03537c1"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; std::vector&lt; std::uint8_t &gt;, <a class="el" href="structdcn_1_1evm_1_1ExecuteError.html">ExecuteError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1evm.html#adcb9f46341b40a32b745810ea03537c1">fetchOwner</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">EVM</a> &amp;evm, const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">Address</a> &amp;address)</td></tr>
+<tr class="separator:adcb9f46341b40a32b745810ea03537c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a093d683bece30848be6955e9a55ede4c" id="r_a093d683bece30848be6955e9a55ede4c"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::uint8_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1evm.html#a093d683bece30848be6955e9a55ede4c">constructSelector</a> (std::string signature)</td></tr>
 <tr class="separator:a093d683bece30848be6955e9a55ede4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa88951e933376af73442cbf316aaba1f" id="r_aa88951e933376af73442cbf316aaba1f"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
@@ -173,9 +175,10 @@ Functions</h2></td></tr>
 <tr class="memitem:a6b83aeba8be828d653210709236c5879" id="r_a6b83aeba8be828d653210709236c5879"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
 <tr class="memitem:a6b83aeba8be828d653210709236c5879"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; std::uint8_t &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1evm.html#a6b83aeba8be828d653210709236c5879">encodeAsArg&lt; std::string &gt;</a> (const std::string &amp;str)</td></tr>
 <tr class="separator:a6b83aeba8be828d653210709236c5879"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9bd53593924ae0c04635f36698651beb" id="r_a9bd53593924ae0c04635f36698651beb"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
-<tr class="memitem:a9bd53593924ae0c04635f36698651beb"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structdcn_1_1evm_1_1DeployError.html">DeployError</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1evm.html#a9bd53593924ae0c04635f36698651beb">_decodeError</a> (const evmc::Result &amp;r)</td></tr>
-<tr class="separator:a9bd53593924ae0c04635f36698651beb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5772f009264f8426cfe3ad4f02f3f3ea" id="r_a5772f009264f8426cfe3ad4f02f3f3ea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structdcn_1_1evm_1_1DeployError.html">DeployError</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1evm.html#a5772f009264f8426cfe3ad4f02f3f3ea">_decodeDeployError</a> (const evmc::Result &amp;r)</td></tr>
+<tr class="separator:a5772f009264f8426cfe3ad4f02f3f3ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae49f1145fddb7366304d428a42080dc" id="r_aae49f1145fddb7366304d428a42080dc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structdcn_1_1evm_1_1ExecuteError.html">ExecuteError</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1evm.html#aae49f1145fddb7366304d428a42080dc">_decodeExecuteError</a> (const evmc::Result &amp;r)</td></tr>
+<tr class="separator:aae49f1145fddb7366304d428a42080dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6fc6d41ee9af34df0ede308831f2f193" id="r_a6fc6d41ee9af34df0ede308831f2f193"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
 <tr class="memitem:a6fc6d41ee9af34df0ede308831f2f193"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; std::vector&lt; uint32_t &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1evm.html#a6fc6d41ee9af34df0ede308831f2f193">decodeReturnedValue</a> (const std::vector&lt; std::uint8_t &gt; &amp;bytes)</td></tr>
 <tr class="separator:a6fc6d41ee9af34df0ede308831f2f193"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -207,16 +210,32 @@ Variables</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a9bd53593924ae0c04635f36698651beb" name="a9bd53593924ae0c04635f36698651beb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9bd53593924ae0c04635f36698651beb">&#9670;&#160;</a></span>_decodeError()</h2>
+<a id="a5772f009264f8426cfe3ad4f02f3f3ea" name="a5772f009264f8426cfe3ad4f02f3f3ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5772f009264f8426cfe3ad4f02f3f3ea">&#9670;&#160;</a></span>_decodeDeployError()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structdcn_1_1evm_1_1DeployError.html">DeployError</a> dcn::evm::_decodeError </td>
+          <td class="memname"><a class="el" href="structdcn_1_1evm_1_1DeployError.html">DeployError</a> dcn::evm::_decodeDeployError </td>
+          <td>(</td>
+          <td class="paramtype">const evmc::Result &amp;&#160;</td>
+          <td class="paramname"><em>r</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aae49f1145fddb7366304d428a42080dc" name="aae49f1145fddb7366304d428a42080dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aae49f1145fddb7366304d428a42080dc">&#9670;&#160;</a></span>_decodeExecuteError()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structdcn_1_1evm_1_1ExecuteError.html">ExecuteError</a> dcn::evm::_decodeExecuteError </td>
           <td>(</td>
           <td class="paramtype">const evmc::Result &amp;&#160;</td>
           <td class="paramname"><em>r</em></td><td>)</td>
@@ -643,14 +662,14 @@ template&lt;&gt; </div>
 
 </div>
 </div>
-<a id="a5ac5b53de448c83d8e0157114d546fe2" name="a5ac5b53de448c83d8e0157114d546fe2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5ac5b53de448c83d8e0157114d546fe2">&#9670;&#160;</a></span>fetchOwner()</h2>
+<a id="adcb9f46341b40a32b745810ea03537c1" name="adcb9f46341b40a32b745810ea03537c1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adcb9f46341b40a32b745810ea03537c1">&#9670;&#160;</a></span>fetchOwner()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">asio::awaitable&lt; std::expected&lt; std::vector&lt; std::uint8_t &gt;, evmc_status_code &gt; &gt; dcn::evm::fetchOwner </td>
+          <td class="memname">asio::awaitable&lt; std::expected&lt; std::vector&lt; std::uint8_t &gt;, <a class="el" href="structdcn_1_1evm_1_1ExecuteError.html">ExecuteError</a> &gt; &gt; dcn::evm::fetchOwner </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">EVM</a> &amp;&#160;</td>
           <td class="paramname"><em>evm</em>, </td>
