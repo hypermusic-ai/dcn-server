@@ -99,6 +99,7 @@ namespace dcn
 
         const auto features = co_await registry.getOwnedFeatures(address);
         const auto transformations = co_await registry.getOwnedTransformations(address);
+        const auto conditions = co_await registry.getOwnedConditions(address);
 
         // Subrange features
         auto features_sub = features 
@@ -110,6 +111,11 @@ namespace dcn
             | std::views::drop(start)
             | std::views::take(limit);
 
+        // Subrange conditions
+        auto conditions_sub = conditions 
+            | std::views::drop(start)
+            | std::views::take(limit);
+
         // implement subrange 
         json json_output;
         json_output["owned_features"] = json::array();
@@ -118,11 +124,15 @@ namespace dcn
         json_output["owned_transformations"] = json::array();
         for (const auto& t : transformations_sub) json_output["owned_transformations"].push_back(t);
 
+        json_output["owned_conditions"] = json::array();
+        for (const auto& c : conditions_sub) json_output["owned_conditions"].push_back(c);
+
         json_output["address"] = evmc::hex(address);
         json_output["page"] = page;
         json_output["limit"] = limit;
         json_output["total_features"] = features.size();
         json_output["total_transformations"] = transformations.size();
+        json_output["total_conditions"] = conditions.size();
 
         response.setCode(http::Code::OK)
             .setBodyWithContentLength(json_output.dump());

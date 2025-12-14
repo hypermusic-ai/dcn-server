@@ -106,7 +106,7 @@ namespace dcn::loader
             out_file.close();
 
             // compile code
-            if(!co_await evm.compile(code_path, out_dir, file::getPTPath()/ "contracts", file::getPTPath() / "node_modules"))
+            if(!co_await evm.compile(code_path, out_dir, file::getPTPath()/ "contracts"))
             {
                 spdlog::error("Failed to compile code");
                 // remove code file
@@ -148,7 +148,7 @@ namespace dcn::loader
         // check execution status
         if(!owner_result)
         {
-            spdlog::error("Failed to fetch owner {}", owner_result.error());
+            spdlog::error(std::format("Failed to fetch owner {}", owner_result.error().kind));
 
             // remove binary file
             std::filesystem::remove(out_dir / (feature_record.feature().name() + ".bin"));
@@ -228,7 +228,7 @@ namespace dcn::loader
             out_file.close();
 
             // compile code
-            if(!co_await evm.compile(code_path, out_dir, file::getPTPath()/ "contracts", file::getPTPath() / "node_modules"))
+            if(!co_await evm.compile(code_path, out_dir, file::getPTPath()/ "contracts"))
             {
                 spdlog::error("Failed to compile code");
                 // remove code file
@@ -270,7 +270,7 @@ namespace dcn::loader
         // check execution status
         if(!owner_result)
         {
-            spdlog::error("Failed to fetch owner {}", owner_result.error());
+            spdlog::error(std::format("Failed to fetch owner {}", owner_result.error().kind));
 
             // remove binary file
             std::filesystem::remove(out_dir / (transformation_record.transformation().name() + ".bin"));
@@ -306,6 +306,130 @@ namespace dcn::loader
         spdlog::debug("transformation '{}' added", name);
         co_return deploy_res.value();
     }
+
+
+    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployCondition(evm::EVM & evm, registry::Registry & registry, ConditionRecord condition_record)
+    {
+        if(condition_record.condition().name().empty() || condition_record.condition().sol_src().empty())
+        {
+            spdlog::error("Condition name or source is empty");
+            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
+        }
+
+        const auto address_result = evmc::from_hex<evm::Address>(condition_record.owner());
+        if(!address_result)
+        {
+            spdlog::error("Failed to parse address");
+            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_ADDRESS});
+        }
+        const auto & address = *address_result;
+
+        static const std::filesystem::path out_dir = file::getStoragePath() / "conditions" / "build";
+
+        if(std::filesystem::exists(out_dir) == false)
+        {
+            spdlog::error("Directory {} does not exists", out_dir.string());
+            co_return std::unexpected(evm::DeployError{});
+        }
+
+        // if binary file does not exist
+        if(std::filesystem::exists(out_dir / (condition_record.condition().name() + ".bin")) == false)
+        {
+            // there is a need for compile code
+            const std::filesystem::path code_path = out_dir / (condition_record.condition().name() + ".sol");
+
+            // create code file
+            std::ofstream out_file(code_path); 
+            if(!out_file.is_open())
+            {
+                spdlog::error("Failed to create file");
+                co_return std::unexpected(evm::DeployError{});
+            }
+
+            out_file << constructConditionSolidityCode(condition_record.condition());
+            out_file.close();
+
+            // compile code
+            if(!co_await evm.compile(code_path, out_dir, file::getPTPath()/ "contracts"))
+            {
+                spdlog::error("Failed to compile code");
+                // remove code file
+                std::filesystem::remove(code_path);
+                co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::COMPILATION_ERROR});
+            }
+
+            // remove code file
+            std::filesystem::remove(code_path);
+        }
+
+        co_await evm.addAccount(address, evm::DEFAULT_GAS_LIMIT);
+        co_await evm.setGas(address, evm::DEFAULT_GAS_LIMIT);
+
+        auto deploy_res = co_await evm.deploy(  
+            out_dir / (condition_record.condition().name() + ".bin"), 
+            address, 
+            evm::encodeAsArg(evm.getRegistryAddress()), 
+            evm::DEFAULT_GAS_LIMIT, 
+            0);
+        
+        if(!deploy_res)
+        {
+            spdlog::error(std::format("Failed to deploy code {}", deploy_res.error().kind));
+
+            // deploy can fail in case when this name is already taken - then we don't want to remove binary file
+            // if it fails for another reason - we want to remove binary file
+            if(deploy_res.error().kind != evm::DeployError::Kind::CONDITION_ALREADY_REGISTERED)
+            {
+                // remove binary file
+                std::filesystem::remove(out_dir / (condition_record.condition().name() + ".bin"));
+                std::filesystem::remove(out_dir / (condition_record.condition().name() + ".abi"));
+            }
+            co_return std::unexpected(deploy_res.error());
+        }
+
+        const auto owner_result = co_await fetchOwner(evm, deploy_res.value());
+
+        // check execution status
+        if(!owner_result)
+        {
+            spdlog::error(std::format("Failed to fetch owner {}", owner_result.error().kind));
+
+            // remove binary file
+            std::filesystem::remove(out_dir / (condition_record.condition().name() + ".bin"));
+            std::filesystem::remove(out_dir / (condition_record.condition().name() + ".abi"));
+
+            co_return std::unexpected(evm::DeployError{});
+        }
+        const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
+
+        if(owner_address != address)
+        {
+            spdlog::error("Owner address mismatch");
+
+            // remove binary file
+            std::filesystem::remove(out_dir / (condition_record.condition().name() + ".bin"));
+            std::filesystem::remove(out_dir / (condition_record.condition().name() + ".abi"));
+
+            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
+        }
+
+        const std::string name = condition_record.condition().name();
+        if(!co_await registry.addCondition(deploy_res.value(), std::move(condition_record))) 
+        {
+            spdlog::error("Failed to add condition '{}'", name);
+
+            // remove binary file
+            std::filesystem::remove(out_dir / (condition_record.condition().name() + ".bin"));
+            std::filesystem::remove(out_dir / (condition_record.condition().name() + ".abi"));
+
+            co_return std::unexpected(evm::DeployError{});
+        }
+
+        spdlog::debug("condition '{}' added", name);
+        co_return deploy_res.value();
+    }
+
+
 
     asio::awaitable<bool> loadStoredFeatures(evm::EVM & evm, registry::Registry & registry)
     {
@@ -370,4 +494,34 @@ namespace dcn::loader
 
         co_return success;
     }
+
+    asio::awaitable<bool> loadStoredConditions(evm::EVM & evm, registry::Registry & registry)
+    {
+        spdlog::info("Loading stored conditions...");
+
+        auto loaded_conditions = _loadJSONRecords<ConditionRecord>(file::getStoragePath() / "conditions");
+        if(loaded_conditions.empty())
+        {
+            co_return false;
+        }
+
+        bool success = true;
+        std::size_t i = 0;
+        const std::size_t batch_size = (loaded_conditions.size() / 100) + 1;
+        assert(batch_size > 0);
+
+        for(auto & [name, condition] : loaded_conditions)
+        {
+            if(!co_await deployCondition(evm, registry, std::move(condition)))
+            {
+                spdlog::error("Failed to deploy condition `{}`", name);
+                success = false;
+            }
+
+            if(++i % batch_size == 0) {spdlog::debug("{}/{} conditions loaded", i, loaded_conditions.size());}
+        }
+
+        co_return success;
+    }
+
 }

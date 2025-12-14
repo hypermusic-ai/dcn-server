@@ -128,7 +128,7 @@ namespace dcn::registry
              * the function returns `std::nullopt`. If the condition does not exist, it
              * is added and the hash of the condition is returned.
              */
-            asio::awaitable<bool> addCondition(evm::Address address, Condition condition);
+            asio::awaitable<bool> addCondition(evm::Address address, ConditionRecord condition);
 
             /**
              * @brief Retrieves the newest condition by name.
@@ -173,6 +173,7 @@ namespace dcn::registry
 
             asio::awaitable<absl::flat_hash_set<std::string>> getOwnedFeatures(const evm::Address & address) const;
             asio::awaitable<absl::flat_hash_set<std::string>> getOwnedTransformations(const evm::Address & address) const;
+            asio::awaitable<absl::flat_hash_set<std::string>> getOwnedConditions(const evm::Address & address) const;
 
         protected:
 
@@ -248,13 +249,6 @@ namespace dcn::registry
              */
             asio::awaitable<bool> isConditionBucketEmpty(const std::string& name) const;
         
-        protected:
-            template<class T>
-            struct Node
-            {
-                T value;
-            };
-
         private:
             asio::strand<asio::io_context::executor_type> _strand;
 
@@ -264,7 +258,7 @@ namespace dcn::registry
 
             absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, FeatureRecord>> _features;
             absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, TransformationRecord>> _transformations;
-            absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, Node<Condition>>> _conditions;
+            absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, ConditionRecord>> _conditions;
 
 
             absl::flat_hash_map<evm::Address, absl::flat_hash_set<std::string>> _owned_features;

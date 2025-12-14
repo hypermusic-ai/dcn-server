@@ -1,5 +1,7 @@
 #include "feature.hpp"
 
+#include <format>
+
 namespace dcn
 {
     std::string constructFeatureSolidityCode(const Feature & feature)
@@ -7,17 +9,15 @@ namespace dcn
         /*
         // SPDX-License-Identifier: GPL-3.0
 
-        pragma solidity >=0.7.0 <0.9.0;
+        pragma solidity >=0.8.2 <0.9.0;
 
         import "../FeatureBase.sol";
-
-        import "../../condition/conditions-examples/AlwaysTrue.sol";
 
         contract FeatureA is FeatureBase
         {
             string[]      private _composites   = ["Pitch", "Time"];
 
-            constructor(address registryAddr) FeatureBase(registryAddr, new AlwaysTrue(), "FeatureA", _composites)
+            constructor(address registryAddr) FeatureBase(registryAddr, "FeatureA", _composites, "Condition", [uint32(1), uint32(2)])
             {
                 getCallDef().push(0, "Add", [uint32(1)]);
                 getCallDef().push(0, "Mul", [uint32(2)]);
@@ -35,23 +35,36 @@ namespace dcn
 
         std::string composites_code;
         std::string transform_def_code;
-        std::string args_code;
+        std::string condition_args_code;
 
+        /*
+            conditionArgs[0] = 1;
+            conditionArgs[1] = 2;
+            ...
+        */
+        for(unsigned int i = 0; i < feature.condition_args_size(); i++)
+        {
+            condition_args_code += std::format("conditionArgs[{}] = int32({});\n", i, feature.condition_args().at(i));
+        }
+
+        /*
+            composites[0] = "a";
+            composites[1] = "b";
+            ...
+        */
         for(unsigned int i = 0; i < feature.dimensions_size(); i++)
         {
-            if(i == 0)composites_code += "=[";
-            composites_code += "\"" + feature.dimensions().at(i).feature_name() + "\"";
-            if(i + 1 != feature.dimensions_size())composites_code += ", ";
-            if(i == feature.dimensions_size() - 1)composites_code += "]";
+            composites_code += std::format("composites[{}] = \"{}\";\n", i, feature.dimensions().at(i).feature_name());
 
             for(unsigned ii = 0; ii < feature.dimensions().at(i).transformations_size(); ii++)
             {
                 const auto & transform = feature.dimensions().at(i).transformations().at(ii);
-                args_code = "";
+                
+                std::string transform_args_code;
                 for(unsigned int iii = 0; iii < transform.args_size(); ++iii)
                 {
-                    args_code += "uint32(" + std::to_string(transform.args().at(iii)) + ")";
-                    if(iii + 1 != transform.args_size())args_code += ", ";
+                    transform_args_code += "uint32(" + std::to_string(transform.args().at(iii)) + ")";
+                    if(iii + 1 != transform.args_size())transform_args_code += ", ";
                 }
 
                 if(transform.args_size() > 0)
@@ -60,7 +73,7 @@ namespace dcn
                         "getCallDef().push(" 
                         + std::to_string(i) 
                         + ", \"" + transform.name() 
-                        + "\", [" + args_code + "]);\n";
+                        + "\", [" + transform_args_code + "]);\n";
                 }else
                 {
                     transform_def_code +=   
@@ -71,19 +84,44 @@ namespace dcn
                 }
             }
         }
+        
+        return std::format(
+            "//SPDX-License-Identifier: MIT\n"
+            "pragma solidity >=0.8.2 <0.9.0;\n"
+            "import \"feature/FeatureBase.sol\";\n"
+            "contract {0} is FeatureBase{{\n"
 
-        return  "//SPDX-License-Identifier: MIT\n"
-                "pragma solidity ^0.8.0;\n"
-                "import \"feature/FeatureBase.sol\";\n"
-                // TODO
-                "import \"condition/conditions-examples/AlwaysTrue.sol\";\n"
-                // ----
-                "contract " + feature.name() + " is FeatureBase{\n" // open contract
-                "string[] private _composites" + composites_code + ";\n"
-                "constructor(address registryAddr) FeatureBase(registryAddr, new AlwaysTrue(), \"" + feature.name() + "\", _composites){\n" // open ctor // 
-                + transform_def_code + // transform_def_code
-                "super.init();\n}" // close ctor;
-                "\n}"; // close contract
+            "function _composites() internal pure returns (string[] memory composites) {{"
+            "composites = new string[]({1});"
+            "{2}"
+            "}}\n"
+            
+            "function _conditionArgs() internal pure returns (int32[] memory conditionArgs) {{"
+            "conditionArgs = new int32[]({3});"
+            "{4}"
+            "}}\n"
+
+            "constructor(address registryAddr) FeatureBase(registryAddr, \"{5}\", _composites(), \"{6}\", _conditionArgs()) {{\n"
+            "{7}"
+            "super.init();\n}}"
+            "\n}}",
+            
+            // def
+            feature.name(),             // 0
+
+            feature.dimensions_size(),  // 1
+            composites_code,          // 2
+
+            feature.condition_args_size(), //3
+            condition_args_code,      // 4
+
+            // constructor
+            feature.name(),             // 5
+            feature.condition_name(),   // 6
+
+            // body
+            transform_def_code        // 7
+        );
     }
 }
 
@@ -203,6 +241,12 @@ namespace dcn::parse
             json_obj["dimensions"].emplace_back(std::move(*dimension_result));
         }
         json_obj["name"] = feature.name();
+        json_obj["condition_name"] = feature.condition_name();
+
+        for(const int32_t & arg : feature.condition_args())
+        {
+            json_obj["condition_args"].emplace_back(arg);
+        }
 
         return json_obj;
     }
@@ -216,6 +260,17 @@ namespace dcn::parse
             feature.set_name(json_obj["name"].get<std::string>());
         }
         else return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "name not found"});
+
+        if (json_obj.contains("condition_name")) {
+            feature.set_condition_name(json_obj["condition_name"].get<std::string>());
+        } else return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "condition_name not found"});
+
+        if (json_obj.contains("condition_args")) {
+            for(const int32_t & arg : json_obj["condition_args"].get<std::vector<int32_t>>())
+            {
+                feature.add_condition_args(arg);
+            }
+        } else return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "condition_args not found"});
 
         if (json_obj.contains("dimensions") == false) {
             return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "dimensions not found"});

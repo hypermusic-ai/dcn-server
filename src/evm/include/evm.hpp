@@ -74,16 +74,29 @@ namespace dcn::evm
             TRANSFORMATION_ARGUMENTS_MISMATCH,
             TRANSFORMATION_MISSING,
 
-            RUN_INSTANCE_ALREADY_REGISTERED,
-            RUN_INSTANCE_MISSING,
+            CONDITION_ALREADY_REGISTERED,
+            CONDITION_ARGUMENTS_MISMATCH,
+            CONDITION_MISSING,
 
             REGISTRY_ERROR,
+
 
         } kind = Kind::UNKNOWN;
 
         evmc_bytes32 a{};  // first bytes32 (or zero)
-        evmc_bytes32 b{};  // second bytes32 (for run instance) or zero
         uint32_t code{};   // for RegistryError
+    };
+
+    struct ExecuteError
+    {
+        enum class Kind : std::uint8_t
+        {
+            UNKNOWN = 0,
+            CONDITION_NOT_MET
+
+        } kind = Kind::UNKNOWN;
+
+        evmc_bytes32 a{};  // first bytes32 (or zero)
     };
 
     class EVM
@@ -120,7 +133,7 @@ namespace dcn::evm
                     std::uint64_t gas_limit,
                     std::uint64_t value) noexcept;
 
-        asio::awaitable<std::expected<std::vector<std::uint8_t>, evmc_status_code>> execute(
+        asio::awaitable<std::expected<std::vector<std::uint8_t>, ExecuteError>> execute(
                     Address sender,
                     Address recipient, 
                     std::vector<std::uint8_t> input_bytes,
@@ -149,7 +162,7 @@ namespace dcn::evm
         Address _registry_address;
         Address _runner_address;
     };
-    asio::awaitable<std::expected<std::vector<std::uint8_t>, evmc_status_code>> fetchOwner(EVM & evm, const Address & address);
+    asio::awaitable<std::expected<std::vector<std::uint8_t>, ExecuteError>> fetchOwner(EVM & evm, const Address & address);
 
     std::vector<std::uint8_t> constructSelector(std::string signature);
 
@@ -203,8 +216,22 @@ struct std::formatter<dcn::evm::DeployError::Kind> : std::formatter<std::string>
             case dcn::evm::DeployError::Kind::TRANSFORMATION_ARGUMENTS_MISMATCH : return formatter<string>::format("Transformation arguments mismatch", ctx);
             case dcn::evm::DeployError::Kind::TRANSFORMATION_MISSING : return formatter<string>::format("Transformation missing", ctx);
             
-            case dcn::evm::DeployError::Kind::RUN_INSTANCE_ALREADY_REGISTERED : return formatter<string>::format("Run instance already registered", ctx);
-            case dcn::evm::DeployError::Kind::RUN_INSTANCE_MISSING : return formatter<string>::format("Run instance missing", ctx);
+            case dcn::evm::DeployError::Kind::CONDITION_ALREADY_REGISTERED : return formatter<string>::format("Condition already registered", ctx);
+            case dcn::evm::DeployError::Kind::CONDITION_ARGUMENTS_MISMATCH : return formatter<string>::format("Condition arguments mismatch", ctx);
+            case dcn::evm::DeployError::Kind::CONDITION_MISSING : return formatter<string>::format("Condition missing", ctx);
+
+            default:  return formatter<string>::format("Unknown", ctx);
+        }
+        return formatter<string>::format("", ctx);
+    }
+};
+
+template <>
+struct std::formatter<dcn::evm::ExecuteError::Kind> : std::formatter<std::string> {
+    auto format(const dcn::evm::ExecuteError::Kind & err, format_context& ctx) const {
+        switch(err)
+        {
+            case dcn::evm::ExecuteError::Kind::CONDITION_NOT_MET : return formatter<string>::format("Condition not met", ctx);
 
             default:  return formatter<string>::format("Unknown", ctx);
         }

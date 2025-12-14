@@ -459,15 +459,13 @@ message (STATUS "PT artifacts location : ${PT_ARTIFACTS_DIR}")
 
 file(MAKE_DIRECTORY "${PT_INSTALL_DIR}")
 file(MAKE_DIRECTORY "${PT_INSTALL_DIR}/contracts")
-file(MAKE_DIRECTORY "${PT_INSTALL_DIR}/node_modules")
 
 add_custom_command(
     OUTPUT ${PT_CONFIG_MARKER}
     COMMAND ${CMAKE_COMMAND} -E echo "Configuring PT"
-    COMMAND npm install
-    && ${CMAKE_COMMAND} -E copy_directory "${PT_SOLIDITY_DIR}/contracts" "${PT_INSTALL_DIR}/contracts"
-    && ${CMAKE_COMMAND} -E copy_directory "${PT_SOLIDITY_DIR}/node_modules" "${PT_INSTALL_DIR}/node_modules"
-    && ${CMAKE_COMMAND} -E touch "${PT_CONFIG_MARKER}"
+    COMMAND
+        ${CMAKE_COMMAND} -E copy_directory "${PT_SOLIDITY_DIR}/contracts" "${PT_INSTALL_DIR}/contracts"
+    &&  ${CMAKE_COMMAND} -E touch "${PT_CONFIG_MARKER}"
     WORKING_DIRECTORY "${PT_SOLIDITY_DIR}"
     COMMENT "Configuring PT repo"
 )

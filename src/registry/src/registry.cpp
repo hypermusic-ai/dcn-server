@@ -258,28 +258,59 @@ namespace dcn::registry
     }
 
 
-    asio::awaitable<bool> Registry::addCondition(evm::Address address, Condition condition)
+    asio::awaitable<bool> Registry::addCondition(evm::Address address, ConditionRecord record)
     {
-        co_await utils::ensureOnStrand(_strand);
-
-        if(! co_await containsConditionBucket(condition.name())) 
+        if(record.condition().name().empty())
         {
-            spdlog::debug("Condition bucket `{}` does not exists, creating new one ... ", condition.name());
-            _conditions.try_emplace(condition.name(), absl::flat_hash_map<evm::Address, Node<Condition>>());
-        }
-
-
-        if(_conditions.at(condition.name()).contains(address))
-        {
-            spdlog::error("Condition `{}` of this signature already exists", condition.name());
+            spdlog::error("Condition name is empty");
             co_return false;
         }
 
-        _newest_condition[condition.name()] = address;
-        _conditions.at(condition.name())    
-            .try_emplace(
-                std::move(address),
-                Node<Condition>{std::move(condition)});
+        co_await utils::ensureOnStrand(_strand);
+
+        if(!co_await containsConditionBucket(record.condition().name())) 
+        {
+            spdlog::debug("Condition bucket `{}` does not exists, creating new one ... ", record.condition().name());
+            _conditions.try_emplace(record.condition().name(), absl::flat_hash_map<evm::Address, ConditionRecord>());
+        }
+
+        if(_conditions.at(record.condition().name()).contains(address))
+        {
+            spdlog::error("Condition `{}` of this signature already exists", record.condition().name());
+            co_return false;
+        }
+        
+        static const std::filesystem::path out_dir = file::getStoragePath() / "conditions";
+        if(std::filesystem::exists(out_dir) == false)
+        {
+            spdlog::error("Directory {} does not exists", out_dir.string());
+            co_return false;
+        }
+
+        const auto parsing_result = parse::parseToJson(record, parse::use_protobuf);
+        if(!parsing_result)
+        {
+            spdlog::error("Failed to parse condition `{}`", record.condition().name());
+            co_return false;
+        }
+
+        std::optional<evm::Address> owner_res = evmc::from_hex<evm::Address>(record.owner());
+        if(!owner_res)
+        {
+            spdlog::error("Failed to parse owner address");
+            co_return false;
+        }
+
+        std::ofstream output_file(out_dir / (record.condition().name() + ".json"), std::ios::out | std::ios::trunc);
+
+        output_file << *parsing_result;
+        output_file.close();
+
+        _owned_conditions[*owner_res].emplace(record.condition().name());
+
+        _newest_condition[record.condition().name()] = address;
+        _conditions.at(record.condition().name()).try_emplace(std::move(address), std::move(record));
+
         co_return true;
     }
 
@@ -291,7 +322,7 @@ namespace dcn::registry
         co_return (co_await getCondition(name, _newest_condition.at(name)));
     }
 
-    asio::awaitable<std::optional<Condition>> Registry::getCondition(const std::string& name, const evm::Address& address) const
+    asio::awaitable<std::optional<Condition>> Registry::getCondition(const std::string& name, const evm::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -305,7 +336,7 @@ namespace dcn::registry
         {
             co_return std::nullopt;
         }
-        co_return it->second.value;
+        co_return it->second.condition();
     }
 
     asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedFeatures(const evm::Address & address) const
@@ -323,4 +354,13 @@ namespace dcn::registry
         if(_owned_transformations.contains(address) == false)co_return absl::flat_hash_set<std::string>{};
         co_return _owned_transformations.at(address);
     }
+
+    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedConditions(const evm::Address & address) const
+    {
+        co_await utils::ensureOnStrand(_strand);
+
+        if(_owned_conditions.contains(address) == false)co_return absl::flat_hash_set<std::string>{};
+        co_return _owned_conditions.at(address);
+    }
+
 }

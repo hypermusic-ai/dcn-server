@@ -330,6 +330,8 @@ export function addTransformation(button) {
 function constructStructuredFeature() {
     const name = document.getElementById('in_featureName').value.trim();
     const dimensions = [];
+    const condition_name = document.getElementById('in_featureConditionName').value.trim();
+    const condition_args = document.getElementById('in_featureConditionArgs').value.trim().split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
 
     document.querySelectorAll('.dimension').forEach(dimEl => {
         const feature_name = dimEl.querySelector('.dimension-feature-name').value.trim();
@@ -346,7 +348,7 @@ function constructStructuredFeature() {
         }
     });
 
-    return JSON.stringify({ name, dimensions }, null, 2);
+    return JSON.stringify({ name, dimensions, condition_name, condition_args }, null, 2);
 }
 
 function populateStructuredFeature(jsonOrObject) {
@@ -354,6 +356,10 @@ function populateStructuredFeature(jsonOrObject) {
 
     // Set name field
     document.getElementById('in_featureName').value = data.name || '';
+
+    // set condition name and args
+    document.getElementById('in_featureConditionName').value = data.condition_name || '';
+    document.getElementById('in_featureConditionArgs').value = data.condition_args;
 
     // Clear any existing dimensions
     clearDimensions();
@@ -434,6 +440,7 @@ export async function getFeature() {
         responseBodyDiv.textContent = error.message;
     }
 }
+
 // --------------------------------------------------------------------------
 // Transformation
 // --------------------------------------------------------------------------
@@ -519,6 +526,90 @@ export async function sendStructuredTransformation() {
 }
 
 // --------------------------------------------------------------------------
+// Conditions
+// --------------------------------------------------------------------------
+export async function getCondition() {
+    const name = document.getElementById('in_conditionName').value.trim();
+    const address = document.getElementById('GET_conditionAddress').value.trim();
+
+    const responseCodeDiv = document.getElementById('GET_conditionResponseCode');
+    const responseBodyDiv = document.getElementById('GET_conditionResponseBody');
+
+    if (!name) {
+        alert("Condition name is required.");
+        return;
+    }
+
+    const apiBase = window.location.origin;
+    const url = `${apiBase}/condition/${name}${address ? `/${address}` : ''}`;
+    try {
+        const res = await fetch(url);
+        const text = await res.text();
+        responseCodeDiv.textContent = res.status;
+        responseBodyDiv.textContent = formatJSON(text);
+        populateStructuredCondition(JSON.parse(text));
+    } catch (error) {
+        responseCodeDiv.textContent = 'Error';
+        responseBodyDiv.textContent = error.message;
+    }
+}
+
+export function updateConditionPreview() {
+    const name = document.getElementById('in_conditionName').value.trim();
+    const sol_src = document.getElementById('POST_conditionCode').value.trim();
+    const obj = { name, sol_src };
+    document.getElementById('POST_conditionRequestBody').textContent = JSON.stringify(obj, null, 2);
+}
+
+export function populateStructuredCondition(jsonOrObject) {
+    const data = typeof jsonOrObject === 'string' ? JSON.parse(jsonOrObject) : jsonOrObject;
+
+    const nameInput = document.getElementById('in_conditionName');
+    const codeInput = document.getElementById('POST_conditionCode');
+    const requestBodyDiv = document.getElementById('POST_conditionRequestBody');
+
+    if (!data || typeof data !== 'object') {
+        console.warn("Invalid condition data:", data);
+        return;
+    }
+
+    nameInput.value = data.name || '';
+    codeInput.value = data.sol_src || '';
+
+    updateConditionPreview(); // trigger live preview rendering
+}
+
+export async function sendStructuredCondition() {
+    const name = document.getElementById('in_conditionName').value.trim();
+    const sol_src = document.getElementById('POST_conditionCode').value.trim();
+
+    const responseCodeDiv = document.getElementById('POST_conditionResponseCode');
+    const responseBodyDiv = document.getElementById('POST_conditionResponseBody');
+
+    if (!name) {
+        alert("Condition name is required.");
+        return;
+    }
+
+    try {
+        const apiBase = window.location.origin;
+        const res = await requestWithLogin(`${apiBase}/condition`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, sol_src }),
+        });
+        const text = await res.text();
+        responseCodeDiv.textContent = res.status;
+        responseBodyDiv.textContent = formatJSON(text);
+    } catch (error) {
+        responseCodeDiv.textContent = 'Error';
+        responseBodyDiv.textContent = error.message;
+    }
+}
+
+// --------------------------------------------------------------------------
 // Version
 // --------------------------------------------------------------------------
 export async function fetchVersionInfo() {
@@ -540,10 +631,11 @@ let currentAccountPage = 0;
 const accountPageSize = 10;
 let totalAccountFeaturePages = 0;
 let totalAccountTransformationPages = 0;
+let totalAccountConditionPages = 0;
 
 export function nextPage()
 {
-    if(currentAccountPage < Math.max(totalAccountFeaturePages, totalAccountTransformationPages))
+    if(currentAccountPage < Math.max(totalAccountFeaturePages, totalAccountTransformationPages, totalAccountConditionPages))
     {
         currentAccountPage += 1;
         fetchAccountResources();
@@ -562,14 +654,17 @@ export async function fetchAccountResources() {
     const address = document.getElementById('accountAddressInput').value.trim();
     const featuresDiv = document.getElementById('accountFeaturesList');
     const transformationsDiv = document.getElementById('accountTransformationsList');
+    const conditionsDiv = document.getElementById('accountConditionsList');
 
     featuresDiv.textContent = 'Loading...';
     transformationsDiv.textContent = 'Loading...';
+    conditionsDiv.textContent = 'Loading...';
 
     if (!address) {
         alert("Address is required.");
         featuresDiv.textContent = '❌ Invalid address';
         transformationsDiv.textContent = '';
+        conditionsDiv.textContent = '';
         return;
     }
 
@@ -596,22 +691,31 @@ export async function fetchAccountResources() {
             }).join('')
             : '(none)';
 
+        conditionsDiv.innerHTML = data.owned_conditions?.length
+            ? data.owned_conditions.map((name, i) => {
+                const bg = i % 2 === 0 ? '#1e1e1e' : '#2a2a2a';
+                return `<div style="padding: 0.5rem; border: 1px solid #3333; border-radius: 4px; margin-bottom: 0.3rem; background: ${bg};"><code>${name}</code></div>`;
+            }).join('')
+            : '(none)';
+
         // Compute total pages based on backend totals
         totalAccountFeaturePages = Math.ceil((data.total_features ?? 0) / accountPageSize);
         totalAccountTransformationPages = Math.ceil((data.total_transformations ?? 0) / accountPageSize);
+        totalAccountConditionPages = Math.ceil((data.total_conditions ?? 0) / accountPageSize);
 
         // Show page number as: Page X of Y
         document.getElementById('accountPageLabel').textContent =
-            `Page ${currentAccountPage + 1} of ${Math.max(totalAccountFeaturePages, totalAccountTransformationPages)}`;
+            `Page ${currentAccountPage + 1} of ${Math.max(totalAccountFeaturePages, totalAccountTransformationPages, totalAccountConditionPages)}`;
 
         // Disable next if on last page
-        const isLastPage = currentAccountPage >= Math.max(totalAccountFeaturePages, totalAccountTransformationPages) - 1;
+        const isLastPage = currentAccountPage >= Math.max(totalAccountFeaturePages, totalAccountTransformationPages, totalAccountConditionPages) - 1;
         document.getElementById('btn_prevAccountPage').disabled = currentAccountPage === 0;
         document.getElementById('btn_nextAccountPage').disabled = isLastPage;
 
     } catch (err) {
         featuresDiv.textContent = '❌ Failed to fetch account data';
         transformationsDiv.textContent = err.message;
+        conditionsDiv.textContent = '';
     }
 }
 

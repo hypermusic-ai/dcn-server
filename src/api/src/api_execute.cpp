@@ -130,7 +130,7 @@ namespace dcn
         {
             response.setCode(http::Code::InternalServerError)          
                 .setBodyWithContentLength(json {
-                    {"message", std::format("Failed to execute code : {}", exec_result.error())}
+                    {"message", std::format("Failed to execute code : {}", exec_result.error().kind)}
                 }.dump());
 
             co_return response;

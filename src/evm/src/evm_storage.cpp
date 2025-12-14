@@ -122,6 +122,14 @@ namespace dcn::evm
             evmc::Result result = _vm.execute(*this, _revision, patched_msg, code.data(), code.size());
             _sender_stack.pop();
 
+            if (result.status_code != EVMC_SUCCESS)
+            {
+                spdlog::error(std::format("Failed to execute contract: {} {}", result.status_code, evmc::hex(result.output_data)));
+                return result;
+            }
+
+            spdlog::debug(std::format("EVMC execute call from {} to {} ended", actual_sender, msg.recipient));
+
             return result;
         }
         else if (msg.kind == EVMC_CREATE || msg.kind == EVMC_CREATE2)
@@ -161,7 +169,7 @@ namespace dcn::evm
 
             if (result.status_code != EVMC_SUCCESS)
             {
-                spdlog::error(std::format("Failed to deploy contract: {}", result.status_code));
+                spdlog::error(std::format("Failed to deploy contract: {} {}", result.status_code, evmc::hex(result.output_data)));
                 return result;
             }
 

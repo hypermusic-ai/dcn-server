@@ -145,14 +145,16 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::GET,     "/feature/<string>/<~string>"},    dcn::GET_feature, std::ref(registry), std::ref(evm));
     server.addRoute({dcn::http::Method::POST,    "/feature"},                       dcn::POST_feature, std::ref(auth_manager), std::ref(registry), std::ref(evm));
 
-
     server.addRoute({dcn::http::Method::HEAD, "/transformation/<string>/<~string>"},    dcn::HEAD_transformation, std::ref(registry));
     server.addRoute({dcn::http::Method::OPTIONS, "/transformation/<string>/<~string>"}, dcn::OPTIONS_transformation);
     server.addRoute({dcn::http::Method::GET,     "/transformation/<string>/<~string>"}, dcn::GET_transformation, std::ref(registry), std::ref(evm));
     server.addRoute({dcn::http::Method::POST,    "/transformation"},                    dcn::POST_transformation, std::ref(auth_manager), std::ref(registry), std::ref(evm));
 
-    //server.addRoute({dcn::http::Method::GET, "/condition"},                          dcn::GET_condition);
-    //server.addRoute({dcn::http::Method::POST, "/condition"},                         dcn::POST_condition);
+    server.addRoute({dcn::http::Method::HEAD, "/condition/<string>/<~string>"},    dcn::HEAD_condition, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/condition/<string>/<~string>"}, dcn::OPTIONS_condition);
+    server.addRoute({dcn::http::Method::GET,     "/condition/<string>/<~string>"}, dcn::GET_condition, std::ref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::POST,    "/condition"},                    dcn::POST_condition, std::ref(auth_manager), std::ref(registry), std::ref(evm));
+
     server.addRoute({dcn::http::Method::OPTIONS, "/execute"},   dcn::OPTIONS_execute);
     server.addRoute({dcn::http::Method::POST, "/execute"},      dcn::POST_execute, std::cref(auth_manager), std::ref(evm));
 
@@ -162,9 +164,12 @@ int main(int argc, char* argv[])
     std::filesystem::create_directory(dcn::file::getStoragePath() / "features" / "build");
     std::filesystem::create_directory(dcn::file::getStoragePath() / "transformations");
     std::filesystem::create_directory(dcn::file::getStoragePath() / "transformations" / "build");
+    std::filesystem::create_directory(dcn::file::getStoragePath() / "conditions");
+    std::filesystem::create_directory(dcn::file::getStoragePath() / "conditions" / "build");
 
-    asio::co_spawn(io_context, dcn::loader::loadStoredTransformations(evm, registry), 
-        [&io_context, &registry, &evm, &server](std::exception_ptr, bool){
+    asio::co_spawn(io_context, 
+        (dcn::loader::loadStoredTransformations(evm, registry) && dcn::loader::loadStoredConditions(evm, registry)), 
+        [&io_context, &registry, &evm, &server](std::exception_ptr, std::tuple<bool, bool>){
                 asio::co_spawn(io_context, dcn::loader::loadStoredFeatures(evm, registry), 
                 [&io_context, &server](std::exception_ptr, bool){
                     asio::co_spawn(io_context, server.listen(), asio::detached);

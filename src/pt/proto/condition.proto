@@ -6,3 +6,10 @@ message Condition {
     string name = 1;
     string sol_src = 2;
 }
+
+// Internal full record (used in storage, indexing, etc.)
+message ConditionRecord 
+{
+    Condition condition = 1;
+    string owner = 2;
+}

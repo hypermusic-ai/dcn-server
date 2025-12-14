@@ -19,6 +19,8 @@ message Feature
 {
     string name = 1;
     repeated Dimension dimensions = 2;
+    string condition_name = 3;
+    repeated int32 condition_args = 4;
 }
 
 // Internal full record (used in storage, indexing, etc.)

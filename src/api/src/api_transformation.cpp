@@ -207,7 +207,7 @@ namespace dcn
         {
             response.setCode(http::Code::InternalServerError)
                 .setBodyWithContentLength(json {
-                    {"message", std::format("Failed to fetch transformation : {}", exec_result.error())}
+                    {"message", std::format("Failed to fetch transformation : {}", exec_result.error().kind)}
                 }.dump());
 
             co_return response;
@@ -219,7 +219,7 @@ namespace dcn
         {
             response.setCode(http::Code::InternalServerError)
                 .setBodyWithContentLength(json {
-                    {"message", std::format("Failed to fetch owner: {}", owner_result.error())}
+                    {"message", std::format("Failed to fetch owner: {}", owner_result.error().kind)}
                 }.dump());
             
             co_return response;

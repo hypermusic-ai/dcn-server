@@ -59,6 +59,7 @@ namespace dcn::parse
     template<>
     Result<Transformation> parseFromJson(std::string json_str, use_protobuf_t);
 
+    
     /**
      * @brief Converts a TransformationRecord object to a JSON object.
      * @param transformation_record The TransformationRecord object to convert.

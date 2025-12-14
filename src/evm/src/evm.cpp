@@ -156,11 +156,7 @@ namespace dcn::evm
         return return_offset;
     }
 
-    template<class E>
-    static E _decodeError(const evmc::Result& r);
-
-    template<>
-    DeployError _decodeError(const evmc::Result& r)
+    DeployError _decodeDeployError(const evmc::Result& r)
     {
         std::vector<std::uint8_t> selector;
 
@@ -194,16 +190,22 @@ namespace dcn::evm
             return DeployError{DeployError::Kind::TRANSFORMATION_MISSING};
         }
 
-        selector = constructSelector("RunInstanceAlreadyRegistered(bytes32, bytes32)");
+        selector = constructSelector("ConditionAlreadyRegistered(bytes32)");
         if (std::equal(selector.begin(), selector.end(), r.output_data))
         {
-            return DeployError{DeployError::Kind::RUN_INSTANCE_ALREADY_REGISTERED};
+            return DeployError{DeployError::Kind::CONDITION_ALREADY_REGISTERED};
         }
 
-        selector = constructSelector("RunInstanceMissing(bytes32, bytes32)");
+        selector = constructSelector("ConditionArgumentsMismatch(bytes32)");
         if (std::equal(selector.begin(), selector.end(), r.output_data))
         {
-            return DeployError{DeployError::Kind::RUN_INSTANCE_MISSING};
+            return DeployError{DeployError::Kind::CONDITION_ARGUMENTS_MISMATCH};
+        }
+
+        selector = constructSelector("ConditionMissing(bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::CONDITION_MISSING};
         }
 
         selector = constructSelector("RegistryError(bytes32)");
@@ -213,6 +215,20 @@ namespace dcn::evm
         }
 
         return DeployError{};
+    }
+
+    ExecuteError _decodeExecuteError(const evmc::Result& r)
+    {
+        std::vector<std::uint8_t> selector;
+
+        selector = constructSelector("ConditionNotMet(bytes32)");
+        spdlog::info(evmc::hex(selector.data()));
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return ExecuteError{ExecuteError::Kind::CONDITION_NOT_MET};
+        }
+
+        return ExecuteError{};
     }
 
 
@@ -320,13 +336,13 @@ namespace dcn::evm
         return result;
     }
 
-    asio::awaitable<std::expected<std::vector<std::uint8_t>, evmc_status_code>> fetchOwner(EVM & evm, const Address & address)
+    asio::awaitable<std::expected<std::vector<std::uint8_t>, ExecuteError>> fetchOwner(EVM & evm, const Address & address)
     {
         spdlog::debug(std::format("Fetching contract owner: {}", address));
         std::vector<uint8_t> input_data;
         const auto selector = constructSelector("getOwner()");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
-        co_return  co_await evm.execute(evm.getRegistryAddress(), address, input_data, 1'000'000, 0);
+        co_return co_await evm.execute(evm.getRegistryAddress(), address, input_data, 1'000'000, 0);
     }
 
     EVM::EVM(asio::io_context & io_context, evmc_revision rev, std::filesystem::path solc_path)
@@ -517,7 +533,7 @@ namespace dcn::evm
 
         if (result.status_code != EVMC_SUCCESS)
         {
-            const DeployError error = _decodeError<DeployError>(result);
+            const DeployError error = _decodeDeployError(result);
             spdlog::error(std::format("Failed to deploy contract: {}, error: {}", result.status_code, error.kind));
             co_return std::unexpected(error);
         }
@@ -545,7 +561,7 @@ namespace dcn::evm
         co_return co_await deploy(file, std::move(sender), std::move(constructor_args),  gas_limit, value);
     }
 
-    asio::awaitable<std::expected<std::vector<std::uint8_t>, evmc_status_code>> EVM::execute(
+    asio::awaitable<std::expected<std::vector<std::uint8_t>, ExecuteError>> EVM::execute(
                     Address sender,
                     Address recipient,
                     std::vector<std::uint8_t> input_bytes,
@@ -555,7 +571,7 @@ namespace dcn::evm
         if(std::ranges::all_of(recipient.bytes, [](uint8_t b) { return b == 0; }))
         {
             spdlog::error("Cannot create a contract with execute function. Use dedicated deploy method.");
-            co_return std::unexpected<evmc_status_code>(EVMC_FAILURE);
+            co_return std::unexpected(ExecuteError{ExecuteError::Kind::UNKNOWN});
         }
 
         evmc_message msg{};
@@ -584,8 +600,9 @@ namespace dcn::evm
         
         if (result.status_code != EVMC_SUCCESS)
         {
-            spdlog::error("Failed to execute contract: {}", evmc_status_code_to_string(result.status_code));
-            co_return std::unexpected<evmc_status_code>(result.status_code);
+            const ExecuteError error = _decodeExecuteError(result);
+            spdlog::error(std::format("Failed to execute contract: {}, error: {} {}", result.status_code, error.kind, evmc::hex(result.output_data)));
+            co_return std::unexpected(error);
         }
 
         // Display result
@@ -602,7 +619,6 @@ namespace dcn::evm
     asio::awaitable<bool> EVM::loadPT()
     { 
         const auto & contracts_dir = file::getPTPath()    / "contracts";
-        const auto & node_modules = file::getPTPath()     / "node_modules";
         const auto & out_dir = file::getPTPath()          / "out";
 
         std::filesystem::create_directories(out_dir);
@@ -611,8 +627,7 @@ namespace dcn::evm
             if(co_await compile(
                     contracts_dir / "registry" / "RegistryBase.sol",
                     out_dir / "registry", 
-                    contracts_dir, 
-                    node_modules) == false)
+                    contracts_dir) == false)
             {
                 spdlog::error("Failed to compile registry");
                 co_return false;
@@ -634,10 +649,9 @@ namespace dcn::evm
 
         { // deploy runner
             if(co_await compile(
-                    contracts_dir /  "Runner.sol",
-                    out_dir, 
-                    contracts_dir, 
-                    node_modules) == false)
+                    contracts_dir / "runner" /  "Runner.sol",
+                    out_dir / "runner", 
+                    contracts_dir) == false)
             {
                 spdlog::error("Failed to compile runner");
                 co_return false;
@@ -645,7 +659,7 @@ namespace dcn::evm
             
             spdlog::debug("Deploy runner");
             const auto runner_address_res = co_await deploy(
-                    out_dir / "Runner.bin", 
+                    out_dir / "runner" / "Runner.bin", 
                     _genesis_address,
                     encodeAsArg(_registry_address), 
                     DEFAULT_GAS_LIMIT, 

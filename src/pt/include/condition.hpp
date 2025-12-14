@@ -1,7 +1,14 @@
 #pragma once
+#include <string>
+#include <regex>
+#include <algorithm>
+
 #include <absl/hash/hash.h>
+#include <spdlog/spdlog.h>
 
 #include "condition.pb.h"
+
+#include "parser.hpp"
 
 namespace dcn
 {
@@ -17,4 +24,67 @@ namespace dcn
     inline H AbslHashValue(H h, const Condition & c) {
         return H::combine(std::move(h), c.name(), c.sol_src());
     }
+
+    std::string constructConditionSolidityCode(const Condition & condition);
+}
+
+namespace dcn::parse
+{
+    /**
+     * @brief Parses a condition object to a JSON object.
+     * @param condition The condition object to parse.
+     */
+    template<>
+    Result<json> parseToJson(Condition condition, use_json_t);
+
+    /**
+     * @brief Parses a JSON object to a condition object.
+     * @param json_obj The JSON object to parse.
+     */
+    template<>
+    Result<Condition> parseFromJson(json json_obj, use_json_t);
+
+    /**
+     * @brief Converts a condition object to a JSON string using protobuf
+     * @param condition The condition object to convert
+     * @return A JSON string representation of the condition object
+     */
+    template<>
+    Result<std::string> parseToJson(Condition condition, use_protobuf_t);
+
+    /**
+     * @brief Parses a JSON string to a condition object using Protobuf.
+     * @param json_str The JSON string to parse.
+     */
+    template<>
+    Result<Condition> parseFromJson(std::string json_str, use_protobuf_t);
+
+
+    /**
+     * @brief Converts a ConditionRecord object to a JSON object.
+     * @param condition_record The ConditionRecord object to convert.
+     */
+    template<>
+    Result<json> parseToJson(ConditionRecord condition_record, use_json_t);
+
+    /**
+     * @brief Converts a ConditionRecord object to a JSON string using Protobuf.
+     * @param condition_record The ConditionRecord object to convert.
+     */
+    template<>
+    Result<std::string> parseToJson(ConditionRecord condition_record, use_protobuf_t);
+
+    /**
+     * @brief Parses a JSON object to a ConditionRecord object.
+     * @param json_obj The JSON object to parse.
+     */
+    template<>
+    Result<ConditionRecord> parseFromJson(json json_obj, use_json_t);
+    
+    /**
+     * @brief Parses a JSON string to a ConditionRecord object using Protobuf.
+     * @param json_str The JSON string to parse.
+     */
+    template<>
+    Result<ConditionRecord> parseFromJson(std::string json_str, use_protobuf_t);
 }

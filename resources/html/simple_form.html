@@ -32,6 +32,10 @@
             sendStructuredTransformation,
             getTransformation,
 
+            updateConditionPreview,
+            sendStructuredCondition,
+            getCondition,
+
             fetchAccountResources,
             nextPage,
             prevPage,
@@ -50,6 +54,8 @@
         document.getElementById('btn_executeCopyResponse').addEventListener('click', () => copyTextFromElement('executeBody'));
 
         document.getElementById('in_featureName').addEventListener('input', updateFeatureRequestPreview);
+        document.getElementById('in_featureConditionName').addEventListener('input', updateFeatureRequestPreview);
+        document.getElementById('in_featureConditionArgs').addEventListener('input', updateFeatureRequestPreview);
         document.getElementById('btn_addDimension').addEventListener('click', addDimension);
         document.getElementById('btn_clearDimensions').addEventListener('click', clearDimensions);
         document.getElementById('btn_sendStructuredFeature').addEventListener('click', sendStructuredFeature);
@@ -61,6 +67,12 @@
         document.getElementById('btn_sendStructuredTransformation').addEventListener('click', sendStructuredTransformation);
         document.getElementById('btn_getTransformation').addEventListener('click', getTransformation);
         document.getElementById('btn_transformationCopyRequest').addEventListener('click', () => copyTextFromElement('POST_transformationRequestBody'));
+
+        document.getElementById('in_conditionName').addEventListener('input', updateConditionPreview);
+        document.getElementById('POST_conditionCode').addEventListener('input', updateConditionPreview);
+        document.getElementById('btn_sendStructuredCondition').addEventListener('click', sendStructuredCondition);
+        document.getElementById('btn_getCondition').addEventListener('click', getCondition);
+        document.getElementById('btn_conditionCopyRequest').addEventListener('click', () => copyTextFromElement('POST_conditionRequestBody'));
 
         document.getElementById('btn_fetchAccountData').addEventListener('click', fetchAccountResources);
         document.getElementById('btn_prevAccountPage').addEventListener('click', prevPage);
@@ -113,6 +125,10 @@
             <div class="column">
                 <h3>Owned Transformations</h3>
                 <div id="accountTransformationsList" class="response-body">Waiting...</div>
+            </div>
+            <div class="column">
+                <h3>Owned Conditions</h3>
+                <div id="accountConditionsList" class="response-body">Waiting...</div>
             </div>
         </div>
         <div style="text-align: center; margin-top: 1rem;">
@@ -191,6 +207,17 @@
             <input type="text" id="in_featureName" placeholder="melody">
         </div>
         <div class="row">
+                <div class="column">
+                    <label>Condition Name</label>
+                    <input type="text" id="in_featureConditionName" placeholder="Check">
+                </div>
+                
+                <div class="column">
+                    <label>args (comma-separated)</label>
+                    <input type="text" id="in_featureConditionArgs" placeholder="...">
+                </div>
+        </div>
+        <div class="row">
         <div class="column">
             <div id="dimensionsContainer"></div>
 
@@ -264,6 +291,50 @@
             <div class="response-row">
                 <div id="GET_transformationResponseCode" class="response-code">-</div>
                 <div id="GET_transformationResponseBody" class="response-body">Waiting...</div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="row">
+        <h2>Conditions</h2>
+        <div style="flex: 1; min-width: 120px; margin-right: 1rem;">
+            <label>Name</label>
+            <input type="text" id="in_conditionName" placeholder="add">
+        </div>
+        <div class="row">
+        <div class="column">
+            <div class="column">
+                <label>Solidity Code</label>
+                <div class="request-body">function check(int32 [] calldata args) view external returns (bool){</div>
+                <textarea id="POST_conditionCode" placeholder="return args[0] == 1;"></textarea>
+                <div class="request-body">}</div>
+            </div>
+
+            <label style="margin:1rem;" >Request body</label>
+            <div class="request-row">
+                <div class="response-wrapper">
+                    <button id="btn_conditionCopyRequest" class="copy-button">📋</button>
+                    <pre id="POST_conditionRequestBody" class="request-body">...</pre>
+                </div>
+            </div>
+            
+            <button id="btn_sendStructuredCondition">🔒 Send</button>
+            
+            <div class="response-row">
+                <div id="POST_conditionResponseCode" class="response-code">-</div>
+                <div id="POST_conditionResponseBody" class="response-body">Waiting...</div>
+            </div>
+        </div>
+        <div class="column">
+            <label>Address (optional)</label>
+            <input id="GET_conditionAddress" type="text" placeholder="0x0...">
+            <button id="btn_getCondition">Fetch</button>
+            <div class="response-row">
+                <div id="GET_conditionResponseCode" class="response-code">-</div>
+                <div id="GET_conditionResponseBody" class="response-body">Waiting...</div>
             </div>
         </div>
         </div>
