@@ -106,14 +106,14 @@ namespace dcn::evm
 
             if (it == _accounts.end())
             {
-                spdlog::error(std::format("Account {} does not exist", msg.recipient));
+                spdlog::error(std::format("call: Account {} does not exist", msg.recipient));
                 return evmc::Result{EVMC_FAILURE};
             }
 
             auto& code = it->second.code;
             if (code.empty())
             {
-                spdlog::error(std::format("Account {} has no code", msg.recipient));
+                spdlog::error(std::format("call: Account {} has no code", msg.recipient));
                 return evmc::Result{EVMC_FAILURE};
             }
             
@@ -124,11 +124,11 @@ namespace dcn::evm
 
             if (result.status_code != EVMC_SUCCESS)
             {
-                spdlog::error(std::format("Failed to execute contract: {} {}", result.status_code, evmc::hex(result.output_data)));
+                spdlog::error(std::format("call: Failed to execute contract: {} {}", result.status_code, evmc::hex(result.output_data)));
                 return result;
             }
 
-            spdlog::debug(std::format("EVMC execute call from {} to {} ended", actual_sender, msg.recipient));
+            spdlog::debug(std::format("call: EVMC execute call from {} to {} ended", actual_sender, msg.recipient));
 
             return result;
         }
@@ -169,7 +169,7 @@ namespace dcn::evm
 
             if (result.status_code != EVMC_SUCCESS)
             {
-                spdlog::error(std::format("Failed to deploy contract: {} {}", result.status_code, evmc::hex(result.output_data)));
+                spdlog::error(std::format("call: Failed to deploy contract: {} {}", result.status_code, evmc::hex(result.output_data)));
                 return result;
             }
 
@@ -178,11 +178,11 @@ namespace dcn::evm
 
             result.create_address = new_address;
             
-            spdlog::debug(std::format("EVMC create call from {} to {} ended", actual_sender, new_address));
+            spdlog::debug(std::format("call: EVMC create call from {} to {} ended", actual_sender, new_address));
             return result;
         }
 
-        spdlog::error(std::format("Unsupported message kind: {}", msg.kind));
+        spdlog::error(std::format("call: Unsupported message kind: {}", msg.kind));
         return evmc::Result{EVMC_FAILURE};
     }
 

@@ -32,12 +32,11 @@ namespace dcn
      * @tparam H The hash state type.
      * @param h The initial hash state.
      * @param d The Dimension object whose attributes will be hashed.
-     * @return A combined hash state incorporating the feature name and all transformation names of the Dimension.
+     * @return A combined hash state
      */
     template <typename H>
     inline H AbslHashValue(H h, const Dimension& d) 
     {
-        h = H::combine(std::move(h), d.feature_name());
         for (const TransformationDef & t : d.transformations()) {
             h = H::combine(std::move(h), t);
         }

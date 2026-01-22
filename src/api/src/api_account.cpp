@@ -97,11 +97,16 @@ namespace dcn
         const auto & page = page_res.value();
         const std::size_t start = page * limit;
 
+        const auto particles = co_await registry.getOwnedParticles(address);
         const auto features = co_await registry.getOwnedFeatures(address);
         const auto transformations = co_await registry.getOwnedTransformations(address);
         const auto conditions = co_await registry.getOwnedConditions(address);
 
         // Subrange features
+        auto particles_sub = particles 
+            | std::views::drop(start)
+            | std::views::take(limit);
+        
         auto features_sub = features 
             | std::views::drop(start)
             | std::views::take(limit);
@@ -118,6 +123,10 @@ namespace dcn
 
         // implement subrange 
         json json_output;
+
+        json_output["owned_particles"] = json::array();
+        for (const auto& p : particles_sub) json_output["owned_particles"].push_back(p);
+
         json_output["owned_features"] = json::array();
         for (const auto& f : features_sub) json_output["owned_features"].push_back(f);
 
@@ -130,6 +139,7 @@ namespace dcn
         json_output["address"] = evmc::hex(address);
         json_output["page"] = page;
         json_output["limit"] = limit;
+        json_output["total_particles"] = particles.size();
         json_output["total_features"] = features.size();
         json_output["total_transformations"] = transformations.size();
         json_output["total_conditions"] = conditions.size();

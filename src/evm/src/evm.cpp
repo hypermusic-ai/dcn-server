@@ -160,6 +160,24 @@ namespace dcn::evm
     {
         std::vector<std::uint8_t> selector;
 
+        selector = constructSelector("ParticleAlreadyRegistered(bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::PARTICLE_ALREADY_REGISTERED};
+        }
+
+        selector = constructSelector("ParticleMissing(bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::PARTICLE_MISSING};
+        }
+
+        selector = constructSelector("ParticleDimensionsMismatch(bytes32)");
+        if (std::equal(selector.begin(), selector.end(), r.output_data))
+        {
+            return DeployError{DeployError::Kind::PARTICLE_DIMENSIONS_MISMATCH};
+        }
+
         selector = constructSelector("FeatureAlreadyRegistered(bytes32)");
         if (std::equal(selector.begin(), selector.end(), r.output_data))
         {
@@ -307,18 +325,18 @@ namespace dcn::evm
         {
             Samples samples;
 
-            std::size_t feature_path_rel = _readUint256(bytes, struct_offset);
-            std::size_t data_rel         = _readUint256(bytes, struct_offset + 32);
+            std::size_t path_rel = _readUint256(bytes, struct_offset);
+            std::size_t data_rel = _readUint256(bytes, struct_offset + 32);
 
             // 4.2: resolve actual offsets
-            std::size_t feature_path_offset = struct_offset + feature_path_rel;
-            std::size_t data_offset         = struct_offset + data_rel;
+            std::size_t path_offset = struct_offset + path_rel;
+            std::size_t data_offset = struct_offset + data_rel;
 
             // 4.3: read string length and content
-            std::size_t str_len = _readUint256(bytes, feature_path_offset);
+            std::size_t str_len = _readUint256(bytes, path_offset);
 
-            samples.set_feature_path(std::string(
-                reinterpret_cast<const char*>(&bytes[feature_path_offset + 32]),
+            samples.set_path(std::string(
+                reinterpret_cast<const char*>(&bytes[path_offset + 32]),
                 str_len
             ));
 
@@ -345,11 +363,12 @@ namespace dcn::evm
         co_return co_await evm.execute(evm.getRegistryAddress(), address, input_data, 1'000'000, 0);
     }
 
-    EVM::EVM(asio::io_context & io_context, evmc_revision rev, std::filesystem::path solc_path)
+    EVM::EVM(asio::io_context & io_context, evmc_revision rev, std::filesystem::path solc_path, std::filesystem::path pt_path)
     :   _vm(evmc_create_evmone()),
         _rev(rev),
         _strand(asio::make_strand(io_context)),
         _solc_path(std::move(solc_path)),
+        _pt_path(std::move(pt_path)),
         _storage(_vm, _rev)
     {
         if (!_vm)
@@ -385,6 +404,16 @@ namespace dcn::evm
     Address EVM::getRunnerAddress() const
     {
         return _runner_address;
+    }
+
+    const std::filesystem::path & EVM::getSolcPath() const 
+    {
+        return _solc_path;
+    }
+
+    const std::filesystem::path & EVM::getPTPath() const 
+    {
+        return _pt_path;
     }
 
     asio::awaitable<bool> EVM::addAccount(Address address, std::uint64_t initial_gas) noexcept
@@ -618,8 +647,9 @@ namespace dcn::evm
 
     asio::awaitable<bool> EVM::loadPT()
     { 
-        const auto & contracts_dir = file::getPTPath()    / "contracts";
-        const auto & out_dir = file::getPTPath()          / "out";
+        const auto  contracts_dir = _pt_path    / "contracts";
+        const auto node_modules = _pt_path      / "node_modules";
+        const auto  out_dir = _pt_path          / "out";
 
         std::filesystem::create_directories(out_dir);
         
@@ -627,7 +657,8 @@ namespace dcn::evm
             if(co_await compile(
                     contracts_dir / "registry" / "RegistryBase.sol",
                     out_dir / "registry", 
-                    contracts_dir) == false)
+                    contracts_dir,
+                    node_modules) == false)
             {
                 spdlog::error("Failed to compile registry");
                 co_return false;
@@ -651,7 +682,8 @@ namespace dcn::evm
             if(co_await compile(
                     contracts_dir / "runner" /  "Runner.sol",
                     out_dir / "runner", 
-                    contracts_dir) == false)
+                    contracts_dir,
+                    node_modules) == false)
             {
                 spdlog::error("Failed to compile runner");
                 co_return false;

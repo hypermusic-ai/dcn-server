@@ -35,6 +35,11 @@ namespace dcn::registry
             
             ~Registry() = default;
 
+            asio::awaitable<bool> addParticle(evm::Address address, ParticleRecord particle);
+            asio::awaitable<std::optional<Particle>> getNewestParticle(const std::string& name) const;
+            asio::awaitable<std::optional<Particle>> getParticle(const std::string& name, const evm::Address & address) const;
+
+
             /**
              * @brief Adds a feature to the registry.
              *
@@ -158,24 +163,14 @@ namespace dcn::registry
              */
             asio::awaitable<std::optional<Condition>> getCondition(const std::string& name, const evm::Address & address) const;
 
-            /**
-             * @brief Recursively checks if all subfeatures exist in the registry
-             *
-             * @param feature The feature to check
-             *
-             * @return true if all subfeatures exist, false otherwise
-             *
-             * This function works by iterating over all dimensions of the feature
-             * and recursively checking if each subfeature exists in the registry.
-             * If at any point any subfeature does not exist, the function returns false.
-             */
-            asio::awaitable<bool> checkIfSubFeaturesExist(const Feature & feature) const;
-
+            asio::awaitable<absl::flat_hash_set<std::string>> getOwnedParticles(const evm::Address & address) const;
             asio::awaitable<absl::flat_hash_set<std::string>> getOwnedFeatures(const evm::Address & address) const;
             asio::awaitable<absl::flat_hash_set<std::string>> getOwnedTransformations(const evm::Address & address) const;
             asio::awaitable<absl::flat_hash_set<std::string>> getOwnedConditions(const evm::Address & address) const;
 
         protected:
+
+            asio::awaitable<bool> containsParticleBucket(const std::string& name) const;
 
             /**
              * @brief Checks if a feature bucket exists in the registry.
@@ -206,6 +201,9 @@ namespace dcn::registry
              *         false otherwise.
              */
             asio::awaitable<bool> containsConditionBucket(const std::string& name) const;
+
+
+            asio::awaitable<bool> isParticleBucketEmpty(const std::string& name) const;
 
             /**
              * @brief Checks if a feature bucket is empty.
@@ -252,15 +250,18 @@ namespace dcn::registry
         private:
             asio::strand<asio::io_context::executor_type> _strand;
 
+            absl::flat_hash_map<std::string, evm::Address> _newest_particle;
             absl::flat_hash_map<std::string, evm::Address> _newest_feature;
             absl::flat_hash_map<std::string, evm::Address> _newest_transformation;
             absl::flat_hash_map<std::string, evm::Address> _newest_condition;
 
+            absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, ParticleRecord>> _particles;
             absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, FeatureRecord>> _features;
             absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, TransformationRecord>> _transformations;
             absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, ConditionRecord>> _conditions;
 
 
+            absl::flat_hash_map<evm::Address, absl::flat_hash_set<std::string>> _owned_particles;
             absl::flat_hash_map<evm::Address, absl::flat_hash_set<std::string>> _owned_features;
             absl::flat_hash_map<evm::Address, absl::flat_hash_set<std::string>> _owned_transformations;
             absl::flat_hash_map<evm::Address, absl::flat_hash_set<std::string>> _owned_conditions;

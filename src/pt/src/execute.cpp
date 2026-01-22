@@ -57,8 +57,8 @@ namespace dcn::parse
     Result<json> parseToJson(ExecuteRequest execute_request, use_json_t)
     {
         json json_obj = json::object();
-        json_obj["feature_name"] = execute_request.feature_name();
-        json_obj["n"] = execute_request.n();
+        json_obj["particle_name"] = execute_request.particle_name();
+        json_obj["samples_count"] = execute_request.samples_count();
 
         for(const auto & running_instance : execute_request.running_instances()) 
         {
@@ -74,8 +74,8 @@ namespace dcn::parse
     Result<ExecuteRequest> parseFromJson(json json, use_json_t)
     {
         ExecuteRequest execute_request;
-        execute_request.set_feature_name(json["feature_name"].get<std::string>()); 
-        execute_request.set_n(json["n"].get<std::uint32_t>()); 
+        execute_request.set_particle_name(json["particle_name"].get<std::string>()); 
+        execute_request.set_samples_count(json["samples_count"].get<std::uint32_t>()); 
 
         for(const auto & running_instance : json["running_instances"]) 
         {

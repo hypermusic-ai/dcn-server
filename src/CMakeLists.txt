@@ -1,4 +1,5 @@
 add_subdirectory(native)
+add_subdirectory(config)
 add_subdirectory(cmd)
 add_subdirectory(version)
 add_subdirectory(utils)

@@ -53,6 +53,7 @@ target_link_libraries("${PROJECT_NAME}Lib"
         proto_gen
         
         "${PROJECT_PREFIX}::Native"
+        "${PROJECT_PREFIX}::Config"
         "${PROJECT_PREFIX}::CMD"
         "${PROJECT_PREFIX}::Version"
         "${PROJECT_PREFIX}::Utils"

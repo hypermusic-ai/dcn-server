@@ -7,8 +7,7 @@
 
 namespace dcn
 {
-
-    asio::awaitable<http::Response> HEAD_transformation(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry)
+    asio::awaitable<http::Response> HEAD_particle(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -18,62 +17,54 @@ namespace dcn
                 .setHeader(http::Header::ContentLength, "0")
                 .setHeader(http::Header::Connection, "close");
 
-        // Expect /transformation/<name> or /transformation/<name>/<address>
+        // Validate path: /particle/<name> or /particle/<name>/<address>
         if (args.size() > 2 || args.size() == 0) {
             response.setCode(http::Code::BadRequest);
             co_return response;
         }
 
-        const auto transformation_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
-
-        if (!transformation_name_result) {
+        const auto particle_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
+        if (!particle_name_result) {
             response.setCode(http::Code::BadRequest);
             co_return response;
         }
+        const auto & particle_name = particle_name_result.value();
 
-        const auto & transformation_name = transformation_name_result.value();
-
-        std::optional<Transformation> transformation_res;
+        std::optional<Particle> particle_res;
 
         if (args.size() == 2) {
-            // /transformation/<name>/<address>
-            const auto transformation_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
-
-            if (!transformation_address_arg) {
+            // /particle/<name>/<address>
+            const auto particle_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
+            if (!particle_address_arg) {
                 response.setCode(http::Code::BadRequest);
                 co_return response;
             }
 
-            const auto transformation_address_result = evmc::from_hex<evm::Address>(*transformation_address_arg);
+            const auto particle_address_result = evmc::from_hex<evm::Address>(particle_address_arg.value());
 
-            if (!transformation_address_result) {
+            if (!particle_address_result) {
                 response.setCode(http::Code::BadRequest);
                 co_return response;
             }
 
-            transformation_res = co_await registry.getTransformation(
-                transformation_name,
-                transformation_address_result.value()
-            );
+            particle_res = co_await registry.getParticle(particle_name, particle_address_result.value());
         } else {
-            // /transformation/<name>
-            transformation_res = co_await registry.getNewestTransformation(
-                transformation_name
-            );
+            // /particle/<name>
+            particle_res = co_await registry.getNewestParticle(particle_name);
         }
 
-        if (!transformation_res) {
-            // Transformation not found
+        if (!particle_res) {
+            // particle not found
             response.setCode(http::Code::NotFound);
             co_return response;
         }
 
-        // Transformation exists
+        // particle exists
         response.setCode(http::Code::OK);
         co_return response;
     }
 
-    asio::awaitable<http::Response> OPTIONS_transformation(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
+    asio::awaitable<http::Response> OPTIONS_particle(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
         response.setCode(http::Code::NoContent)
@@ -87,7 +78,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_transformation(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry, evm::EVM & evm)
+    asio::awaitable<http::Response> GET_particle(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry, evm::EVM & evm)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -100,78 +91,78 @@ namespace dcn
         if(args.size() > 2 || args.size() == 0)
         {
             response.setCode(http::Code::BadRequest)
-                .setBodyWithContentLength(json {
+                .setBodyWithContentLength(json{
                     {"message", "Invalid number of arguments. Expected 1 or 2 arguments."}
                 }.dump());
 
             co_return response;
         }
 
-        const auto transformation_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
+        auto particle_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
 
-        if(!transformation_name_result)
+        if(!particle_name_result)
         {
             response.setCode(http::Code::BadRequest)
-                .setBodyWithContentLength(json {
-                    {"message", "Invalid transformation name"}
+                .setBodyWithContentLength(json{
+                    {"message", "Invalid particle name"}
                 }.dump());
 
             co_return response;
         }
-        const auto & transformation_name = transformation_name_result.value();
+        const auto & particle_name = particle_name_result.value();
 
-        std::optional<Transformation> transformation_res;
+        std::optional<Particle> particle_res;
 
         if(args.size() == 2)
         {
-            const auto transformation_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
+            const auto particle_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
 
-            if(!transformation_address_arg)
+            if(!particle_address_arg)
             {
                 response.setCode(http::Code::BadRequest)
                     .setBodyWithContentLength(json {
-                        {"message", "Invalid transformation address"}
+                        {"message", "Invalid particle address argument"}
                     }.dump());
 
                 co_return response;
             }
 
-            const auto transformation_address_result = evmc::from_hex<evm::Address>(*transformation_address_arg);
+            const auto particle_address_result = evmc::from_hex<evm::Address>(particle_address_arg.value());
 
-            if(!transformation_address_result)
+            if(!particle_address_result)
             {
                 response.setCode(http::Code::BadRequest)
-                    .setBodyWithContentLength(json {
-                        {"message", "Invalid transformation address value"}
+                    .setBodyWithContentLength(json{
+                        {"message", "Invalid particle address argument value"}
                     }.dump());
 
                 co_return response;
             }
 
-            transformation_res = co_await registry.getTransformation(transformation_name_result.value(), transformation_address_result.value());
+            particle_res = co_await registry.getParticle(particle_name_result.value(), particle_address_result.value());
         }
         else if(args.size() == 1)
         {
-            transformation_res = co_await registry.getNewestTransformation(transformation_name_result.value());
+            particle_res = co_await registry.getNewestParticle(particle_name_result.value());
         }
 
-        if(!transformation_res) 
+        if(!particle_res) 
         {
             response.setCode(http::Code::NotFound)
                 .setBodyWithContentLength(json {
-                    {"message", "Transformation not found"}
+                    {"message", "Particle not found"}
                 }.dump());
 
             co_return response;
         }
         
-        auto json_res = parse::parseToJson(*transformation_res, parse::use_json);
+        auto json_res = parse::parseToJson(*particle_res, parse::use_json);
 
         if(!json_res)
         {
             response.setCode(http::Code::InternalServerError)
                 .setBodyWithContentLength(json {
-                    {"message", "Cannot parse transformation to JSON"}
+                    {"message", "Parsing response to json failed"}
                 }.dump());
 
             co_return response;
@@ -179,7 +170,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // function selector
-        const auto selector = evm::constructSelector("getTransformation(string)");
+        const auto selector = evm::constructSelector("getParticle(string)");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // Step 2: Offset to string data (32 bytes with value 0x20)
@@ -189,16 +180,16 @@ namespace dcn
 
         // Step 3: String length
         std::vector<uint8_t> str_len(32, 0);
-        str_len[31] = static_cast<uint8_t>(transformation_name.size());
+        str_len[31] = static_cast<uint8_t>(particle_name.size());
         input_data.insert(input_data.end(), str_len.begin(), str_len.end());
 
         // Step 4: String bytes
-        input_data.insert(input_data.end(), transformation_name.begin(), transformation_name.end());
+        input_data.insert(input_data.end(), particle_name.begin(), particle_name.end());
 
         // Step 5: Padding to 32-byte boundary
-        const std::size_t padding = (32 - (transformation_name.size() % 32)) % 32;
+        const std::size_t padding = (32 - (particle_name.size() % 32)) % 32;
         input_data.insert(input_data.end(), padding, 0);
-
+        
         co_await evm.setGas(evm.getRegistryAddress(), evm::DEFAULT_GAS_LIMIT);
         const auto exec_result = co_await evm.execute(evm.getRegistryAddress(), evm.getRegistryAddress(), input_data, evm::DEFAULT_GAS_LIMIT, 0);
 
@@ -207,19 +198,19 @@ namespace dcn
         {
             response.setCode(http::Code::InternalServerError)
                 .setBodyWithContentLength(json {
-                    {"message", std::format("Failed to fetch transformation : {}", exec_result.error().kind)}
+                    {"message", std::format("Failed to fetch particle : {}", exec_result.error().kind)}
                 }.dump());
-
+            
             co_return response;
         }
 
-        const auto transformation_address = evm::decodeReturnedValue<evm::Address>(exec_result.value());
-        const auto owner_result = co_await fetchOwner(evm, transformation_address);
+        const auto particle_address = evm::decodeReturnedValue<evm::Address>(exec_result.value());
+        const auto owner_result = co_await fetchOwner(evm, particle_address);
         if(!owner_result)
         {
             response.setCode(http::Code::InternalServerError)
                 .setBodyWithContentLength(json {
-                    {"message", std::format("Failed to fetch owner: {}", owner_result.error().kind)}
+                    {"message", std::format("Failed to fetch owner : {}", owner_result.error().kind)}
                 }.dump());
             
             co_return response;
@@ -228,16 +219,16 @@ namespace dcn
         const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
 
         (*json_res)["owner"] = evmc::hex(owner_address);
-        (*json_res)["local_address"] = evmc::hex(transformation_address);
+        (*json_res)["local_address"] = evmc::hex(particle_address);
         (*json_res)["address"] = "0x0";
 
         response.setCode(http::Code::OK)
             .setBodyWithContentLength(json_res->dump());
-        
+
         co_return response;
     }
 
-    asio::awaitable<http::Response> POST_transformation(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList,
+    asio::awaitable<http::Response> POST_particle(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList,
         auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config)
     {
         http::Response response;
@@ -270,40 +261,41 @@ namespace dcn
         }
         const auto & address = auth_result.value();
 
-        spdlog::debug(std::format("token verified address: {}", address));
-        
-        const auto transformation_res = parse::parseFromJson<Transformation>(request.getBody(), parse::use_protobuf);
+        spdlog::debug(std::format("token verified address : {}", address));
 
-        if(!transformation_res) 
+        // parse particle from json_string
+        const auto particle_res = parse::parseFromJson<Particle>(request.getBody(), parse::use_protobuf);
+
+        if(!particle_res) 
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json {
-                    {"message", std::format("Failed to parse transformation: {}", transformation_res.error().kind)}
+                    {"message", "Failed to parse particle"}
                 }.dump());
 
             co_return response;
         }
 
-        const Transformation & transformation = *transformation_res;
+        const Particle & particle = *particle_res;
 
-        TransformationRecord transformation_record;
-        transformation_record.set_owner(evmc::hex(address));
-        *transformation_record.mutable_transformation() = std::move(transformation);
+        ParticleRecord particle_record;
+        particle_record.set_owner(evmc::hex(address));
+        *particle_record.mutable_particle() = std::move(particle);
 
-        const auto deploy_res = co_await loader::deployTransformation(evm, registry, transformation_record, config.storage_path);
+        const auto deploy_res = co_await loader::deployParticle(evm, registry, particle_record, config.storage_path);
         if(!deploy_res)
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json {
-                    {"message", std::format("Failed to deploy transformation. Error: {}", deploy_res.error().kind)}
+                    {"message", std::format("Failed to deploy particle. Error: {}", deploy_res.error().kind)}
                 }.dump());
 
             co_return response;
         }
 
         json json_output;
-        json_output["name"] = transformation_record.transformation().name();
-        json_output["owner"] = transformation_record.owner();
+        json_output["name"] = particle_record.particle().name();
+        json_output["owner"] = particle_record.owner();
         json_output["local_address"] = evmc::hex(deploy_res.value());
         json_output["address"] = "0x0";
 

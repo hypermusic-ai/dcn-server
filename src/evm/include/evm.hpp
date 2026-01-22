@@ -42,20 +42,7 @@
 namespace dcn::evm
 {
     using Address = evmc::address;
-
-    /**
-     * error FeatureAlreadyRegistered(bytes32 name);
-     * error FeatureMissing(bytes32 name);
     
-     * error TransformationAlreadyRegistered(bytes32 name);
-     * error TransformationArgumentsMismatch(bytes32 name);
-     * error TransformationMissing(bytes32 name);
-    
-     * error RunInstanceAlreadyRegistered(bytes32 featureName, bytes32 runInstanceName);
-     * error RunInstanceMissing(bytes32 featureName, bytes32 runInstanceName);
-    
-     * error RegistryError(uint32 code);
-    */
     struct DeployError 
     {
         enum class Kind : std::uint8_t
@@ -66,6 +53,10 @@ namespace dcn::evm
             INVALID_ADDRESS,
             INVALID_DATA,
             COMPILATION_ERROR,
+
+            PARTICLE_ALREADY_REGISTERED,
+            PARTICLE_MISSING,
+            PARTICLE_DIMENSIONS_MISMATCH,
 
             FEATURE_ALREADY_REGISTERED,
             FEATURE_MISSING,
@@ -79,7 +70,6 @@ namespace dcn::evm
             CONDITION_MISSING,
 
             REGISTRY_ERROR,
-
 
         } kind = Kind::UNKNOWN;
 
@@ -102,7 +92,7 @@ namespace dcn::evm
     class EVM
     {
     public:
-        EVM(asio::io_context & io_context, evmc_revision rev, std::filesystem::path solc_path);
+        EVM(asio::io_context & io_context, evmc_revision rev, std::filesystem::path solc_path, std::filesystem::path pt_path);
         ~EVM() = default;
 
         EVM(const EVM&) = delete;
@@ -143,6 +133,9 @@ namespace dcn::evm
         Address getRegistryAddress() const;
         Address getRunnerAddress() const;
 
+        const std::filesystem::path & getSolcPath() const;
+        const std::filesystem::path & getPTPath() const;
+
     protected:
         asio::awaitable<bool> loadPT();
 
@@ -153,6 +146,7 @@ namespace dcn::evm
         evmc_revision _rev;
 
         std::filesystem::path _solc_path;
+        std::filesystem::path _pt_path;
 
         EVMStorage _storage;
         
@@ -208,6 +202,10 @@ struct std::formatter<dcn::evm::DeployError::Kind> : std::formatter<std::string>
             case dcn::evm::DeployError::Kind::INVALID_ADDRESS : return formatter<string>::format("Invalid address", ctx);
             case dcn::evm::DeployError::Kind::INVALID_DATA : return formatter<string>::format("Invalid data", ctx);
             case dcn::evm::DeployError::Kind::COMPILATION_ERROR : return formatter<string>::format("Compilation error", ctx);
+
+            case dcn::evm::DeployError::Kind::PARTICLE_ALREADY_REGISTERED : return formatter<string>::format("Particle already registered", ctx);
+            case dcn::evm::DeployError::Kind::PARTICLE_MISSING : return formatter<string>::format("Particle missing", ctx);
+            case dcn::evm::DeployError::Kind::PARTICLE_DIMENSIONS_MISMATCH : return formatter<string>::format("Particle dimensions mismatch", ctx);
 
             case dcn::evm::DeployError::Kind::FEATURE_ALREADY_REGISTERED : return formatter<string>::format("Feature already registered", ctx);
             case dcn::evm::DeployError::Kind::FEATURE_MISSING : return formatter<string>::format("Feature missing", ctx);

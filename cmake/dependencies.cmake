@@ -448,9 +448,21 @@ else()
     include(cmake/FetchPT.cmake)
 endif()
 
+find_program(NPM_EXECUTABLE npm)
+if(NOT NPM_EXECUTABLE)
+    message(FATAL_ERROR "npm not found but required for PT npm install.")
+endif()
+
+if(WIN32)
+    set(_npm_cmd cmd /c call "${NPM_EXECUTABLE}")
+else()
+    set(_npm_cmd "${NPM_EXECUTABLE}")
+endif()
+
 set(PT_SOLIDITY_DIR "${PT_REPO_PREFIX}/solidity")
 set(PT_ARTIFACTS_DIR "${PT_SOLIDITY_DIR}/artifacts")
 set(PT_INSTALL_DIR "${CMAKE_BINARY_DIR}/_install/pt")
+set(PT_NPM_MARKER "${PT_INSTALL_DIR}/pt_npm_success.txt")
 set(PT_CONFIG_MARKER "${PT_INSTALL_DIR}/pt_config_success.txt")
 
 message(STATUS "PT repository location : ${PT_REPO_PREFIX}")
@@ -459,21 +471,63 @@ message (STATUS "PT artifacts location : ${PT_ARTIFACTS_DIR}")
 
 file(MAKE_DIRECTORY "${PT_INSTALL_DIR}")
 file(MAKE_DIRECTORY "${PT_INSTALL_DIR}/contracts")
+file(MAKE_DIRECTORY "${PT_INSTALL_DIR}/node_modules")
+
+# npm commands
+if(EXISTS "${PT_SOLIDITY_DIR}/package-lock.json")
+    add_custom_command(
+        OUTPUT ${PT_NPM_MARKER}
+        COMMAND ${CMAKE_COMMAND} -E echo "Configuring PT - npm ci"
+        COMMAND ${CMAKE_COMMAND} -E echo "Running npm ci in ${PT_SOLIDITY_DIR}"
+        COMMAND ${_npm_cmd} ci --no-audit --no-fund
+        COMMAND ${CMAKE_COMMAND} -E echo "Configuring PT - npm ci - create npm marker"
+        COMMAND ${CMAKE_COMMAND} -E touch "${PT_NPM_MARKER}"
+        WORKING_DIRECTORY "${PT_SOLIDITY_DIR}"
+        COMMENT "Configuring PT repo"
+    )
+elseif(EXISTS "${PT_SOLIDITY_DIR}/package.json")
+    add_custom_command(
+        OUTPUT ${PT_NPM_MARKER}
+        COMMAND ${CMAKE_COMMAND} -E echo "Configuring PT - npm install"
+        COMMAND ${CMAKE_COMMAND} -E echo "Running npm install in ${PT_SOLIDITY_DIR}"
+        COMMAND ${_npm_cmd} install --no-audit --no-fund
+        COMMAND ${CMAKE_COMMAND} -E echo "Configuring PT - npm install - create npm marker"
+        COMMAND ${CMAKE_COMMAND} -E touch "${PT_NPM_MARKER}"
+        WORKING_DIRECTORY "${PT_SOLIDITY_DIR}"
+        COMMENT "Configuring PT repo"
+    )
+else()
+    add_custom_command(
+        OUTPUT ${PT_NPM_MARKER}
+        COMMAND ${CMAKE_COMMAND} -E echo "Configuring PT - npm"
+        COMMAND ${CMAKE_COMMAND} -E echo "No npm package-lock.json or package.json found in ${PT_SOLIDITY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E echo "Configuring PT - create empty node_modules directory"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${PT_SOLIDITY_DIR}/node_modules"
+        COMMAND ${CMAKE_COMMAND} -E echo "Configuring PT - create npm marker"
+        COMMAND ${CMAKE_COMMAND} -E touch "${PT_NPM_MARKER}"
+        WORKING_DIRECTORY "${PT_SOLIDITY_DIR}"
+        COMMENT "Configuring PT repo"
+    )
+endif()
+
+add_custom_target(pt_npm_configure ALL DEPENDS ${PT_NPM_MARKER})
 
 add_custom_command(
     OUTPUT ${PT_CONFIG_MARKER}
     COMMAND ${CMAKE_COMMAND} -E echo "Configuring PT"
-    COMMAND
-        ${CMAKE_COMMAND} -E copy_directory "${PT_SOLIDITY_DIR}/contracts" "${PT_INSTALL_DIR}/contracts"
-    &&  ${CMAKE_COMMAND} -E touch "${PT_CONFIG_MARKER}"
+    ${_pt_npm_commands}
+    COMMAND  ${CMAKE_COMMAND} -E copy_directory "${PT_SOLIDITY_DIR}/contracts" "${PT_INSTALL_DIR}/contracts"
+    COMMAND  ${CMAKE_COMMAND} -E copy_directory "${PT_SOLIDITY_DIR}/node_modules" "${PT_INSTALL_DIR}/node_modules"
+    COMMAND  ${CMAKE_COMMAND} -E touch "${PT_CONFIG_MARKER}"
     WORKING_DIRECTORY "${PT_SOLIDITY_DIR}"
     COMMENT "Configuring PT repo"
 )
 
 add_custom_target(pt_configure ALL DEPENDS ${PT_CONFIG_MARKER})
+add_dependencies(pt_configure pt_npm_configure)
 
 if(NOT DECENTRALISED_ART_USE_SUBMODULE_PT)
-    add_dependencies(pt_configure pt_download)
+    add_dependencies(pt_npm_configure pt_download)
 endif()
 
 install(DIRECTORY "${PT_INSTALL_DIR}/"

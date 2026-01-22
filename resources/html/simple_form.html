@@ -13,14 +13,15 @@
 
     <script type="module">
         import {
-            loginWithMetaMask,
-            fetchVersionInfo,
             fetchBeforeExecute,
-            
             saveInstanceEdit,
             closePopup,
+            execute
+        } from '/js/execute';
 
-            execute,
+        import {
+            loginWithMetaMask,
+            fetchVersionInfo,
 
             updateFeatureRequestPreview,
             addDimension,
@@ -35,6 +36,11 @@
             updateConditionPreview,
             sendStructuredCondition,
             getCondition,
+
+            updateParticlePreview,
+            fetchParticleFeatureDimensions,
+            sendStructuredParticle,
+            getParticle,
 
             fetchAccountResources,
             nextPage,
@@ -54,8 +60,6 @@
         document.getElementById('btn_executeCopyResponse').addEventListener('click', () => copyTextFromElement('executeBody'));
 
         document.getElementById('in_featureName').addEventListener('input', updateFeatureRequestPreview);
-        document.getElementById('in_featureConditionName').addEventListener('input', updateFeatureRequestPreview);
-        document.getElementById('in_featureConditionArgs').addEventListener('input', updateFeatureRequestPreview);
         document.getElementById('btn_addDimension').addEventListener('click', addDimension);
         document.getElementById('btn_clearDimensions').addEventListener('click', clearDimensions);
         document.getElementById('btn_sendStructuredFeature').addEventListener('click', sendStructuredFeature);
@@ -73,6 +77,16 @@
         document.getElementById('btn_sendStructuredCondition').addEventListener('click', sendStructuredCondition);
         document.getElementById('btn_getCondition').addEventListener('click', getCondition);
         document.getElementById('btn_conditionCopyRequest').addEventListener('click', () => copyTextFromElement('POST_conditionRequestBody'));
+
+        document.getElementById('in_particleName').addEventListener('input', updateParticlePreview);
+        document.getElementById('in_particleFeatureName').addEventListener('input', updateParticlePreview);
+        document.getElementById('btn_particleLoadFeature').addEventListener('click', fetchParticleFeatureDimensions);
+        document.getElementById('particleCompositesContainer').addEventListener('input', updateParticlePreview);
+        document.getElementById('in_particleConditionName').addEventListener('input', updateParticlePreview);
+        document.getElementById('in_particleConditionArgs').addEventListener('input', updateParticlePreview);
+        document.getElementById('btn_sendStructuredParticle').addEventListener('click', sendStructuredParticle);
+        document.getElementById('btn_getParticle').addEventListener('click', getParticle);
+        document.getElementById('btn_particleCopyRequest').addEventListener('click', () => copyTextFromElement('POST_particleRequestBody'));
 
         document.getElementById('btn_fetchAccountData').addEventListener('click', fetchAccountResources);
         document.getElementById('btn_prevAccountPage').addEventListener('click', prevPage);
@@ -117,7 +131,11 @@
                 <input type="text" id="accountAddressInput" class="response-body" placeholder="0x..." style="flex: 3;">
             </div>
         </div>
-        <div class="response-row">
+        <div class="account-grid">
+            <div class="column">
+                <h3>Owned Particles</h3>
+                <div id="accountParticlesList" class="response-body">Waiting...</div>
+            </div>
             <div class="column">
                 <h3>Owned Features</h3>
                 <div id="accountFeaturesList" class="response-body">Waiting...</div>
@@ -147,7 +165,7 @@
             <h2>Execute</h2>
             <div class="row" style="display: flex; gap: 1rem; align-items: flex-end;">
                 <div style="flex: 1; min-width: 120px; margin-right: 1rem;">
-                    <label>Feature name</label>
+                    <label>Particle name</label>
                     <input id="executeName" type="text" placeholder="pitch">
                 </div>
                 <div style="flex: 1; min-width: 120px;">
@@ -157,7 +175,7 @@
             </div>
             <div id="popupInstanceEditor" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:#222; color:#fff; padding:1rem; border-radius:8px; z-index:9999;">
                 <h3>Edit Running Instance</h3>
-                <p id="popupFeatureLabel"></p>
+                <p id="popupRunningInstanceLabel"></p>
                 <label>Start Point</label>
                 <input type="number" id="popupStartPoint" style="width:100%;">
                 <label>Transform Shift</label>
@@ -207,18 +225,8 @@
             <input type="text" id="in_featureName" placeholder="melody">
         </div>
         <div class="row">
-                <div class="column">
-                    <label>Condition Name</label>
-                    <input type="text" id="in_featureConditionName" placeholder="Check">
-                </div>
-                
-                <div class="column">
-                    <label>args (comma-separated)</label>
-                    <input type="text" id="in_featureConditionArgs" placeholder="...">
-                </div>
-        </div>
-        <div class="row">
         <div class="column">
+            <label>Dimensions</label>
             <div id="dimensionsContainer"></div>
 
             <div class="button-row">
@@ -335,6 +343,66 @@
             <div class="response-row">
                 <div id="GET_conditionResponseCode" class="response-code">-</div>
                 <div id="GET_conditionResponseBody" class="response-body">Waiting...</div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="row">
+        <h2>Particles</h2>
+        <div style="flex: 1; min-width: 120px; margin-right: 1rem;">
+            <label>Name</label>
+            <input type="text" id="in_particleName" placeholder="melody-particle">
+        </div>
+        <div class="row">
+        <div class="column">
+            <label>Feature name</label>
+            <input id="in_particleFeatureName" type="text" placeholder="melody">
+
+            <div class="row" style="display: flex; gap: 1rem; align-items: flex-end;">
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="visibility:hidden;">Fetch</label>
+                    <button id="btn_particleLoadFeature" type="button">Fetch feature dimensions</button>
+                </div>
+                <div id="particleFeatureInfo" style="flex: 2; color: #888; font-size: 0.9rem;">Fetch the feature to load composite inputs.</div>
+            </div>
+
+            <label>Composite names (per dimension)</label>
+            <div id="particleCompositesContainer"></div>
+            <div style="color: #888; font-size: 0.9rem; margin-top: -0.5rem; margin-bottom: 1rem;">
+                Leave empty for scalar (empty string).
+            </div>
+
+            <label>Condition name</label>
+            <input id="in_particleConditionName" type="text" placeholder="is_active">
+
+            <label>Condition args (comma-separated)</label>
+            <input id="in_particleConditionArgs" type="text" placeholder="1, 2">
+
+            <label style="margin:1rem;" >Request body</label>
+            <div class="request-row">
+                <div class="response-wrapper">
+                    <button id="btn_particleCopyRequest" class="copy-button">📋</button>
+                    <pre id="POST_particleRequestBody" class="request-body">...</pre>
+                </div>
+            </div>
+
+            <button id="btn_sendStructuredParticle">🔒 Send</button>
+
+            <div class="response-row">
+                <div id="POST_particleResponseCode" class="response-code">-</div>
+                <div id="POST_particleResponseBody" class="response-body">Waiting...</div>
+            </div>
+        </div>
+        <div class="column">
+            <label>Address (optional)</label>
+            <input id="GET_particleAddress" type="text" placeholder="0x0...">
+            <button id="btn_getParticle">Fetch</button>
+            <div class="response-row">
+                <div id="GET_particleResponseCode" class="response-code">-</div>
+                <div id="GET_particleResponseBody" class="response-body">Waiting...</div>
             </div>
         </div>
         </div>
