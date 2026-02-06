@@ -121,6 +121,12 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aff1cd5426bfe85d036b403de264d503c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93aef24aa32941e6aa82cd2f31781935" id="r_a93aef24aa32941e6aa82cd2f31781935"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a93aef24aa32941e6aa82cd2f31781935">~Registry</a> ()=default</td></tr>
 <tr class="separator:a93aef24aa32941e6aa82cd2f31781935"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a99230668d6404d1ba0a94c7a00d239ed" id="r_a99230668d6404d1ba0a94c7a00d239ed"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a99230668d6404d1ba0a94c7a00d239ed">addParticle</a> (<a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> address, ParticleRecord particle)</td></tr>
+<tr class="separator:a99230668d6404d1ba0a94c7a00d239ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c754c1b6948e3430864a20411b94f31" id="r_a6c754c1b6948e3430864a20411b94f31"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Particle &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a6c754c1b6948e3430864a20411b94f31">getNewestParticle</a> (const std::string &amp;name) const</td></tr>
+<tr class="separator:a6c754c1b6948e3430864a20411b94f31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8cce3e97dd4f03a6ec8967c1e641793b" id="r_a8cce3e97dd4f03a6ec8967c1e641793b"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Particle &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a8cce3e97dd4f03a6ec8967c1e641793b">getParticle</a> (const std::string &amp;name, const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;address) const</td></tr>
+<tr class="separator:a8cce3e97dd4f03a6ec8967c1e641793b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb54a937e64a92d5b755ec899b3b9f99" id="r_afb54a937e64a92d5b755ec899b3b9f99"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#afb54a937e64a92d5b755ec899b3b9f99">addFeature</a> (<a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> address, FeatureRecord feature)</td></tr>
 <tr class="memdesc:afb54a937e64a92d5b755ec899b3b9f99"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a feature to the registry.  <br /></td></tr>
 <tr class="separator:afb54a937e64a92d5b755ec899b3b9f99"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -148,9 +154,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a89f61f6bcbabb2be573669801d4a8e1c" id="r_a89f61f6bcbabb2be573669801d4a8e1c"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Condition &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a89f61f6bcbabb2be573669801d4a8e1c">getCondition</a> (const std::string &amp;name, const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;address) const</td></tr>
 <tr class="memdesc:a89f61f6bcbabb2be573669801d4a8e1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves a specific condition by name and address.  <br /></td></tr>
 <tr class="separator:a89f61f6bcbabb2be573669801d4a8e1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1288a7b3a8c0c9cddf39dae75fc85f1b" id="r_a1288a7b3a8c0c9cddf39dae75fc85f1b"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a1288a7b3a8c0c9cddf39dae75fc85f1b">checkIfSubFeaturesExist</a> (const Feature &amp;feature) const</td></tr>
-<tr class="memdesc:a1288a7b3a8c0c9cddf39dae75fc85f1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recursively checks if all subfeatures exist in the registry.  <br /></td></tr>
-<tr class="separator:a1288a7b3a8c0c9cddf39dae75fc85f1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a03d1ae6af11d3f788f3debe819d4af" id="r_a3a03d1ae6af11d3f788f3debe819d4af"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a3a03d1ae6af11d3f788f3debe819d4af">getOwnedParticles</a> (const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;address) const</td></tr>
+<tr class="separator:a3a03d1ae6af11d3f788f3debe819d4af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6fc9193483c9c266ed5f40921f01eea1" id="r_a6fc9193483c9c266ed5f40921f01eea1"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a6fc9193483c9c266ed5f40921f01eea1">getOwnedFeatures</a> (const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;address) const</td></tr>
 <tr class="separator:a6fc9193483c9c266ed5f40921f01eea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1065a11367175fb975621e0a97ce367c" id="r_a1065a11367175fb975621e0a97ce367c"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a1065a11367175fb975621e0a97ce367c">getOwnedTransformations</a> (const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;address) const</td></tr>
@@ -160,6 +165,8 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
+<tr class="memitem:aa39794bc4e284a780f4a58170ed0a960" id="r_aa39794bc4e284a780f4a58170ed0a960"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#aa39794bc4e284a780f4a58170ed0a960">containsParticleBucket</a> (const std::string &amp;name) const</td></tr>
+<tr class="separator:aa39794bc4e284a780f4a58170ed0a960"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a644ddf8558722530997e1cdc5b3acf6c" id="r_a644ddf8558722530997e1cdc5b3acf6c"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a644ddf8558722530997e1cdc5b3acf6c">containsFeatureBucket</a> (const std::string &amp;name) const</td></tr>
 <tr class="memdesc:a644ddf8558722530997e1cdc5b3acf6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if a feature bucket exists in the registry.  <br /></td></tr>
 <tr class="separator:a644ddf8558722530997e1cdc5b3acf6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -169,6 +176,8 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:afc775ff526f9cba3951a6b19a865ca52" id="r_afc775ff526f9cba3951a6b19a865ca52"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#afc775ff526f9cba3951a6b19a865ca52">containsConditionBucket</a> (const std::string &amp;name) const</td></tr>
 <tr class="memdesc:afc775ff526f9cba3951a6b19a865ca52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if a condition bucket exists in the registry.  <br /></td></tr>
 <tr class="separator:afc775ff526f9cba3951a6b19a865ca52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad527b08d064d9d4675381899f37ff521" id="r_ad527b08d064d9d4675381899f37ff521"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#ad527b08d064d9d4675381899f37ff521">isParticleBucketEmpty</a> (const std::string &amp;name) const</td></tr>
+<tr class="separator:ad527b08d064d9d4675381899f37ff521"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2bf10417ade06367c790fb82887970af" id="r_a2bf10417ade06367c790fb82887970af"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a2bf10417ade06367c790fb82887970af">isFeatureBucketEmpty</a> (const std::string &amp;name) const</td></tr>
 <tr class="memdesc:a2bf10417ade06367c790fb82887970af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if a feature bucket is empty.  <br /></td></tr>
 <tr class="separator:a2bf10417ade06367c790fb82887970af"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -352,6 +361,34 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a99230668d6404d1ba0a94c7a00d239ed" name="a99230668d6404d1ba0a94c7a00d239ed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a99230668d6404d1ba0a94c7a00d239ed">&#9670;&#160;</a></span>addParticle()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::addParticle </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a>&#160;</td>
+          <td class="paramname"><em>address</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ParticleRecord&#160;</td>
+          <td class="paramname"><em>particle</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="acb1eabbf7f111ac2dc7622bb7922e8f7" name="acb1eabbf7f111ac2dc7622bb7922e8f7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acb1eabbf7f111ac2dc7622bb7922e8f7">&#9670;&#160;</a></span>addTransformation()</h2>
 
@@ -386,34 +423,6 @@ Protected Member Functions</h2></td></tr>
   </dd>
 </dl>
 <p>This function adds a transformation to the registry. The transformation is added to a bucket with its name as the key. If the transformation already exists, the function returns <code>std::nullopt</code>. If the transformation does not exist, it is added and the hash of the transformation is returned. </p>
-
-</div>
-</div>
-<a id="a1288a7b3a8c0c9cddf39dae75fc85f1b" name="a1288a7b3a8c0c9cddf39dae75fc85f1b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1288a7b3a8c0c9cddf39dae75fc85f1b">&#9670;&#160;</a></span>checkIfSubFeaturesExist()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::checkIfSubFeaturesExist </td>
-          <td>(</td>
-          <td class="paramtype">const Feature &amp;&#160;</td>
-          <td class="paramname"><em>feature</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Recursively checks if all subfeatures exist in the registry. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">feature</td><td>The feature to check</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>true if all subfeatures exist, false otherwise</dd></dl>
-<p>This function works by iterating over all dimensions of the feature and recursively checking if each subfeature exists in the registry. If at any point any subfeature does not exist, the function returns false. </p>
 
 </div>
 </div>
@@ -484,6 +493,32 @@ Protected Member Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>True if the feature bucket with the given name exists, false otherwise. </dd></dl>
+
+</div>
+</div>
+<a id="aa39794bc4e284a780f4a58170ed0a960" name="aa39794bc4e284a780f4a58170ed0a960"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa39794bc4e284a780f4a58170ed0a960">&#9670;&#160;</a></span>containsParticleBucket()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::containsParticleBucket </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -656,6 +691,24 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a6c754c1b6948e3430864a20411b94f31" name="a6c754c1b6948e3430864a20411b94f31"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6c754c1b6948e3430864a20411b94f31">&#9670;&#160;</a></span>getNewestParticle()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; std::optional&lt; Particle &gt; &gt; dcn::registry::Registry::getNewestParticle </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a5571e885cac805e52c7166b5205c1ba2" name="a5571e885cac805e52c7166b5205c1ba2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5571e885cac805e52c7166b5205c1ba2">&#9670;&#160;</a></span>getNewestTransformation()</h2>
 
@@ -720,6 +773,24 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a3a03d1ae6af11d3f788f3debe819d4af" name="a3a03d1ae6af11d3f788f3debe819d4af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a03d1ae6af11d3f788f3debe819d4af">&#9670;&#160;</a></span>getOwnedParticles()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt; dcn::registry::Registry::getOwnedParticles </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;&#160;</td>
+          <td class="paramname"><em>address</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a1065a11367175fb975621e0a97ce367c" name="a1065a11367175fb975621e0a97ce367c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1065a11367175fb975621e0a97ce367c">&#9670;&#160;</a></span>getOwnedTransformations()</h2>
 
@@ -732,6 +803,34 @@ Protected Member Functions</h2></td></tr>
           <td class="paramtype">const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;&#160;</td>
           <td class="paramname"><em>address</em></td><td>)</td>
           <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8cce3e97dd4f03a6ec8967c1e641793b" name="a8cce3e97dd4f03a6ec8967c1e641793b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8cce3e97dd4f03a6ec8967c1e641793b">&#9670;&#160;</a></span>getParticle()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; std::optional&lt; Particle &gt; &gt; dcn::registry::Registry::getParticle </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a> &amp;&#160;</td>
+          <td class="paramname"><em>address</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -846,6 +945,32 @@ Protected Member Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the feature bucket exists and is empty, false otherwise.</dd></dl>
 <p>This function first checks if the feature bucket exists in the registry. If it does not exist, the function returns true. If the feature bucket does exist, the function returns true if the bucket is empty and false otherwise. </p>
+
+</div>
+</div>
+<a id="ad527b08d064d9d4675381899f37ff521" name="ad527b08d064d9d4675381899f37ff521"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad527b08d064d9d4675381899f37ff521">&#9670;&#160;</a></span>isParticleBucketEmpty()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::isParticleBucketEmpty </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>

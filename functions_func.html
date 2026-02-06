@@ -108,6 +108,7 @@ $(document).ready(function(){initNavTree('functions_func.html',''); initResizabl
 <li>addCondition()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#ade21641866218540d5e5bab300e4162a">dcn::registry::Registry</a></li>
 <li>addFeature()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#afb54a937e64a92d5b755ec899b3b9f99">dcn::registry::Registry</a></li>
 <li>addHeader()&#160;:&#160;<a class="el" href="classdcn_1_1http_1_1MessageBase.html#a025d7be859bf9aa933c43a13ef3c92e8">dcn::http::MessageBase</a></li>
+<li>addParticle()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a99230668d6404d1ba0a94c7a00d239ed">dcn::registry::Registry</a></li>
 <li>addRoute()&#160;:&#160;<a class="el" href="classdcn_1_1server_1_1Router.html#a7fd268c5d92d7e3cda55236d3cbbc141">dcn::server::Router</a>, <a class="el" href="classdcn_1_1server_1_1Server.html#afa94b51405a939843129e02ec374748d">dcn::server::Server</a></li>
 <li>addTransformation()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#acb1eabbf7f111ac2dc7622bb7922e8f7">dcn::registry::Registry</a></li>
 <li>AuthManager()&#160;:&#160;<a class="el" href="classdcn_1_1auth_1_1AuthManager.html#a3eba51bd7c992d1b3a3fc8be974a6230">dcn::auth::AuthManager</a></li>
@@ -116,13 +117,13 @@ $(document).ready(function(){initNavTree('functions_func.html',''); initResizabl
 
 <h3><a id="index_c" name="index_c"></a>- c -</h3><ul>
 <li>call()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVMStorage.html#a7d174d9c5af790eed2acb44d40228404">dcn::evm::EVMStorage</a></li>
-<li>checkIfSubFeaturesExist()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a1288a7b3a8c0c9cddf39dae75fc85f1b">dcn::registry::Registry</a></li>
 <li>close()&#160;:&#160;<a class="el" href="classdcn_1_1server_1_1Server.html#a857966339be8d3b0f05b04db60387a49">dcn::server::Server</a></li>
 <li>compareAccessToken()&#160;:&#160;<a class="el" href="classdcn_1_1auth_1_1AuthManager.html#a02d8c9fec5655facbc3e87759a59aba1">dcn::auth::AuthManager</a></li>
 <li>compile()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVM.html#aee6d85a27a62c7fd4227cf6eb77c4688">dcn::evm::EVM</a></li>
 <li>constructHelpMessage()&#160;:&#160;<a class="el" href="classdcn_1_1cmd_1_1ArgParser.html#a5a4715e8d888ec65ef9e4ae2d705fbb7">dcn::cmd::ArgParser</a></li>
 <li>containsConditionBucket()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#afc775ff526f9cba3951a6b19a865ca52">dcn::registry::Registry</a></li>
 <li>containsFeatureBucket()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a644ddf8558722530997e1cdc5b3acf6c">dcn::registry::Registry</a></li>
+<li>containsParticleBucket()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#aa39794bc4e284a780f4a58170ed0a960">dcn::registry::Registry</a></li>
 <li>containsTransformationBucket()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a50689be3d6c11a75507b9f1f7f5b82d2">dcn::registry::Registry</a></li>
 <li>copy_code()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVMStorage.html#a6580fd8583b0bac049e7913b08fae77a">dcn::evm::EVMStorage</a></li>
 </ul>
@@ -139,7 +140,7 @@ $(document).ready(function(){initNavTree('functions_func.html',''); initResizabl
 
 <h3><a id="index_e" name="index_e"></a>- e -</h3><ul>
 <li>emit_log()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVMStorage.html#a0e353716a0ad58c5c9d21a1f8cd8bffe">dcn::evm::EVMStorage</a></li>
-<li>EVM()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVM.html#af7b672287fa04929480f831c0400d6f9">dcn::evm::EVM</a></li>
+<li>EVM()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVM.html#a86f57fce8af76a0f9023b03c73de12d0">dcn::evm::EVM</a></li>
 <li>EVMStorage()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVMStorage.html#a08b1c36e82deb5eb191d95cb56ba1471">dcn::evm::EVMStorage</a></li>
 <li>execute()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVM.html#a25aa42c722110a704fc846aa9f632446">dcn::evm::EVM</a></li>
 </ul>
@@ -175,19 +176,24 @@ $(document).ready(function(){initNavTree('functions_func.html',''); initResizabl
 <li>getMethod()&#160;:&#160;<a class="el" href="classdcn_1_1http_1_1Request.html#a2ebef0462a44514b5955d6c5b3cb5859">dcn::http::Request</a>, <a class="el" href="classdcn_1_1server_1_1RouteKey.html#a5047989d28b2dbc9ffbafd005ee3ac55">dcn::server::RouteKey</a></li>
 <li>getNewestCondition()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a51b383c551b8814aef2d870e5680f27d">dcn::registry::Registry</a></li>
 <li>getNewestFeature()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#aeec51a913d00bc2b228555eb17310495">dcn::registry::Registry</a></li>
+<li>getNewestParticle()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a6c754c1b6948e3430864a20411b94f31">dcn::registry::Registry</a></li>
 <li>getNewestTransformation()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a5571e885cac805e52c7166b5205c1ba2">dcn::registry::Registry</a></li>
 <li>getOwnedConditions()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a635db8be352538509e31bdba9db76a9b">dcn::registry::Registry</a></li>
 <li>getOwnedFeatures()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a6fc9193483c9c266ed5f40921f01eea1">dcn::registry::Registry</a></li>
+<li>getOwnedParticles()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a3a03d1ae6af11d3f788f3debe819d4af">dcn::registry::Registry</a></li>
 <li>getOwnedTransformations()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a1065a11367175fb975621e0a97ce367c">dcn::registry::Registry</a></li>
+<li>getParticle()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a8cce3e97dd4f03a6ec8967c1e641793b">dcn::registry::Registry</a></li>
 <li>getPath()&#160;:&#160;<a class="el" href="classdcn_1_1http_1_1Request.html#a6b4f9fa67060b202cff5b41f152b8adb">dcn::http::Request</a>, <a class="el" href="classdcn_1_1server_1_1RouteKey.html#ab502aed9cce5af6b99b47e92702f1cd0">dcn::server::RouteKey</a></li>
 <li>getPathInfo()&#160;:&#160;<a class="el" href="classdcn_1_1http_1_1URL.html#a33e3f0a73258676bf6718b9451fcc8eb">dcn::http::URL</a></li>
 <li>getPathInfoDef()&#160;:&#160;<a class="el" href="classdcn_1_1server_1_1RouteKey.html#ad057d70367a3d8d97bfdc292126ae175">dcn::server::RouteKey</a></li>
 <li>getPathModule()&#160;:&#160;<a class="el" href="classdcn_1_1http_1_1URL.html#a5ec7658a0b21be38c904c0f8bf15a9b8">dcn::http::URL</a></li>
+<li>getPTPath()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVM.html#a61157c78a52097f25fc3d354e543be11">dcn::evm::EVM</a></li>
 <li>getQuery()&#160;:&#160;<a class="el" href="classdcn_1_1http_1_1URL.html#a39506fd629cd7e2a0513297958e3f10e">dcn::http::URL</a></li>
 <li>getQueryDef()&#160;:&#160;<a class="el" href="classdcn_1_1server_1_1RouteKey.html#a58f46e3d106638993d2f3f1b733e6e4f">dcn::server::RouteKey</a></li>
 <li>getRegistryAddress()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVM.html#aec3801f34ba53de151aee4bf50fa7949">dcn::evm::EVM</a></li>
 <li>getRequirement()&#160;:&#160;<a class="el" href="classdcn_1_1server_1_1RouteArg.html#a4d7c5c0a53ef66d827a3da79605fa6c7">dcn::server::RouteArg</a></li>
 <li>getRunnerAddress()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVM.html#a32548a936206503efede141ded5bb7d2">dcn::evm::EVM</a></li>
+<li>getSolcPath()&#160;:&#160;<a class="el" href="classdcn_1_1evm_1_1EVM.html#af0a402d47e8cb1008e1aa2bd91d578be">dcn::evm::EVM</a></li>
 <li>getTransformation()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a5e4cca42d19eb4d80d98c55b4726898e">dcn::registry::Registry</a></li>
 <li>getType()&#160;:&#160;<a class="el" href="classdcn_1_1server_1_1RouteArg.html#a543dc0e8154d28cf065d55baba439795">dcn::server::RouteArg</a></li>
 <li>getVersion()&#160;:&#160;<a class="el" href="classdcn_1_1http_1_1MessageBase.html#a4342573fcd3568513c8b76fd273f7cf2">dcn::http::MessageBase</a></li>
@@ -203,6 +209,7 @@ $(document).ready(function(){initNavTree('functions_func.html',''); initResizabl
 <li>invalidateAccessToken()&#160;:&#160;<a class="el" href="classdcn_1_1auth_1_1AuthManager.html#a435f095ac977ee028cae5048fc47aea1">dcn::auth::AuthManager</a></li>
 <li>isConditionBucketEmpty()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#afed9f3429f9bda5075ba07fee43698ce">dcn::registry::Registry</a></li>
 <li>isFeatureBucketEmpty()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a2bf10417ade06367c790fb82887970af">dcn::registry::Registry</a></li>
+<li>isParticleBucketEmpty()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#ad527b08d064d9d4675381899f37ff521">dcn::registry::Registry</a></li>
 <li>isTransformationBucketEmpty()&#160;:&#160;<a class="el" href="classdcn_1_1registry_1_1Registry.html#a8af408cd164c32ff17497fc99b901f2c">dcn::registry::Registry</a></li>
 </ul>
 

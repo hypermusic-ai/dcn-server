@@ -115,17 +115,21 @@ Public Types</h2></td></tr>
 , <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6af398c942626ee04721403508d08719c8">INVALID_DATA</a>
 , <br />
 &#160;&#160;<a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6aa1bc3585e8f796013046b688f877220c">COMPILATION_ERROR</a>
-, <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a6000814bcd9f1acc80413f9ed7e47152">FEATURE_ALREADY_REGISTERED</a>
+, <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6ac3efc436c050828ee5dc347c0c8c074f">PARTICLE_ALREADY_REGISTERED</a>
+, <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6ac5edaf060efdd5be51df42467281d6da">PARTICLE_MISSING</a>
+, <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6adebae0efe4f4809bf6786851dbe94dc4">PARTICLE_DIMENSIONS_MISMATCH</a>
+, <br />
+&#160;&#160;<a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a6000814bcd9f1acc80413f9ed7e47152">FEATURE_ALREADY_REGISTERED</a>
 , <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a5642847ed2b5d8b6fd56dd8332a43210">FEATURE_MISSING</a>
 , <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a86450e1895931d1c1b1547c93993e5e7">TRANSFORMATION_ALREADY_REGISTERED</a>
+, <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a59b243b01295e0c1e55ccabd751b3fb1">TRANSFORMATION_ARGUMENTS_MISMATCH</a>
 , <br />
-&#160;&#160;<a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a59b243b01295e0c1e55ccabd751b3fb1">TRANSFORMATION_ARGUMENTS_MISMATCH</a>
-, <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a4c2c0dc6f56d831a44db6e61704b1946">TRANSFORMATION_MISSING</a>
+&#160;&#160;<a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a4c2c0dc6f56d831a44db6e61704b1946">TRANSFORMATION_MISSING</a>
 , <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a73d3a88eda6fa0c5f31d733fc8b5e907">CONDITION_ALREADY_REGISTERED</a>
 , <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a4c075bb07452e54bd1f20ddd34a4d6b8">CONDITION_ARGUMENTS_MISMATCH</a>
+, <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a3eaa12e11502d793740721d0d8d83404">CONDITION_MISSING</a>
 , <br />
-&#160;&#160;<a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a3eaa12e11502d793740721d0d8d83404">CONDITION_MISSING</a>
-, <a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a94c037a649a0e6ed76bcb582d849e0cb">REGISTRY_ERROR</a>
+&#160;&#160;<a class="el" href="structdcn_1_1evm_1_1DeployError.html#a745ddbdd9fdb7949d18d138abb0722a6a94c037a649a0e6ed76bcb582d849e0cb">REGISTRY_ERROR</a>
 <br />
  }</td></tr>
 <tr class="separator:a745ddbdd9fdb7949d18d138abb0722a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -139,12 +143,7 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:ad55f33be96d74c8a65530dd06a8033f7" id="r_ad55f33be96d74c8a65530dd06a8033f7"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1evm_1_1DeployError.html#ad55f33be96d74c8a65530dd06a8033f7">code</a> {}</td></tr>
 <tr class="separator:ad55f33be96d74c8a65530dd06a8033f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>error FeatureAlreadyRegistered(bytes32 name); error FeatureMissing(bytes32 name);</p>
-<p>error TransformationAlreadyRegistered(bytes32 name); error TransformationArgumentsMismatch(bytes32 name); error TransformationMissing(bytes32 name);</p>
-<p>error RunInstanceAlreadyRegistered(bytes32 featureName, bytes32 runInstanceName); error RunInstanceMissing(bytes32 featureName, bytes32 runInstanceName);</p>
-<p>error RegistryError(uint32 code); </p>
-</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="a745ddbdd9fdb7949d18d138abb0722a6" name="a745ddbdd9fdb7949d18d138abb0722a6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a745ddbdd9fdb7949d18d138abb0722a6">&#9670;&#160;</a></span>Kind</h2>
 
@@ -170,6 +169,9 @@ Public Attributes</h2></td></tr>
 <tr><td class="fieldname"><a id="a745ddbdd9fdb7949d18d138abb0722a6a865c16f9916ff3298a555db1c0069be1" name="a745ddbdd9fdb7949d18d138abb0722a6a865c16f9916ff3298a555db1c0069be1"></a>INVALID_ADDRESS&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a745ddbdd9fdb7949d18d138abb0722a6af398c942626ee04721403508d08719c8" name="a745ddbdd9fdb7949d18d138abb0722a6af398c942626ee04721403508d08719c8"></a>INVALID_DATA&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a745ddbdd9fdb7949d18d138abb0722a6aa1bc3585e8f796013046b688f877220c" name="a745ddbdd9fdb7949d18d138abb0722a6aa1bc3585e8f796013046b688f877220c"></a>COMPILATION_ERROR&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a745ddbdd9fdb7949d18d138abb0722a6ac3efc436c050828ee5dc347c0c8c074f" name="a745ddbdd9fdb7949d18d138abb0722a6ac3efc436c050828ee5dc347c0c8c074f"></a>PARTICLE_ALREADY_REGISTERED&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a745ddbdd9fdb7949d18d138abb0722a6ac5edaf060efdd5be51df42467281d6da" name="a745ddbdd9fdb7949d18d138abb0722a6ac5edaf060efdd5be51df42467281d6da"></a>PARTICLE_MISSING&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a745ddbdd9fdb7949d18d138abb0722a6adebae0efe4f4809bf6786851dbe94dc4" name="a745ddbdd9fdb7949d18d138abb0722a6adebae0efe4f4809bf6786851dbe94dc4"></a>PARTICLE_DIMENSIONS_MISMATCH&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a745ddbdd9fdb7949d18d138abb0722a6a6000814bcd9f1acc80413f9ed7e47152" name="a745ddbdd9fdb7949d18d138abb0722a6a6000814bcd9f1acc80413f9ed7e47152"></a>FEATURE_ALREADY_REGISTERED&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a745ddbdd9fdb7949d18d138abb0722a6a5642847ed2b5d8b6fd56dd8332a43210" name="a745ddbdd9fdb7949d18d138abb0722a6a5642847ed2b5d8b6fd56dd8332a43210"></a>FEATURE_MISSING&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a745ddbdd9fdb7949d18d138abb0722a6a86450e1895931d1c1b1547c93993e5e7" name="a745ddbdd9fdb7949d18d138abb0722a6a86450e1895931d1c1b1547c93993e5e7"></a>TRANSFORMATION_ALREADY_REGISTERED&#160;</td><td class="fielddoc"></td></tr>

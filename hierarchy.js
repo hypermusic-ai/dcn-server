@@ -5,6 +5,7 @@ var hierarchy =
     [ "dcn::auth::AuthError", "structdcn_1_1auth_1_1AuthError.html", null ],
     [ "dcn::auth::AuthManager", "classdcn_1_1auth_1_1AuthManager.html", null ],
     [ "dcn::cmd::CommandLineArgDef", "structdcn_1_1cmd_1_1CommandLineArgDef.html", null ],
+    [ "dcn::config::Config", "structdcn_1_1config_1_1Config.html", null ],
     [ "dcn::evm::DeployError", "structdcn_1_1evm_1_1DeployError.html", null ],
     [ "dcn::evm::EVM", "classdcn_1_1evm_1_1EVM.html", null ],
     [ "dcn::evm::ExecuteError", "structdcn_1_1evm_1_1ExecuteError.html", null ],

@@ -9,6 +9,9 @@ var annotated_dup =
         [ "ArgParser", "classdcn_1_1cmd_1_1ArgParser.html", "classdcn_1_1cmd_1_1ArgParser" ],
         [ "CommandLineArgDef", "structdcn_1_1cmd_1_1CommandLineArgDef.html", "structdcn_1_1cmd_1_1CommandLineArgDef" ]
       ] ],
+      [ "config", "namespacedcn_1_1config.html", [
+        [ "Config", "structdcn_1_1config_1_1Config.html", "structdcn_1_1config_1_1Config" ]
+      ] ],
       [ "crypto", "namespacedcn_1_1crypto.html", [
         [ "Keccak256", "classdcn_1_1crypto_1_1Keccak256.html", null ]
       ] ],

@@ -125,76 +125,75 @@ $(document).ready(function(){initNavTree('feature_8hpp_source.html',''); initRes
 <div class="foldopen" id="foldopen00038" data-start="{" data-end="}">
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno"><a class="line" href="namespacedcn.html#a7f6d611651213b04f6be1cce6359f071">   38</a></span>    <span class="keyword">inline</span> H <a class="code hl_function" href="namespacedcn.html#a9cf5a424396b387e6a9fd155e8fe1f4d">AbslHashValue</a>(H h, <span class="keyword">const</span> Dimension&amp; d) </div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    {</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>        h = H::combine(std::move(h), d.feature_name());</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> TransformationDef &amp; t : d.transformations()) {</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>            h = H::combine(std::move(h), t);</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        }</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        <span class="keywordflow">return</span> h;</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    }</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> TransformationDef &amp; t : d.transformations()) {</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>            h = H::combine(std::move(h), t);</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        }</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keywordflow">return</span> h;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    }</div>
 </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> H&gt;</div>
-<div class="foldopen" id="foldopen00056" data-start="{" data-end="}">
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno"><a class="line" href="namespacedcn.html#a9497290fb638adb984f9fda75041a12f">   56</a></span>    <span class="keyword">inline</span> H <a class="code hl_function" href="namespacedcn.html#a9cf5a424396b387e6a9fd155e8fe1f4d">AbslHashValue</a>(H h, <span class="keyword">const</span> Feature&amp; f) {</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        h = H::combine(std::move(h), f.name());</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> Dimension &amp; d : f.dimensions()) {</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            h = H::combine(std::move(h), d);</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        }</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>        <span class="keywordflow">return</span> h;</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    }</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> H&gt;</div>
+<div class="foldopen" id="foldopen00055" data-start="{" data-end="}">
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno"><a class="line" href="namespacedcn.html#a9497290fb638adb984f9fda75041a12f">   55</a></span>    <span class="keyword">inline</span> H <a class="code hl_function" href="namespacedcn.html#a9cf5a424396b387e6a9fd155e8fe1f4d">AbslHashValue</a>(H h, <span class="keyword">const</span> Feature&amp; f) {</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        h = H::combine(std::move(h), f.name());</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> Dimension &amp; d : f.dimensions()) {</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>            h = H::combine(std::move(h), d);</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        }</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        <span class="keywordflow">return</span> h;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    }</div>
 </div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    std::string <a class="code hl_function" href="namespacedcn.html#a30e89e0e4b7a8001225150709705697c">constructFeatureSolidityCode</a>(<span class="keyword">const</span> Feature &amp; feature);</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>}</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedcn_1_1parse.html">dcn::parse</a></div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>{</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    Result&lt;json&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(TransformationDef transform_def, use_json_t);</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    Result&lt;TransformationDef&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> <a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a>, use_json_t);</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    Result&lt;json&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(Dimension dimension, use_json_t);</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    Result&lt;Dimension&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> <a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a>, use_json_t);</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    Result&lt;std::string&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(Dimension dimension, use_protobuf_t);</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    Result&lt;Dimension&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(std::string json_str, use_protobuf_t);</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    </div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    Result&lt;json&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(Feature feature, use_json_t);</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    Result&lt;Feature&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> json_obj, use_json_t);</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    Result&lt;std::string&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(Feature feature, use_protobuf_t);</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    Result&lt;Feature&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(std::string json_str, use_protobuf_t);</div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    Result&lt;json&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(FeatureRecord feature, use_json_t);</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span> </div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    Result&lt;std::string&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(FeatureRecord feature_record, use_protobuf_t);</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span> </div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    Result&lt;FeatureRecord&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> json_obj, use_json_t);</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    </div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    Result&lt;FeatureRecord&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(std::string json_str, use_protobuf_t);</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>}</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    std::string <a class="code hl_function" href="namespacedcn.html#a30e89e0e4b7a8001225150709705697c">constructFeatureSolidityCode</a>(<span class="keyword">const</span> Feature &amp; feature);</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>}</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedcn_1_1parse.html">dcn::parse</a></div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>{</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    Result&lt;json&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(TransformationDef transform_def, use_json_t);</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    Result&lt;TransformationDef&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> <a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a>, use_json_t);</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    Result&lt;json&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(Dimension dimension, use_json_t);</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    Result&lt;Dimension&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> <a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a>, use_json_t);</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    Result&lt;std::string&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(Dimension dimension, use_protobuf_t);</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    Result&lt;Dimension&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(std::string json_str, use_protobuf_t);</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    </div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    Result&lt;json&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(Feature feature, use_json_t);</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    Result&lt;Feature&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> json_obj, use_json_t);</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    Result&lt;std::string&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(Feature feature, use_protobuf_t);</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    Result&lt;Feature&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(std::string json_str, use_protobuf_t);</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span> </div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    Result&lt;json&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(FeatureRecord feature, use_json_t);</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span> </div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    Result&lt;std::string&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(FeatureRecord feature_record, use_protobuf_t);</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span> </div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    Result&lt;FeatureRecord&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> json_obj, use_json_t);</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    </div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    <span class="keyword">template</span>&lt;&gt;</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    Result&lt;FeatureRecord&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(std::string json_str, use_protobuf_t);</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>}</div>
 <div class="ttc" id="anamespacedcn_1_1parse_html"><div class="ttname"><a href="namespacedcn_1_1parse.html">dcn::parse</a></div><div class="ttdef"><b>Definition</b> auth.cpp:4</div></div>
 <div class="ttc" id="anamespacedcn_1_1parse_html_a38511241c866711fb934a87e56365016"><div class="ttname"><a href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">dcn::parse::parseToJson</a></div><div class="ttdeci">Result&lt; json &gt; parseToJson(T message, use_json_t)</div><div class="ttdoc">Converts a T to a JSON object using JSON.</div></div>
 <div class="ttc" id="anamespacedcn_1_1parse_html_a8590eca51c163e212a5f0a7450145aa5"><div class="ttname"><a href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">dcn::parse::parseFromJson</a></div><div class="ttdeci">Result&lt; T &gt; parseFromJson(json json, use_json_t)</div><div class="ttdoc">Converts a JSON string to a T using JSON.</div></div>
-<div class="ttc" id="anamespacedcn_html"><div class="ttname"><a href="namespacedcn.html">dcn</a></div><div class="ttdef"><b>Definition</b> decentralised_art.hpp:29</div></div>
+<div class="ttc" id="anamespacedcn_html"><div class="ttname"><a href="namespacedcn.html">dcn</a></div><div class="ttdef"><b>Definition</b> decentralised_art.hpp:30</div></div>
 <div class="ttc" id="anamespacedcn_html_a30e89e0e4b7a8001225150709705697c"><div class="ttname"><a href="namespacedcn.html#a30e89e0e4b7a8001225150709705697c">dcn::constructFeatureSolidityCode</a></div><div class="ttdeci">std::string constructFeatureSolidityCode(const Feature &amp;feature)</div><div class="ttdef"><b>Definition</b> feature.cpp:7</div></div>
 <div class="ttc" id="anamespacedcn_html_a9cf5a424396b387e6a9fd155e8fe1f4d"><div class="ttname"><a href="namespacedcn.html#a9cf5a424396b387e6a9fd155e8fe1f4d">dcn::AbslHashValue</a></div><div class="ttdeci">H AbslHashValue(H h, const Condition &amp;c)</div><div class="ttdoc">Combines hash values for a Condition object.</div><div class="ttdef"><b>Definition</b> condition.hpp:24</div></div>
 <div class="ttc" id="aparser_8hpp_html"><div class="ttname"><a href="parser_8hpp.html">parser.hpp</a></div></div>
