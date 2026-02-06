@@ -228,7 +228,8 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> POST_feature(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm)
+    asio::awaitable<http::Response> POST_feature(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, 
+        auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -281,7 +282,7 @@ namespace dcn
         feature_record.set_owner(evmc::hex(address));
         *feature_record.mutable_feature() = std::move(feature);
 
-        const auto deploy_res = co_await loader::deployFeature(evm, registry, feature_record);
+        const auto deploy_res = co_await loader::deployFeature(evm, registry, feature_record, config.storage_path);
         if(!deploy_res)
         {
             response.setCode(http::Code::BadRequest)

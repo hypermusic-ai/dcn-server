@@ -68,13 +68,13 @@ namespace dcn
         }
         const ExecuteRequest & execute_request = *execute_request_res;
 
-        static constexpr uint32_t MAX_N = 65536;
+        static constexpr uint32_t MAX_SAMPLES_COUNT = 65536;
 
-        if(execute_request.n() > MAX_N)
+        if(execute_request.samples_count() > MAX_SAMPLES_COUNT)
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json {
-                    {"message", "N is too large"}
+                    {"message", "samples_count is too large"}
                 }.dump());
 
             co_return response;
@@ -91,11 +91,11 @@ namespace dcn
         input_data.insert(input_data.end(), offset_to_string.begin(), offset_to_string.end());
 
         // 2. uint32 argument, properly encoded as a 32-byte word
-        const std::vector<std::uint8_t> N_bytes = evm::encodeAsArg(execute_request.n());
-        input_data.insert(input_data.end(), N_bytes.begin(), N_bytes.end());
+        const std::vector<std::uint8_t> samples_count_bytes = evm::encodeAsArg(execute_request.samples_count());
+        input_data.insert(input_data.end(), samples_count_bytes.begin(), samples_count_bytes.end());
 
         // (String encoding)
-        const std::vector<std::uint8_t> name_bytes = evm::encodeAsArg(execute_request.feature_name());
+        const std::vector<std::uint8_t> name_bytes = evm::encodeAsArg(execute_request.particle_name());
 
         // 3. Offset to vector<tuple>, will be right after string
         std::vector<uint8_t> offset_tuple_vec(32, 0);

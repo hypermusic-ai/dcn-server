@@ -14,6 +14,7 @@ using namespace asio::experimental::awaitable_operators;
 #include <absl/container/flat_hash_set.h>
 
 #include "cmd.hpp"
+#include "config.hpp"
 #include "server.hpp"
 #include "http.hpp"
 #include "evm.hpp"

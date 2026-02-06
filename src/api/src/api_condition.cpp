@@ -237,7 +237,8 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> POST_condition(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm)
+    asio::awaitable<http::Response> POST_condition(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, 
+        auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -289,7 +290,7 @@ namespace dcn
         condition_record.set_owner(evmc::hex(address));
         *condition_record.mutable_condition() = std::move(condition);
 
-        const auto deploy_res = co_await loader::deployCondition(evm, registry, condition_record);
+        const auto deploy_res = co_await loader::deployCondition(evm, registry, condition_record, config.storage_path);
         if(!deploy_res)
         {
             response.setCode(http::Code::BadRequest)

@@ -93,6 +93,12 @@ button:hover {
     gap: 1rem;
 }
 
+.account-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
 .response-code {
     background: #333;
     color: #fff;
@@ -169,6 +175,12 @@ hr {
     width: 100%;
     border: 1px solid #333;
     margin: 2rem 0;
+}
+
+@media (max-width: 720px) {
+    .account-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 #accountPageLabel {

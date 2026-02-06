@@ -1,11 +1,14 @@
 name: Build Decentralised Art Server
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Build and Test (Debug)"]
+    types: [completed]
     branches: [ main ]
 
 jobs:
   build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -15,10 +18,10 @@ jobs:
     - name: Install dependencies
       run: sudo apt update && sudo apt install -y cmake build-essential libssl-dev npm
 
-    - name: Configure and build
+    - name: Configure and build (Release)
       run: |
-        cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install
-        cmake --build build --config Debug --target install -j 4
+        cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release --target install -j 4
 
     - name: Pack install directory into tarball
       run: |

@@ -17,9 +17,12 @@ project("${PROJECT_NAME}"
 add_executable("${PROJECT_NAME}"    
     "src/tests.cpp"
 
-    # --- Test files ---
-    "src/ut0.cpp"
-    "src/router-tests.cpp"
+    # --- pt module test files ---
+    "src/pt/feature.cpp"
+    "src/pt/transformation.cpp"
+    "src/pt/condition.cpp"
+    "src/pt/particle.cpp"
+    "src/pt/execute.cpp"
 )
 
 target_include_directories("${PROJECT_NAME}"     
@@ -35,5 +38,14 @@ target_link_libraries("${PROJECT_NAME}"
 )
 
 set_target_properties("${PROJECT_NAME}" PROPERTIES CXX_STANDARD 23)
+
+# Copy evmone shared library to tests build directory
+add_custom_command(TARGET DecentralisedArtServerTests POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          "${EVMONE_SHARED_LIBRARY_PATH}"
+          "$<TARGET_FILE_DIR:DecentralisedArtServerTests>/${EVMONE_SHARED_LIBRARY}"
+  VERBATIM
+)
+
 
 gtest_discover_tests("${PROJECT_NAME}")

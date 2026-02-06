@@ -8,21 +8,20 @@ namespace dcn::registry
 
     }
 
-    asio::awaitable<bool> Registry::checkIfSubFeaturesExist(const Feature & feature) const
+    asio::awaitable<bool> Registry::containsParticleBucket(const std::string& name) const 
     {
         co_await utils::ensureOnStrand(_strand);
 
-        for(const Dimension & dimension : feature.dimensions())
-        {
-            const std::string & subfeature_name = dimension.feature_name();
-            if(co_await isFeatureBucketEmpty(subfeature_name))co_return false;
-
-            const auto & sub_feature_node = _features.at(subfeature_name).at(_newest_feature.at(subfeature_name));
-            co_return (co_await checkIfSubFeaturesExist(sub_feature_node.feature()));
-        }
-        co_return true;
+        co_return _particles.contains(name);
     }
 
+    asio::awaitable<bool> Registry::isParticleBucketEmpty(const std::string& name) const 
+    {
+        co_await utils::ensureOnStrand(_strand);
+
+        if(co_await containsParticleBucket(name) == false)co_return true;
+        co_return _particles.at(name).empty();
+    }
 
     asio::awaitable<bool> Registry::containsFeatureBucket(const std::string& name) const 
     {
@@ -69,6 +68,97 @@ namespace dcn::registry
         co_return _conditions.at(name).empty();
     }
 
+    asio::awaitable<bool> Registry::addParticle(evm::Address address, ParticleRecord record)
+    {
+        if(record.particle().name().empty())
+        {
+            spdlog::error("Particle name is empty");
+            co_return false;
+        }
+
+        co_await utils::ensureOnStrand(_strand);
+
+        if(! co_await containsParticleBucket(record.particle().name()))
+        {
+            spdlog::debug("Particle bucket `{}` does not exists, creating new one ... ", record.particle().name());
+            _particles.try_emplace(record.particle().name(), absl::flat_hash_map<evm::Address, ParticleRecord>());
+        }       
+
+        if(_particles.at(record.particle().name()).contains(address))
+        {
+            spdlog::error("Particle `{}` of this signature already exists", record.particle().name());
+            co_return false;
+        }
+
+        // check if root feature exists
+        if(! co_await containsFeatureBucket(record.particle().feature_name()))
+        {
+            spdlog::error("Cannot find feature `{}` used in particle `{}`", record.particle().feature_name(), record.particle().name());
+            co_return false;
+        }
+
+        if(co_await isFeatureBucketEmpty(record.particle().feature_name()))
+        {
+            spdlog::error("Cannot find feature `{}` used in particle `{}`", record.particle().feature_name(), record.particle().name());
+            co_return false;
+        }
+
+        // check if composites exists
+        for(const std::string & composite : record.particle().composite_names())
+        {
+            if(composite.empty()) continue;
+
+            if(! co_await containsParticleBucket(composite))
+            {
+                spdlog::error("Cannot find particle `{}` used in particle `{}`", composite, record.particle().name());
+                co_return false;
+            }
+            if(co_await isParticleBucketEmpty(composite))
+            {
+                spdlog::error("Cannot find particle `{}` used in particle `{}`", composite, record.particle().name());
+                co_return false;
+            }
+        }
+
+        std::optional<evm::Address> owner_res = evmc::from_hex<evm::Address>(record.owner());
+        if(!owner_res)
+        {
+            spdlog::error("Failed to parse owner address");
+            co_return false;
+        }
+
+        _owned_particles[*owner_res].emplace(record.particle().name());
+
+        _newest_particle[record.particle().name()] = address;
+        _particles.at(record.particle().name()).try_emplace(std::move(address), std::move(record));
+
+        co_return true;
+    }
+
+    asio::awaitable<std::optional<Particle>> Registry::getNewestParticle(const std::string& name) const
+    {
+        co_await utils::ensureOnStrand(_strand);
+
+        if(_newest_particle.contains(name) == false)co_return std::nullopt;
+        co_return (co_await getParticle(name, _newest_particle.at(name)));
+    }
+
+    asio::awaitable<std::optional<Particle>> Registry::getParticle(const std::string& name, const evm::Address & address) const
+    {
+        co_await utils::ensureOnStrand(_strand);
+
+        auto bucket_it = _particles.find(name);
+        if(bucket_it == _particles.end()) 
+        {
+            co_return std::nullopt;
+        }
+        auto it = bucket_it->second.find(address);
+        if(it == bucket_it->second.end()) 
+        {
+            co_return std::nullopt;
+        }
+        co_return it->second.particle();
+    }
 
     asio::awaitable<bool> Registry::addFeature(evm::Address address, FeatureRecord record)
     {
@@ -79,12 +169,6 @@ namespace dcn::registry
         }
 
         co_await utils::ensureOnStrand(_strand);
-
-        if(co_await checkIfSubFeaturesExist(record.feature()) == false)
-        {
-            spdlog::error("Cannot find subfeatures for feature `{}`", record.feature().name());
-            co_return false;
-        }
 
         if(! co_await containsFeatureBucket(record.feature().name()))
         {
@@ -116,31 +200,12 @@ namespace dcn::registry
             }
         }
 
-        static const std::filesystem::path out_dir = file::getStoragePath() / "features";
-        if(std::filesystem::exists(out_dir) == false)
-        {
-            spdlog::error("Directory {} does not exists", out_dir.string());
-            co_return false;
-        }
-
-        const auto parsing_result = parse::parseToJson(record, parse::use_protobuf);
-        if(!parsing_result)
-        {
-            spdlog::error("Failed to parse feature `{}`", record.feature().name());
-            co_return false;
-        }
-
         std::optional<evm::Address> owner_res = evmc::from_hex<evm::Address>(record.owner());
         if(!owner_res)
         {
             spdlog::error("Failed to parse owner address");
             co_return false;
         }
-
-        std::ofstream output_file(out_dir / (record.feature().name() + ".json"), std::ios::out | std::ios::trunc);
-
-        output_file << *parsing_result;
-        output_file.close();
 
         _owned_features[*owner_res].emplace(record.feature().name());
 
@@ -198,31 +263,12 @@ namespace dcn::registry
             co_return false;
         }
         
-        static const std::filesystem::path out_dir = file::getStoragePath() / "transformations";
-        if(std::filesystem::exists(out_dir) == false)
-        {
-            spdlog::error("Directory {} does not exists", out_dir.string());
-            co_return false;
-        }
-
-        const auto parsing_result = parse::parseToJson(record, parse::use_protobuf);
-        if(!parsing_result)
-        {
-            spdlog::error("Failed to parse transformation `{}`", record.transformation().name());
-            co_return false;
-        }
-
         std::optional<evm::Address> owner_res = evmc::from_hex<evm::Address>(record.owner());
         if(!owner_res)
         {
             spdlog::error("Failed to parse owner address");
             co_return false;
         }
-
-        std::ofstream output_file(out_dir / (record.transformation().name() + ".json"), std::ios::out | std::ios::trunc);
-
-        output_file << *parsing_result;
-        output_file.close();
 
         _owned_transformations[*owner_res].emplace(record.transformation().name());
 
@@ -280,31 +326,12 @@ namespace dcn::registry
             co_return false;
         }
         
-        static const std::filesystem::path out_dir = file::getStoragePath() / "conditions";
-        if(std::filesystem::exists(out_dir) == false)
-        {
-            spdlog::error("Directory {} does not exists", out_dir.string());
-            co_return false;
-        }
-
-        const auto parsing_result = parse::parseToJson(record, parse::use_protobuf);
-        if(!parsing_result)
-        {
-            spdlog::error("Failed to parse condition `{}`", record.condition().name());
-            co_return false;
-        }
-
         std::optional<evm::Address> owner_res = evmc::from_hex<evm::Address>(record.owner());
         if(!owner_res)
         {
             spdlog::error("Failed to parse owner address");
             co_return false;
         }
-
-        std::ofstream output_file(out_dir / (record.condition().name() + ".json"), std::ios::out | std::ios::trunc);
-
-        output_file << *parsing_result;
-        output_file.close();
 
         _owned_conditions[*owner_res].emplace(record.condition().name());
 
@@ -337,6 +364,14 @@ namespace dcn::registry
             co_return std::nullopt;
         }
         co_return it->second.condition();
+    }
+
+    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedParticles(const evm::Address & address) const
+    {
+        co_await utils::ensureOnStrand(_strand);
+
+        if(_owned_particles.contains(address) == false)co_return absl::flat_hash_set<std::string>{};
+        co_return _owned_particles.at(address);
     }
 
     asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedFeatures(const evm::Address & address) const

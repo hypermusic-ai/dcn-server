@@ -10,6 +10,7 @@ ExternalProject_Add(pt_download
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
     LOG_DOWNLOAD ON
+    EXCLUDE_FROM_ALL TRUE
 )
 
 set(PT_REPO_PREFIX "${PT_REPO_PREFIX}/src/pt_repo")

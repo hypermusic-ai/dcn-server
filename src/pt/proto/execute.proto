@@ -12,7 +12,7 @@ message RunningInstance
 // Execute request payload
 message ExecuteRequest 
 {
-  string feature_name = 1;
-  uint32 n = 2;
+  string particle_name = 1;
+  uint32 samples_count = 2;
   repeated RunningInstance running_instances = 3;
 }

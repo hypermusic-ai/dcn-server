@@ -9,6 +9,7 @@ using namespace asio::experimental::awaitable_operators;
 #include <spdlog/spdlog.h>
 
 #include "utils.hpp"
+#include "config.hpp"
 #include "route.hpp"
 #include "parser.hpp"
 #include "pt.hpp"
@@ -140,6 +141,52 @@ namespace dcn
 
 
     /**
+     * @brief Handles HEAD requests for the particle endpoint.
+     *
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @param registry Registry instance for retrieving particles
+     * @return An HTTP response
+    */
+    asio::awaitable<http::Response> HEAD_particle(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry);
+    
+    /**
+     * @brief Handles OPTIONS requests by returning a response with CORS headers.
+     *
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @return An HTTP response with CORS headers
+     */
+    asio::awaitable<http::Response> OPTIONS_particle(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args);
+
+    /**
+     * @brief Handle a GET request to /particles
+     * 
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @param registry Registry instance for retrieving particles
+     * @return An HTTP response
+     */
+    asio::awaitable<http::Response> GET_particle(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry, evm::EVM & evm);
+
+    /**
+     * @brief Handle a POST request to /particles
+     *
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @param registry Registry instance for retrieving particles
+     * @return An HTTP response
+     */
+    asio::awaitable<http::Response> POST_particle(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args,
+        auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config);
+
+
+
+    /**
      * @brief Handles HEAD requests for the feature endpoint.
      *
      * @param request The incoming HTTP request
@@ -180,7 +227,8 @@ namespace dcn
      * @param registry Registry instance for retrieving features
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> POST_feature(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> POST_feature(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args,
+        auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config);
 
 
     /**
@@ -231,7 +279,8 @@ namespace dcn
      * @param evm EVM instance
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> POST_transformation(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> POST_transformation(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args,
+        auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config);
 
 
     /**
@@ -282,7 +331,8 @@ namespace dcn
      * @param evm EVM instance
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> POST_condition(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> POST_condition(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, 
+        auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config);
 
     /**
      * @brief Handles OPTIONS requests for the execute endpoint by returning a response with CORS headers.

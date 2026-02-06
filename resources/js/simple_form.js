@@ -1,195 +1,7 @@
-import { setAccessToken, getAccessToken } from "./auth";
+import { setAccessToken } from "./auth";
+import { requestWithLogin, formatJSON, configureLoginHandler } from "./utils";
 
-let rootFeatureName;
-
-// --------------------------------------------------------------------------
-// Running Instances
-// --------------------------------------------------------------------------
-let runningInstanceData = [];
-let currentNodeEditing = null;
-
-function openRIPopup(nodeId, nodeData) {
-    currentNodeEditing = nodeId;
-    document.getElementById("popupFeatureLabel").textContent = nodeData.name;
-    const existing = runningInstanceData[nodeId] || [0, 0];
-    document.getElementById("popupStartPoint").value = existing[0];
-    document.getElementById("popupTransformShift").value = existing[1];
-    document.getElementById("popupInstanceEditor").style.display = 'block';
-}
-
-export function closePopup() {
-    document.getElementById("popupInstanceEditor").style.display = 'none';
-    currentNodeEditing = null;
-}
-
-export function saveInstanceEdit() {
-    const a = parseInt(document.getElementById("popupStartPoint").value);
-    const b = parseInt(document.getElementById("popupTransformShift").value);
-    if (!isNaN(a) && !isNaN(b)) {
-        runningInstanceData[currentNodeEditing] = [a, b];
-        updateRunningInstanceList();
-    }
-    closePopup();
-}
-
-function updateRunningInstanceList() {
-    const jsonString = JSON.stringify({
-        running_instances: runningInstanceData.map(([s, t]) => ({ start_point: s, transformation_shift: t }))
-    }, null, 2);
-
-    document.getElementById('executeRunningInstances').textContent = jsonString;
-}
-
-function clearRunningInstances() {
-    runningInstanceData = [];
-    updateRunningInstanceList();
-}
-
-// --------------------------------------------------------------------------
-// Execute
-// --------------------------------------------------------------------------
-function drawFeatureTree(treeData) {
-    const nodes = [];
-    const edges = [];
-
-    treeData.forEach((item, index) => {
-        nodes.push({
-            id: item.id,
-            label: item.name.split('/').pop(),
-            title: `${item.name}\n${item.scalar ? 'Scalar' : 'Composite'}`,
-            color: item.scalar ? '#1e90ff' : '#ffffff',
-            font: { color: item.scalar ? '#fff' : '#000' },
-            shape: item.scalar ? 'ellipse' : 'box'
-        });
-
-        if (item.parent !== -1) {
-            edges.push({ from: item.parent, to: item.id });
-        }
-    });
-
-    const container = document.getElementById('treeContainer');
-    const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
-    const options = {
-        layout: { hierarchical: { direction: 'UD', sortMethod: 'directed' } },
-        physics: false,
-        edges: { color: '#aaa' },
-        interaction: { hover: true }
-    };
-
-    const network = new vis.Network(container, data, options);
-
-    network.on("click", function (params) {
-        if (params.nodes.length > 0) {
-            const nodeId = params.nodes[0];
-            const nodeData = treeData.find(n => n.id === nodeId);
-            if (nodeData) {
-                openRIPopup(nodeId, nodeData);
-            }
-        }
-    });
-
-    container.style.display = 'block';
-    network.fit();
-}
-
-async function fetchFeatureDepthFirst(rootFeatureName) {
-    clearRunningInstances();
-
-    let nodeIdCounter = 0;
-    const compositeList = [];
-    const apiBase = window.location.origin;
-    const stack = [{
-        parent: -1,
-        path: '',
-        name: rootFeatureName,
-        assignId: () => nodeIdCounter++
-    }];
-
-    while (stack.length > 0) {
-        const { parent, path, name, assignId } = stack.pop();
-        const id = assignId();
-
-        try {
-            const res = await fetch(`${apiBase}/feature/${name}`);
-            if (!res.ok) throw new Error(`Failed to fetch ${name}`);
-            const feature = await res.json();
-
-            const fullPath = `${path}/${feature.name}`;
-            const scalar = feature.dimensions.length === 0;
-
-            compositeList.push({ parent, id, name: fullPath, scalar });
-            runningInstanceData[id] = [0, 0];
-
-            // Push children in reverse so they’re visited left-to-right
-            for (let i = feature.dimensions.length - 1; i >= 0; i--) {
-                const dim = feature.dimensions[i];
-                stack.push({
-                    parent: id,
-                    path: fullPath,
-                    name: dim.feature_name,
-                    assignId: () => nodeIdCounter++
-                });
-            }
-        } catch (e) {
-            console.error(`Error fetching ${name}, ${e.message}`);
-            throw e;
-        }
-    }
-
-    updateRunningInstanceList();
-
-    return compositeList;
-}
-
-export async function fetchBeforeExecute() {
-    rootFeatureName = document.getElementById('executeName').value.trim();
-    if (!rootFeatureName) {
-        alert("Please provide a feature name.");
-        return;
-    }
-
-    try{
-        const features = await fetchFeatureDepthFirst(rootFeatureName);
-        drawFeatureTree(features);
-    }catch(e){
-        console.error(e);
-
-        const container = document.getElementById('treeContainer');
-        container.style.display = 'block';
-        container.innerHTML = `<p>Failed to fetch features. ${e.message} </p>`;
-    }
-}
-
-export async function execute() {
-    const feature_name = document.getElementById('executeName').value.trim();
-    const n = document.getElementById('executeN').value.trim();
-    const running_instances = runningInstanceData.map(([start_point, transformation_shift]) => ({ start_point, transformation_shift }));
-
-    const codeDiv = document.getElementById('executeCode');
-    const bodyDiv = document.getElementById('executeBody');
-    if (!feature_name) {
-        alert("Contract name is required.");
-        return;
-    }
-    const apiBase = window.location.origin;
-    try {
-        const res = await requestWithLogin(`${apiBase}/execute`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ feature_name, n, running_instances }),
-            }
-        );
-        const text = await res.text();
-        codeDiv.textContent = res.status;
-        bodyDiv.textContent = formatJSON(text);
-    } catch (error) {
-        codeDiv.textContent = 'Error';
-        bodyDiv.textContent = error.message;
-    }
-}
+export { copyTextFromElement } from "./utils";
 
 // --------------------------------------------------------------------------
 // Feature
@@ -220,30 +32,6 @@ export function addDimension() {
     const legend = document.createElement('legend');
     legend.textContent = `Dimension ${index + 1}`;
 
-    // Create row container
-    const row = document.createElement('div');
-    row.style.display = 'flex';
-    row.style.gap = '1rem';
-    row.style.alignItems = 'flex-start';
-
-    // Column feature name
-    const nameCol = document.createElement('div');
-    nameCol.style.flex = '1';
-    nameCol.style.marginLeft = '1rem';
-    nameCol.style.marginRight = '1rem';
-
-    const label = document.createElement('label');
-    label.textContent = 'Feature Name';
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'dimension-feature-name';
-    input.placeholder = 'pitch';
-    input.addEventListener('input', updateFeatureRequestPreview);
-
-    nameCol.appendChild(label);
-    nameCol.appendChild(input);
-
     const transformationsDiv = document.createElement('div');
     transformationsDiv.className = 'transformations';
 
@@ -253,11 +41,6 @@ export function addDimension() {
     addBtn.addEventListener('click', () => addTransformation(addBtn));
 
     fieldset.appendChild(legend);
-
-    // Assemble row
-    row.appendChild(nameCol);
-    fieldset.appendChild(row);
-
     fieldset.appendChild(transformationsDiv);
     fieldset.appendChild(addBtn);
 
@@ -330,11 +113,8 @@ export function addTransformation(button) {
 function constructStructuredFeature() {
     const name = document.getElementById('in_featureName').value.trim();
     const dimensions = [];
-    const condition_name = document.getElementById('in_featureConditionName').value.trim();
-    const condition_args = document.getElementById('in_featureConditionArgs').value.trim().split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
 
     document.querySelectorAll('.dimension').forEach(dimEl => {
-        const feature_name = dimEl.querySelector('.dimension-feature-name').value.trim();
         const transformations = [];
         dimEl.querySelectorAll('.transformations > div').forEach(tEl => {
             const tname = tEl.querySelector('.transformation-name').value.trim();
@@ -343,12 +123,12 @@ function constructStructuredFeature() {
                 transformations.push({ name: tname, args: targs });
             }
         });
-        if (feature_name) {
-            dimensions.push({ feature_name, transformations });
+        if (transformations.length > 0) {
+            dimensions.push({ transformations });
         }
     });
 
-    return JSON.stringify({ name, dimensions, condition_name, condition_args }, null, 2);
+    return JSON.stringify({ name, dimensions }, null, 2);
 }
 
 function populateStructuredFeature(jsonOrObject) {
@@ -356,10 +136,6 @@ function populateStructuredFeature(jsonOrObject) {
 
     // Set name field
     document.getElementById('in_featureName').value = data.name || '';
-
-    // set condition name and args
-    document.getElementById('in_featureConditionName').value = data.condition_name || '';
-    document.getElementById('in_featureConditionArgs').value = data.condition_args;
 
     // Clear any existing dimensions
     clearDimensions();
@@ -369,9 +145,6 @@ function populateStructuredFeature(jsonOrObject) {
         addDimension(); // creates and appends a new .dimension block
 
         const dimEl = container.children[dimIndex];
-
-        // Set feature name
-        dimEl.querySelector('.dimension-feature-name').value = dim.feature_name || '';
 
         const transformationsDiv = dimEl.querySelector('.transformations');
 
@@ -482,7 +255,6 @@ export function populateStructuredTransformation(jsonOrObject) {
 
     const nameInput = document.getElementById('in_transformationName');
     const codeInput = document.getElementById('POST_transformationCode');
-    const requestBodyDiv = document.getElementById('POST_transformationRequestBody');
 
     if (!data || typeof data !== 'object') {
         console.warn("Invalid transformation data:", data);
@@ -566,7 +338,6 @@ export function populateStructuredCondition(jsonOrObject) {
 
     const nameInput = document.getElementById('in_conditionName');
     const codeInput = document.getElementById('POST_conditionCode');
-    const requestBodyDiv = document.getElementById('POST_conditionRequestBody');
 
     if (!data || typeof data !== 'object') {
         console.warn("Invalid condition data:", data);
@@ -610,6 +381,189 @@ export async function sendStructuredCondition() {
 }
 
 // --------------------------------------------------------------------------
+// Particle
+// --------------------------------------------------------------------------
+function parseCsvList(value) {
+    if (!value) return [];
+    return value.split(',')
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+}
+
+function parseIntList(value) {
+    if (!value) return [];
+    return value.split(',')
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+        .map(item => Number.parseInt(item, 10))
+        .filter(item => !Number.isNaN(item));
+}
+
+function setParticleFeatureInfo(message, isError = false) {
+    const info = document.getElementById('particleFeatureInfo');
+    if (!info) return;
+    info.textContent = message;
+    info.style.color = isError ? '#ff8a8a' : '#888';
+}
+
+function getParticleCompositeValues() {
+    const inputs = document.querySelectorAll('.particle-composite-input');
+    return Array.from(inputs).map(input => input.value.trim());
+}
+
+function renderParticleCompositeInputs(count, existingValues = []) {
+    const container = document.getElementById('particleCompositesContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const safeCount = Number.isFinite(count) && count > 0 ? count : 0;
+    if (safeCount === 0) {
+        const empty = document.createElement('div');
+        empty.style.color = '#888';
+        empty.textContent = 'No dimensions to configure.';
+        container.appendChild(empty);
+        updateParticlePreview();
+        return;
+    }
+
+    for (let i = 0; i < safeCount; i += 1) {
+        const wrapper = document.createElement('div');
+        wrapper.style.marginBottom = '0.5rem';
+
+        const label = document.createElement('label');
+        label.textContent = `Dimension ${i + 1} composite`;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'particle-composite-input';
+        input.placeholder = 'leave empty for scalar';
+        if (existingValues[i] !== undefined) {
+            input.value = existingValues[i];
+        }
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+        container.appendChild(wrapper);
+    }
+
+    updateParticlePreview();
+}
+
+export async function fetchParticleFeatureDimensions() {
+    const feature_name = document.getElementById('in_particleFeatureName').value.trim();
+    if (!feature_name) {
+        alert("Feature name is required.");
+        setParticleFeatureInfo("Feature name is required.", true);
+        return;
+    }
+
+    setParticleFeatureInfo("Fetching feature...", false);
+
+    const apiBase = window.location.origin;
+    try {
+        const res = await fetch(`${apiBase}/feature/${feature_name}`);
+        if (!res.ok) {
+            throw new Error(`Failed to fetch feature (${res.status})`);
+        }
+        const data = await res.json();
+        const dims = Array.isArray(data.dimensions) ? data.dimensions.length : 0;
+
+        const existingValues = getParticleCompositeValues();
+        renderParticleCompositeInputs(dims, existingValues);
+
+        const label = dims === 1 ? 'dimension' : 'dimensions';
+        setParticleFeatureInfo(`Loaded ${dims} ${label} from feature "${data.name || feature_name}".`, false);
+    } catch (error) {
+        console.error(error);
+        setParticleFeatureInfo(`Failed to fetch feature: ${error.message}`, true);
+    }
+}
+
+function constructStructuredParticle() {
+    const name = document.getElementById('in_particleName').value.trim();
+    const feature_name = document.getElementById('in_particleFeatureName').value.trim();
+    const composite_names = getParticleCompositeValues();
+    const condition_name = document.getElementById('in_particleConditionName').value.trim();
+    const condition_args = parseIntList(document.getElementById('in_particleConditionArgs').value);
+
+    return JSON.stringify({ name, feature_name, composite_names, condition_name, condition_args }, null, 2);
+}
+
+export function updateParticlePreview() {
+    const json = constructStructuredParticle();
+    document.getElementById('POST_particleRequestBody').textContent = json;
+}
+
+export function populateStructuredParticle(jsonOrObject) {
+    const data = typeof jsonOrObject === 'string' ? JSON.parse(jsonOrObject) : jsonOrObject;
+
+    if (!data || typeof data !== 'object') {
+        console.warn("Invalid particle data:", data);
+        return;
+    }
+
+    document.getElementById('in_particleName').value = data.name || '';
+    document.getElementById('in_particleFeatureName').value = data.feature_name || '';
+    const compositeNames = Array.isArray(data.composite_names) ? data.composite_names : [];
+    renderParticleCompositeInputs(compositeNames.length, compositeNames);
+    document.getElementById('in_particleConditionName').value = data.condition_name || '';
+    document.getElementById('in_particleConditionArgs').value = Array.isArray(data.condition_args)
+        ? data.condition_args.join(', ')
+        : '';
+
+    updateParticlePreview();
+}
+
+export async function sendStructuredParticle() {
+    const requestBody = constructStructuredParticle();
+
+    const responseCodeDiv = document.getElementById('POST_particleResponseCode');
+    const responseBodyDiv = document.getElementById('POST_particleResponseBody');
+
+    try {
+        const apiBase = window.location.origin;
+        const res = await requestWithLogin(`${apiBase}/particle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: requestBody,
+        });
+        const text = await res.text();
+        responseCodeDiv.textContent = res.status;
+        responseBodyDiv.textContent = formatJSON(text);
+    } catch (error) {
+        responseCodeDiv.textContent = 'Error';
+        responseBodyDiv.textContent = error.message;
+    }
+}
+
+export async function getParticle() {
+    const name = document.getElementById('in_particleName').value.trim();
+    const address = document.getElementById('GET_particleAddress').value.trim();
+
+    const responseCodeDiv = document.getElementById('GET_particleResponseCode');
+    const responseBodyDiv = document.getElementById('GET_particleResponseBody');
+
+    if (!name) {
+        alert("Particle name is required.");
+        return;
+    }
+
+    const apiBase = window.location.origin;
+    const url = `${apiBase}/particle/${name}${address ? `/${address}` : ''}`;
+    try {
+        const res = await fetch(url);
+        const text = await res.text();
+        responseCodeDiv.textContent = res.status;
+        responseBodyDiv.textContent = formatJSON(text);
+        populateStructuredParticle(JSON.parse(text));
+    } catch (error) {
+        responseCodeDiv.textContent = 'Error';
+        responseBodyDiv.textContent = error.message;
+    }
+}
+
+// --------------------------------------------------------------------------
 // Version
 // --------------------------------------------------------------------------
 export async function fetchVersionInfo() {
@@ -632,10 +586,18 @@ const accountPageSize = 10;
 let totalAccountFeaturePages = 0;
 let totalAccountTransformationPages = 0;
 let totalAccountConditionPages = 0;
+let totalAccountParticlePages = 0;
 
 export function nextPage()
 {
-    if(currentAccountPage < Math.max(totalAccountFeaturePages, totalAccountTransformationPages, totalAccountConditionPages))
+    const maxPages = Math.max(
+        totalAccountFeaturePages,
+        totalAccountTransformationPages,
+        totalAccountConditionPages,
+        totalAccountParticlePages
+    );
+
+    if(currentAccountPage < maxPages)
     {
         currentAccountPage += 1;
         fetchAccountResources();
@@ -655,16 +617,19 @@ export async function fetchAccountResources() {
     const featuresDiv = document.getElementById('accountFeaturesList');
     const transformationsDiv = document.getElementById('accountTransformationsList');
     const conditionsDiv = document.getElementById('accountConditionsList');
+    const particlesDiv = document.getElementById('accountParticlesList');
 
     featuresDiv.textContent = 'Loading...';
     transformationsDiv.textContent = 'Loading...';
     conditionsDiv.textContent = 'Loading...';
+    particlesDiv.textContent = 'Loading...';
 
     if (!address) {
         alert("Address is required.");
         featuresDiv.textContent = '❌ Invalid address';
         transformationsDiv.textContent = '';
         conditionsDiv.textContent = '';
+        particlesDiv.textContent = '';
         return;
     }
 
@@ -698,17 +663,32 @@ export async function fetchAccountResources() {
             }).join('')
             : '(none)';
 
+        particlesDiv.innerHTML = data.owned_particles?.length
+            ? data.owned_particles.map((name, i) => {
+                const bg = i % 2 === 0 ? '#1e1e1e' : '#2a2a2a';
+                return `<div style="padding: 0.5rem; border: 1px solid #3333; border-radius: 4px; margin-bottom: 0.3rem; background: ${bg};"><code>${name}</code></div>`;
+            }).join('')
+            : '(none)';
+
         // Compute total pages based on backend totals
         totalAccountFeaturePages = Math.ceil((data.total_features ?? 0) / accountPageSize);
         totalAccountTransformationPages = Math.ceil((data.total_transformations ?? 0) / accountPageSize);
         totalAccountConditionPages = Math.ceil((data.total_conditions ?? 0) / accountPageSize);
+        totalAccountParticlePages = Math.ceil((data.total_particles ?? 0) / accountPageSize);
 
         // Show page number as: Page X of Y
+        const maxPages = Math.max(
+            totalAccountFeaturePages,
+            totalAccountTransformationPages,
+            totalAccountConditionPages,
+            totalAccountParticlePages
+        );
+
         document.getElementById('accountPageLabel').textContent =
-            `Page ${currentAccountPage + 1} of ${Math.max(totalAccountFeaturePages, totalAccountTransformationPages, totalAccountConditionPages)}`;
+            `Page ${currentAccountPage + 1} of ${maxPages}`;
 
         // Disable next if on last page
-        const isLastPage = currentAccountPage >= Math.max(totalAccountFeaturePages, totalAccountTransformationPages, totalAccountConditionPages) - 1;
+        const isLastPage = currentAccountPage >= maxPages - 1;
         document.getElementById('btn_prevAccountPage').disabled = currentAccountPage === 0;
         document.getElementById('btn_nextAccountPage').disabled = isLastPage;
 
@@ -716,6 +696,7 @@ export async function fetchAccountResources() {
         featuresDiv.textContent = '❌ Failed to fetch account data';
         transformationsDiv.textContent = err.message;
         conditionsDiv.textContent = '';
+        particlesDiv.textContent = '';
     }
 }
 
@@ -768,69 +749,4 @@ export async function loginWithMetaMask()
 
     return false;
 }
-
-// --------------------------------------------------------------------------
-// Utils
-// --------------------------------------------------------------------------
-
-export function copyTextFromElement(elementId) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-  
-    const text = el.innerText || el.textContent;
-    navigator.clipboard.writeText(text)
-      .then(() => {
-      })
-      .catch(err => {
-        alert("Failed to copy: " + err);
-      });
-}
-
-  // Function to format the JSON response nicely
-function formatJSON(text) {
-    try {
-        const json = JSON.parse(text);
-        return JSON.stringify(json, null, 2); // Pretty-print with 2 spaces
-    } catch (e) {
-        return text; // If not valid JSON, return as it is
-    }
-}
-
-export async function requestWithLogin(url, options = {}) {
-  // clone options to avoid mutating caller object
-  const opts = { ...options };
-  const headers = new Headers(opts.headers || {});
-
-  // attach Authorization header if we have an access token
-  let token = getAccessToken();
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
-  opts.headers = headers;
-
-  // DO NOT include cookies on normal API calls unless needed
-  // (keeps CSRF surface minimal)
-  opts.credentials ??= "omit";
-
-  // first attempt
-  let res = await fetch(url, opts);
-  if (res.status !== 401) {
-    return res;
-  }
-
-  // 401 → try login once more
-  if (!await loginWithMetaMask()) {
-    return res; // refresh failed → propagate 401
-  }
-
-  // retry original request ONCE with new token
-  token = getAccessToken();
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
-  opts.headers = headers;
-
-  return fetch(url, opts);
-}
+configureLoginHandler(loginWithMetaMask);

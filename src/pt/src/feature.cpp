@@ -15,9 +15,7 @@ namespace dcn
 
         contract FeatureA is FeatureBase
         {
-            string[]      private _composites   = ["Pitch", "Time"];
-
-            constructor(address registryAddr) FeatureBase(registryAddr, "FeatureA", _composites, "Condition", [uint32(1), uint32(2)])
+            constructor(address registryAddr) FeatureBase(registryAddr, "FeatureA", 2)
             {
                 getCallDef().push(0, "Add", [uint32(1)]);
                 getCallDef().push(0, "Mul", [uint32(2)]);
@@ -33,29 +31,10 @@ namespace dcn
         }
         */
 
-        std::string composites_code;
         std::string transform_def_code;
-        std::string condition_args_code;
 
-        /*
-            conditionArgs[0] = 1;
-            conditionArgs[1] = 2;
-            ...
-        */
-        for(unsigned int i = 0; i < feature.condition_args_size(); i++)
-        {
-            condition_args_code += std::format("conditionArgs[{}] = int32({});\n", i, feature.condition_args().at(i));
-        }
-
-        /*
-            composites[0] = "a";
-            composites[1] = "b";
-            ...
-        */
         for(unsigned int i = 0; i < feature.dimensions_size(); i++)
         {
-            composites_code += std::format("composites[{}] = \"{}\";\n", i, feature.dimensions().at(i).feature_name());
-
             for(unsigned ii = 0; ii < feature.dimensions().at(i).transformations_size(); ii++)
             {
                 const auto & transform = feature.dimensions().at(i).transformations().at(ii);
@@ -91,36 +70,17 @@ namespace dcn
             "import \"feature/FeatureBase.sol\";\n"
             "contract {0} is FeatureBase{{\n"
 
-            "function _composites() internal pure returns (string[] memory composites) {{"
-            "composites = new string[]({1});"
+            "constructor(address registryAddr) FeatureBase(registryAddr, \"{0}\", {1}) {{\n"
             "{2}"
-            "}}\n"
-            
-            "function _conditionArgs() internal pure returns (int32[] memory conditionArgs) {{"
-            "conditionArgs = new int32[]({3});"
-            "{4}"
-            "}}\n"
-
-            "constructor(address registryAddr) FeatureBase(registryAddr, \"{5}\", _composites(), \"{6}\", _conditionArgs()) {{\n"
-            "{7}"
             "super.init();\n}}"
             "\n}}",
             
             // def
             feature.name(),             // 0
-
+            // ctor
             feature.dimensions_size(),  // 1
-            composites_code,          // 2
-
-            feature.condition_args_size(), //3
-            condition_args_code,      // 4
-
-            // constructor
-            feature.name(),             // 5
-            feature.condition_name(),   // 6
-
             // body
-            transform_def_code        // 7
+            transform_def_code        // 2
         );
     }
 }
@@ -160,7 +120,6 @@ namespace dcn::parse
     Result<json> parseToJson(Dimension dimension, use_json_t)
     {
         json json_obj = json::object();
-        json_obj["feature_name"] = dimension.feature_name();
         for(const TransformationDef & transform_def : dimension.transformations())
         {
             auto transform_result = parseToJson(transform_def, use_json);\
@@ -176,11 +135,6 @@ namespace dcn::parse
     Result<Dimension> parseFromJson(json json_obj, use_json_t)
     {
         Dimension dimension;
-
-        if (json_obj.contains("feature_name")) {
-            dimension.set_feature_name(json_obj["feature_name"].get<std::string>());
-        }
-        else return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "feature_name not found"});
 
         if(json_obj.contains("transformations") == false) {
             return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "transformations not found"});
@@ -241,12 +195,6 @@ namespace dcn::parse
             json_obj["dimensions"].emplace_back(std::move(*dimension_result));
         }
         json_obj["name"] = feature.name();
-        json_obj["condition_name"] = feature.condition_name();
-
-        for(const int32_t & arg : feature.condition_args())
-        {
-            json_obj["condition_args"].emplace_back(arg);
-        }
 
         return json_obj;
     }
@@ -260,17 +208,6 @@ namespace dcn::parse
             feature.set_name(json_obj["name"].get<std::string>());
         }
         else return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "name not found"});
-
-        if (json_obj.contains("condition_name")) {
-            feature.set_condition_name(json_obj["condition_name"].get<std::string>());
-        } else return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "condition_name not found"});
-
-        if (json_obj.contains("condition_args")) {
-            for(const int32_t & arg : json_obj["condition_args"].get<std::vector<int32_t>>())
-            {
-                feature.add_condition_args(arg);
-            }
-        } else return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "condition_args not found"});
 
         if (json_obj.contains("dimensions") == false) {
             return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "dimensions not found"});

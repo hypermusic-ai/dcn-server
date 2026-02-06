@@ -4,6 +4,6 @@ package dcn;
 
 message Samples
 {
-    string feature_path = 1;
+    string path = 1;
     repeated int32 data = 2;
 }
