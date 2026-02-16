@@ -412,7 +412,7 @@ function renderParticleCompositeInputs(count, existingValues = []) {
     const safeCount = Number.isFinite(count) && count > 0 ? count : 0;
     if (safeCount === 0) {
         const empty = document.createElement('div');
-        empty.style.color = '#888';
+        empty.className = 'muted-note';
         empty.textContent = 'No dimensions to configure.';
         container.appendChild(empty);
         updateParticlePreview();
@@ -421,7 +421,7 @@ function renderParticleCompositeInputs(count, existingValues = []) {
 
     for (let i = 0; i < safeCount; i += 1) {
         const wrapper = document.createElement('div');
-        wrapper.style.marginBottom = '0.5rem';
+        wrapper.className = 'particle-composite-row';
 
         const label = document.createElement('label');
         label.textContent = `Dimension ${i + 1} composite`;

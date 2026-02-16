@@ -128,7 +128,7 @@ body {
     width: min(1200px, calc(100% - 1.4rem));
     min-height: calc(100vh - 3.7rem);
     height: auto;
-    margin: 0.7rem auto;
+    margin: 0.8rem auto 1rem;
 }
 
 .api-panel {
@@ -140,6 +140,7 @@ body {
     display: grid;
     grid-template-rows: auto auto 1fr;
     overflow: hidden;
+    box-shadow: 0 8px 24px rgba(17, 17, 17, 0.05);
 }
 
 .api-toolbar {
@@ -226,6 +227,7 @@ h3 {
     padding: 0.62rem 1rem;
     border-bottom: 1px solid var(--line);
     overflow-x: auto;
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
 }
 
 .api-tab {
@@ -253,6 +255,7 @@ h3 {
 
 .tab-panels {
     min-height: 0;
+    overflow: auto;
 }
 
 .tab-panel {
@@ -271,19 +274,23 @@ h3 {
     gap: 0.9rem;
     height: auto;
     min-height: 0;
+    align-items: start;
 }
 
 .tab-column {
-    min-height: 220px;
-    overflow: visible;
+    min-height: 260px;
+    overflow: auto;
     border: 1px solid var(--line);
     border-radius: 0.75rem;
     padding: 0.8rem;
     background: #fcfcfc;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
 }
 
 .tab-hint {
-    margin: 0;
+    margin: 0.2rem 0 0;
     color: #666666;
     font-size: 0.83rem;
 }
@@ -292,7 +299,7 @@ h3 {
     display: flex;
     align-items: flex-end;
     gap: 0.7rem;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.5rem;
 }
 
 .form-row .action-button {
@@ -312,12 +319,14 @@ h3 {
     color: #666666;
     font-size: 0.8rem;
     min-width: 0;
+    line-height: 1.35;
 }
 
 .helper-text {
     color: #666666;
     font-size: 0.79rem;
-    margin: -0.3rem 0 0.8rem;
+    margin: -0.1rem 0 0.5rem;
+    line-height: 1.35;
 }
 
 label {
@@ -384,7 +393,7 @@ button:disabled {
     display: flex;
     gap: 0.55rem;
     flex-wrap: wrap;
-    margin-bottom: 0.7rem;
+    margin: 0.2rem 0 0.6rem;
 }
 
 .button-row button {
@@ -396,7 +405,8 @@ button:disabled {
 .response-row {
     display: flex;
     gap: 0.7rem;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.7rem;
+    align-items: stretch;
 }
 
 .response-code {
@@ -425,8 +435,33 @@ button:disabled {
     word-break: break-word;
     overflow-wrap: break-word;
     max-width: 100%;
-    max-height: 200px;
+    max-height: 220px;
     overflow: auto;
+}
+
+.response-row .response-body,
+.response-row .response-wrapper,
+.request-row .response-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+
+.request-row .request-body {
+    min-height: 130px;
+}
+
+.response-row .response-body {
+    min-height: 120px;
+}
+
+.response-wrapper .response-body,
+.response-wrapper .request-body {
+    padding-right: 2rem;
+}
+
+pre.response-body,
+pre.request-body {
+    margin: 0;
 }
 
 .request-row {
@@ -462,13 +497,50 @@ button:disabled {
 #treeContainer {
     display: none;
     width: 100%;
-    height: 250px;
+    height: clamp(250px, 32vh, 380px);
     overflow: visible;
     position: relative;
     z-index: 0;
     background: #f6f6f6 !important;
     border: 1px solid var(--line) !important;
     border-radius: 0.5rem;
+}
+
+#executeRunningInstances {
+    min-height: 160px;
+}
+
+#executeBody {
+    min-height: 140px;
+}
+
+#POST_featureRequestBody,
+#POST_transformationRequestBody,
+#POST_conditionRequestBody,
+#POST_particleRequestBody {
+    min-height: 150px;
+}
+
+.inline-code-fragment {
+    max-height: none;
+    min-height: 0;
+    padding: 0.45rem 0.58rem;
+    white-space: pre-wrap;
+}
+
+#particleCompositesContainer {
+    max-height: 220px;
+    overflow: auto;
+    padding-right: 0.2rem;
+}
+
+.particle-composite-row {
+    margin-bottom: 0.5rem;
+}
+
+.muted-note {
+    color: #888888;
+    font-size: 0.8rem;
 }
 
 .dimension-fieldset {
@@ -507,7 +579,7 @@ button:disabled {
 
 .account-grid .response-body {
     min-height: 120px;
-    max-height: 180px;
+    max-height: 220px;
 }
 
 .account-item {
@@ -584,6 +656,7 @@ button:disabled {
 
     .tab-column {
         max-height: none;
+        overflow: visible;
     }
 
     .api-toolbar {
@@ -636,6 +709,12 @@ button:disabled {
     .site-links a.site-link-open-api {
         color: #ffffff;
         border-color: rgba(17, 17, 17, 0.22);
+    }
+}
+
+@media (min-width: 1101px) {
+    .tab-column {
+        max-height: calc(100vh - 16.2rem);
     }
 }
 

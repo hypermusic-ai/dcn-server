@@ -221,6 +221,15 @@
                             </div>
 
                             <p class="tab-hint">Click any node in the dependency graph to edit running instance values.</p>
+
+                            <label>Execute response</label>
+                            <div class="response-row">
+                                <div id="executeCode" class="response-code">-</div>
+                                <div class="response-wrapper">
+                                    <button id="btn_executeCopyResponse" class="copy-button">📋</button>
+                                    <pre id="executeBody" class="response-body">Waiting...</pre>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="tab-column">
@@ -234,14 +243,6 @@
                                 <div id="treeContainer"></div>
                             </div>
 
-                            <label>Execute response</label>
-                            <div class="response-row">
-                                <div id="executeCode" class="response-code">-</div>
-                                <div class="response-wrapper">
-                                    <button id="btn_executeCopyResponse" class="copy-button">📋</button>
-                                    <pre id="executeBody" class="response-body">Waiting...</pre>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </section>
@@ -363,9 +364,9 @@
                             <input type="text" id="in_transformationName" placeholder="add">
 
                             <label>Solidity code</label>
-                            <div class="request-body">function run(uint32 x, uint32 [] calldata args) view external returns (uint32){</div>
+                            <div class="request-body inline-code-fragment">function run(uint32 x, uint32 [] calldata args) view external returns (uint32){</div>
                             <textarea id="POST_transformationCode" placeholder="return x + args[0];"></textarea>
-                            <div class="request-body">}</div>
+                            <div class="request-body inline-code-fragment">}</div>
 
                             <label>Address (optional)</label>
                             <input id="GET_transformationAddress" type="text" placeholder="0x0...">
@@ -409,9 +410,9 @@
                             <input type="text" id="in_conditionName" placeholder="is_active">
 
                             <label>Solidity code</label>
-                            <div class="request-body">function check(int32 [] calldata args) view external returns (bool){</div>
+                            <div class="request-body inline-code-fragment">function check(int32 [] calldata args) view external returns (bool){</div>
                             <textarea id="POST_conditionCode" placeholder="return args[0] == 1;"></textarea>
-                            <div class="request-body">}</div>
+                            <div class="request-body inline-code-fragment">}</div>
 
                             <label>Address (optional)</label>
                             <input id="GET_conditionAddress" type="text" placeholder="0x0...">
