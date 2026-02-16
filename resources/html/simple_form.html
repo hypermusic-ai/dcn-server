@@ -3,10 +3,16 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Decentralised Art Server</title>
+    <title>Decentralised Creative Network API</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
     
     <script type="text/javascript" src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
     <link href="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
@@ -92,16 +98,63 @@
         document.getElementById('btn_prevAccountPage').addEventListener('click', prevPage);
         document.getElementById('btn_nextAccountPage').addEventListener('click', nextPage);
 
+        const nav = document.getElementById('siteNav');
+        const navToggle = document.getElementById('siteNavToggle');
+        if (nav && navToggle) {
+            navToggle.addEventListener('click', () => {
+                const open = nav.classList.toggle('is-open');
+                navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+
+            nav.querySelectorAll('.site-links a').forEach((anchor) => {
+                anchor.addEventListener('click', () => {
+                    nav.classList.remove('is-open');
+                    navToggle.setAttribute('aria-expanded', 'false');
+                });
+            });
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 900) {
+                    nav.classList.remove('is-open');
+                    navToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
     </script>
     <link rel="stylesheet" href="styles/simple_form.css">
 
 </head>
 
 <body>
-    <div style="margin-top: 4rem; color: #888; font-size: 0.9rem; text-align: center;">
+    <header class="site-nav" id="siteNav">
+        <div class="site-nav-inner">
+            <a href="https://decentralised.art/" class="site-brand">Decentralised Creative Network</a>
+            <button
+                type="button"
+                class="site-nav-toggle"
+                id="siteNavToggle"
+                aria-expanded="false"
+                aria-label="Toggle navigation menu"
+            >
+                <span class="site-nav-toggle-open">☰</span>
+                <span class="site-nav-toggle-close">✕</span>
+            </button>
+            <nav class="site-links" aria-label="Primary">
+                <a href="https://decentralised.art/">Home</a>
+                <a href="https://decentralised.art/onboarding">Tutorial</a>
+                <a href="https://decentralised.art/api-tutorial">Documentation</a>
+                <a href="https://decentralised.art/examples">Examples</a>
+                <a href="/" class="site-link-open-api">Open API</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="api-shell">
+    <div style="margin-top: 1rem; color: #888; font-size: 0.9rem; text-align: center;">
         <div id="versionInfo">Loading version info...</div>
     </div>
-    <h1>Decentralised Art Server</h1>
+    <h1>Decentralised Creative Network API</h1>
     <p style="text-align:center; max-width:600px">Interact with the API endpoints directly from your browser.</p>
 
     <hr>
@@ -407,5 +460,6 @@
         </div>
         </div>
     </div>
+    </main>
 </body>
 </html>
