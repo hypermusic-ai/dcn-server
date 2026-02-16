@@ -25,9 +25,7 @@ export function addDimension() {
     dim.className = 'dimension';
 
     const fieldset = document.createElement('fieldset');
-    fieldset.style.border = '1px solid #555';
-    fieldset.style.padding = '1rem';
-    fieldset.style.marginBottom = '0.5rem';
+    fieldset.className = 'dimension-fieldset';
 
     const legend = document.createElement('legend');
     legend.textContent = `Dimension ${index + 1}`;
@@ -54,22 +52,18 @@ export function addTransformation(button) {
     const container = button.previousElementSibling;
 
     const t = document.createElement('div');
-    t.style.marginBottom = '1rem';
+    t.className = 'feature-transformation';
 
     const hr = document.createElement('hr');
     t.appendChild(hr);
 
     // Create row container
     const row = document.createElement('div');
-    row.style.display = 'flex';
-    row.style.gap = '1rem';
-    row.style.alignItems = 'flex-start';
+    row.className = 'transformation-row';
 
     // Column 1: name
     const nameCol = document.createElement('div');
-    nameCol.style.flex = '1';
-    nameCol.style.marginLeft = '1rem';
-    nameCol.style.marginRight = '1rem';
+    nameCol.className = 'transformation-col';
 
     const nameLabel = document.createElement('label');
     nameLabel.textContent = 'Transformation name';
@@ -85,9 +79,7 @@ export function addTransformation(button) {
 
     // Column 2: args
     const argsCol = document.createElement('div');
-    argsCol.style.flex = '1';
-    argsCol.style.marginLeft = '1rem';
-    argsCol.style.marginRight = '1rem';
+    argsCol.className = 'transformation-col';
 
     const argsLabel = document.createElement('label');
     argsLabel.textContent = 'args (comma-separated)';
@@ -420,7 +412,7 @@ function renderParticleCompositeInputs(count, existingValues = []) {
     const safeCount = Number.isFinite(count) && count > 0 ? count : 0;
     if (safeCount === 0) {
         const empty = document.createElement('div');
-        empty.style.color = '#888';
+        empty.className = 'muted-note';
         empty.textContent = 'No dimensions to configure.';
         container.appendChild(empty);
         updateParticlePreview();
@@ -429,7 +421,7 @@ function renderParticleCompositeInputs(count, existingValues = []) {
 
     for (let i = 0; i < safeCount; i += 1) {
         const wrapper = document.createElement('div');
-        wrapper.style.marginBottom = '0.5rem';
+        wrapper.className = 'particle-composite-row';
 
         const label = document.createElement('label');
         label.textContent = `Dimension ${i + 1} composite`;
@@ -643,31 +635,19 @@ export async function fetchAccountResources() {
         const data = await res.json();
         
         featuresDiv.innerHTML = data.owned_features?.length
-            ? data.owned_features.map((name, i) => {
-                const bg = i % 2 === 0 ? '#1e1e1e' : '#2a2a2a';
-                return `<div style="padding: 0.5rem; border: 1px solid #3333; border-radius: 4px; margin-bottom: 0.3rem; background: ${bg};"><code>${name}</code></div>`;
-            }).join('')
+            ? data.owned_features.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
             : '(none)';
 
         transformationsDiv.innerHTML = data.owned_transformations?.length
-            ? data.owned_transformations.map((name, i) => {
-                const bg = i % 2 === 0 ? '#1e1e1e' : '#2a2a2a';
-                return `<div style="padding: 0.5rem; border: 1px solid #3333; border-radius: 4px; margin-bottom: 0.3rem; background: ${bg};"><code>${name}</code></div>`;
-            }).join('')
+            ? data.owned_transformations.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
             : '(none)';
 
         conditionsDiv.innerHTML = data.owned_conditions?.length
-            ? data.owned_conditions.map((name, i) => {
-                const bg = i % 2 === 0 ? '#1e1e1e' : '#2a2a2a';
-                return `<div style="padding: 0.5rem; border: 1px solid #3333; border-radius: 4px; margin-bottom: 0.3rem; background: ${bg};"><code>${name}</code></div>`;
-            }).join('')
+            ? data.owned_conditions.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
             : '(none)';
 
         particlesDiv.innerHTML = data.owned_particles?.length
-            ? data.owned_particles.map((name, i) => {
-                const bg = i % 2 === 0 ? '#1e1e1e' : '#2a2a2a';
-                return `<div style="padding: 0.5rem; border: 1px solid #3333; border-radius: 4px; margin-bottom: 0.3rem; background: ${bg};"><code>${name}</code></div>`;
-            }).join('')
+            ? data.owned_particles.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
             : '(none)';
 
         // Compute total pages based on backend totals
