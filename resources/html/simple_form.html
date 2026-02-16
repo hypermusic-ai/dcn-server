@@ -10,10 +10,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@500;600;700&display=swap"
-      rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@500;600;700&display=swap"
+        rel="stylesheet"
     />
-    
+
     <script type="text/javascript" src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
     <link href="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
 
@@ -121,9 +121,31 @@
             });
         }
 
-    </script>
-    <link rel="stylesheet" href="styles/simple_form.css">
+        const tabs = Array.from(document.querySelectorAll('.api-tab'));
+        const panels = Array.from(document.querySelectorAll('.tab-panel'));
 
+        function activateTab(tabKey) {
+            tabs.forEach((tab) => {
+                const active = tab.dataset.tabTarget === tabKey;
+                tab.classList.toggle('is-active', active);
+                tab.setAttribute('aria-selected', active ? 'true' : 'false');
+                tab.setAttribute('tabindex', active ? '0' : '-1');
+            });
+
+            panels.forEach((panel) => {
+                panel.classList.toggle('is-active', panel.dataset.tabPanel === tabKey);
+            });
+        }
+
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => activateTab(tab.dataset.tabTarget));
+        });
+
+        const initialTab = tabs.find((tab) => tab.classList.contains('is-active'))?.dataset.tabTarget || 'execute';
+        activateTab(initialTab);
+    </script>
+
+    <link rel="stylesheet" href="styles/simple_form.css">
 </head>
 
 <body>
@@ -151,315 +173,361 @@
     </header>
 
     <main class="api-shell">
-    <div style="margin-top: 1rem; color: #888; font-size: 0.9rem; text-align: center;">
-        <div id="versionInfo">Loading version info...</div>
-    </div>
-    <h1>Decentralised Creative Network API</h1>
-    <p style="text-align:center; max-width:600px">Interact with the API endpoints directly from your browser.</p>
-
-    <hr>
-    <div class="row">
-        <div class="column">
-            <h2>MetaMask login</h2>
-
-            <div class="response-row" style="display: flex; gap: 1rem; align-items: flex-end;">
-                <button id="login" style="min-width: 200px;">Login</button>
-                
-                <div style="flex: 1; min-width: 120px; margin-right: 1rem;">
-                    <label>Status</label>
-                    <div id="loginStatus" class="response-body">Waiting...</div>
+        <section class="api-panel">
+            <div class="api-toolbar">
+                <div class="api-title-wrap">
+                    <h1>Decentralised Creative Network API</h1>
+                    <div id="versionInfo" class="version-info">Loading version info...</div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="row">
-      <div class="column">
-        <h2>Account Overview</h2>
-        <div class="response-row" style="display: flex; gap: 1rem; align-items: flex-end;">
-            <button id="btn_fetchAccountData" style="min-width: 200px;">Fetch Account Data</button>
-            
-            <div style="flex: 1; min-width: 120px; margin-right: 1rem;">
-                <label>Address</label>
-                <input type="text" id="accountAddressInput" class="response-body" placeholder="0x..." style="flex: 3;">
-            </div>
-        </div>
-        <div class="account-grid">
-            <div class="column">
-                <h3>Owned Particles</h3>
-                <div id="accountParticlesList" class="response-body">Waiting...</div>
-            </div>
-            <div class="column">
-                <h3>Owned Features</h3>
-                <div id="accountFeaturesList" class="response-body">Waiting...</div>
-            </div>
-            <div class="column">
-                <h3>Owned Transformations</h3>
-                <div id="accountTransformationsList" class="response-body">Waiting...</div>
-            </div>
-            <div class="column">
-                <h3>Owned Conditions</h3>
-                <div id="accountConditionsList" class="response-body">Waiting...</div>
-            </div>
-        </div>
-        <div style="text-align: center; margin-top: 1rem;">
-            <button id="btn_prevAccountPage">⬅ Prev</button>
-            <span id="accountPageLabel" style="margin: 0 1rem;">Page 1</span>
-            <button id="btn_nextAccountPage">Next ➡</button>
-        </div>
-      </div>
-    </div>
-
-
-    <hr>
-
-    <div class="row">
-        <div class="column">
-            <h2>Execute</h2>
-            <div class="row" style="display: flex; gap: 1rem; align-items: flex-end;">
-                <div style="flex: 1; min-width: 120px; margin-right: 1rem;">
-                    <label>Particle name</label>
-                    <input id="executeName" type="text" placeholder="pitch">
-                </div>
-                <div style="flex: 1; min-width: 120px;">
-                    <label style="visibility:hidden;">Fetch</label>
-                    <button id = "btn_fetchBeforeExecute">Fetch</button>
-                </div>
-            </div>
-            <div id="popupInstanceEditor" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:#222; color:#fff; padding:1rem; border-radius:8px; z-index:9999;">
-                <h3>Edit Running Instance</h3>
-                <p id="popupRunningInstanceLabel"></p>
-                <label>Start Point</label>
-                <input type="number" id="popupStartPoint" style="width:100%;">
-                <label>Transform Shift</label>
-                <input type="number" id="popupTransformShift" style="width:100%;">
-                <div style="margin-top:1rem; display:flex; justify-content: space-between;">
-                    <button id="btn_saveInstanceEdit">Save</button>
-                    <button id="btn_closePopup">Cancel</button>
-                </div>
-            </div>
-            <label>Running Instances</label>
-            <div class="request-row">
-                <div id="executeRunningInstances" class="request-body"></div>
-            </div>
-            <div class="request-row">
-                <div id="treeContainer" style="display: none; width: 100%; height: 400px; background: #1e1e1e; border-radius: 6px; margin: 1rem;"></div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="column">
-            <div class="row" style="display: flex; gap: 1rem; align-items: flex-end;">
-                <div style="flex: 1; min-width: 120px; margin-right: 1rem;">
-                    <label>Sample count</label>
-                    <input id="executeN" type="number" placeholder="5">
-                </div>
-                <div style="flex: 1; min-width: 120px;">
-                    <label style="visibility:hidden;">Execute</label>
-                    <button id="btn_execute">🔒 Execute</button>
-                </div>
-            </div>
-            <div class="response-row">
-                <div id="executeCode" class="response-code">-</div>
-                <div class="response-wrapper">
-                    <button id="btn_executeCopyResponse" class="copy-button">📋</button>
-                    <pre id="executeBody" class="response-body">Waiting...</pre>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <hr>
-
-    <div class="row">
-        <h2>Features</h2>
-        <div style="flex: 1; min-width: 120px; margin-right: 1rem;">
-            <label>Name</label>
-            <input type="text" id="in_featureName" placeholder="melody">
-        </div>
-        <div class="row">
-        <div class="column">
-            <label>Dimensions</label>
-            <div id="dimensionsContainer"></div>
-
-            <div class="button-row">
-                <button id="btn_addDimension">➕ Add dimension</button>
-                <button id="btn_clearDimensions">🗑️ Clear dimensions</button>
-            </div>
-
-            <label>Request body</label>
-            <div class="request-row">
-                <div class="response-wrapper">
-                    <button id="btn_featureCopyRequest" class="copy-button">📋</button>
-                    <pre id="POST_featureRequestBody" class="request-body">...</pre>
-                </div>
-            </div>
-            <button id="btn_sendStructuredFeature">🔒 Send</button>
-
-            <div class="response-row">
-                <div id="POST_featureResponseCode" class="response-code">-</div>
-                <div id="POST_featureResponseBody" class="response-body">Waiting...</div>
-            </div>
-        </div>
-        <div class="column">
-            <label>Address (optional)</label>
-            <input id="GET_featureAddress" type="text" placeholder="0x0...">
-            <button id="btn_getFeature">Fetch</button>
-            <div class="response-row">
-                <div id="GET_featureResponseCode" class="response-code">-</div>
-                <div id="GET_featureResponseBody" class="response-body">Waiting...</div>
-            </div>
-        </div>
-    </div>
-    </div>
-
-    <hr>
-
-    <div class="row">
-        <h2>Transformations</h2>
-        <div style="flex: 1; min-width: 120px; margin-right: 1rem;">
-            <label>Name</label>
-            <input type="text" id="in_transformationName" placeholder="add">
-        </div>
-        <div class="row">
-        <div class="column">
-            <div class="column">
-                <label>Solidity Code</label>
-                <div class="request-body">function run(uint32 x, uint32 [] calldata args) view external returns (uint32){</div>
-                <textarea id="POST_transformationCode" placeholder="return x + args[0];"></textarea>
-                <div class="request-body">}</div>
-            </div>
-
-            <label style="margin:1rem;" >Request body</label>
-            <div class="request-row">
-                <div class="response-wrapper">
-                    <button id="btn_transformationCopyRequest" class="copy-button">📋</button>
-                    <pre id="POST_transformationRequestBody" class="request-body">...</pre>
-                </div>
-            </div>
-            
-            <button id="btn_sendStructuredTransformation">🔒 Send</button>
-            
-            <div class="response-row">
-                <div id="POST_transformationResponseCode" class="response-code">-</div>
-                <div id="POST_transformationResponseBody" class="response-body">Waiting...</div>
-            </div>
-        </div>
-        <div class="column">
-            <label>Address (optional)</label>
-            <input id="GET_transformationAddress" type="text" placeholder="0x0...">
-            <button id="btn_getTransformation">Fetch</button>
-            <div class="response-row">
-                <div id="GET_transformationResponseCode" class="response-code">-</div>
-                <div id="GET_transformationResponseBody" class="response-body">Waiting...</div>
-            </div>
-        </div>
-        </div>
-    </div>
-
-    <hr>
-
-    <div class="row">
-        <h2>Conditions</h2>
-        <div style="flex: 1; min-width: 120px; margin-right: 1rem;">
-            <label>Name</label>
-            <input type="text" id="in_conditionName" placeholder="add">
-        </div>
-        <div class="row">
-        <div class="column">
-            <div class="column">
-                <label>Solidity Code</label>
-                <div class="request-body">function check(int32 [] calldata args) view external returns (bool){</div>
-                <textarea id="POST_conditionCode" placeholder="return args[0] == 1;"></textarea>
-                <div class="request-body">}</div>
-            </div>
-
-            <label style="margin:1rem;" >Request body</label>
-            <div class="request-row">
-                <div class="response-wrapper">
-                    <button id="btn_conditionCopyRequest" class="copy-button">📋</button>
-                    <pre id="POST_conditionRequestBody" class="request-body">...</pre>
-                </div>
-            </div>
-            
-            <button id="btn_sendStructuredCondition">🔒 Send</button>
-            
-            <div class="response-row">
-                <div id="POST_conditionResponseCode" class="response-code">-</div>
-                <div id="POST_conditionResponseBody" class="response-body">Waiting...</div>
-            </div>
-        </div>
-        <div class="column">
-            <label>Address (optional)</label>
-            <input id="GET_conditionAddress" type="text" placeholder="0x0...">
-            <button id="btn_getCondition">Fetch</button>
-            <div class="response-row">
-                <div id="GET_conditionResponseCode" class="response-code">-</div>
-                <div id="GET_conditionResponseBody" class="response-body">Waiting...</div>
-            </div>
-        </div>
-        </div>
-    </div>
-
-    <hr>
-
-    <div class="row">
-        <h2>Particles</h2>
-        <div style="flex: 1; min-width: 120px; margin-right: 1rem;">
-            <label>Name</label>
-            <input type="text" id="in_particleName" placeholder="melody-particle">
-        </div>
-        <div class="row">
-        <div class="column">
-            <label>Feature name</label>
-            <input id="in_particleFeatureName" type="text" placeholder="melody">
-
-            <div class="row" style="display: flex; gap: 1rem; align-items: flex-end;">
-                <div style="flex: 1; min-width: 120px;">
-                    <label style="visibility:hidden;">Fetch</label>
-                    <button id="btn_particleLoadFeature" type="button">Fetch feature dimensions</button>
-                </div>
-                <div id="particleFeatureInfo" style="flex: 2; color: #888; font-size: 0.9rem;">Fetch the feature to load composite inputs.</div>
-            </div>
-
-            <label>Composite names (per dimension)</label>
-            <div id="particleCompositesContainer"></div>
-            <div style="color: #888; font-size: 0.9rem; margin-top: -0.5rem; margin-bottom: 1rem;">
-                Leave empty for scalar (empty string).
-            </div>
-
-            <label>Condition name</label>
-            <input id="in_particleConditionName" type="text" placeholder="is_active">
-
-            <label>Condition args (comma-separated)</label>
-            <input id="in_particleConditionArgs" type="text" placeholder="1, 2">
-
-            <label style="margin:1rem;" >Request body</label>
-            <div class="request-row">
-                <div class="response-wrapper">
-                    <button id="btn_particleCopyRequest" class="copy-button">📋</button>
-                    <pre id="POST_particleRequestBody" class="request-body">...</pre>
+                <div class="login-compact">
+                    <button id="login" class="compact-login-btn">MetaMask Login</button>
+                    <div class="login-compact-status">
+                        <span>Status</span>
+                        <div id="loginStatus" class="response-body compact-status-body">Waiting...</div>
+                    </div>
                 </div>
             </div>
 
-            <button id="btn_sendStructuredParticle">🔒 Send</button>
+            <div class="api-tabs" role="tablist" aria-label="API Sections">
+                <button type="button" id="tab-btn-execute" class="api-tab is-active" role="tab" aria-selected="true" data-tab-target="execute">Execute</button>
+                <button type="button" id="tab-btn-particles" class="api-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="particles">Particles</button>
+                <button type="button" id="tab-btn-features" class="api-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="features">Features</button>
+                <button type="button" id="tab-btn-transformations" class="api-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="transformations">Transformations</button>
+                <button type="button" id="tab-btn-conditions" class="api-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="conditions">Conditions</button>
+                <button type="button" id="tab-btn-account" class="api-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="account">Account Overview</button>
+            </div>
 
-            <div class="response-row">
-                <div id="POST_particleResponseCode" class="response-code">-</div>
-                <div id="POST_particleResponseBody" class="response-body">Waiting...</div>
+            <div class="tab-panels">
+                <section class="tab-panel is-active" data-tab-panel="execute" role="tabpanel" aria-labelledby="tab-btn-execute">
+                    <div class="tab-grid">
+                        <div class="tab-column">
+                            <h2>Execute</h2>
+
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label>Particle name</label>
+                                    <input id="executeName" type="text" placeholder="pitch">
+                                </div>
+                                <button id="btn_fetchBeforeExecute" class="action-button">Fetch dependency graph</button>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label>Sample count</label>
+                                    <input id="executeN" type="number" placeholder="5">
+                                </div>
+                                <button id="btn_execute" class="action-button">🔒 Execute</button>
+                            </div>
+
+                            <p class="tab-hint">Click any node in the dependency graph to edit running instance values.</p>
+                        </div>
+
+                        <div class="tab-column">
+                            <label>Running instances</label>
+                            <div class="request-row">
+                                <pre id="executeRunningInstances" class="request-body"></pre>
+                            </div>
+
+                            <label>Dependency graph</label>
+                            <div class="request-row">
+                                <div id="treeContainer"></div>
+                            </div>
+
+                            <label>Execute response</label>
+                            <div class="response-row">
+                                <div id="executeCode" class="response-code">-</div>
+                                <div class="response-wrapper">
+                                    <button id="btn_executeCopyResponse" class="copy-button">📋</button>
+                                    <pre id="executeBody" class="response-body">Waiting...</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="tab-panel" data-tab-panel="particles" role="tabpanel" aria-labelledby="tab-btn-particles">
+                    <div class="tab-grid">
+                        <div class="tab-column">
+                            <h2>Particles</h2>
+
+                            <label>Name</label>
+                            <input type="text" id="in_particleName" placeholder="melody-particle">
+
+                            <label>Feature name</label>
+                            <input id="in_particleFeatureName" type="text" placeholder="melody">
+
+                            <div class="form-row single-action-row">
+                                <button id="btn_particleLoadFeature" type="button" class="action-button">Fetch feature dimensions</button>
+                                <div id="particleFeatureInfo" class="helper-info">Fetch the feature to load composite inputs.</div>
+                            </div>
+
+                            <label>Composite names (per dimension)</label>
+                            <div id="particleCompositesContainer"></div>
+                            <div class="helper-text">Leave empty for scalar (empty string).</div>
+
+                            <label>Condition name</label>
+                            <input id="in_particleConditionName" type="text" placeholder="is_active">
+
+                            <label>Condition args (comma-separated)</label>
+                            <input id="in_particleConditionArgs" type="text" placeholder="1, 2">
+
+                            <label>Address (optional)</label>
+                            <input id="GET_particleAddress" type="text" placeholder="0x0...">
+
+                            <div class="button-row">
+                                <button id="btn_sendStructuredParticle" class="action-button">🔒 Send</button>
+                                <button id="btn_getParticle" class="action-button">Fetch</button>
+                            </div>
+                        </div>
+
+                        <div class="tab-column">
+                            <label>Request body</label>
+                            <div class="request-row">
+                                <div class="response-wrapper">
+                                    <button id="btn_particleCopyRequest" class="copy-button">📋</button>
+                                    <pre id="POST_particleRequestBody" class="request-body">...</pre>
+                                </div>
+                            </div>
+
+                            <label>Create response</label>
+                            <div class="response-row">
+                                <div id="POST_particleResponseCode" class="response-code">-</div>
+                                <div id="POST_particleResponseBody" class="response-body">Waiting...</div>
+                            </div>
+
+                            <label>Fetch response</label>
+                            <div class="response-row">
+                                <div id="GET_particleResponseCode" class="response-code">-</div>
+                                <div id="GET_particleResponseBody" class="response-body">Waiting...</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="tab-panel" data-tab-panel="features" role="tabpanel" aria-labelledby="tab-btn-features">
+                    <div class="tab-grid">
+                        <div class="tab-column">
+                            <h2>Features</h2>
+
+                            <label>Name</label>
+                            <input type="text" id="in_featureName" placeholder="melody">
+
+                            <label>Dimensions</label>
+                            <div id="dimensionsContainer"></div>
+
+                            <div class="button-row">
+                                <button id="btn_addDimension">➕ Add dimension</button>
+                                <button id="btn_clearDimensions">🗑️ Clear dimensions</button>
+                            </div>
+
+                            <label>Address (optional)</label>
+                            <input id="GET_featureAddress" type="text" placeholder="0x0...">
+
+                            <div class="button-row">
+                                <button id="btn_sendStructuredFeature" class="action-button">🔒 Send</button>
+                                <button id="btn_getFeature" class="action-button">Fetch</button>
+                            </div>
+                        </div>
+
+                        <div class="tab-column">
+                            <label>Request body</label>
+                            <div class="request-row">
+                                <div class="response-wrapper">
+                                    <button id="btn_featureCopyRequest" class="copy-button">📋</button>
+                                    <pre id="POST_featureRequestBody" class="request-body">...</pre>
+                                </div>
+                            </div>
+
+                            <label>Create response</label>
+                            <div class="response-row">
+                                <div id="POST_featureResponseCode" class="response-code">-</div>
+                                <div id="POST_featureResponseBody" class="response-body">Waiting...</div>
+                            </div>
+
+                            <label>Fetch response</label>
+                            <div class="response-row">
+                                <div id="GET_featureResponseCode" class="response-code">-</div>
+                                <div id="GET_featureResponseBody" class="response-body">Waiting...</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="tab-panel" data-tab-panel="transformations" role="tabpanel" aria-labelledby="tab-btn-transformations">
+                    <div class="tab-grid">
+                        <div class="tab-column">
+                            <h2>Transformations</h2>
+
+                            <label>Name</label>
+                            <input type="text" id="in_transformationName" placeholder="add">
+
+                            <label>Solidity code</label>
+                            <div class="request-body">function run(uint32 x, uint32 [] calldata args) view external returns (uint32){</div>
+                            <textarea id="POST_transformationCode" placeholder="return x + args[0];"></textarea>
+                            <div class="request-body">}</div>
+
+                            <label>Address (optional)</label>
+                            <input id="GET_transformationAddress" type="text" placeholder="0x0...">
+
+                            <div class="button-row">
+                                <button id="btn_sendStructuredTransformation" class="action-button">🔒 Send</button>
+                                <button id="btn_getTransformation" class="action-button">Fetch</button>
+                            </div>
+                        </div>
+
+                        <div class="tab-column">
+                            <label>Request body</label>
+                            <div class="request-row">
+                                <div class="response-wrapper">
+                                    <button id="btn_transformationCopyRequest" class="copy-button">📋</button>
+                                    <pre id="POST_transformationRequestBody" class="request-body">...</pre>
+                                </div>
+                            </div>
+
+                            <label>Create response</label>
+                            <div class="response-row">
+                                <div id="POST_transformationResponseCode" class="response-code">-</div>
+                                <div id="POST_transformationResponseBody" class="response-body">Waiting...</div>
+                            </div>
+
+                            <label>Fetch response</label>
+                            <div class="response-row">
+                                <div id="GET_transformationResponseCode" class="response-code">-</div>
+                                <div id="GET_transformationResponseBody" class="response-body">Waiting...</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="tab-panel" data-tab-panel="conditions" role="tabpanel" aria-labelledby="tab-btn-conditions">
+                    <div class="tab-grid">
+                        <div class="tab-column">
+                            <h2>Conditions</h2>
+
+                            <label>Name</label>
+                            <input type="text" id="in_conditionName" placeholder="is_active">
+
+                            <label>Solidity code</label>
+                            <div class="request-body">function check(int32 [] calldata args) view external returns (bool){</div>
+                            <textarea id="POST_conditionCode" placeholder="return args[0] == 1;"></textarea>
+                            <div class="request-body">}</div>
+
+                            <label>Address (optional)</label>
+                            <input id="GET_conditionAddress" type="text" placeholder="0x0...">
+
+                            <div class="button-row">
+                                <button id="btn_sendStructuredCondition" class="action-button">🔒 Send</button>
+                                <button id="btn_getCondition" class="action-button">Fetch</button>
+                            </div>
+                        </div>
+
+                        <div class="tab-column">
+                            <label>Request body</label>
+                            <div class="request-row">
+                                <div class="response-wrapper">
+                                    <button id="btn_conditionCopyRequest" class="copy-button">📋</button>
+                                    <pre id="POST_conditionRequestBody" class="request-body">...</pre>
+                                </div>
+                            </div>
+
+                            <label>Create response</label>
+                            <div class="response-row">
+                                <div id="POST_conditionResponseCode" class="response-code">-</div>
+                                <div id="POST_conditionResponseBody" class="response-body">Waiting...</div>
+                            </div>
+
+                            <label>Fetch response</label>
+                            <div class="response-row">
+                                <div id="GET_conditionResponseCode" class="response-code">-</div>
+                                <div id="GET_conditionResponseBody" class="response-body">Waiting...</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="tab-panel" data-tab-panel="account" role="tabpanel" aria-labelledby="tab-btn-account">
+                    <div class="tab-grid">
+                        <div class="tab-column">
+                            <h2>Account Overview</h2>
+
+                            <label>Address</label>
+                            <input type="text" id="accountAddressInput" placeholder="0x...">
+
+                            <button id="btn_fetchAccountData" class="action-button">Fetch account data</button>
+
+                            <div class="page-controls">
+                                <button id="btn_prevAccountPage">⬅ Prev</button>
+                                <span id="accountPageLabel">Page 1</span>
+                                <button id="btn_nextAccountPage">Next ➡</button>
+                            </div>
+                        </div>
+
+                        <div class="tab-column">
+                            <div class="account-grid">
+                                <div>
+                                    <h3>Owned Particles</h3>
+                                    <div id="accountParticlesList" class="response-body">Waiting...</div>
+                                </div>
+                                <div>
+                                    <h3>Owned Features</h3>
+                                    <div id="accountFeaturesList" class="response-body">Waiting...</div>
+                                </div>
+                                <div>
+                                    <h3>Owned Transformations</h3>
+                                    <div id="accountTransformationsList" class="response-body">Waiting...</div>
+                                </div>
+                                <div>
+                                    <h3>Owned Conditions</h3>
+                                    <div id="accountConditionsList" class="response-body">Waiting...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
-        </div>
-        <div class="column">
-            <label>Address (optional)</label>
-            <input id="GET_particleAddress" type="text" placeholder="0x0...">
-            <button id="btn_getParticle">Fetch</button>
-            <div class="response-row">
-                <div id="GET_particleResponseCode" class="response-code">-</div>
-                <div id="GET_particleResponseBody" class="response-body">Waiting...</div>
-            </div>
-        </div>
-        </div>
-    </div>
+        </section>
     </main>
+
+    <div id="popupInstanceEditor" class="popup-instance-editor" style="display:none;">
+        <h3>Edit Running Instance</h3>
+        <p id="popupRunningInstanceLabel"></p>
+        <label>Start Point</label>
+        <input type="number" id="popupStartPoint">
+        <label>Transform Shift</label>
+        <input type="number" id="popupTransformShift">
+        <div class="button-row">
+            <button id="btn_saveInstanceEdit">Save</button>
+            <button id="btn_closePopup">Cancel</button>
+        </div>
+    </div>
+    <script>
+        (function setupTabFallback() {
+            const tabs = Array.from(document.querySelectorAll('.api-tab'));
+            const panels = Array.from(document.querySelectorAll('.tab-panel'));
+            if (!tabs.length || !panels.length) return;
+
+            function activateTab(tabKey) {
+                tabs.forEach((tab) => {
+                    const active = tab.dataset.tabTarget === tabKey;
+                    tab.classList.toggle('is-active', active);
+                    tab.setAttribute('aria-selected', active ? 'true' : 'false');
+                    tab.setAttribute('tabindex', active ? '0' : '-1');
+                });
+
+                panels.forEach((panel) => {
+                    panel.classList.toggle('is-active', panel.dataset.tabPanel === tabKey);
+                });
+            }
+
+            tabs.forEach((tab) => {
+                tab.addEventListener('click', () => activateTab(tab.dataset.tabTarget));
+            });
+
+            const initialTab = tabs.find((tab) => tab.classList.contains('is-active'))?.dataset.tabTarget || tabs[0].dataset.tabTarget;
+            activateTab(initialTab);
+        })();
+    </script>
 </body>
+
 </html>

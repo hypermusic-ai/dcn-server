@@ -92,6 +92,27 @@ function drawExecuteTree(treeData) {
     network.fit();
 }
 
+function getCompositeNames(particle) {
+    if (!particle || typeof particle !== 'object') {
+        return [];
+    }
+
+    const rawComposites =
+        Array.isArray(particle.composite_names) ? particle.composite_names :
+            Array.isArray(particle.compositeNames) ? particle.compositeNames :
+                Array.isArray(particle.composites) ? particle.composites : [];
+
+    return rawComposites.map((entry) => {
+        if (typeof entry === 'string') {
+            return entry;
+        }
+        if (entry && typeof entry.name === 'string') {
+            return entry.name;
+        }
+        return '';
+    });
+}
+
 async function fetchParticleDepthFirst(rootName) {
     clearRunningInstances();
 
@@ -102,41 +123,53 @@ async function fetchParticleDepthFirst(rootName) {
         parent: -1,
         path: '',
         name: rootName,
-        assignId: () => nodeIdCounter++
+        assignId: () => nodeIdCounter++,
+        isScalarLeaf: false
     }];
 
     while (stack.length > 0) {
-        const { parent, path, name, assignId } = stack.pop();
+        const { parent, path, name, assignId, isScalarLeaf } = stack.pop();
         const id = assignId();
 
+        if (isScalarLeaf) {
+            const fullPath = `${path}/${name}`;
+            childList.push({ parent, id, name: fullPath, scalar: true });
+            runningInstanceData[id] = [0, 0];
+            continue;
+        }
+
         try {
-            const res = await fetch(`${apiBase}/particle/${name}`);
+            const res = await fetch(`${apiBase}/particle/${encodeURIComponent(name)}`);
             if (!res.ok) throw new Error(`Failed to fetch ${name}`);
             const particle = await res.json();
 
-            const fullPath = `${path}/${particle.name}`;
-            let scalar = true;
+            const particleName = typeof particle.name === 'string' ? particle.name : name;
+            const compositeNames = getCompositeNames(particle);
+            const fullPath = `${path}/${particleName}`;
+            const scalar = compositeNames.length === 0;
 
-            // iterate over all composites, if all are empty strings its scalar
-            // Push children in reverse so they’re visited left-to-right
-            for (let i = particle.composite_names.length - 1; i >= 0; i--) {
-                if (particle.composite_names[i] !== '') {
-                    scalar = false;
-
+            // Push children in reverse so they’re visited left-to-right.
+            for (let i = compositeNames.length - 1; i >= 0; i--) {
+                const compositeName = typeof compositeNames[i] === 'string'
+                    ? compositeNames[i].trim()
+                    : '';
+                if (compositeName !== '') {
                     stack.push({
                         parent: id,
                         path: fullPath,
-                        name: particle.composite_names[i],
-                        assignId: () => nodeIdCounter++
+                        name: compositeName,
+                        assignId: () => nodeIdCounter++,
+                        isScalarLeaf: false
                     });
 
                 }
-                else{
+                else {
                     stack.push({
                         parent: id,
                         path: fullPath,
-                        name: particle.name + `_${i}`,
-                        assignId: () => nodeIdCounter++
+                        name: `${particleName}_${i}`,
+                        assignId: () => nodeIdCounter++,
+                        isScalarLeaf: true
                     });
                 }
             }
