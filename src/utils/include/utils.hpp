@@ -3,13 +3,16 @@
 #include <sstream>
 #include <cstdlib>
 #include <cstdint>
+#include <ctime>
 #include <iomanip>
 #include <chrono>
 #include <format>
+#include <stdexcept>
 #include <string>
 #include <fstream>
 #include <filesystem>
 #include <functional>
+#include <mutex>
 
 #include "native.h"
 #include <asio.hpp>

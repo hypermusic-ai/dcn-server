@@ -1,0 +1,32 @@
+name: Build and Test (macOS Debug)
+
+on:
+  push:
+
+jobs:
+  build-macos-debug:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: brew install npm
+
+    - name: Configure and build (Debug)
+      run: |
+        cmake -S . -B build-macos-debug -DDECENTRALISED_ART_BUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=install-macos-debug -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build-macos-debug --config Debug --target DecentralisedArtServerTests -j 4
+
+    - name: Run tests
+      run: ctest --test-dir build-macos-debug -C Debug --output-on-failure
+
+    - name: Install artifacts
+      run: cmake --build build-macos-debug --config Debug --target install -j 4
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: decentralised-art-server-macos-debug
+        path: install-macos-debug

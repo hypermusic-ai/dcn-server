@@ -96,7 +96,11 @@ target_link_libraries("${PROJECT_NAME}"
 )
 
 # sets the RPATH in the executable to search for libraries in a path relative to the executable location
-set_target_properties("${PROJECT_NAME}" PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
+if(APPLE)
+    set_target_properties("${PROJECT_NAME}" PROPERTIES INSTALL_RPATH "@loader_path/../lib")
+else()
+    set_target_properties("${PROJECT_NAME}" PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
+endif()
 
 # executable install target
 install(TARGETS ${PROJECT_NAME}

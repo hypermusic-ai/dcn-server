@@ -1,0 +1,32 @@
+name: Build and Test (linux Debug)
+
+on:
+  push:
+
+jobs:
+  build-linux-debug:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: sudo apt update && sudo apt install -y cmake build-essential libssl-dev npm
+
+    - name: Configure and build (Debug)
+      run: |
+        cmake -S . -B build-linux-debug -DDECENTRALISED_ART_BUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=install-linux-debug -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build-linux-debug --config Debug --target DecentralisedArtServerTests -j 4
+
+    - name: Run tests
+      run: ctest --test-dir build-linux-debug/tests -C Debug --output-on-failure
+
+    - name: Install artifacts
+      run: cmake --build build-linux-debug --config Debug --target install -j 4
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: decentralised-art-server-linux-debug
+        path: install-linux-debug
