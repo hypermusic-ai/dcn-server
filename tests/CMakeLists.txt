@@ -39,11 +39,18 @@ target_link_libraries("${PROJECT_NAME}"
 
 set_target_properties("${PROJECT_NAME}" PROPERTIES CXX_STANDARD 23)
 
+if(APPLE)
+    set_target_properties("${PROJECT_NAME}" PROPERTIES BUILD_RPATH "@loader_path")
+endif()
+
 # Copy evmone shared library to tests build directory
 add_custom_command(TARGET DecentralisedArtServerTests POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
           "${EVMONE_SHARED_LIBRARY_PATH}"
           "$<TARGET_FILE_DIR:DecentralisedArtServerTests>/${EVMONE_SHARED_LIBRARY}"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          "${EVMONE_SHARED_LIBRARY_PATH}"
+          "$<TARGET_FILE_DIR:DecentralisedArtServerTests>/libevmone.${EVMONE_MAJOR_VERSION}.${EVMONE_MINOR_VERSION}.dylib"
   VERBATIM
 )
 

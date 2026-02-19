@@ -218,6 +218,8 @@ set(SOLC_VERSION "v0.8.30")
 
 if(WIN32)
     set(SOLC_EXE_NAME "solc-windows.exe")
+elseif(APPLE)
+    set(SOLC_EXE_NAME "solc-macos")
 elseif(UNIX)
     set(SOLC_EXE_NAME "solc-static-linux")
 endif()
@@ -310,6 +312,8 @@ set(EVMONE_VERSION "${EVMONE_MAJOR_VERSION}.${EVMONE_MINOR_VERSION}.${EVMONE_PAT
 
 if(WIN32)
     set(EVMONE_ARCHIVE_NAME "evmone-${EVMONE_VERSION}-windows-amd64.zip")
+elseif(APPLE)
+    set(EVMONE_ARCHIVE_NAME "evmone-${EVMONE_VERSION}-darwin-arm64.tar.gz")
 elseif(UNIX)
     set(EVMONE_ARCHIVE_NAME "evmone-${EVMONE_VERSION}-linux-x86_64.tar.gz")
 endif()
@@ -378,6 +382,40 @@ if(WIN32)
     install(FILES "${EVMONE_STATIC_LIBRARY_PATH}" DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(FILES "${EVMONE_SHARED_LIBRARY_PATH}" DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+elseif(APPLE)
+    set(EVMONE_SHARED_LIBRARY "libevmone.dylib")
+    set(EVMONE_SHARED_LIBRARY_SONAME "libevmone.${EVMONE_MAJOR_VERSION}.${EVMONE_MINOR_VERSION}.dylib")
+    set(EVMONE_SHARED_LIBRARY_PATH "${EVMONE_ARCHIVE_EXTRACT_DIR}/lib/${EVMONE_SHARED_LIBRARY}")
+
+    # Copy extracted libraries to install directory & Generate configuration marker
+    add_custom_command(
+        OUTPUT ${EVMONE_CONFIG_MARKER}
+        COMMAND ${CMAKE_COMMAND} -E echo  
+                    "Copy extracted evmone includes"
+                    "${EVMONE_ARCHIVE_EXTRACT_DIR}/include"
+                    "to install directory"
+                    "${EVMONE_INSTALL_DIR}/include"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${EVMONE_ARCHIVE_EXTRACT_DIR}/include" "${EVMONE_INSTALL_DIR}/include"
+        COMMAND ${CMAKE_COMMAND} -E echo
+                    "Copy extracted evmone library"
+                    "${EVMONE_SHARED_LIBRARY_PATH}"
+                    "to install directory"
+                    "${EVMONE_INSTALL_DIR}/lib/"
+        COMMAND ${CMAKE_COMMAND} -E copy "${EVMONE_SHARED_LIBRARY_PATH}" "${EVMONE_INSTALL_DIR}/lib/"
+        COMMAND ${CMAKE_COMMAND} -E copy "${EVMONE_SHARED_LIBRARY_PATH}" "${EVMONE_INSTALL_DIR}/lib/${EVMONE_SHARED_LIBRARY_SONAME}"
+        COMMAND ${CMAKE_COMMAND} -E echo 
+                    "Generate configurtaion marker ${EVMONE_CONFIG_MARKER}"
+        COMMAND ${CMAKE_COMMAND} -E touch "${EVMONE_CONFIG_MARKER}"
+        COMMENT "Configuring Evmone"
+    )
+
+    set_target_properties(evmone PROPERTIES
+        IMPORTED_LOCATION "${EVMONE_INSTALL_DIR}/lib/${EVMONE_SHARED_LIBRARY}"          # libevmone.dylib
+        INTERFACE_INCLUDE_DIRECTORIES "${EVMONE_INSTALL_DIR}/include"
+    )
+
+    install(FILES "${EVMONE_INSTALL_DIR}/lib/${EVMONE_SHARED_LIBRARY}" DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+    install(FILES "${EVMONE_INSTALL_DIR}/lib/${EVMONE_SHARED_LIBRARY_SONAME}" DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 elseif(UNIX)
     set(EVMONE_SHARED_LIBRARY "libevmone.so.${EVMONE_VERSION}")
     set(EVMONE_SHARED_LIBRARY_PATH "${EVMONE_ARCHIVE_EXTRACT_DIR}/lib/${EVMONE_SHARED_LIBRARY}")
@@ -427,7 +465,6 @@ elseif(UNIX)
 
     install(FILES "${EVMONE_INSTALL_DIR}/lib/libevmone.so.${EVMONE_VERSION}" DESTINATION "${CMAKE_INSTALL_LIBDIR}")
     install(CODE "${_symlink_script}")
-
 endif()
 
 target_include_directories(evmone INTERFACE $<BUILD_INTERFACE:${EVMONE_INSTALL_DIR}/include>)

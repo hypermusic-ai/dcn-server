@@ -86,6 +86,9 @@ struct std::formatter<dcn::http::Header> : std::formatter<std::string> {
         // D
         case dcn::http::Header::Date:   return formatter<string>::format("Date", ctx);
 
+        // E
+        case dcn::http::Header::Expect: return formatter<string>::format("Expect", ctx);
+
         // O
         case dcn::http::Header::Origin: return formatter<string>::format("Origin", ctx);
 

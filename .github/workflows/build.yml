@@ -2,7 +2,7 @@ name: Build Decentralised Art Server
 
 on:
   workflow_run:
-    workflows: ["Build and Test (Debug)"]
+    workflows: ["Build and Test (linux Debug)"]
     types: [completed]
     branches: [ main ]
 
