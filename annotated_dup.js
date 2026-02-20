@@ -42,6 +42,10 @@ var annotated_dup =
         [ "RouteKey", "classdcn_1_1server_1_1RouteKey.html", "classdcn_1_1server_1_1RouteKey" ],
         [ "Router", "classdcn_1_1server_1_1Router.html", "classdcn_1_1server_1_1Router" ],
         [ "Server", "classdcn_1_1server_1_1Server.html", "classdcn_1_1server_1_1Server" ]
+      ] ],
+      [ "utils", "namespacedcn_1_1utils.html", [
+        [ "LogoASCII_t", "structdcn_1_1utils_1_1LogoASCII__t.html", null ],
+        [ "LogoUnicode_t", "structdcn_1_1utils_1_1LogoUnicode__t.html", null ]
       ] ]
     ] ],
     [ "std", null, [

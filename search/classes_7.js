@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['parseerror_0',['ParseError',['../structdcn_1_1parse_1_1ParseError.html',1,'dcn::parse']]]
+  ['messagebase_0',['MessageBase',['../classdcn_1_1http_1_1MessageBase.html',1,'dcn::http']]]
 ];

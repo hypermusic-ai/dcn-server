@@ -13,5 +13,7 @@ var searchData=
   ['loadtextfile_10',['loadTextFile',['../namespacedcn_1_1file.html#aa8691407ea5dcd69fa48b99616323244',1,'dcn::file']]],
   ['logo_2ecpp_11',['logo.cpp',['../logo_8cpp.html',1,'']]],
   ['logo_2ehpp_12',['logo.hpp',['../logo_8hpp.html',1,'']]],
-  ['logs_5fpath_13',['logs_path',['../structdcn_1_1config_1_1Config.html#a50c16c7fb07ccaca4f22c405997a7b3d',1,'dcn::config::Config']]]
+  ['logoascii_5ft_13',['LogoASCII_t',['../structdcn_1_1utils_1_1LogoASCII__t.html',1,'dcn::utils']]],
+  ['logounicode_5ft_14',['LogoUnicode_t',['../structdcn_1_1utils_1_1LogoUnicode__t.html',1,'dcn::utils']]],
+  ['logs_5fpath_15',['logs_path',['../structdcn_1_1config_1_1Config.html#a50c16c7fb07ccaca4f22c405997a7b3d',1,'dcn::config::Config']]]
 ];

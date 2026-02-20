@@ -35,6 +35,8 @@ var hierarchy =
       [ "dcn::evm::EVMStorage", "classdcn_1_1evm_1_1EVMStorage.html", null ]
     ] ],
     [ "dcn::crypto::Keccak256", "classdcn_1_1crypto_1_1Keccak256.html", null ],
+    [ "dcn::utils::LogoASCII_t", "structdcn_1_1utils_1_1LogoASCII__t.html", null ],
+    [ "dcn::utils::LogoUnicode_t", "structdcn_1_1utils_1_1LogoUnicode__t.html", null ],
     [ "dcn::http::MessageBase", "classdcn_1_1http_1_1MessageBase.html", [
       [ "dcn::http::Request", "classdcn_1_1http_1_1Request.html", null ],
       [ "dcn::http::Response", "classdcn_1_1http_1_1Response.html", null ]

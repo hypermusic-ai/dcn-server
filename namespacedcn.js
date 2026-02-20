@@ -15,26 +15,20 @@ var namespacedcn =
       [ "deployFeature", "namespacedcn_1_1loader.html#a2fe32d2b16b32b3a0645b74ef9cd6312", null ],
       [ "deployParticle", "namespacedcn_1_1loader.html#a08545b054e20104eb522bc9cba6b7a62", null ],
       [ "deployTransformation", "namespacedcn_1_1loader.html#aaf5c77045b76d7f6f87f4274b098dd6c", null ],
+      [ "ensurePTBuildVersion", "namespacedcn_1_1loader.html#a4aa5e028062655a056723923e9bbd76c", null ],
       [ "loadStoredConditions", "namespacedcn_1_1loader.html#a1ad7bab1f6fffbeec5e8fe2e0ff8b1fc", null ],
       [ "loadStoredFeatures", "namespacedcn_1_1loader.html#a38783eff6bf0bfe0dcf0d9e1a22bae4b", null ],
       [ "loadStoredParticles", "namespacedcn_1_1loader.html#ac8aac9df00ae7265d838d004ca54e8e6", null ],
       [ "loadStoredTransformations", "namespacedcn_1_1loader.html#a91f278da6af894bfc8ca35a593175505", null ]
     ] ],
     [ "native", "namespacedcn_1_1native.html", [
+      [ "configureTerminal", "namespacedcn_1_1native.html#a328d57442cec1b0c032565eecabac41e", null ],
       [ "runProcess", "namespacedcn_1_1native.html#a969c7a0469fb2cd69b6a559bd8455d5a", null ]
     ] ],
     [ "parse", "namespacedcn_1_1parse.html", "namespacedcn_1_1parse" ],
     [ "registry", "namespacedcn_1_1registry.html", "namespacedcn_1_1registry" ],
     [ "server", "namespacedcn_1_1server.html", "namespacedcn_1_1server" ],
-    [ "utils", "namespacedcn_1_1utils.html", [
-      [ "currentTimestamp", "namespacedcn_1_1utils.html#a07545fa1ab2d1ccc349667eae8ba746f", null ],
-      [ "ensureOnStrand", "namespacedcn_1_1utils.html#aae9b2c4db93b9f4d05974a60179eb86a", null ],
-      [ "equalsIgnoreCase", "namespacedcn_1_1utils.html#ac5be949d9e1bfe957e75587b3ef85c4e", null ],
-      [ "getAsciiLogo", "namespacedcn_1_1utils.html#ae27ec98b2a1acbfae234ac07af90679f", null ],
-      [ "loadBuildTimestamp", "namespacedcn_1_1utils.html#afe5529604b645836efa07f3d4d662540", null ],
-      [ "topologicalSort", "namespacedcn_1_1utils.html#a213229fb0c30f9ca92e2d1c60f550442", null ],
-      [ "watchdog", "namespacedcn_1_1utils.html#a3d90cd25bc6985e0d5d00227bf125b3e", null ]
-    ] ],
+    [ "utils", "namespacedcn_1_1utils.html", "namespacedcn_1_1utils" ],
     [ "AbslHashValue", "namespacedcn.html#a9cf5a424396b387e6a9fd155e8fe1f4d", null ],
     [ "AbslHashValue", "namespacedcn.html#a7f6d611651213b04f6be1cce6359f071", null ],
     [ "AbslHashValue", "namespacedcn.html#a9497290fb638adb984f9fda75041a12f", null ],

@@ -103,10 +103,10 @@ $(document).ready(function(){initNavTree('native_8h_source.html',''); initResiza
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#if defined(WIN32)</span></div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="windows_8h.html">windows/windows.h</a>&quot;</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#elif defined(__unix__)</span></div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;<a class="code" href="unix_8h.html">unix/unix.h</a>&quot;</span></div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#elif defined(__APPLE__)</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;<a class="code" href="mac_8h.html">mac/mac.h</a>&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#elif defined(__APPLE__)</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;<a class="code" href="mac_8h.html">mac/mac.h</a>&quot;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#elif defined(__unix__)</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;<a class="code" href="unix_8h.html">unix/unix.h</a>&quot;</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#else</span></div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#   error &quot;Error, unsupported platform&quot;</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#endif</span></div>
@@ -117,12 +117,15 @@ $(document).ready(function(){initNavTree('native_8h_source.html',''); initResiza
 <div class="foldopen" id="foldopen00016" data-start="{" data-end="}">
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="namespacedcn_1_1native.html">   16</a></span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedcn_1_1native.html">dcn::native</a></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>{</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    std::pair&lt;int, std::string&gt; <a class="code hl_function" href="namespacedcn_1_1native.html#a969c7a0469fb2cd69b6a559bd8455d5a">runProcess</a>(<span class="keyword">const</span> std::string &amp; command, std::vector&lt;std::string&gt; args = {});</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>}</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="namespacedcn_1_1native.html#a328d57442cec1b0c032565eecabac41e">configureTerminal</a>();</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    std::pair&lt;int, std::string&gt; <a class="code hl_function" href="namespacedcn_1_1native.html#a969c7a0469fb2cd69b6a559bd8455d5a">runProcess</a>(<span class="keyword">const</span> std::string &amp; command, std::vector&lt;std::string&gt; args = {});</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>}</div>
 </div>
 <div class="ttc" id="amac_8h_html"><div class="ttname"><a href="mac_8h.html">mac.h</a></div></div>
 <div class="ttc" id="anamespacedcn_1_1native_html"><div class="ttname"><a href="namespacedcn_1_1native.html">dcn::native</a></div><div class="ttdef"><b>Definition</b> native.h:17</div></div>
-<div class="ttc" id="anamespacedcn_1_1native_html_a969c7a0469fb2cd69b6a559bd8455d5a"><div class="ttname"><a href="namespacedcn_1_1native.html#a969c7a0469fb2cd69b6a559bd8455d5a">dcn::native::runProcess</a></div><div class="ttdeci">std::pair&lt; int, std::string &gt; runProcess(const std::string &amp;command, std::vector&lt; std::string &gt; args={})</div><div class="ttdef"><b>Definition</b> mac.cpp:7</div></div>
+<div class="ttc" id="anamespacedcn_1_1native_html_a328d57442cec1b0c032565eecabac41e"><div class="ttname"><a href="namespacedcn_1_1native.html#a328d57442cec1b0c032565eecabac41e">dcn::native::configureTerminal</a></div><div class="ttdeci">bool configureTerminal()</div><div class="ttdef"><b>Definition</b> mac.cpp:7</div></div>
+<div class="ttc" id="anamespacedcn_1_1native_html_a969c7a0469fb2cd69b6a559bd8455d5a"><div class="ttname"><a href="namespacedcn_1_1native.html#a969c7a0469fb2cd69b6a559bd8455d5a">dcn::native::runProcess</a></div><div class="ttdeci">std::pair&lt; int, std::string &gt; runProcess(const std::string &amp;command, std::vector&lt; std::string &gt; args={})</div><div class="ttdef"><b>Definition</b> mac.cpp:18</div></div>
 <div class="ttc" id="aunix_8h_html"><div class="ttname"><a href="unix_8h.html">unix.h</a></div></div>
 <div class="ttc" id="awindows_8h_html"><div class="ttname"><a href="windows_8h.html">windows.h</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
