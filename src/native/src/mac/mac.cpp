@@ -1,8 +1,19 @@
 #include "mac/mac.h"
 
+#include <clocale>
 #include <spdlog/spdlog.h>
 
 namespace dcn::native {
+    bool configureTerminal()
+    {
+        const char * locale_name = ::setlocale(LC_ALL, "");
+        if (locale_name == nullptr)
+        {
+            return false;
+        }
+
+        return true;
+    }
 
     std::pair<int, std::string> runProcess(const std::string& command, std::vector<std::string> args)
     {

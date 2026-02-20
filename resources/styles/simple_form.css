@@ -523,7 +523,8 @@ pre.request-body {
 
 .inline-code-fragment {
     max-height: none;
-    min-height: 0;
+    min-height: 32px;
+    overflow: visible;
     padding: 0.45rem 0.58rem;
     white-space: pre-wrap;
 }

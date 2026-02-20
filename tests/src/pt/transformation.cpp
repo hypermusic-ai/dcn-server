@@ -106,3 +106,13 @@ TEST_F(UnitTest, TransformationRecord_ParseToJson_RoundTripAcrossParsers)
     expectEqual(record, *from_json_via_protobuf);
     expectEqual(record, *from_protobuf_via_json);
 }
+
+TEST_F(UnitTest, Transformation_ConstructSolidityCode_UsesInitializerPattern)
+{
+    Transformation transformation = makeTransformationSample();
+    std::string solidity = constructTransformationSolidityCode(transformation);
+
+    EXPECT_NE(solidity.find("function initialize(address registryAddr) external initializer"), std::string::npos);
+    EXPECT_NE(solidity.find("__TransformationBase_init"), std::string::npos);
+    EXPECT_EQ(solidity.find("constructor(address registryAddr)"), std::string::npos);
+}

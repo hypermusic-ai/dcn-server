@@ -128,3 +128,13 @@ TEST_F(UnitTest, ParticleRecord_ParseToJson_RoundTripAcrossParsers)
     expectEqual(record, *from_json_via_protobuf);
     expectEqual(record, *from_protobuf_via_json);
 }
+
+TEST_F(UnitTest, Particle_ConstructSolidityCode_UsesInitializerPattern)
+{
+    Particle particle = makeParticleSample();
+    std::string solidity = constructParticleSolidityCode(particle);
+
+    EXPECT_NE(solidity.find("function initialize(address registryAddr) external initializer"), std::string::npos);
+    EXPECT_NE(solidity.find("__ParticleBase_init"), std::string::npos);
+    EXPECT_EQ(solidity.find("constructor(address registryAddr)"), std::string::npos);
+}

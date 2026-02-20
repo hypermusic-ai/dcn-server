@@ -106,3 +106,13 @@ TEST_F(UnitTest, ConditionRecord_ParseToJson_RoundTripAcrossParsers)
     expectEqual(record, *from_json_via_protobuf);
     expectEqual(record, *from_protobuf_via_json);
 }
+
+TEST_F(UnitTest, Condition_ConstructSolidityCode_UsesInitializerPattern)
+{
+    Condition condition = makeConditionSample();
+    std::string solidity = constructConditionSolidityCode(condition);
+
+    EXPECT_NE(solidity.find("function initialize(address registryAddr) external initializer"), std::string::npos);
+    EXPECT_NE(solidity.find("__ConditionBase_init"), std::string::npos);
+    EXPECT_EQ(solidity.find("constructor(address registryAddr)"), std::string::npos);
+}

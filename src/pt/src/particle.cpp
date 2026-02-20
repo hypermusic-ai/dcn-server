@@ -43,8 +43,9 @@ namespace dcn
             "{4}"
             "}}\n"
 
-            "constructor(address registryAddr) ParticleBase(registryAddr, \"{0}\", \"{5}\", _composites(), \"{6}\", _conditionArgs())\n"
-            "{{}}"
+            "function initialize(address registryAddr) external initializer {{\n"
+            "__ParticleBase_init(registryAddr, \"{0}\", \"{5}\", _composites(), \"{6}\", _conditionArgs());\n"
+            "}}\n"
             "\n}}",
             
             // def

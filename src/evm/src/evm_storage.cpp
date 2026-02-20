@@ -102,18 +102,24 @@ namespace dcn::evm
 
         if (msg.kind == EVMC_CALL || msg.kind == EVMC_DELEGATECALL || msg.kind == EVMC_CALLCODE) 
         {
-            auto it = _accounts.find(to_key(msg.recipient));
+            evmc::address code_address = msg.recipient;
+            if (msg.kind == EVMC_DELEGATECALL || msg.kind == EVMC_CALLCODE)
+            {
+                code_address = msg.code_address;
+            }
+
+            auto it = _accounts.find(to_key(code_address));
 
             if (it == _accounts.end())
             {
-                spdlog::error(std::format("call: Account {} does not exist", msg.recipient));
+                spdlog::error(std::format("call: Code account {} does not exist", code_address));
                 return evmc::Result{EVMC_FAILURE};
             }
 
             auto& code = it->second.code;
             if (code.empty())
             {
-                spdlog::error(std::format("call: Account {} has no code", msg.recipient));
+                spdlog::error(std::format("call: Code account {} has no code (recipient {})", code_address, msg.recipient));
                 return evmc::Result{EVMC_FAILURE};
             }
             
@@ -124,7 +130,13 @@ namespace dcn::evm
 
             if (result.status_code != EVMC_SUCCESS)
             {
-                spdlog::error(std::format("call: Failed to execute contract: {} {}", result.status_code, evmc::hex(result.output_data)));
+                std::string output_hex = "<empty>";
+                if(result.output_data != nullptr && result.output_size > 0)
+                {
+                    output_hex = evmc::hex(evmc::bytes_view{result.output_data, result.output_size});
+                }
+
+                spdlog::error(std::format("call: Failed to execute contract: {} {}", result.status_code, output_hex));
                 return result;
             }
 
@@ -169,7 +181,13 @@ namespace dcn::evm
 
             if (result.status_code != EVMC_SUCCESS)
             {
-                spdlog::error(std::format("call: Failed to deploy contract: {} {}", result.status_code, evmc::hex(result.output_data)));
+                std::string output_hex = "<empty>";
+                if(result.output_data != nullptr && result.output_size > 0)
+                {
+                    output_hex = evmc::hex(evmc::bytes_view{result.output_data, result.output_size});
+                }
+
+                spdlog::error(std::format("call: Failed to deploy contract: {} {}", result.status_code, output_hex));
                 return result;
             }
 

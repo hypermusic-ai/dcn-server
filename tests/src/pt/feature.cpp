@@ -136,3 +136,14 @@ TEST_F(UnitTest, FeatureRecord_ParseToJson_RoundTripAcrossParsers)
     expectEqual(record, *from_json_via_protobuf);
     expectEqual(record, *from_protobuf_via_json);
 }
+
+TEST_F(UnitTest, Feature_ConstructSolidityCode_UsesInitializerPattern)
+{
+    Feature feature = makeFeatureSample();
+    std::string solidity = constructFeatureSolidityCode(feature);
+
+    EXPECT_NE(solidity.find("function initialize(address registryAddr) external initializer"), std::string::npos);
+    EXPECT_NE(solidity.find("__FeatureBase_init"), std::string::npos);
+    EXPECT_NE(solidity.find("__FeatureBase_finalizeInit"), std::string::npos);
+    EXPECT_EQ(solidity.find("constructor(address registryAddr)"), std::string::npos);
+}

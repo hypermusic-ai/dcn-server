@@ -2,10 +2,10 @@
 
 #if defined(WIN32)
 #include "windows/windows.h"
-#elif defined(__unix__)
-#include "unix/unix.h"
 #elif defined(__APPLE__)
 #include "mac/mac.h"
+#elif defined(__unix__)
+#include "unix/unix.h"
 #else
 #   error "Error, unsupported platform"
 #endif
@@ -15,6 +15,15 @@
 
 namespace dcn::native
 {
+    /**
+     * Configures terminal settings for the current platform.
+     * This is primarily used to ensure UTF-8 compatible console output.
+     *
+     * @return true if terminal configuration succeeded or was not required.
+     * @return false if terminal configuration failed.
+     */
+    bool configureTerminal();
+
     /**
      * Spawns a new process with the given command.
      * The command must be a valid shell command.
