@@ -54,7 +54,9 @@ namespace dcn
                 "pragma solidity >=0.8.2 <0.9.0;\n"
                 "import \"condition/ConditionBase.sol\";\n"
                 "contract " + condition.name() + " is ConditionBase{\n" // open contract
-                "constructor(address registryAddr) ConditionBase(registryAddr, \"" + condition.name() + "\"," +  std::to_string(argc) +"){}\n"
+                "function initialize(address registryAddr) external initializer {\n"
+                "__ConditionBase_init(registryAddr, \"" + condition.name() + "\"," +  std::to_string(argc) +");\n"
+                "}\n"
                 "function check(int32 [] calldata args) view external returns (bool){\n" // open function
                 "require(args.length == this.getArgsCount(), \"wrong number of arguments\");\n"
                 + condition.sol_src() + "\n}" // close function

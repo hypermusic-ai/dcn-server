@@ -3,6 +3,49 @@
 #include <spdlog/spdlog.h>
 
 namespace dcn::native{
+    bool configureTerminal()
+    {
+        bool success = true;
+
+        if (!SetConsoleOutputCP(CP_UTF8))
+        {
+            success = false;
+        }
+
+        if (!SetConsoleCP(CP_UTF8))
+        {
+            success = false;
+        }
+
+        const auto enable_vt = [](DWORD std_handle) -> bool
+        {
+            const HANDLE handle = GetStdHandle(std_handle);
+            if (handle == NULL || handle == INVALID_HANDLE_VALUE)
+            {
+                return true;
+            }
+
+            DWORD mode = 0;
+            if (!GetConsoleMode(handle, &mode))
+            {
+                // Not a terminal (e.g. redirected output), nothing to configure.
+                return true;
+            }
+
+            if (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+            {
+                return true;
+            }
+
+            return SetConsoleMode(handle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0;
+        };
+
+        success = success && enable_vt(STD_OUTPUT_HANDLE);
+        success = success && enable_vt(STD_ERROR_HANDLE);
+
+        return success;
+    }
+
     std::pair<int, std::string> runProcess(const std::string& command, std::vector<std::string> args)
     {
         std::ostringstream oss;

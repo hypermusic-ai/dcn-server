@@ -158,6 +158,11 @@ namespace dcn::evm
 
     DeployError _decodeDeployError(const evmc::Result& r)
     {
+        if(r.output_data == nullptr || r.output_size < 4)
+        {
+            return DeployError{};
+        }
+
         std::vector<std::uint8_t> selector;
 
         selector = constructSelector("ParticleAlreadyRegistered(bytes32)");
@@ -226,7 +231,7 @@ namespace dcn::evm
             return DeployError{DeployError::Kind::CONDITION_MISSING};
         }
 
-        selector = constructSelector("RegistryError(bytes32)");
+        selector = constructSelector("RegistryError(uint32)");
         if (std::equal(selector.begin(), selector.end(), r.output_data))
         {
             return DeployError{DeployError::Kind::REGISTRY_ERROR};
@@ -237,6 +242,11 @@ namespace dcn::evm
 
     ExecuteError _decodeExecuteError(const evmc::Result& r)
     {
+        if(r.output_data == nullptr || r.output_size < 4)
+        {
+            return ExecuteError{};
+        }
+
         std::vector<std::uint8_t> selector;
 
         selector = constructSelector("ConditionNotMet(bytes32)");
@@ -630,7 +640,13 @@ namespace dcn::evm
         if (result.status_code != EVMC_SUCCESS)
         {
             const ExecuteError error = _decodeExecuteError(result);
-            spdlog::error(std::format("Failed to execute contract: {}, error: {} {}", result.status_code, error.kind, evmc::hex(result.output_data)));
+            std::string output_hex = "<empty>";
+            if(result.output_data != nullptr && result.output_size > 0)
+            {
+                output_hex = evmc::hex(evmc::bytes_view{result.output_data, result.output_size});
+            }
+
+            spdlog::error(std::format("Failed to execute contract: {}, error: {} {}", result.status_code, error.kind, output_hex));
             co_return std::unexpected(error);
         }
 
@@ -650,10 +666,11 @@ namespace dcn::evm
         const auto  contracts_dir = _pt_path    / "contracts";
         const auto node_modules = _pt_path      / "node_modules";
         const auto  out_dir = _pt_path          / "out";
+        const auto proxy_out_dir = out_dir      / "proxy";
 
         std::filesystem::create_directories(out_dir);
         
-        { // deploy registry
+        { // deploy registry implementation + proxy
             if(co_await compile(
                     contracts_dir / "registry" / "RegistryBase.sol",
                     out_dir / "registry", 
@@ -664,21 +681,44 @@ namespace dcn::evm
                 co_return false;
             }
 
-            const auto registry_address_res = co_await deploy(
+            if(co_await compile(
+                    contracts_dir / "proxy" / "PTRegistryProxy.sol",
+                    proxy_out_dir, 
+                    contracts_dir,
+                    node_modules) == false)
+            {
+                spdlog::error("Failed to compile registry proxy");
+                co_return false;
+            }
+
+            const auto registry_impl_address_res = co_await deploy(
                     out_dir / "registry" / "RegistryBase.bin", 
                     _genesis_address,
                     {}, 
                     DEFAULT_GAS_LIMIT, 
                     0);
 
-            if(!registry_address_res)
+            if(!registry_impl_address_res)
                 co_return false;
 
-            _registry_address = registry_address_res.value();
-            spdlog::info("Registry address: {}", evmc::hex(_registry_address));
+            const auto registry_impl_address = registry_impl_address_res.value();
+            spdlog::info("Registry implementation address: {}", evmc::hex(registry_impl_address));
+
+            const auto registry_proxy_address_res = co_await deploy(
+                    proxy_out_dir / "PTRegistryProxy.bin",
+                    _genesis_address,
+                    encodeAsArg(registry_impl_address),
+                    DEFAULT_GAS_LIMIT,
+                    0);
+
+            if(!registry_proxy_address_res)
+                co_return false;
+
+            _registry_address = registry_proxy_address_res.value();
+            spdlog::info("Registry proxy address: {}", evmc::hex(_registry_address));
         }
 
-        { // deploy runner
+        { // deploy runner implementation + proxy
             if(co_await compile(
                     contracts_dir / "runner" /  "Runner.sol",
                     out_dir / "runner", 
@@ -688,20 +728,48 @@ namespace dcn::evm
                 spdlog::error("Failed to compile runner");
                 co_return false;
             }
+
+            if(co_await compile(
+                    contracts_dir / "proxy" / "PTContractProxy.sol",
+                    proxy_out_dir, 
+                    contracts_dir,
+                    node_modules) == false)
+            {
+                spdlog::error("Failed to compile contract proxy");
+                co_return false;
+            }
             
-            spdlog::debug("Deploy runner");
-            const auto runner_address_res = co_await deploy(
+            spdlog::debug("Deploy runner implementation");
+            const auto runner_impl_address_res = co_await deploy(
                     out_dir / "runner" / "Runner.bin", 
                     _genesis_address,
-                    encodeAsArg(_registry_address), 
+                    {}, 
                     DEFAULT_GAS_LIMIT, 
                     0);
 
-            if(!runner_address_res)
+            if(!runner_impl_address_res)
+                co_return false;
+
+            const auto runner_impl_address = runner_impl_address_res.value();
+            spdlog::info("Runner implementation address: {}", evmc::hex(runner_impl_address));
+
+            std::vector<std::uint8_t> runner_proxy_ctor_args = encodeAsArg(runner_impl_address);
+            const auto registry_arg = encodeAsArg(_registry_address);
+            runner_proxy_ctor_args.insert(runner_proxy_ctor_args.end(), registry_arg.begin(), registry_arg.end());
+
+            spdlog::debug("Deploy runner proxy");
+            const auto runner_proxy_address_res = co_await deploy(
+                    proxy_out_dir / "PTContractProxy.bin",
+                    _genesis_address,
+                    std::move(runner_proxy_ctor_args),
+                    DEFAULT_GAS_LIMIT,
+                    0);
+
+            if(!runner_proxy_address_res)
                 co_return false;
         
-            _runner_address = runner_address_res.value();
-            spdlog::info("Runner address: {}", evmc::hex(_runner_address));
+            _runner_address = runner_proxy_address_res.value();
+            spdlog::info("Runner proxy address: {}", evmc::hex(_runner_address));
         }
 
         co_return true;

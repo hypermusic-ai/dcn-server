@@ -70,9 +70,10 @@ namespace dcn
             "import \"feature/FeatureBase.sol\";\n"
             "contract {0} is FeatureBase{{\n"
 
-            "constructor(address registryAddr) FeatureBase(registryAddr, \"{0}\", {1}) {{\n"
+            "function initialize(address registryAddr) external initializer {{\n"
+            "__FeatureBase_init(registryAddr, \"{0}\", {1});\n"
             "{2}"
-            "super.init();\n}}"
+            "__FeatureBase_finalizeInit();\n}}\n"
             "\n}}",
             
             // def

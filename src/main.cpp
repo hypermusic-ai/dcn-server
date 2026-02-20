@@ -35,9 +35,21 @@ int main(int argc, char* argv[])
     cfg.resources_path = cfg.bin_path.parent_path() / "resources";
     cfg.storage_path = cfg.bin_path.parent_path() / "storage";
 
+    const bool terminal_configured = dcn::native::configureTerminal();
     _configureLogger(cfg.logs_path);
 
-    spdlog::info("{}", dcn::utils::getAsciiLogo());
+    if(!terminal_configured)
+    {
+        std::printf("%s", dcn::utils::getLogo(dcn::utils::LogoASCII).c_str());
+        std::fflush(stdout);
+        spdlog::warn("Terminal configuration was not fully applied");
+    }
+    else
+    {
+        std::printf("%s", dcn::utils::getLogo(dcn::utils::LogoUnicode).c_str());
+        std::fflush(stdout);
+        spdlog::debug("Terminal configuration applied successfully");
+    }
 
     const std::string build_timestamp = dcn::utils::loadBuildTimestamp(cfg.bin_path / "build_timestamp");
     spdlog::debug("Build timestamp: {}", build_timestamp);
@@ -197,6 +209,12 @@ int main(int argc, char* argv[])
     std::filesystem::create_directory(cfg.storage_path / "transformations" / "build");
     std::filesystem::create_directory(cfg.storage_path / "conditions");
     std::filesystem::create_directory(cfg.storage_path / "conditions" / "build");
+
+    if(!dcn::loader::ensurePTBuildVersion(cfg.storage_path))
+    {
+        spdlog::error("Failed to prepare PT Solidity build cache");
+        return 1;
+    }
 
     asio::co_spawn(io_context, 
         (dcn::loader::loadStoredTransformations(evm, registry, cfg.storage_path)  &&
