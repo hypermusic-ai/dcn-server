@@ -1,4 +1,4 @@
-import { requestWithLogin, formatJSON } from "./utils";
+import { requestWithLogin, formatJSON, apiUrl } from "./utils";
 
 let rootExecuteName;
 
@@ -118,7 +118,6 @@ async function fetchParticleDepthFirst(rootName) {
 
     let nodeIdCounter = 0;
     const childList = [];
-    const apiBase = window.location.origin;
     const stack = [{
         parent: -1,
         path: '',
@@ -139,7 +138,7 @@ async function fetchParticleDepthFirst(rootName) {
         }
 
         try {
-            const res = await fetch(`${apiBase}/particle/${encodeURIComponent(name)}`);
+            const res = await fetch(apiUrl(`/particle/${encodeURIComponent(name)}`));
             if (!res.ok) throw new Error(`Failed to fetch ${name}`);
             const particle = await res.json();
 
@@ -217,9 +216,8 @@ export async function execute() {
         alert("Contract name is required.");
         return;
     }
-    const apiBase = window.location.origin;
     try {
-        const res = await requestWithLogin(`${apiBase}/execute`,
+        const res = await requestWithLogin(apiUrl('/execute'),
             {
                 method: 'POST',
                 headers: {

@@ -1,6 +1,12 @@
 import { getAccessToken } from "./auth";
 
 let loginHandler = null;
+const deploymentBaseUrl = new URL("../", import.meta.url);
+
+export function apiUrl(path = "") {
+    const relativePath = String(path).replace(/^\/+/, "");
+    return new URL(relativePath, deploymentBaseUrl).toString();
+}
 
 export function configureLoginHandler(handler) {
     loginHandler = handler;

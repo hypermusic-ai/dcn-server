@@ -1,5 +1,5 @@
 import { setAccessToken } from "./auth";
-import { requestWithLogin, formatJSON, configureLoginHandler } from "./utils";
+import { requestWithLogin, formatJSON, configureLoginHandler, apiUrl } from "./utils";
 
 export { copyTextFromElement } from "./utils";
 
@@ -167,8 +167,7 @@ export async function sendStructuredFeature() {
     const responseBodyDiv = document.getElementById('POST_featureResponseBody');
 
     try {
-        const apiBase = window.location.origin;
-        const res = await requestWithLogin(`${apiBase}/feature`, {
+        const res = await requestWithLogin(apiUrl('/feature'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: requestBody,
@@ -192,8 +191,7 @@ export async function getFeature() {
         alert("Feature name is required.");
         return;
     }
-    const apiBase = window.location.origin;
-    const url = `${apiBase}/feature/${name}${address ? `/${address}` : ''}`;
+    const url = apiUrl(`/feature/${name}${address ? `/${address}` : ''}`);
     try {
         const res = await fetch(url);
         const text = await res.text();
@@ -221,8 +219,7 @@ export async function getTransformation() {
         return;
     }
 
-    const apiBase = window.location.origin;
-    const url = `${apiBase}/transformation/${name}${address ? `/${address}` : ''}`;
+    const url = apiUrl(`/transformation/${name}${address ? `/${address}` : ''}`);
     try {
         const res = await fetch(url);
         const text = await res.text();
@@ -272,8 +269,7 @@ export async function sendStructuredTransformation() {
     }
 
     try {
-        const apiBase = window.location.origin;
-        const res = await requestWithLogin(`${apiBase}/transformation`, {
+        const res = await requestWithLogin(apiUrl('/transformation'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -304,8 +300,7 @@ export async function getCondition() {
         return;
     }
 
-    const apiBase = window.location.origin;
-    const url = `${apiBase}/condition/${name}${address ? `/${address}` : ''}`;
+    const url = apiUrl(`/condition/${name}${address ? `/${address}` : ''}`);
     try {
         const res = await fetch(url);
         const text = await res.text();
@@ -355,8 +350,7 @@ export async function sendStructuredCondition() {
     }
 
     try {
-        const apiBase = window.location.origin;
-        const res = await requestWithLogin(`${apiBase}/condition`, {
+        const res = await requestWithLogin(apiUrl('/condition'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -452,9 +446,8 @@ export async function fetchParticleFeatureDimensions() {
 
     setParticleFeatureInfo("Fetching feature...", false);
 
-    const apiBase = window.location.origin;
     try {
-        const res = await fetch(`${apiBase}/feature/${feature_name}`);
+        const res = await fetch(apiUrl(`/feature/${feature_name}`));
         if (!res.ok) {
             throw new Error(`Failed to fetch feature (${res.status})`);
         }
@@ -514,8 +507,7 @@ export async function sendStructuredParticle() {
     const responseBodyDiv = document.getElementById('POST_particleResponseBody');
 
     try {
-        const apiBase = window.location.origin;
-        const res = await requestWithLogin(`${apiBase}/particle`, {
+        const res = await requestWithLogin(apiUrl('/particle'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: requestBody,
@@ -541,8 +533,7 @@ export async function getParticle() {
         return;
     }
 
-    const apiBase = window.location.origin;
-    const url = `${apiBase}/particle/${name}${address ? `/${address}` : ''}`;
+    const url = apiUrl(`/particle/${name}${address ? `/${address}` : ''}`);
     try {
         const res = await fetch(url);
         const text = await res.text();
@@ -561,7 +552,7 @@ export async function getParticle() {
 export async function fetchVersionInfo() {
     const versionDiv = document.getElementById('versionInfo');
     try {
-        const res = await fetch(`${window.location.origin}/version`);
+        const res = await fetch(apiUrl('/version'));
         const data = await res.json();
         versionDiv.textContent = `Version ${data.version} (Built: ${data.build_timestamp})`;
     } catch (err) {
@@ -626,8 +617,7 @@ export async function fetchAccountResources() {
     }
 
     try {
-        const apiBase = window.location.origin;
-        const res = await requestWithLogin(`${apiBase}/account/${address}?limit=${accountPageSize}&page=${currentAccountPage}`, {
+        const res = await requestWithLogin(apiUrl(`/account/${address}?limit=${accountPageSize}&page=${currentAccountPage}`), {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -696,8 +686,7 @@ export async function loginWithMetaMask()
 
     try {
         const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const apiBase = window.location.origin;
-        const nonceRes = await fetch(`${apiBase}/nonce/` + address);
+        const nonceRes = await fetch(apiUrl(`/nonce/${address}`));
         const { nonce } = await nonceRes.json();
 
         const message = `Login nonce: ${nonce}`;
@@ -706,7 +695,7 @@ export async function loginWithMetaMask()
             params: [message, address],
         });
 
-        const authRes = await fetch(`${apiBase}/auth`, {
+        const authRes = await fetch(apiUrl('/auth'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ address, signature, message }),
