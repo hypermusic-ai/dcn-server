@@ -11,9 +11,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: choco install openssl --no-progress -y
-
     - name: Configure and build (Debug)
       run: |
         cmake -S . -B build-windows-debug -DDECENTRALISED_ART_BUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=install-windows-debug -DCMAKE_BUILD_TYPE=Debug

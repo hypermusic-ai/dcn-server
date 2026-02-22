@@ -81,14 +81,14 @@ body {
     color: #111111;
 }
 
-.site-links a.site-link-open-api {
+.site-links a.site-link-open-network {
     background: var(--accent-green);
     color: #ffffff;
     border-color: rgba(17, 17, 17, 0.2);
     font-weight: 600;
 }
 
-.site-links a.site-link-open-api:hover {
+.site-links a.site-link-open-network:hover {
     background: color-mix(in srgb, var(--accent-green) 88%, #ffffff 12%);
     color: #ffffff;
 }
@@ -179,10 +179,51 @@ h3 {
     font-size: 0.95rem;
 }
 
+.api-title-wrap h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.8vw, 1.9rem);
+}
+
+.api-title-wrap h2 {
+  margin: 0.2rem 0 0;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #2f2f2f;
+}
+
 .version-info {
     color: #666666;
     font-size: 0.8rem;
     margin-top: 0.25rem;
+}
+
+.group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.75rem;
+  padding: 0.62rem 0.72rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid #111111;
+  border-radius: 0.55rem;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+}
+
+.group-head h2 {
+  margin: 0;
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.group-head p {
+  margin: 0;
+  color: #666666;
+  font-size: 0.76rem;
+  line-height: 1.35;
 }
 
 .login-compact {
@@ -221,7 +262,7 @@ h3 {
     white-space: nowrap;
 }
 
-.api-tabs {
+.group-tabs {
     display: flex;
     gap: 0.45rem;
     padding: 0.62rem 1rem;
@@ -230,7 +271,7 @@ h3 {
     background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
 }
 
-.api-tab {
+.group-tab {
     margin: 0;
     border: 1px solid var(--line-strong);
     background: #ffffff;
@@ -242,12 +283,12 @@ h3 {
     white-space: nowrap;
 }
 
-.api-tab:hover {
+.group-tab:hover {
     background: #f7f7f7;
     border-color: #cfcfcf;
 }
 
-.api-tab.is-active {
+.group-tab.is-active {
     background: #111111;
     color: #ffffff;
     border-color: #111111;
@@ -707,7 +748,7 @@ pre.request-body {
         border: 1px solid var(--line);
     }
 
-    .site-links a.site-link-open-api {
+    .site-links a.site-link-open-network {
         color: #ffffff;
         border-color: rgba(17, 17, 17, 0.22);
     }
@@ -753,7 +794,13 @@ pre.request-body {
         white-space: normal;
     }
 
-    .api-tab {
+    .group-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+
+    .group-tab {
         font-size: 0.76rem;
         padding: 0.4rem 0.7rem;
     }

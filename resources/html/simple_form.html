@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Decentralised Creative Network API</title>
+    <title>DCN Chain API</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -121,7 +121,7 @@
             });
         }
 
-        const tabs = Array.from(document.querySelectorAll('.api-tab'));
+        const tabs = Array.from(document.querySelectorAll('.group-tab'));
         const panels = Array.from(document.querySelectorAll('.tab-panel'));
 
         function activateTab(tabKey) {
@@ -164,10 +164,9 @@
             </button>
             <nav class="site-links" aria-label="Primary">
                 <a href="https://decentralised.art/">Home</a>
-                <a href="https://decentralised.art/onboarding">Tutorial</a>
-                <a href="https://decentralised.art/api-tutorial">Documentation</a>
-                <a href="https://decentralised.art/examples">Examples</a>
-                <a href="/" class="site-link-open-api">Open API</a>
+                <a href="https://decentralised.art/tutorial/">Tutorial</a>
+                <a href="https://decentralised.art/documentation/">API Docs</a>
+                <a href="https://decentralised.art/app/" class="site-link-open-network">Network</a>
             </nav>
         </div>
     </header>
@@ -176,7 +175,8 @@
         <section class="api-panel">
             <div class="api-toolbar">
                 <div class="api-title-wrap">
-                    <h1>Decentralised Creative Network API</h1>
+                    <h1>Decentralised Creative Network</h1>
+                    <h2>Chain API</h2>
                     <div id="versionInfo" class="version-info">Loading version info...</div>
                 </div>
 
@@ -189,21 +189,23 @@
                 </div>
             </div>
 
-            <div class="api-tabs" role="tablist" aria-label="API Sections">
-                <button type="button" id="tab-btn-execute" class="api-tab is-active" role="tab" aria-selected="true" data-tab-target="execute">Execute</button>
-                <button type="button" id="tab-btn-particles" class="api-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="particles">Particles</button>
-                <button type="button" id="tab-btn-features" class="api-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="features">Features</button>
-                <button type="button" id="tab-btn-transformations" class="api-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="transformations">Transformations</button>
-                <button type="button" id="tab-btn-conditions" class="api-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="conditions">Conditions</button>
-                <button type="button" id="tab-btn-account" class="api-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="account">Account Overview</button>
+            <div class="group-tabs" role="tablist" aria-label="API Sections">
+                <button type="button" id="tab-btn-execute" class="group-tab is-active" role="tab" aria-selected="true" data-tab-target="execute">Execute</button>
+                <button type="button" id="tab-btn-particles" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="particles">Particles</button>
+                <button type="button" id="tab-btn-features" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="features">Features</button>
+                <button type="button" id="tab-btn-transformations" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="transformations">Transformations</button>
+                <button type="button" id="tab-btn-conditions" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="conditions">Conditions</button>
+                <button type="button" id="tab-btn-account" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="account">Account Overview</button>
             </div>
 
             <div class="tab-panels">
                 <section class="tab-panel is-active" data-tab-panel="execute" role="tabpanel" aria-labelledby="tab-btn-execute">
+                    <div class="group-head">
+                      <h2>Execute</h2>
+                      <p>Run a particle</p>
+                    </div>
                     <div class="tab-grid">
                         <div class="tab-column">
-                            <h2>Execute</h2>
-
                             <div class="form-row">
                                 <div class="form-field">
                                     <label>Particle name</label>
@@ -248,10 +250,12 @@
                 </section>
 
                 <section class="tab-panel" data-tab-panel="particles" role="tabpanel" aria-labelledby="tab-btn-particles">
+                    <div class="group-head">
+                      <h2>Particles</h2>
+                      <p>Interact with existing particles or create a new particle</p>
+                    </div>
                     <div class="tab-grid">
                         <div class="tab-column">
-                            <h2>Particles</h2>
-
                             <label>Name</label>
                             <input type="text" id="in_particleName" placeholder="melody_particle">
 
@@ -307,10 +311,12 @@
                 </section>
 
                 <section class="tab-panel" data-tab-panel="features" role="tabpanel" aria-labelledby="tab-btn-features">
+                    <div class="group-head">
+                      <h2>Features</h2>
+                      <p>Interact with existing features or create a new feature</p>
+                    </div>
                     <div class="tab-grid">
                         <div class="tab-column">
-                            <h2>Features</h2>
-
                             <label>Name</label>
                             <input type="text" id="in_featureName" placeholder="melody">
 
@@ -356,10 +362,12 @@
                 </section>
 
                 <section class="tab-panel" data-tab-panel="transformations" role="tabpanel" aria-labelledby="tab-btn-transformations">
+                    <div class="group-head">
+                      <h2>Transformations</h2>
+                      <p>Interact with existing transformations or create a new transformation</p>
+                    </div>
                     <div class="tab-grid">
                         <div class="tab-column">
-                            <h2>Transformations</h2>
-
                             <label>Name</label>
                             <input type="text" id="in_transformationName" placeholder="add">
 
@@ -402,10 +410,12 @@
                 </section>
 
                 <section class="tab-panel" data-tab-panel="conditions" role="tabpanel" aria-labelledby="tab-btn-conditions">
+                    <div class="group-head">
+                      <h2>Conditions</h2>
+                      <p>Interact with existing conditions or create a new condition</p>
+                    </div>
                     <div class="tab-grid">
                         <div class="tab-column">
-                            <h2>Conditions</h2>
-
                             <label>Name</label>
                             <input type="text" id="in_conditionName" placeholder="is_active">
 
@@ -448,10 +458,12 @@
                 </section>
 
                 <section class="tab-panel" data-tab-panel="account" role="tabpanel" aria-labelledby="tab-btn-account">
+                    <div class="group-head">
+                      <h2>Account Overview</h2>
+                      <p>Gather information about an account</p>
+                    </div>
                     <div class="tab-grid">
                         <div class="tab-column">
-                            <h2>Account Overview</h2>
-
                             <label>Address</label>
                             <input type="text" id="accountAddressInput" placeholder="0x...">
 
@@ -504,7 +516,7 @@
     </div>
     <script>
         (function setupTabFallback() {
-            const tabs = Array.from(document.querySelectorAll('.api-tab'));
+            const tabs = Array.from(document.querySelectorAll('.group-tab'));
             const panels = Array.from(document.querySelectorAll('.tab-panel'));
             if (!tabs.length || !panels.length) return;
 
