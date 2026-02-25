@@ -17,7 +17,8 @@ namespace dcn::native {
 
     std::pair<int, std::string> runProcess(const std::string& command, std::vector<std::string> args)
     {
-        if (access(command.c_str(), X_OK) != 0)
+        const bool has_path_separator = command.find('/') != std::string::npos;
+        if (has_path_separator && access(command.c_str(), X_OK) != 0)
         {
             throw std::runtime_error("Command not executable: " + command);
         }

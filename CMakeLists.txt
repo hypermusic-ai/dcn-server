@@ -68,6 +68,7 @@ target_link_libraries("${PROJECT_NAME}Lib"
         "${PROJECT_PREFIX}::EVM"
         "${PROJECT_PREFIX}::Loader"
         "${PROJECT_PREFIX}::Registry"
+        "${PROJECT_PREFIX}::Mainnet"
 )
 
 target_sources("${PROJECT_NAME}Lib" PUBLIC

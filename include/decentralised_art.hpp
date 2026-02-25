@@ -25,6 +25,7 @@ using namespace asio::experimental::awaitable_operators;
 #include "utils.hpp"
 #include "version.hpp"
 #include "loader.hpp"
+#include "mainnet.hpp"
 
 namespace dcn
 {

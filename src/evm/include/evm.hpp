@@ -8,6 +8,7 @@
 #include <expected>
 #include <fstream>
 #include <istream>
+#include <optional>
 
 // Undefine the conflicting macro
 #ifdef interface
@@ -42,6 +43,45 @@
 namespace dcn::evm
 {
     using Address = evmc::address;
+
+    struct ParticleAddedEvent
+    {
+        Address caller{};
+        Address owner{};
+        std::string name;
+        Address particle_address{};
+        std::string feature_name;
+        std::vector<std::string> composite_names;
+        std::string condition_name;
+        std::vector<std::int32_t> condition_args;
+    };
+
+    struct FeatureAddedEvent
+    {
+        Address caller{};
+        std::string name;
+        Address feature_address{};
+        Address owner{};
+        std::uint32_t dimensions_count{};
+    };
+
+    struct TransformationAddedEvent
+    {
+        Address caller{};
+        std::string name;
+        Address transformation_address{};
+        Address owner{};
+        std::uint32_t args_count{};
+    };
+
+    struct ConditionAddedEvent
+    {
+        Address caller{};
+        std::string name;
+        Address condition_address{};
+        Address owner{};
+        std::uint32_t args_count{};
+    };
     
     struct DeployError 
     {
@@ -159,6 +199,47 @@ namespace dcn::evm
     asio::awaitable<std::expected<std::vector<std::uint8_t>, ExecuteError>> fetchOwner(EVM & evm, const Address & address);
 
     std::vector<std::uint8_t> constructSelector(std::string signature);
+    evmc::bytes32 constructEventTopic(std::string signature);
+
+    std::optional<ParticleAddedEvent> decodeParticleAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics);
+
+    std::optional<ParticleAddedEvent> decodeParticleAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex);
+
+    std::optional<FeatureAddedEvent> decodeFeatureAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics);
+
+    std::optional<FeatureAddedEvent> decodeFeatureAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex);
+
+    std::optional<TransformationAddedEvent> decodeTransformationAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics);
+
+    std::optional<TransformationAddedEvent> decodeTransformationAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex);
+
+    std::optional<ConditionAddedEvent> decodeConditionAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics);
+
+    std::optional<ConditionAddedEvent> decodeConditionAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex);
 
     template<class T>
     std::vector<std::uint8_t> encodeAsArg(const T & val);

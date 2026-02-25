@@ -25,6 +25,7 @@ add_executable("${PROJECT_NAME}"
     "src/pt/execute.cpp"
     "src/pt/initial_deployment.cpp"
     "src/pt/proxy_upgrade.cpp"
+    "src/mainnet_ingestion.cpp"
 )
 
 target_include_directories("${PROJECT_NAME}"     

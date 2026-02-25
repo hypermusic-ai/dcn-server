@@ -83,7 +83,6 @@ namespace dcn
      */
     asio::awaitable<http::Response> GET_serveBinaryFile(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, const std::string mime_type, const std::vector<std::byte> & file_content);
 
-
     /**
      * @brief Handle a GET request to /auth/nonce
      * 

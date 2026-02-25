@@ -1,4 +1,5 @@
 #include "evm.hpp"
+#include <limits>
 
 namespace dcn::evm
 {
@@ -7,6 +8,13 @@ namespace dcn::evm
         std::uint8_t hash[32];
         crypto::Keccak256::getHash(reinterpret_cast<const uint8_t*>(signature.data()), signature.size(), hash);
         return std::vector<std::uint8_t>(hash, hash + 4);
+    }
+
+    evmc::bytes32 constructEventTopic(std::string signature)
+    {
+        evmc::bytes32 topic{};
+        crypto::Keccak256::getHash(reinterpret_cast<const uint8_t*>(signature.data()), signature.size(), topic.bytes);
+        return topic;
     }
 
     template<>
@@ -154,6 +162,489 @@ namespace dcn::evm
             return_offset = (return_offset << 8) | bytes[offset + i];
         return_offset += 32;
         return return_offset;
+    }
+
+    static std::optional<std::size_t> _readWordAsSizeT(const std::uint8_t* data, std::size_t data_size, std::size_t offset)
+    {
+        if(data == nullptr || offset + 32 > data_size)
+        {
+            return std::nullopt;
+        }
+
+        std::size_t value = 0;
+
+        constexpr std::size_t prefix = 32 - sizeof(std::size_t);
+        for(std::size_t i = 0; i < prefix; ++i)
+        {
+            if(data[offset + i] != 0)
+            {
+                return std::nullopt;
+            }
+        }
+
+        for(std::size_t i = prefix; i < 32; ++i)
+        {
+            value = (value << 8) | data[offset + i];
+        }
+
+        return value;
+    }
+
+    static std::optional<Address> _readAddressWord(const std::uint8_t* data, std::size_t data_size, std::size_t offset)
+    {
+        if(data == nullptr || offset + 32 > data_size)
+        {
+            return std::nullopt;
+        }
+
+        Address addr{};
+        std::memcpy(addr.bytes, data + offset + 12, 20);
+        return addr;
+    }
+
+    static Address _topicWordToAddress(const evmc::bytes32 & topic_word)
+    {
+        Address addr{};
+        std::memcpy(addr.bytes, topic_word.bytes + 12, 20);
+        return addr;
+    }
+
+    static std::optional<std::string> _decodeAbiString(const std::uint8_t* data, std::size_t data_size, std::size_t string_offset)
+    {
+        const auto length_res = _readWordAsSizeT(data, data_size, string_offset);
+        if(!length_res)
+        {
+            return std::nullopt;
+        }
+
+        const std::size_t length = *length_res;
+        if(string_offset + 32 > data_size || length > (data_size - (string_offset + 32)))
+        {
+            return std::nullopt;
+        }
+
+        return std::string(reinterpret_cast<const char*>(data + string_offset + 32), length);
+    }
+
+    static std::optional<std::vector<std::string>> _decodeAbiStringArray(const std::uint8_t* data, std::size_t data_size, std::size_t array_offset)
+    {
+        const auto length_res = _readWordAsSizeT(data, data_size, array_offset);
+        if(!length_res)
+        {
+            return std::nullopt;
+        }
+
+        const std::size_t length = *length_res;
+        const std::size_t head_start = array_offset + 32;
+
+        if(head_start > data_size)
+        {
+            return std::nullopt;
+        }
+
+        if(length > (std::numeric_limits<std::size_t>::max() / 32))
+        {
+            return std::nullopt;
+        }
+
+        const std::size_t head_size = length * 32;
+        if(head_size > (data_size - head_start))
+        {
+            return std::nullopt;
+        }
+
+        std::vector<std::string> out;
+        out.reserve(length);
+
+        for(std::size_t i = 0; i < length; ++i)
+        {
+            const auto rel_offset_res = _readWordAsSizeT(data, data_size, head_start + i * 32);
+            if(!rel_offset_res)
+            {
+                return std::nullopt;
+            }
+
+            const std::size_t elem_offset = head_start + *rel_offset_res;
+            const auto elem_res = _decodeAbiString(data, data_size, elem_offset);
+            if(!elem_res)
+            {
+                return std::nullopt;
+            }
+
+            out.push_back(*elem_res);
+        }
+
+        return out;
+    }
+
+    static std::optional<std::vector<std::int32_t>> _decodeAbiInt32Array(const std::uint8_t* data, std::size_t data_size, std::size_t array_offset)
+    {
+        const auto length_res = _readWordAsSizeT(data, data_size, array_offset);
+        if(!length_res)
+        {
+            return std::nullopt;
+        }
+
+        const std::size_t length = *length_res;
+        const std::size_t first_value_offset = array_offset + 32;
+
+        if(first_value_offset > data_size)
+        {
+            return std::nullopt;
+        }
+
+        if(length > (std::numeric_limits<std::size_t>::max() / 32))
+        {
+            return std::nullopt;
+        }
+
+        const std::size_t values_size = length * 32;
+        if(values_size > (data_size - first_value_offset))
+        {
+            return std::nullopt;
+        }
+
+        std::vector<std::int32_t> out;
+        out.reserve(length);
+
+        for(std::size_t i = 0; i < length; ++i)
+        {
+            const std::size_t word_offset = first_value_offset + i * 32;
+            const std::uint8_t* word = data + word_offset;
+
+            const std::uint32_t raw_value =
+                (static_cast<std::uint32_t>(word[28]) << 24) |
+                (static_cast<std::uint32_t>(word[29]) << 16) |
+                (static_cast<std::uint32_t>(word[30]) << 8) |
+                static_cast<std::uint32_t>(word[31]);
+
+            const bool negative = (raw_value & 0x80000000u) != 0;
+            const std::uint8_t expected_sign = negative ? 0xFF : 0x00;
+            for(std::size_t b = 0; b < 28; ++b)
+            {
+                if(word[b] != expected_sign)
+                {
+                    return std::nullopt;
+                }
+            }
+
+            out.push_back(static_cast<std::int32_t>(raw_value));
+        }
+
+        return out;
+    }
+
+    static std::optional<std::uint32_t> _readUint32Word(const std::uint8_t* data, std::size_t data_size, std::size_t offset)
+    {
+        const auto value_res = _readWordAsSizeT(data, data_size, offset);
+        if(!value_res || *value_res > static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max()))
+        {
+            return std::nullopt;
+        }
+
+        return static_cast<std::uint32_t>(*value_res);
+    }
+
+    static std::optional<std::vector<evmc::bytes32>> _decodeTopicWords(const std::vector<std::string> & topics_hex)
+    {
+        if(topics_hex.empty())
+        {
+            return std::nullopt;
+        }
+
+        std::vector<evmc::bytes32> topic_words;
+        topic_words.reserve(topics_hex.size());
+        for(const std::string & topic_hex : topics_hex)
+        {
+            const auto topic_word = evmc::from_hex<evmc::bytes32>(topic_hex);
+            if(!topic_word)
+            {
+                return std::nullopt;
+            }
+            topic_words.push_back(*topic_word);
+        }
+
+        return topic_words;
+    }
+
+    std::optional<ParticleAddedEvent> decodeParticleAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics)
+    {
+        if(data == nullptr || topics == nullptr || num_topics < 3 || data_size < 32 * 6)
+        {
+            return std::nullopt;
+        }
+
+        const evmc::bytes32 expected_topic = constructEventTopic(
+            "ParticleAdded(address,address,string,address,string,string[],string,int32[])");
+
+        if(topics[0] != expected_topic)
+        {
+            return std::nullopt;
+        }
+
+        ParticleAddedEvent event{};
+        event.caller = _topicWordToAddress(topics[1]);
+        event.owner = _topicWordToAddress(topics[2]);
+
+        const auto name_offset = _readWordAsSizeT(data, data_size, 0);
+        const auto particle_address = _readAddressWord(data, data_size, 32);
+        const auto feature_offset = _readWordAsSizeT(data, data_size, 64);
+        const auto composites_offset = _readWordAsSizeT(data, data_size, 96);
+        const auto condition_offset = _readWordAsSizeT(data, data_size, 128);
+        const auto condition_args_offset = _readWordAsSizeT(data, data_size, 160);
+
+        if(!name_offset || !particle_address || !feature_offset || !composites_offset || !condition_offset || !condition_args_offset)
+        {
+            return std::nullopt;
+        }
+
+        const auto name = _decodeAbiString(data, data_size, *name_offset);
+        const auto feature_name = _decodeAbiString(data, data_size, *feature_offset);
+        const auto composite_names = _decodeAbiStringArray(data, data_size, *composites_offset);
+        const auto condition_name = _decodeAbiString(data, data_size, *condition_offset);
+        const auto condition_args = _decodeAbiInt32Array(data, data_size, *condition_args_offset);
+
+        if(!name || !feature_name || !composite_names || !condition_name || !condition_args)
+        {
+            return std::nullopt;
+        }
+
+        event.name = *name;
+        event.particle_address = *particle_address;
+        event.feature_name = *feature_name;
+        event.composite_names = *composite_names;
+        event.condition_name = *condition_name;
+        event.condition_args = *condition_args;
+
+        return event;
+    }
+
+    std::optional<ParticleAddedEvent> decodeParticleAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex)
+    {
+        const auto data_bytes = evmc::from_hex(data_hex);
+        if(!data_bytes)
+        {
+            return std::nullopt;
+        }
+
+        const auto topic_words = _decodeTopicWords(topics_hex);
+        if(!topic_words)
+        {
+            return std::nullopt;
+        }
+
+        return decodeParticleAddedEvent(
+            data_bytes->data(),
+            data_bytes->size(),
+            topic_words->data(),
+            topic_words->size());
+    }
+
+    std::optional<FeatureAddedEvent> decodeFeatureAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics)
+    {
+        if(data == nullptr || topics == nullptr || num_topics < 1 || data_size < 32 * 5)
+        {
+            return std::nullopt;
+        }
+
+        const evmc::bytes32 expected_topic = constructEventTopic(
+            "FeatureAdded(address,string,address,address,uint32)");
+
+        if(topics[0] != expected_topic)
+        {
+            return std::nullopt;
+        }
+
+        const auto caller = _readAddressWord(data, data_size, 0);
+        const auto name_offset = _readWordAsSizeT(data, data_size, 32);
+        const auto feature_address = _readAddressWord(data, data_size, 64);
+        const auto owner = _readAddressWord(data, data_size, 96);
+        const auto dimensions_count = _readUint32Word(data, data_size, 128);
+        if(!caller || !name_offset || !feature_address || !owner || !dimensions_count)
+        {
+            return std::nullopt;
+        }
+
+        const auto name = _decodeAbiString(data, data_size, *name_offset);
+        if(!name)
+        {
+            return std::nullopt;
+        }
+
+        return FeatureAddedEvent{
+            .caller = *caller,
+            .name = *name,
+            .feature_address = *feature_address,
+            .owner = *owner,
+            .dimensions_count = *dimensions_count
+        };
+    }
+
+    std::optional<FeatureAddedEvent> decodeFeatureAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex)
+    {
+        const auto data_bytes = evmc::from_hex(data_hex);
+        if(!data_bytes)
+        {
+            return std::nullopt;
+        }
+
+        const auto topic_words = _decodeTopicWords(topics_hex);
+        if(!topic_words)
+        {
+            return std::nullopt;
+        }
+
+        return decodeFeatureAddedEvent(
+            data_bytes->data(),
+            data_bytes->size(),
+            topic_words->data(),
+            topic_words->size());
+    }
+
+    std::optional<TransformationAddedEvent> decodeTransformationAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics)
+    {
+        if(data == nullptr || topics == nullptr || num_topics < 1 || data_size < 32 * 5)
+        {
+            return std::nullopt;
+        }
+
+        const evmc::bytes32 expected_topic = constructEventTopic(
+            "TransformationAdded(address,string,address,address,uint32)");
+
+        if(topics[0] != expected_topic)
+        {
+            return std::nullopt;
+        }
+
+        const auto caller = _readAddressWord(data, data_size, 0);
+        const auto name_offset = _readWordAsSizeT(data, data_size, 32);
+        const auto transformation_address = _readAddressWord(data, data_size, 64);
+        const auto owner = _readAddressWord(data, data_size, 96);
+        const auto args_count = _readUint32Word(data, data_size, 128);
+        if(!caller || !name_offset || !transformation_address || !owner || !args_count)
+        {
+            return std::nullopt;
+        }
+
+        const auto name = _decodeAbiString(data, data_size, *name_offset);
+        if(!name)
+        {
+            return std::nullopt;
+        }
+
+        return TransformationAddedEvent{
+            .caller = *caller,
+            .name = *name,
+            .transformation_address = *transformation_address,
+            .owner = *owner,
+            .args_count = *args_count
+        };
+    }
+
+    std::optional<TransformationAddedEvent> decodeTransformationAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex)
+    {
+        const auto data_bytes = evmc::from_hex(data_hex);
+        if(!data_bytes)
+        {
+            return std::nullopt;
+        }
+
+        const auto topic_words = _decodeTopicWords(topics_hex);
+        if(!topic_words)
+        {
+            return std::nullopt;
+        }
+
+        return decodeTransformationAddedEvent(
+            data_bytes->data(),
+            data_bytes->size(),
+            topic_words->data(),
+            topic_words->size());
+    }
+
+    std::optional<ConditionAddedEvent> decodeConditionAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics)
+    {
+        if(data == nullptr || topics == nullptr || num_topics < 1 || data_size < 32 * 5)
+        {
+            return std::nullopt;
+        }
+
+        const evmc::bytes32 expected_topic = constructEventTopic(
+            "ConditionAdded(address,string,address,address,uint32)");
+
+        if(topics[0] != expected_topic)
+        {
+            return std::nullopt;
+        }
+
+        const auto caller = _readAddressWord(data, data_size, 0);
+        const auto name_offset = _readWordAsSizeT(data, data_size, 32);
+        const auto condition_address = _readAddressWord(data, data_size, 64);
+        const auto owner = _readAddressWord(data, data_size, 96);
+        const auto args_count = _readUint32Word(data, data_size, 128);
+        if(!caller || !name_offset || !condition_address || !owner || !args_count)
+        {
+            return std::nullopt;
+        }
+
+        const auto name = _decodeAbiString(data, data_size, *name_offset);
+        if(!name)
+        {
+            return std::nullopt;
+        }
+
+        return ConditionAddedEvent{
+            .caller = *caller,
+            .name = *name,
+            .condition_address = *condition_address,
+            .owner = *owner,
+            .args_count = *args_count
+        };
+    }
+
+    std::optional<ConditionAddedEvent> decodeConditionAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex)
+    {
+        const auto data_bytes = evmc::from_hex(data_hex);
+        if(!data_bytes)
+        {
+            return std::nullopt;
+        }
+
+        const auto topic_words = _decodeTopicWords(topics_hex);
+        if(!topic_words)
+        {
+            return std::nullopt;
+        }
+
+        return decodeConditionAddedEvent(
+            data_bytes->data(),
+            data_bytes->size(),
+            topic_words->data(),
+            topic_words->size());
     }
 
     DeployError _decodeDeployError(const evmc::Result& r)
