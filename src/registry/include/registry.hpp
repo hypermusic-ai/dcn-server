@@ -35,6 +35,11 @@ namespace dcn::registry
             
             ~Registry() = default;
 
+            asio::awaitable<bool> add(chain::Address address, ParticleRecord particle);
+            asio::awaitable<bool> add(chain::Address address, FeatureRecord feature);
+            asio::awaitable<bool> add(chain::Address address, TransformationRecord transformation);
+            asio::awaitable<bool> add(chain::Address address, ConditionRecord condition);
+
             asio::awaitable<bool> addParticle(chain::Address address, ParticleRecord particle);
             asio::awaitable<std::optional<Particle>> getNewestParticle(const std::string& name) const;
             asio::awaitable<std::optional<Particle>> getParticle(const std::string& name, const chain::Address & address) const;

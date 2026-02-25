@@ -398,4 +398,25 @@ namespace dcn::registry
         co_return _owned_conditions.at(address);
     }
 
+
+
+    asio::awaitable<bool> Registry::add(chain::Address address, ParticleRecord particle)
+    {
+        return addParticle(address, std::move(particle));
+    }
+
+    asio::awaitable<bool> Registry::add(chain::Address address, FeatureRecord feature)
+    {
+        return addFeature(address, std::move(feature));
+    }
+
+    asio::awaitable<bool> Registry::add(chain::Address address, TransformationRecord transformation)
+    {
+        return addTransformation(address, std::move(transformation));
+    }
+
+    asio::awaitable<bool> Registry::add(chain::Address address, ConditionRecord condition)
+    {
+        return addCondition(address, std::move(condition));
+    }
 }
