@@ -270,105 +270,105 @@ namespace dcn::evm
                               const evmc::bytes32 topics[],
                               size_t num_topics) noexcept
     {
-        const auto particle_added_event = decodeParticleAddedEvent(data, data_size, topics, num_topics);
-        if(particle_added_event)
-        {
-            std::string composite_names_str;
-            for(std::size_t i = 0; i < particle_added_event->composite_names.size(); ++i)
-            {
-                const auto & composite_name = particle_added_event->composite_names[i];
-                composite_names_str += std::format("    [{}] {}\n", i, composite_name.length() > 0 ? composite_name : "<none>");
-            }
+        // const auto particle_added_event = decodeParticleAddedEvent(data, data_size, topics, num_topics);
+        // if(particle_added_event)
+        // {
+        //     std::string composite_names_str;
+        //     for(std::size_t i = 0; i < particle_added_event->composite_names.size(); ++i)
+        //     {
+        //         const auto & composite_name = particle_added_event->composite_names[i];
+        //         composite_names_str += std::format("    [{}] {}\n", i, composite_name.length() > 0 ? composite_name : "<none>");
+        //     }
 
-            std::string condition_args_str;
-            for(std::size_t i = 0; i < particle_added_event->condition_args.size(); ++i)
-            {
-                condition_args_str += std::format("    [{}]: {}\n", i, particle_added_event->condition_args[i]);
-            }
+        //     std::string condition_args_str;
+        //     for(std::size_t i = 0; i < particle_added_event->condition_args.size(); ++i)
+        //     {
+        //         condition_args_str += std::format("    [{}]: {}\n", i, particle_added_event->condition_args[i]);
+        //     }
 
-            spdlog::info(std::format(
-                "Decoded PT event ParticleAdded from {}:\n"
-                "  Caller: {}\n"
-                "  Owner: {}\n"
-                "  Name: {}\n"
-                "  Particle: {}\n"
-                "  Feature: {}\n"
-                "  Condition: {}\n"
-                "  CompositeNames:\n{}"
-                "  ConditionArgs:\n{}",
-                addr,
-                particle_added_event->caller,
-                particle_added_event->owner,
-                particle_added_event->name,
-                particle_added_event->particle_address,
-                particle_added_event->feature_name,
-                particle_added_event->condition_name.empty() ? "    <none>\n" : particle_added_event->condition_name,
-                composite_names_str.empty() ? "    <none>\n" : composite_names_str,
-                condition_args_str.empty() ? "    <none>\n" : condition_args_str
-            )
-            );
-            return;
-        }
+        //     spdlog::info(std::format(
+        //         "Decoded PT event ParticleAdded from {}:\n"
+        //         "  Caller: {}\n"
+        //         "  Owner: {}\n"
+        //         "  Name: {}\n"
+        //         "  Particle: {}\n"
+        //         "  Feature: {}\n"
+        //         "  Condition: {}\n"
+        //         "  CompositeNames:\n{}"
+        //         "  ConditionArgs:\n{}",
+        //         addr,
+        //         particle_added_event->caller,
+        //         particle_added_event->owner,
+        //         particle_added_event->name,
+        //         particle_added_event->particle_address,
+        //         particle_added_event->feature_name,
+        //         particle_added_event->condition_name.empty() ? "    <none>\n" : particle_added_event->condition_name,
+        //         composite_names_str.empty() ? "    <none>\n" : composite_names_str,
+        //         condition_args_str.empty() ? "    <none>\n" : condition_args_str
+        //     )
+        //     );
+        //     return;
+        // }
 
-        const auto feature_added_event = decodeFeatureAddedEvent(data, data_size, topics, num_topics);
-        if(feature_added_event)
-        {
-            spdlog::info(std::format(
-                "Decoded PT event FeatureAdded from {}:\n"
-                "  Caller: {}\n"
-                "  Owner: {}\n"
-                "  Name: {}\n"
-                "  Feature: {}\n"
-                "  DimensionsCount: {}",
-                addr,
-                feature_added_event->caller,
-                feature_added_event->owner,
-                feature_added_event->name,
-                feature_added_event->feature_address,
-                feature_added_event->dimensions_count
-            ));
-            return;
-        }
+        // const auto feature_added_event = decodeFeatureAddedEvent(data, data_size, topics, num_topics);
+        // if(feature_added_event)
+        // {
+        //     spdlog::info(std::format(
+        //         "Decoded PT event FeatureAdded from {}:\n"
+        //         "  Caller: {}\n"
+        //         "  Owner: {}\n"
+        //         "  Name: {}\n"
+        //         "  Feature: {}\n"
+        //         "  DimensionsCount: {}",
+        //         addr,
+        //         feature_added_event->caller,
+        //         feature_added_event->owner,
+        //         feature_added_event->name,
+        //         feature_added_event->feature_address,
+        //         feature_added_event->dimensions_count
+        //     ));
+        //     return;
+        // }
 
-        const auto transformation_added_event = decodeTransformationAddedEvent(data, data_size, topics, num_topics);
-        if(transformation_added_event)
-        {
-            spdlog::info(std::format(
-                "Decoded PT event TransformationAdded from {}:\n"
-                "  Caller: {}\n"
-                "  Owner: {}\n"
-                "  Name: {}\n"
-                "  Transformation: {}\n"
-                "  ArgsCount: {}",
-                addr,
-                transformation_added_event->caller,
-                transformation_added_event->owner,
-                transformation_added_event->name,
-                transformation_added_event->transformation_address,
-                transformation_added_event->args_count
-            ));
-            return;
-        }
+        // const auto transformation_added_event = decodeTransformationAddedEvent(data, data_size, topics, num_topics);
+        // if(transformation_added_event)
+        // {
+        //     spdlog::info(std::format(
+        //         "Decoded PT event TransformationAdded from {}:\n"
+        //         "  Caller: {}\n"
+        //         "  Owner: {}\n"
+        //         "  Name: {}\n"
+        //         "  Transformation: {}\n"
+        //         "  ArgsCount: {}",
+        //         addr,
+        //         transformation_added_event->caller,
+        //         transformation_added_event->owner,
+        //         transformation_added_event->name,
+        //         transformation_added_event->transformation_address,
+        //         transformation_added_event->args_count
+        //     ));
+        //     return;
+        // }
 
-        const auto condition_added_event = decodeConditionAddedEvent(data, data_size, topics, num_topics);
-        if(condition_added_event)
-        {
-            spdlog::info(std::format(
-                "Decoded PT event ConditionAdded from {}:\n"
-                "  Caller: {}\n"
-                "  Owner: {}\n"
-                "  Name: {}\n"
-                "  Condition: {}\n"
-                "  ArgsCount: {}",
-                addr,
-                condition_added_event->caller,
-                condition_added_event->owner,
-                condition_added_event->name,
-                condition_added_event->condition_address,
-                condition_added_event->args_count
-            ));
-            return;
-        }
+        // const auto condition_added_event = decodeConditionAddedEvent(data, data_size, topics, num_topics);
+        // if(condition_added_event)
+        // {
+        //     spdlog::info(std::format(
+        //         "Decoded PT event ConditionAdded from {}:\n"
+        //         "  Caller: {}\n"
+        //         "  Owner: {}\n"
+        //         "  Name: {}\n"
+        //         "  Condition: {}\n"
+        //         "  ArgsCount: {}",
+        //         addr,
+        //         condition_added_event->caller,
+        //         condition_added_event->owner,
+        //         condition_added_event->name,
+        //         condition_added_event->condition_address,
+        //         condition_added_event->args_count
+        //     ));
+        //     return;
+        // }
 
         std::string label = "<n/a>";
         std::string value = "<n/a>";

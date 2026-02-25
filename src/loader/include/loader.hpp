@@ -11,15 +11,16 @@
 #include "parser.hpp"
 #include "file.hpp"
 #include "evm.hpp"
+#include "chain.hpp"
 
 namespace dcn::loader
 {
     bool ensurePTBuildVersion(const std::filesystem::path & storage_path);
 
-    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployParticle(evm::EVM & evm, registry::Registry & registry, ParticleRecord particle, const std::filesystem::path & storage_path);
-    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployFeature(evm::EVM & evm, registry::Registry & registry, FeatureRecord feature, const std::filesystem::path & storage_path);
-    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployTransformation(evm::EVM & evm, registry::Registry & registry, TransformationRecord transformation, const std::filesystem::path & storage_path);
-    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployCondition(evm::EVM & evm, registry::Registry & registry, ConditionRecord condition, const std::filesystem::path & storage_path);
+    asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployParticle(evm::EVM & evm, registry::Registry & registry, ParticleRecord particle, const std::filesystem::path & storage_path);
+    asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployFeature(evm::EVM & evm, registry::Registry & registry, FeatureRecord feature, const std::filesystem::path & storage_path);
+    asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployTransformation(evm::EVM & evm, registry::Registry & registry, TransformationRecord transformation, const std::filesystem::path & storage_path);
+    asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployCondition(evm::EVM & evm, registry::Registry & registry, ConditionRecord condition, const std::filesystem::path & storage_path);
 
 
     asio::awaitable<bool> loadStoredParticles(evm::EVM & evm, registry::Registry & registry, const std::filesystem::path & storage_path);

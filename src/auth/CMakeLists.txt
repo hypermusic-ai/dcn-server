@@ -5,9 +5,8 @@ add_module(NAME "Auth"
         "${PROJECT_PREFIX}::Crypto"
         "${PROJECT_PREFIX}::HTTP"
         "${PROJECT_PREFIX}::Parser"
-        "${PROJECT_PREFIX}::EVM"
+        "${PROJECT_PREFIX}::Chain"
         "${PROJECT_PREFIX}::File"
-        "${PROJECT_PREFIX}::PT"
 
         spdlog::spdlog
         asio
@@ -15,7 +14,6 @@ add_module(NAME "Auth"
         secp256k1
         jwt-cpp
         evmc
-        evmone
         nlohmann_json
 )
 

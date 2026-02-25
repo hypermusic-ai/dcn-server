@@ -67,12 +67,12 @@ int main(int argc, char* argv[])
     arg_parser.addArg("--help", dcn::cmd::CommandLineArgDef::NArgs::Zero, dcn::cmd::CommandLineArgDef::Type::Bool, "Display help message and exit");
     arg_parser.addArg("--version", dcn::cmd::CommandLineArgDef::NArgs::Zero, dcn::cmd::CommandLineArgDef::Type::Bool, "Display version and exit");
     arg_parser.addArg("--port", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Port to listen on");
-    arg_parser.addArg("--mainnet-rpc", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::String, "Ethereum JSON-RPC endpoint URL used for event sync");
-    arg_parser.addArg("--mainnet-registry", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::String, "PT registry proxy address on mainnet");
-    arg_parser.addArg("--mainnet-start-block", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Optional first block for event sync when no local cursor exists");
-    arg_parser.addArg("--mainnet-poll-ms", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Mainnet poll interval in milliseconds");
-    arg_parser.addArg("--mainnet-confirmations", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Finality confirmation depth");
-    arg_parser.addArg("--mainnet-batch-size", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Max number of blocks fetched per eth_getLogs request");
+    arg_parser.addArg("--chain-rpc", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::String, "Ethereum JSON-RPC endpoint URL used for event sync");
+    arg_parser.addArg("--chain-registry", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::String, "PT registry proxy address on chain");
+    arg_parser.addArg("--chain-start-block", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Optional first block for event sync when no local cursor exists");
+    arg_parser.addArg("--chain-poll-ms", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Chain poll interval in milliseconds");
+    arg_parser.addArg("--chain-confirmations", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Finality confirmation depth");
+    arg_parser.addArg("--chain-batch-size", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Max number of blocks fetched per eth_getLogs request");
 
     arg_parser.parse(argc, argv);
 
@@ -91,62 +91,62 @@ int main(int argc, char* argv[])
 
     const asio::ip::port_type port = arg_parser.getArg<std::vector<int>>("--port").value_or(std::vector<int>{dcn::DEFAULT_PORT}).at(0);
 
-    dcn::mainnet::IngestionConfig mainnet_ingestion_cfg;
-    mainnet_ingestion_cfg.storage_path = cfg.storage_path;
+    dcn::chain::IngestionConfig chain_ingestion_cfg;
+    chain_ingestion_cfg.storage_path = cfg.storage_path;
 
-    const auto mainnet_poll_ms_arg = arg_parser.getArg<std::vector<int>>("--mainnet-poll-ms").value_or(std::vector<int>{5000}).at(0);
-    const auto mainnet_confirmations_arg = arg_parser.getArg<std::vector<int>>("--mainnet-confirmations").value_or(std::vector<int>{12}).at(0);
-    const auto mainnet_batch_size_arg = arg_parser.getArg<std::vector<int>>("--mainnet-batch-size").value_or(std::vector<int>{500}).at(0);
+    const auto chain_poll_ms_arg = arg_parser.getArg<std::vector<int>>("--chain-poll-ms").value_or(std::vector<int>{5000}).at(0);
+    const auto chain_confirmations_arg = arg_parser.getArg<std::vector<int>>("--chain-confirmations").value_or(std::vector<int>{12}).at(0);
+    const auto chain_batch_size_arg = arg_parser.getArg<std::vector<int>>("--chain-batch-size").value_or(std::vector<int>{500}).at(0);
 
-    if(mainnet_poll_ms_arg <= 0 || mainnet_confirmations_arg < 0 || mainnet_batch_size_arg <= 0)
+    if(chain_poll_ms_arg <= 0 || chain_confirmations_arg < 0 || chain_batch_size_arg <= 0)
     {
-        spdlog::error("Invalid mainnet sync numeric options");
+        spdlog::error("Invalid chain sync numeric options");
         return 1;
     }
 
-    mainnet_ingestion_cfg.poll_interval_ms = static_cast<std::uint64_t>(mainnet_poll_ms_arg);
-    mainnet_ingestion_cfg.confirmations = static_cast<std::uint64_t>(mainnet_confirmations_arg);
-    mainnet_ingestion_cfg.block_batch_size = static_cast<std::uint64_t>(mainnet_batch_size_arg);
+    chain_ingestion_cfg.poll_interval_ms = static_cast<std::uint64_t>(chain_poll_ms_arg);
+    chain_ingestion_cfg.confirmations = static_cast<std::uint64_t>(chain_confirmations_arg);
+    chain_ingestion_cfg.block_batch_size = static_cast<std::uint64_t>(chain_batch_size_arg);
 
-    if(const auto mainnet_start_block_arg = arg_parser.getArg<std::vector<int>>("--mainnet-start-block"))
+    if(const auto chain_start_block_arg = arg_parser.getArg<std::vector<int>>("--chain-start-block"))
     {
-        if(mainnet_start_block_arg->at(0) < 0)
+        if(chain_start_block_arg->at(0) < 0)
         {
-            spdlog::error("Mainnet start block cannot be negative");
+            spdlog::error("Chain start block cannot be negative");
             return 1;
         }
-        mainnet_ingestion_cfg.start_block = static_cast<std::uint64_t>(mainnet_start_block_arg->at(0));
+        chain_ingestion_cfg.start_block = static_cast<std::uint64_t>(chain_start_block_arg->at(0));
     }
 
-    const auto mainnet_rpc_arg = arg_parser.getArg<std::vector<std::string>>("--mainnet-rpc");
-    const auto mainnet_registry_arg = arg_parser.getArg<std::vector<std::string>>("--mainnet-registry");
+    const auto chain_rpc_arg = arg_parser.getArg<std::vector<std::string>>("--chain-rpc");
+    const auto chain_registry_arg = arg_parser.getArg<std::vector<std::string>>("--chain-registry");
 
-    if((mainnet_rpc_arg.has_value() && !mainnet_registry_arg.has_value()) ||
-        (!mainnet_rpc_arg.has_value() && mainnet_registry_arg.has_value()))
+    if((chain_rpc_arg.has_value() && !chain_registry_arg.has_value()) ||
+        (!chain_rpc_arg.has_value() && chain_registry_arg.has_value()))
     {
-        spdlog::error("Both --mainnet-rpc and --mainnet-registry must be provided together");
+        spdlog::error("Both --chain-rpc and --chain-registry must be provided together");
         return 1;
     }
 
-    if(mainnet_rpc_arg && mainnet_registry_arg)
+    if(chain_rpc_arg && chain_registry_arg)
     {
-        const auto registry_addr_res = evmc::from_hex<dcn::evm::Address>(mainnet_registry_arg->at(0));
+        const auto registry_addr_res = evmc::from_hex<dcn::chain::Address>(chain_registry_arg->at(0));
         if(!registry_addr_res)
         {
-            spdlog::error("Invalid --mainnet-registry address");
+            spdlog::error("Invalid --chain-registry address");
             return 1;
         }
 
-        mainnet_ingestion_cfg.enabled = true;
-        mainnet_ingestion_cfg.rpc_url = mainnet_rpc_arg->at(0);
-        mainnet_ingestion_cfg.registry_address = *registry_addr_res;
+        chain_ingestion_cfg.enabled = true;
+        chain_ingestion_cfg.rpc_url = chain_rpc_arg->at(0);
+        chain_ingestion_cfg.registry_address = *registry_addr_res;
 
         spdlog::info(
-            "Mainnet sync enabled. Registry={}, poll={}ms, confirmations={}, batch={}",
-            mainnet_registry_arg->at(0),
-            mainnet_ingestion_cfg.poll_interval_ms,
-            mainnet_ingestion_cfg.confirmations,
-            mainnet_ingestion_cfg.block_batch_size);
+            "Chain sync enabled. Registry={}, poll={}ms, confirmations={}, batch={}",
+            chain_registry_arg->at(0),
+            chain_ingestion_cfg.poll_interval_ms,
+            chain_ingestion_cfg.confirmations,
+            chain_ingestion_cfg.block_batch_size);
     }
 
     spdlog::info("Current working path: {}", std::filesystem::current_path().string());
@@ -283,20 +283,20 @@ int main(int argc, char* argv[])
     asio::co_spawn(io_context, 
         (dcn::loader::loadStoredTransformations(evm, registry, cfg.storage_path)  &&
         dcn::loader::loadStoredConditions(evm, registry, cfg.storage_path)), 
-        [&io_context, &registry, &evm, &server, &cfg, &mainnet_ingestion_cfg](std::exception_ptr, std::tuple<bool, bool>)
+        [&io_context, &registry, &evm, &server, &cfg, &chain_ingestion_cfg](std::exception_ptr, std::tuple<bool, bool>)
         {
             // transformation and condition loaded  
             asio::co_spawn(io_context, dcn::loader::loadStoredFeatures(evm, registry, cfg.storage_path), 
-                [&io_context, &registry, &evm, &server, &cfg, &mainnet_ingestion_cfg](std::exception_ptr, bool)
+                [&io_context, &registry, &evm, &server, &cfg, &chain_ingestion_cfg](std::exception_ptr, bool)
                 {
                     // features loaded
                     asio::co_spawn(io_context, dcn::loader::loadStoredParticles(evm, registry, cfg.storage_path), 
-                [&io_context, &server, &registry, &mainnet_ingestion_cfg](std::exception_ptr, bool)
+                [&io_context, &server, &registry, &chain_ingestion_cfg](std::exception_ptr, bool)
                         {
                             // particles loaded
-                            if(mainnet_ingestion_cfg.enabled)
+                            if(chain_ingestion_cfg.enabled)
                             {
-                                asio::co_spawn(io_context, dcn::mainnet::runEventIngestion(mainnet_ingestion_cfg, registry), asio::detached);
+                                //asio::co_spawn(io_context, dcn::chain::runEventIngestion(chain_ingestion_cfg, registry), asio::detached);
                             }
                             asio::co_spawn(io_context, server.listen(), asio::detached);
                         }

@@ -248,22 +248,22 @@ namespace dcn::loader
     // }
 
 
-    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployParticle(evm::EVM & evm, registry::Registry & registry, ParticleRecord particle_record, const std::filesystem::path & storage_path)
+    asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployParticle(evm::EVM & evm, registry::Registry & registry, ParticleRecord particle_record, const std::filesystem::path & storage_path)
     {
         if(particle_record.particle().name().empty())
         {
             spdlog::error("Particle name is empty");
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(pt::PTDeployError{
+                .kind = pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         const std::string name = particle_record.particle().name();
 
-
-        const auto address_result = evmc::from_hex<evm::Address>(particle_record.owner());
+        const auto address_result = evmc::from_hex<chain::Address>(particle_record.owner());
         if(!address_result)
         {
             spdlog::error("Failed to parse address");
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_ADDRESS});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
         const auto & address = *address_result;
         
@@ -273,7 +273,7 @@ namespace dcn::loader
         if(std::filesystem::exists(bin_dir) == false)
         {
             spdlog::error("Directory {} does not exists", bin_dir.string());
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
         // if binary file does not exist
@@ -287,7 +287,7 @@ namespace dcn::loader
             if(!out_file.is_open())
             {
                 spdlog::error("Failed to create file");
-                co_return std::unexpected(evm::DeployError{});
+                co_return std::unexpected(pt::PTDeployError{});
             }
 
             out_file << constructParticleSolidityCode(particle_record.particle());
@@ -299,7 +299,7 @@ namespace dcn::loader
                 spdlog::error("Failed to compile code");
                 // remove code file
                 _removeFileNoThrow(code_path);
-                co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::COMPILATION_ERROR});
+                co_return std::unexpected(pt::PTDeployError{ pt::PTDeployError::Kind::INVALID_INPUT});
             }
 
             // remove code file
@@ -321,7 +321,17 @@ namespace dcn::loader
         {
             spdlog::error(std::format("Failed to deploy particle implementation: {}", implementation_deploy_res.error().kind));
             _loadCleanup(bin_dir, name);
-            co_return std::unexpected(implementation_deploy_res.error());
+
+            const auto & error = implementation_deploy_res.error();
+            const auto pt_error = parse::decodeBytes<pt::PTDeployError>(error.result_bytes);
+
+            if(!pt_error)
+            {
+                spdlog::error(std::format("Failed to parse PTDeployError: {}", pt_error.error().kind));
+                co_return std::unexpected(pt::PTDeployError{});
+            }
+
+            co_return std::unexpected(pt_error.value());
         }
 
         const auto implementation_address = implementation_deploy_res.value();
@@ -329,8 +339,9 @@ namespace dcn::loader
 
         if(!co_await _ensurePTContractProxyBin(evm))
         {
+            spdlog::error("Failed to ensure PTContractProxy.bin");
             _loadCleanup(bin_dir, name);
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::COMPILATION_ERROR});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         std::vector<std::uint8_t> proxy_ctor_args = evm::encodeAsArg(implementation_address);
@@ -348,14 +359,24 @@ namespace dcn::loader
         {
             spdlog::error(std::format("Failed to deploy particle proxy : {}", proxy_deploy_res.error().kind));
 
+            const auto & error = proxy_deploy_res.error();
+
+            const auto pt_error = parse::decodeBytes<pt::PTDeployError>(error.result_bytes);
+
+            if(!pt_error)
+            {
+                spdlog::error(std::format("Failed to parse PTDeployError: {}", pt_error.error().kind));
+                co_return std::unexpected(pt::PTDeployError{});
+            }
+
             // deploy can fail in case when this name is already taken - then we don't want to remove binary file
             // if it fails for another reason - we want to remove binary file
-            if(proxy_deploy_res.error().kind != evm::DeployError::Kind::PARTICLE_ALREADY_REGISTERED)
+            if(pt_error->kind != pt::PTDeployError::Kind::PARTICLE_ALREADY_REGISTERED)
             {
                 // remove binary file
                 _loadCleanup(bin_dir, name);
             }
-            co_return std::unexpected(proxy_deploy_res.error());
+            co_return std::unexpected(pt_error.value());
         }
 
         const auto particle_proxy_address = proxy_deploy_res.value();
@@ -371,10 +392,22 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
-        const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
+        const auto owner_address_res = chain::readAddressWord(owner_result.value());
+
+        if(!owner_address_res)
+        {
+            spdlog::error("Failed to parse owner address");
+
+            // remove binary file
+            _loadCleanup(bin_dir, name);
+
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
+        }
+
+        const auto & owner_address = owner_address_res.value();
 
         if(owner_address != address)
         {
@@ -383,7 +416,7 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         if(!co_await registry.addParticle(particle_proxy_address, particle_record))
@@ -393,7 +426,7 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
         
         if(!co_await _saveJsonRecord(name, std::move(particle_record), out_dir))
@@ -403,7 +436,7 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
         spdlog::debug("particle '{}' added", name);
@@ -412,21 +445,21 @@ namespace dcn::loader
 
 
 
-    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployFeature(evm::EVM & evm, registry::Registry & registry, FeatureRecord feature_record, const std::filesystem::path & storage_path)
+    asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployFeature(evm::EVM & evm, registry::Registry & registry, FeatureRecord feature_record, const std::filesystem::path & storage_path)
     {
         if(feature_record.feature().name().empty())
         {
             spdlog::error("Feature name is empty");
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         const std::string name = feature_record.feature().name();
 
-        const auto address_result = evmc::from_hex<evm::Address>(feature_record.owner());
+        const auto address_result = evmc::from_hex<chain::Address>(feature_record.owner());
         if(!address_result)
         {
             spdlog::error("Failed to parse address");
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_ADDRESS});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
         const auto & address = *address_result;
 
@@ -436,7 +469,7 @@ namespace dcn::loader
         if(std::filesystem::exists(bin_dir) == false)
         {
             spdlog::error("Directory {} does not exists", bin_dir.string());
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
         // if binary file does not exist
@@ -450,7 +483,7 @@ namespace dcn::loader
             if(!out_file.is_open())
             {
                 spdlog::error("Failed to create file");
-                co_return std::unexpected(evm::DeployError{});
+                co_return std::unexpected(pt::PTDeployError{});
             }
 
             out_file << constructFeatureSolidityCode(feature_record.feature());
@@ -462,7 +495,7 @@ namespace dcn::loader
                 spdlog::error("Failed to compile code");
                 // remove code file
                 _removeFileNoThrow(code_path);
-                co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::COMPILATION_ERROR});
+                co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
             }
 
             // remove code file
@@ -483,7 +516,17 @@ namespace dcn::loader
         {
             spdlog::error(std::format("Failed to deploy feature implementation: {}", implementation_deploy_res.error().kind));
             _loadCleanup(bin_dir, name);
-            co_return std::unexpected(implementation_deploy_res.error());
+
+            const auto & error = implementation_deploy_res.error();
+            const auto pt_error = parse::decodeBytes<pt::PTDeployError>(error.result_bytes);
+
+            if(!pt_error)
+            {
+                spdlog::error(std::format("Failed to parse PTDeployError: {}", pt_error.error().kind));
+                co_return std::unexpected(pt::PTDeployError{});
+            }
+
+            co_return std::unexpected(pt_error.value());
         }
 
         const auto implementation_address = implementation_deploy_res.value();
@@ -492,7 +535,7 @@ namespace dcn::loader
         if(!co_await _ensurePTContractProxyBin(evm))
         {
             _loadCleanup(bin_dir, name);
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::COMPILATION_ERROR});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         std::vector<std::uint8_t> proxy_ctor_args = evm::encodeAsArg(implementation_address);
@@ -510,14 +553,23 @@ namespace dcn::loader
         {
             spdlog::error(std::format("Failed to deploy feature proxy : {}", proxy_deploy_res.error().kind));
 
+            const auto & error = proxy_deploy_res.error();
+            const auto pt_error = parse::decodeBytes<pt::PTDeployError>(error.result_bytes);
+            
+            if(!pt_error)
+            {
+                spdlog::error(std::format("Failed to parse PTDeployError: {}", pt_error.error().kind));
+                co_return std::unexpected(pt::PTDeployError{});
+            }
+
             // deploy can fail in case when this name is already taken - then we don't want to remove binary file
             // if it fails for another reason - we want to remove binary file
-            if(proxy_deploy_res.error().kind != evm::DeployError::Kind::FEATURE_ALREADY_REGISTERED)
+            if(pt_error->kind != pt::PTDeployError::Kind::FEATURE_ALREADY_REGISTERED)
             {
                 // remove binary file
                 _loadCleanup(bin_dir, name);
             }
-            co_return std::unexpected(proxy_deploy_res.error());
+            co_return std::unexpected(pt_error.value());
         }
 
         const auto feature_proxy_address = proxy_deploy_res.value();
@@ -533,10 +585,22 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
-        const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
+        const auto owner_address_res = chain::readAddressWord(owner_result.value());
+
+        if(!owner_address_res)
+        {
+            spdlog::error("Failed to parse owner address");
+
+            // remove binary file
+            _loadCleanup(bin_dir, name);
+
+            co_return std::unexpected(pt::PTDeployError{});
+        }
+
+        const auto & owner_address = owner_address_res.value();
 
         if(owner_address != address)
         {
@@ -545,7 +609,7 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         if(!co_await registry.addFeature(feature_proxy_address, feature_record))
@@ -555,7 +619,7 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
         if(!co_await _saveJsonRecord(name, std::move(feature_record), out_dir))
@@ -565,28 +629,28 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
         spdlog::debug("feature '{}' added", name);
         co_return feature_proxy_address;
     }
 
-    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployTransformation(evm::EVM & evm, registry::Registry & registry, TransformationRecord transformation_record, const std::filesystem::path & storage_path)
+    asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployTransformation(evm::EVM & evm, registry::Registry & registry, TransformationRecord transformation_record, const std::filesystem::path & storage_path)
     {
         if(transformation_record.transformation().name().empty() || transformation_record.transformation().sol_src().empty())
         {
             spdlog::error("Transformation name or source is empty");
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         const std::string name = transformation_record.transformation().name();
 
-        const auto address_result = evmc::from_hex<evm::Address>(transformation_record.owner());
+        const auto address_result = evmc::from_hex<chain::Address>(transformation_record.owner());
         if(!address_result)
         {
             spdlog::error("Failed to parse address");
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_ADDRESS});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
         const auto & address = *address_result;
 
@@ -596,7 +660,7 @@ namespace dcn::loader
         if(std::filesystem::exists(bin_dir) == false)
         {
             spdlog::error("Directory {} does not exists", bin_dir.string());
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
         // if binary file does not exist
@@ -610,7 +674,7 @@ namespace dcn::loader
             if(!out_file.is_open())
             {
                 spdlog::error("Failed to create file");
-                co_return std::unexpected(evm::DeployError{});
+                co_return std::unexpected(pt::PTDeployError{});
             }
 
             out_file << constructTransformationSolidityCode(transformation_record.transformation());
@@ -622,7 +686,7 @@ namespace dcn::loader
                 spdlog::error("Failed to compile code");
                 // remove code file
                 _removeFileNoThrow(code_path);
-                co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::COMPILATION_ERROR});
+                co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
             }
 
             // remove code file
@@ -643,7 +707,17 @@ namespace dcn::loader
         {
             spdlog::error(std::format("Failed to deploy transformation implementation: {}", implementation_deploy_res.error().kind));
             _loadCleanup(bin_dir, name);
-            co_return std::unexpected(implementation_deploy_res.error());
+
+            const auto & error = implementation_deploy_res.error();
+            const auto pt_error = parse::decodeBytes<pt::PTDeployError>(error.result_bytes);
+
+            if(!pt_error)
+            {
+                spdlog::error(std::format("Failed to parse PTDeployError: {}", pt_error.error().kind));
+                co_return std::unexpected(pt::PTDeployError{});
+            }
+
+            co_return std::unexpected(pt_error.value());
         }
 
         const auto implementation_address = implementation_deploy_res.value();
@@ -652,7 +726,7 @@ namespace dcn::loader
         if(!co_await _ensurePTContractProxyBin(evm))
         {
             _loadCleanup(bin_dir, name);
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::COMPILATION_ERROR});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         std::vector<std::uint8_t> proxy_ctor_args = evm::encodeAsArg(implementation_address);
@@ -669,15 +743,24 @@ namespace dcn::loader
         if(!proxy_deploy_res)
         {
             spdlog::error(std::format("Failed to deploy transformation proxy {}", proxy_deploy_res.error().kind));
+            
+            const auto & error = proxy_deploy_res.error();
+            const auto pt_error = parse::decodeBytes<pt::PTDeployError>(error.result_bytes);
+
+            if(!pt_error)
+            {
+                spdlog::error(std::format("Failed to parse PTDeployError: {}", pt_error.error().kind));
+                co_return std::unexpected(pt::PTDeployError{});
+            }
 
             // deploy can fail in case when this name is already taken - then we don't want to remove binary file
             // if it fails for another reason - we want to remove binary file
-            if(proxy_deploy_res.error().kind != evm::DeployError::Kind::TRANSFORMATION_ALREADY_REGISTERED)
+            if(pt_error->kind != pt::PTDeployError::Kind::TRANSFORMATION_ALREADY_REGISTERED)
             {
                 // remove binary file
                 _loadCleanup(bin_dir, name);
             }
-            co_return std::unexpected(proxy_deploy_res.error());
+            co_return std::unexpected(pt_error.value());
         }
 
         const auto transformation_proxy_address = proxy_deploy_res.value();
@@ -693,9 +776,22 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
-        const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
+
+        const auto owner_address_res = chain::readAddressWord(owner_result.value());
+
+        if(!owner_address_res)
+        {
+            spdlog::error("Failed to parse owner address");
+
+            // remove binary file
+            _loadCleanup(bin_dir, name);
+
+            co_return std::unexpected(pt::PTDeployError{});
+        }
+
+        const auto & owner_address = owner_address_res.value();
 
         if(owner_address != address)
         {
@@ -704,7 +800,7 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         if(!co_await registry.addTransformation(transformation_proxy_address, transformation_record)) 
@@ -714,7 +810,7 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
         if(!co_await _saveJsonRecord(name, std::move(transformation_record), out_dir))
@@ -724,7 +820,7 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
         spdlog::debug("transformation '{}' added", name);
@@ -732,21 +828,21 @@ namespace dcn::loader
     }
 
 
-    asio::awaitable<std::expected<evm::Address, evm::DeployError>> deployCondition(evm::EVM & evm, registry::Registry & registry, ConditionRecord condition_record, const std::filesystem::path & storage_path)
+    asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployCondition(evm::EVM & evm, registry::Registry & registry, ConditionRecord condition_record, const std::filesystem::path & storage_path)
     {
         if(condition_record.condition().name().empty() || condition_record.condition().sol_src().empty())
         {
             spdlog::error("Condition name or source is empty");
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         const std::string name = condition_record.condition().name();
 
-        const auto address_result = evmc::from_hex<evm::Address>(condition_record.owner());
+        const auto address_result = evmc::from_hex<chain::Address>(condition_record.owner());
         if(!address_result)
         {
             spdlog::error("Failed to parse address");
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_ADDRESS});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
         const auto & address = *address_result;
 
@@ -756,7 +852,7 @@ namespace dcn::loader
         if(std::filesystem::exists(bin_dir) == false)
         {
             spdlog::error("Directory {} does not exists", bin_dir.string());
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
         // if binary file does not exist
@@ -770,7 +866,7 @@ namespace dcn::loader
             if(!out_file.is_open())
             {
                 spdlog::error("Failed to create file");
-                co_return std::unexpected(evm::DeployError{});
+                co_return std::unexpected(pt::PTDeployError{});
             }
 
             out_file << constructConditionSolidityCode(condition_record.condition());
@@ -782,7 +878,7 @@ namespace dcn::loader
                 spdlog::error("Failed to compile code");
                 // remove code file
                 _removeFileNoThrow(code_path);
-                co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::COMPILATION_ERROR});
+                co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
             }
 
             // remove code file
@@ -803,7 +899,17 @@ namespace dcn::loader
         {
             spdlog::error(std::format("Failed to deploy condition implementation: {}", implementation_deploy_res.error().kind));
             _loadCleanup(bin_dir, name);
-            co_return std::unexpected(implementation_deploy_res.error());
+
+            const auto & error = implementation_deploy_res.error();
+            const auto pt_error = parse::decodeBytes<pt::PTDeployError>(error.result_bytes);
+
+            if(!pt_error)
+            {
+                spdlog::error(std::format("Failed to parse PTDeployError: {}", pt_error.error().kind));
+                co_return std::unexpected(pt::PTDeployError{});
+            }
+
+            co_return std::unexpected(pt_error.value());
         }
 
         const auto implementation_address = implementation_deploy_res.value();
@@ -812,7 +918,7 @@ namespace dcn::loader
         if(!co_await _ensurePTContractProxyBin(evm))
         {
             _loadCleanup(bin_dir, name);
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::COMPILATION_ERROR});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         std::vector<std::uint8_t> proxy_ctor_args = evm::encodeAsArg(implementation_address);
@@ -829,15 +935,24 @@ namespace dcn::loader
         if(!proxy_deploy_res)
         {
             spdlog::error(std::format("Failed to deploy condition proxy {}", proxy_deploy_res.error().kind));
+            
+            const auto & error = proxy_deploy_res.error();
+            const auto pt_error = parse::decodeBytes<pt::PTDeployError>(error.result_bytes);
+
+            if(!pt_error)
+            {
+                spdlog::error(std::format("Failed to parse PTDeployError: {}", pt_error.error().kind));
+                co_return std::unexpected(pt::PTDeployError{});
+            }
 
             // deploy can fail in case when this name is already taken - then we don't want to remove binary file
             // if it fails for another reason - we want to remove binary file
-            if(proxy_deploy_res.error().kind != evm::DeployError::Kind::CONDITION_ALREADY_REGISTERED)
+            if(pt_error->kind != pt::PTDeployError::Kind::CONDITION_ALREADY_REGISTERED)
             {
                 // remove binary file
                 _loadCleanup(bin_dir, name);
             }
-            co_return std::unexpected(proxy_deploy_res.error());
+            co_return std::unexpected(pt_error.value());
         }
 
         const auto condition_proxy_address = proxy_deploy_res.value();
@@ -853,9 +968,21 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
-        const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
+        const auto owner_address_res = chain::readAddressWord(owner_result.value());
+
+        if(!owner_address_res)
+        {
+            spdlog::error("Failed to parse owner address");
+
+            // remove binary file
+            _loadCleanup(bin_dir, name);
+
+            co_return std::unexpected(pt::PTDeployError{});
+        }
+
+        const auto & owner_address = owner_address_res.value();
 
         if(owner_address != address)
         {
@@ -864,7 +991,7 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{evm::DeployError::Kind::INVALID_DATA});
+            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
         if(!co_await registry.addCondition(condition_proxy_address, condition_record)) 
@@ -874,7 +1001,7 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
         if(!co_await _saveJsonRecord(name, std::move(condition_record), out_dir))
@@ -884,7 +1011,7 @@ namespace dcn::loader
             // remove binary file
             _loadCleanup(bin_dir, name);
 
-            co_return std::unexpected(evm::DeployError{});
+            co_return std::unexpected(pt::PTDeployError{});
         }
 
         spdlog::debug("condition '{}' added", name);

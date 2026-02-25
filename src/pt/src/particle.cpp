@@ -1,3 +1,8 @@
+#include <format>
+
+#include "crypto.hpp"
+#include "utils.hpp"
+
 #include "particle.hpp"
 
 namespace dcn
@@ -62,6 +67,88 @@ namespace dcn
             particle.condition_name() // 6
         );
 
+    }
+}
+
+namespace dcn::pt
+{
+    std::optional<ParticleAddedEvent> decodeParticleAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics)
+    {
+        if(data == nullptr || topics == nullptr || num_topics < 3 || data_size < 32 * 6)
+        {
+            return std::nullopt;
+        }
+
+        const evmc::bytes32 expected_topic = crypto::constructEventTopic(
+            "ParticleAdded(address,address,string,address,string,string[],string,int32[])");
+
+        if(topics[0] != expected_topic)
+        {
+            return std::nullopt;
+        }
+
+        ParticleAddedEvent event{};
+        event.caller = chain::topicWordToAddress(topics[1]);
+        event.owner = chain::topicWordToAddress(topics[2]);
+
+        const auto name_offset = utils::readWordAsSizeT(data, data_size, 0);
+        const auto particle_address = chain::readAddressWord(data, data_size, 32);
+        const auto feature_offset = utils::readWordAsSizeT(data, data_size, 64);
+        const auto composites_offset = utils::readWordAsSizeT(data, data_size, 96);
+        const auto condition_offset = utils::readWordAsSizeT(data, data_size, 128);
+        const auto condition_args_offset = utils::readWordAsSizeT(data, data_size, 160);
+
+        if(!name_offset || !particle_address || !feature_offset || !composites_offset || !condition_offset || !condition_args_offset)
+        {
+            return std::nullopt;
+        }
+
+        const auto name = utils::decodeAbiString(data, data_size, *name_offset);
+        const auto feature_name = utils::decodeAbiString(data, data_size, *feature_offset);
+        const auto composite_names = utils::decodeAbiStringArray(data, data_size, *composites_offset);
+        const auto condition_name = utils::decodeAbiString(data, data_size, *condition_offset);
+        const auto condition_args = utils::decodeAbiInt32Array(data, data_size, *condition_args_offset);
+
+        if(!name || !feature_name || !composite_names || !condition_name || !condition_args)
+        {
+            return std::nullopt;
+        }
+
+        event.name = *name;
+        event.particle_address = *particle_address;
+        event.feature_name = *feature_name;
+        event.composite_names = *composite_names;
+        event.condition_name = *condition_name;
+        event.condition_args = *condition_args;
+
+        return event;
+    }
+
+    std::optional<ParticleAddedEvent> decodeParticleAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex)
+    {
+        const auto data_bytes = evmc::from_hex(data_hex);
+        if(!data_bytes)
+        {
+            return std::nullopt;
+        }
+
+        const auto topic_words = crypto::decodeTopicWords(topics_hex);
+        if(!topic_words)
+        {
+            return std::nullopt;
+        }
+
+        return decodeParticleAddedEvent(
+            data_bytes->data(),
+            data_bytes->size(),
+            topic_words->data(),
+            topic_words->size());
     }
 }
 

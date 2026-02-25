@@ -68,7 +68,7 @@ namespace dcn::registry
         co_return _conditions.at(name).empty();
     }
 
-    asio::awaitable<bool> Registry::addParticle(evm::Address address, ParticleRecord record)
+    asio::awaitable<bool> Registry::addParticle(chain::Address address, ParticleRecord record)
     {
         if(record.particle().name().empty())
         {
@@ -81,7 +81,7 @@ namespace dcn::registry
         if(! co_await containsParticleBucket(record.particle().name()))
         {
             spdlog::debug("Particle bucket `{}` does not exists, creating new one ... ", record.particle().name());
-            _particles.try_emplace(record.particle().name(), absl::flat_hash_map<evm::Address, ParticleRecord>());
+            _particles.try_emplace(record.particle().name(), absl::flat_hash_map<chain::Address, ParticleRecord>());
         }       
 
         if(_particles.at(record.particle().name()).contains(address))
@@ -120,7 +120,7 @@ namespace dcn::registry
             }
         }
 
-        std::optional<evm::Address> owner_res = evmc::from_hex<evm::Address>(record.owner());
+        std::optional<chain::Address> owner_res = evmc::from_hex<chain::Address>(record.owner());
         if(!owner_res)
         {
             spdlog::error("Failed to parse owner address");
@@ -143,7 +143,7 @@ namespace dcn::registry
         co_return (co_await getParticle(name, _newest_particle.at(name)));
     }
 
-    asio::awaitable<std::optional<Particle>> Registry::getParticle(const std::string& name, const evm::Address & address) const
+    asio::awaitable<std::optional<Particle>> Registry::getParticle(const std::string& name, const chain::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -160,7 +160,7 @@ namespace dcn::registry
         co_return it->second.particle();
     }
 
-    asio::awaitable<bool> Registry::addFeature(evm::Address address, FeatureRecord record)
+    asio::awaitable<bool> Registry::addFeature(chain::Address address, FeatureRecord record)
     {
         if(record.feature().name().empty())
         {
@@ -173,7 +173,7 @@ namespace dcn::registry
         if(! co_await containsFeatureBucket(record.feature().name()))
         {
             spdlog::debug("Feature bucket `{}` does not exists, creating new one ... ", record.feature().name());
-            _features.try_emplace(record.feature().name(), absl::flat_hash_map<evm::Address, FeatureRecord>());
+            _features.try_emplace(record.feature().name(), absl::flat_hash_map<chain::Address, FeatureRecord>());
         }       
 
         if(_features.at(record.feature().name()).contains(address))
@@ -200,7 +200,7 @@ namespace dcn::registry
             }
         }
 
-        std::optional<evm::Address> owner_res = evmc::from_hex<evm::Address>(record.owner());
+        std::optional<chain::Address> owner_res = evmc::from_hex<chain::Address>(record.owner());
         if(!owner_res)
         {
             spdlog::error("Failed to parse owner address");
@@ -223,7 +223,7 @@ namespace dcn::registry
         co_return (co_await getFeature(name, _newest_feature.at(name)));
     }
 
-    asio::awaitable<std::optional<Feature>> Registry::getFeature(const std::string& name, const evm::Address & address) const
+    asio::awaitable<std::optional<Feature>> Registry::getFeature(const std::string& name, const chain::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -241,7 +241,7 @@ namespace dcn::registry
     }
 
 
-    asio::awaitable<bool> Registry::addTransformation(evm::Address address, TransformationRecord record)
+    asio::awaitable<bool> Registry::addTransformation(chain::Address address, TransformationRecord record)
     {
         if(record.transformation().name().empty())
         {
@@ -254,7 +254,7 @@ namespace dcn::registry
         if(!co_await containsTransformationBucket(record.transformation().name())) 
         {
             spdlog::debug("Transformation bucket `{}` does not exists, creating new one ... ", record.transformation().name());
-            _transformations.try_emplace(record.transformation().name(), absl::flat_hash_map<evm::Address, TransformationRecord>());
+            _transformations.try_emplace(record.transformation().name(), absl::flat_hash_map<chain::Address, TransformationRecord>());
         }
 
         if(_transformations.at(record.transformation().name()).contains(address))
@@ -263,7 +263,7 @@ namespace dcn::registry
             co_return false;
         }
         
-        std::optional<evm::Address> owner_res = evmc::from_hex<evm::Address>(record.owner());
+        std::optional<chain::Address> owner_res = evmc::from_hex<chain::Address>(record.owner());
         if(!owner_res)
         {
             spdlog::error("Failed to parse owner address");
@@ -286,7 +286,7 @@ namespace dcn::registry
         co_return (co_await getTransformation(name, _newest_transformation.at(name)));
     }
 
-    asio::awaitable<std::optional<Transformation>> Registry::getTransformation(const std::string& name, const evm::Address & address) const
+    asio::awaitable<std::optional<Transformation>> Registry::getTransformation(const std::string& name, const chain::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -304,7 +304,7 @@ namespace dcn::registry
     }
 
 
-    asio::awaitable<bool> Registry::addCondition(evm::Address address, ConditionRecord record)
+    asio::awaitable<bool> Registry::addCondition(chain::Address address, ConditionRecord record)
     {
         if(record.condition().name().empty())
         {
@@ -317,7 +317,7 @@ namespace dcn::registry
         if(!co_await containsConditionBucket(record.condition().name())) 
         {
             spdlog::debug("Condition bucket `{}` does not exists, creating new one ... ", record.condition().name());
-            _conditions.try_emplace(record.condition().name(), absl::flat_hash_map<evm::Address, ConditionRecord>());
+            _conditions.try_emplace(record.condition().name(), absl::flat_hash_map<chain::Address, ConditionRecord>());
         }
 
         if(_conditions.at(record.condition().name()).contains(address))
@@ -326,7 +326,7 @@ namespace dcn::registry
             co_return false;
         }
         
-        std::optional<evm::Address> owner_res = evmc::from_hex<evm::Address>(record.owner());
+        std::optional<chain::Address> owner_res = evmc::from_hex<chain::Address>(record.owner());
         if(!owner_res)
         {
             spdlog::error("Failed to parse owner address");
@@ -349,7 +349,7 @@ namespace dcn::registry
         co_return (co_await getCondition(name, _newest_condition.at(name)));
     }
 
-    asio::awaitable<std::optional<Condition>> Registry::getCondition(const std::string& name, const evm::Address & address) const
+    asio::awaitable<std::optional<Condition>> Registry::getCondition(const std::string& name, const chain::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -366,7 +366,7 @@ namespace dcn::registry
         co_return it->second.condition();
     }
 
-    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedParticles(const evm::Address & address) const
+    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedParticles(const chain::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -374,7 +374,7 @@ namespace dcn::registry
         co_return _owned_particles.at(address);
     }
 
-    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedFeatures(const evm::Address & address) const
+    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedFeatures(const chain::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -382,7 +382,7 @@ namespace dcn::registry
         co_return _owned_features.at(address);
     }
 
-    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedTransformations(const evm::Address & address) const
+    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedTransformations(const chain::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -390,7 +390,7 @@ namespace dcn::registry
         co_return _owned_transformations.at(address);
     }
 
-    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedConditions(const evm::Address & address) const
+    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedConditions(const chain::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 

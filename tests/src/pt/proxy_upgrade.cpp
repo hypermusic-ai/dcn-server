@@ -43,16 +43,16 @@ namespace
         return std::filesystem::path(DECENTRALISED_ART_TEST_PT_PATH);
     }
 
-    evm::Address expectedGenesisAddress()
+    chain::Address expectedGenesisAddress()
     {
-        evm::Address genesis_address{};
+        chain::Address genesis_address{};
         std::memcpy(genesis_address.bytes + (20 - 7), "genesis", 7);
         return genesis_address;
     }
 
-    evm::Address makeAddressFromSuffix(const char* suffix)
+    chain::Address makeAddressFromSuffix(const char* suffix)
     {
-        evm::Address address{};
+        chain::Address address{};
         const std::size_t suffix_len = std::strlen(suffix);
         if(suffix_len <= 20)
         {
@@ -61,7 +61,7 @@ namespace
         return address;
     }
 
-    bool isZeroAddress(const evm::Address & address)
+    bool isZeroAddress(const chain::Address & address)
     {
         return std::ranges::all_of(address.bytes, [](std::uint8_t b) { return b == 0; });
     }
@@ -75,11 +75,11 @@ namespace
         return future.get();
     }
 
-    std::vector<std::uint8_t> makeUpgradeToAndCallInput(const evm::Address & new_implementation)
+    std::vector<std::uint8_t> makeUpgradeToAndCallInput(const chain::Address & new_implementation)
     {
         std::vector<std::uint8_t> input;
 
-        const auto selector = evm::constructSelector("upgradeToAndCall(address,bytes)");
+        const auto selector = crypto::constructSelector("upgradeToAndCall(address,bytes)");
         input.insert(input.end(), selector.begin(), selector.end());
 
         const auto implementation_arg = evm::encodeAsArg(new_implementation);
@@ -104,7 +104,7 @@ namespace
     {
         std::vector<std::uint8_t> input_data;
 
-        const auto selector = evm::constructSelector("gen(string,uint32,(uint32,uint32)[])");
+        const auto selector = crypto::constructSelector("gen(string,uint32,(uint32,uint32)[])");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         std::vector<std::uint8_t> offset_to_string(32, 0);
@@ -188,7 +188,7 @@ namespace
     {
         asio::io_context io_context{};
         evm::EVM evm_instance;
-        evm::Address genesis_address;
+        chain::Address genesis_address;
 
         ProxyTestEnv()
             : evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath()),
@@ -238,7 +238,7 @@ contract RunnerV2 is Runner {
         return source_path;
     }
 
-    std::expected<evm::Address, std::string> deployRunnerV2(ProxyTestEnv & env)
+    std::expected<chain::Address, std::string> deployRunnerV2(ProxyTestEnv & env)
     {
         const auto source_path = writeRunnerV2Source();
         const std::filesystem::path out_dir = buildPath() / "tests" / "proxy_upgrade_build";
@@ -303,7 +303,7 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradeRequiresOwnerAndSwapsImplementatio
     const auto runner_v2_implementation = *runner_v2_result;
 
     // `version()` does not exist before upgrade
-    std::vector<std::uint8_t> version_input = evm::constructSelector("version()");
+    std::vector<std::uint8_t> version_input = crypto::constructSelector("version()");
     {
         // This revert is expected: V1 does not expose `version()`.
         const ScopedLogLevel suppress_expected_revert_logs(spdlog::level::critical);
@@ -366,7 +366,11 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradeRequiresOwnerAndSwapsImplementatio
     // storage remains intact across upgrade
     const auto owner_result = runAwaitable(env.io_context, evm::fetchOwner(env.evm_instance, runner_proxy));
     ASSERT_TRUE(owner_result.has_value());
-    EXPECT_EQ(evm::decodeReturnedValue<evm::Address>(owner_result.value()), env.genesis_address);
+
+    auto owner_address_res = chain::readAddressWord(owner_result.value());
+    ASSERT_TRUE(owner_address_res.has_value());
+
+    EXPECT_EQ(owner_address_res.value(), env.genesis_address);
 }
 
 TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
@@ -455,7 +459,10 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
             0));
 
     ASSERT_TRUE(generation_before_upgrade.has_value());
-    const auto samples_before_upgrade = evm::decodeReturnedValue<std::vector<Samples>>(generation_before_upgrade.value());
+    const auto samples_before_upgrade_res = parse::decodeBytes<std::vector<Samples>>(generation_before_upgrade.value());
+    ASSERT_TRUE(samples_before_upgrade_res.has_value());
+
+    const auto & samples_before_upgrade = samples_before_upgrade_res.value();
     ASSERT_EQ(samples_before_upgrade.size(), 1u);
     EXPECT_EQ(samples_before_upgrade[0].path(), "/PersistParticle:0");
     ASSERT_EQ(samples_before_upgrade[0].data_size(), 8);
@@ -484,7 +491,7 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
         env.evm_instance.execute(
             env.genesis_address,
             runner_proxy,
-            evm::constructSelector("version()"),
+            crypto::constructSelector("version()"),
             evm::DEFAULT_GAS_LIMIT,
             0));
     ASSERT_TRUE(version_after_upgrade.has_value());
@@ -501,6 +508,10 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
             0));
 
     ASSERT_TRUE(generation_after_upgrade.has_value());
-    const auto samples_after_upgrade = evm::decodeReturnedValue<std::vector<Samples>>(generation_after_upgrade.value());
+    const auto samples_after_upgrade_res = parse::decodeBytes<std::vector<Samples>>(generation_after_upgrade.value());
+    ASSERT_TRUE(samples_after_upgrade_res.has_value());
+
+    const auto & samples_after_upgrade = samples_after_upgrade_res.value();
+    
     expectSamplesEqual(samples_before_upgrade, samples_after_upgrade);
 }

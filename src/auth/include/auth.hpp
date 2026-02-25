@@ -21,7 +21,7 @@ using namespace asio::experimental::awaitable_operators;
 #include "keccak256.hpp"
 #include "http.hpp"
 #include "parse_error.hpp"
-#include "evm.hpp"
+#include "chain.hpp"
 
 namespace dcn::auth
 {
@@ -56,19 +56,19 @@ namespace dcn::auth
             
             ~AuthManager() = default;
 
-            asio::awaitable<std::string> generateNonce(const evm::Address & address);
+            asio::awaitable<std::string> generateNonce(const chain::Address & address);
 
-            asio::awaitable<bool> verifyNonce(const evm::Address & address, const std::string & nonce);
+            asio::awaitable<bool> verifyNonce(const chain::Address & address, const std::string & nonce);
 
-            asio::awaitable<bool> verifySignature(const evm::Address & address, const std::string& signature, const std::string& message);
+            asio::awaitable<bool> verifySignature(const chain::Address & address, const std::string& signature, const std::string& message);
 
-            asio::awaitable<std::string> generateAccessToken(const evm::Address & address);
+            asio::awaitable<std::string> generateAccessToken(const chain::Address & address);
 
-            asio::awaitable<std::expected<evm::Address, AuthError>> verifyAccessToken(std::string token) const;
+            asio::awaitable<std::expected<chain::Address, AuthError>> verifyAccessToken(std::string token) const;
 
-            asio::awaitable<bool> compareAccessToken(const evm::Address & address, std::string token) const;
+            asio::awaitable<bool> compareAccessToken(const chain::Address & address, std::string token) const;
 
-            asio::awaitable<void> invalidateAccessToken(const evm::Address & address);
+            asio::awaitable<void> invalidateAccessToken(const chain::Address & address);
 
         private:
             asio::strand<asio::io_context::executor_type> _strand;
@@ -78,9 +78,9 @@ namespace dcn::auth
             static std::random_device _rng;
 
             std::uniform_int_distribution<int> _dist;
-            absl::flat_hash_map<evm::Address, std::string> _nonces;
+            absl::flat_hash_map<chain::Address, std::string> _nonces;
 
-            absl::flat_hash_map<evm::Address, std::string> _access_tokens;
+            absl::flat_hash_map<chain::Address, std::string> _access_tokens;
     };
 }
 

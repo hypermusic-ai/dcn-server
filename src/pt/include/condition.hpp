@@ -9,6 +9,7 @@
 #include "condition.pb.h"
 
 #include "parser.hpp"
+#include "address.hpp"
 
 namespace dcn
 {
@@ -26,6 +27,29 @@ namespace dcn
     }
 
     std::string constructConditionSolidityCode(const Condition & condition);
+}
+
+namespace dcn::pt
+{
+    struct ConditionAddedEvent
+    {
+        chain::Address caller{};
+        std::string name;
+        chain::Address condition_address{};
+        chain::Address owner{};
+        std::uint32_t args_count{};
+    };
+
+    std::optional<ConditionAddedEvent> decodeConditionAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics);
+
+    std::optional<ConditionAddedEvent> decodeConditionAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex);
+
 }
 
 namespace dcn::parse

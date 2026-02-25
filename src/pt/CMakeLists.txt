@@ -8,7 +8,8 @@ add_module(NAME "PT"
         "${PROJECT_PREFIX}::Utils"
         "${PROJECT_PREFIX}::Parser"
         "${PROJECT_PREFIX}::Crypto"
-        
+        "${PROJECT_PREFIX}::Chain"
+
         absl::hash
         spdlog::spdlog
         asio

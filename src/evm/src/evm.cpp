@@ -3,22 +3,8 @@
 
 namespace dcn::evm
 {
-    std::vector<std::uint8_t> constructSelector(std::string signature)
-    {
-        std::uint8_t hash[32];
-        crypto::Keccak256::getHash(reinterpret_cast<const uint8_t*>(signature.data()), signature.size(), hash);
-        return std::vector<std::uint8_t>(hash, hash + 4);
-    }
-
-    evmc::bytes32 constructEventTopic(std::string signature)
-    {
-        evmc::bytes32 topic{};
-        crypto::Keccak256::getHash(reinterpret_cast<const uint8_t*>(signature.data()), signature.size(), topic.bytes);
-        return topic;
-    }
-
     template<>
-    std::vector<std::uint8_t> encodeAsArg<Address>(const Address & address)
+    std::vector<std::uint8_t> encodeAsArg<chain::Address>(const chain::Address & address)
     {
         std::vector<std::uint8_t> encoded(32, 0); // Initialize with 32 zero bytes
         std::copy(address.bytes, address.bytes + 20, encoded.begin() + 12); // Right-align in last 20 bytes
@@ -126,740 +112,11 @@ namespace dcn::evm
         return encoded;
     }
 
-
-    static std::uint32_t _readUint32(const std::vector<std::uint8_t> & bytes, std::size_t offset) {
-        std::uint32_t value = 0;
-        for (std::size_t i = 0; i < 4; ++i) {
-            value <<= 8;
-            value |= bytes[offset + i];
-        }
-        return value;
-    }
-
-    static std::uint32_t _readUint32Padded(const std::vector<uint8_t>& bytes, std::size_t offset) {
-        // Read last 4 bytes of 32-byte ABI word
-        assert(offset + 32 <= bytes.size());
-        uint32_t value = 0;
-        for (int i = 28; i < 32; ++i) {
-            value = (value << 8) | bytes[offset + i];
-        }
-        return value;
-    }
-
-    static std::uint64_t _readUint256(const std::vector<std::uint8_t> & bytes, std::size_t offset) {
-        std::uint64_t value = 0;
-        for (std::size_t i = 0; i < 32; ++i) {
-            value <<= 8;
-            value |= bytes[offset + i];
-        }
-        return value;
-    }
-
-
-    static std::uint64_t _readOffset(const std::vector<std::uint8_t> & bytes, std::size_t offset) {
-        std::size_t return_offset = 0;
-        for (int i = 0; i < 32; ++i)
-            return_offset = (return_offset << 8) | bytes[offset + i];
-        return_offset += 32;
-        return return_offset;
-    }
-
-    static std::optional<std::size_t> _readWordAsSizeT(const std::uint8_t* data, std::size_t data_size, std::size_t offset)
-    {
-        if(data == nullptr || offset + 32 > data_size)
-        {
-            return std::nullopt;
-        }
-
-        std::size_t value = 0;
-
-        constexpr std::size_t prefix = 32 - sizeof(std::size_t);
-        for(std::size_t i = 0; i < prefix; ++i)
-        {
-            if(data[offset + i] != 0)
-            {
-                return std::nullopt;
-            }
-        }
-
-        for(std::size_t i = prefix; i < 32; ++i)
-        {
-            value = (value << 8) | data[offset + i];
-        }
-
-        return value;
-    }
-
-    static std::optional<Address> _readAddressWord(const std::uint8_t* data, std::size_t data_size, std::size_t offset)
-    {
-        if(data == nullptr || offset + 32 > data_size)
-        {
-            return std::nullopt;
-        }
-
-        Address addr{};
-        std::memcpy(addr.bytes, data + offset + 12, 20);
-        return addr;
-    }
-
-    static Address _topicWordToAddress(const evmc::bytes32 & topic_word)
-    {
-        Address addr{};
-        std::memcpy(addr.bytes, topic_word.bytes + 12, 20);
-        return addr;
-    }
-
-    static std::optional<std::string> _decodeAbiString(const std::uint8_t* data, std::size_t data_size, std::size_t string_offset)
-    {
-        const auto length_res = _readWordAsSizeT(data, data_size, string_offset);
-        if(!length_res)
-        {
-            return std::nullopt;
-        }
-
-        const std::size_t length = *length_res;
-        if(string_offset + 32 > data_size || length > (data_size - (string_offset + 32)))
-        {
-            return std::nullopt;
-        }
-
-        return std::string(reinterpret_cast<const char*>(data + string_offset + 32), length);
-    }
-
-    static std::optional<std::vector<std::string>> _decodeAbiStringArray(const std::uint8_t* data, std::size_t data_size, std::size_t array_offset)
-    {
-        const auto length_res = _readWordAsSizeT(data, data_size, array_offset);
-        if(!length_res)
-        {
-            return std::nullopt;
-        }
-
-        const std::size_t length = *length_res;
-        const std::size_t head_start = array_offset + 32;
-
-        if(head_start > data_size)
-        {
-            return std::nullopt;
-        }
-
-        if(length > (std::numeric_limits<std::size_t>::max() / 32))
-        {
-            return std::nullopt;
-        }
-
-        const std::size_t head_size = length * 32;
-        if(head_size > (data_size - head_start))
-        {
-            return std::nullopt;
-        }
-
-        std::vector<std::string> out;
-        out.reserve(length);
-
-        for(std::size_t i = 0; i < length; ++i)
-        {
-            const auto rel_offset_res = _readWordAsSizeT(data, data_size, head_start + i * 32);
-            if(!rel_offset_res)
-            {
-                return std::nullopt;
-            }
-
-            const std::size_t elem_offset = head_start + *rel_offset_res;
-            const auto elem_res = _decodeAbiString(data, data_size, elem_offset);
-            if(!elem_res)
-            {
-                return std::nullopt;
-            }
-
-            out.push_back(*elem_res);
-        }
-
-        return out;
-    }
-
-    static std::optional<std::vector<std::int32_t>> _decodeAbiInt32Array(const std::uint8_t* data, std::size_t data_size, std::size_t array_offset)
-    {
-        const auto length_res = _readWordAsSizeT(data, data_size, array_offset);
-        if(!length_res)
-        {
-            return std::nullopt;
-        }
-
-        const std::size_t length = *length_res;
-        const std::size_t first_value_offset = array_offset + 32;
-
-        if(first_value_offset > data_size)
-        {
-            return std::nullopt;
-        }
-
-        if(length > (std::numeric_limits<std::size_t>::max() / 32))
-        {
-            return std::nullopt;
-        }
-
-        const std::size_t values_size = length * 32;
-        if(values_size > (data_size - first_value_offset))
-        {
-            return std::nullopt;
-        }
-
-        std::vector<std::int32_t> out;
-        out.reserve(length);
-
-        for(std::size_t i = 0; i < length; ++i)
-        {
-            const std::size_t word_offset = first_value_offset + i * 32;
-            const std::uint8_t* word = data + word_offset;
-
-            const std::uint32_t raw_value =
-                (static_cast<std::uint32_t>(word[28]) << 24) |
-                (static_cast<std::uint32_t>(word[29]) << 16) |
-                (static_cast<std::uint32_t>(word[30]) << 8) |
-                static_cast<std::uint32_t>(word[31]);
-
-            const bool negative = (raw_value & 0x80000000u) != 0;
-            const std::uint8_t expected_sign = negative ? 0xFF : 0x00;
-            for(std::size_t b = 0; b < 28; ++b)
-            {
-                if(word[b] != expected_sign)
-                {
-                    return std::nullopt;
-                }
-            }
-
-            out.push_back(static_cast<std::int32_t>(raw_value));
-        }
-
-        return out;
-    }
-
-    static std::optional<std::uint32_t> _readUint32Word(const std::uint8_t* data, std::size_t data_size, std::size_t offset)
-    {
-        const auto value_res = _readWordAsSizeT(data, data_size, offset);
-        if(!value_res || *value_res > static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max()))
-        {
-            return std::nullopt;
-        }
-
-        return static_cast<std::uint32_t>(*value_res);
-    }
-
-    static std::optional<std::vector<evmc::bytes32>> _decodeTopicWords(const std::vector<std::string> & topics_hex)
-    {
-        if(topics_hex.empty())
-        {
-            return std::nullopt;
-        }
-
-        std::vector<evmc::bytes32> topic_words;
-        topic_words.reserve(topics_hex.size());
-        for(const std::string & topic_hex : topics_hex)
-        {
-            const auto topic_word = evmc::from_hex<evmc::bytes32>(topic_hex);
-            if(!topic_word)
-            {
-                return std::nullopt;
-            }
-            topic_words.push_back(*topic_word);
-        }
-
-        return topic_words;
-    }
-
-    std::optional<ParticleAddedEvent> decodeParticleAddedEvent(
-        const std::uint8_t* data,
-        std::size_t data_size,
-        const evmc::bytes32 topics[],
-        std::size_t num_topics)
-    {
-        if(data == nullptr || topics == nullptr || num_topics < 3 || data_size < 32 * 6)
-        {
-            return std::nullopt;
-        }
-
-        const evmc::bytes32 expected_topic = constructEventTopic(
-            "ParticleAdded(address,address,string,address,string,string[],string,int32[])");
-
-        if(topics[0] != expected_topic)
-        {
-            return std::nullopt;
-        }
-
-        ParticleAddedEvent event{};
-        event.caller = _topicWordToAddress(topics[1]);
-        event.owner = _topicWordToAddress(topics[2]);
-
-        const auto name_offset = _readWordAsSizeT(data, data_size, 0);
-        const auto particle_address = _readAddressWord(data, data_size, 32);
-        const auto feature_offset = _readWordAsSizeT(data, data_size, 64);
-        const auto composites_offset = _readWordAsSizeT(data, data_size, 96);
-        const auto condition_offset = _readWordAsSizeT(data, data_size, 128);
-        const auto condition_args_offset = _readWordAsSizeT(data, data_size, 160);
-
-        if(!name_offset || !particle_address || !feature_offset || !composites_offset || !condition_offset || !condition_args_offset)
-        {
-            return std::nullopt;
-        }
-
-        const auto name = _decodeAbiString(data, data_size, *name_offset);
-        const auto feature_name = _decodeAbiString(data, data_size, *feature_offset);
-        const auto composite_names = _decodeAbiStringArray(data, data_size, *composites_offset);
-        const auto condition_name = _decodeAbiString(data, data_size, *condition_offset);
-        const auto condition_args = _decodeAbiInt32Array(data, data_size, *condition_args_offset);
-
-        if(!name || !feature_name || !composite_names || !condition_name || !condition_args)
-        {
-            return std::nullopt;
-        }
-
-        event.name = *name;
-        event.particle_address = *particle_address;
-        event.feature_name = *feature_name;
-        event.composite_names = *composite_names;
-        event.condition_name = *condition_name;
-        event.condition_args = *condition_args;
-
-        return event;
-    }
-
-    std::optional<ParticleAddedEvent> decodeParticleAddedEvent(
-        const std::string & data_hex,
-        const std::vector<std::string> & topics_hex)
-    {
-        const auto data_bytes = evmc::from_hex(data_hex);
-        if(!data_bytes)
-        {
-            return std::nullopt;
-        }
-
-        const auto topic_words = _decodeTopicWords(topics_hex);
-        if(!topic_words)
-        {
-            return std::nullopt;
-        }
-
-        return decodeParticleAddedEvent(
-            data_bytes->data(),
-            data_bytes->size(),
-            topic_words->data(),
-            topic_words->size());
-    }
-
-    std::optional<FeatureAddedEvent> decodeFeatureAddedEvent(
-        const std::uint8_t* data,
-        std::size_t data_size,
-        const evmc::bytes32 topics[],
-        std::size_t num_topics)
-    {
-        if(data == nullptr || topics == nullptr || num_topics < 1 || data_size < 32 * 5)
-        {
-            return std::nullopt;
-        }
-
-        const evmc::bytes32 expected_topic = constructEventTopic(
-            "FeatureAdded(address,string,address,address,uint32)");
-
-        if(topics[0] != expected_topic)
-        {
-            return std::nullopt;
-        }
-
-        const auto caller = _readAddressWord(data, data_size, 0);
-        const auto name_offset = _readWordAsSizeT(data, data_size, 32);
-        const auto feature_address = _readAddressWord(data, data_size, 64);
-        const auto owner = _readAddressWord(data, data_size, 96);
-        const auto dimensions_count = _readUint32Word(data, data_size, 128);
-        if(!caller || !name_offset || !feature_address || !owner || !dimensions_count)
-        {
-            return std::nullopt;
-        }
-
-        const auto name = _decodeAbiString(data, data_size, *name_offset);
-        if(!name)
-        {
-            return std::nullopt;
-        }
-
-        return FeatureAddedEvent{
-            .caller = *caller,
-            .name = *name,
-            .feature_address = *feature_address,
-            .owner = *owner,
-            .dimensions_count = *dimensions_count
-        };
-    }
-
-    std::optional<FeatureAddedEvent> decodeFeatureAddedEvent(
-        const std::string & data_hex,
-        const std::vector<std::string> & topics_hex)
-    {
-        const auto data_bytes = evmc::from_hex(data_hex);
-        if(!data_bytes)
-        {
-            return std::nullopt;
-        }
-
-        const auto topic_words = _decodeTopicWords(topics_hex);
-        if(!topic_words)
-        {
-            return std::nullopt;
-        }
-
-        return decodeFeatureAddedEvent(
-            data_bytes->data(),
-            data_bytes->size(),
-            topic_words->data(),
-            topic_words->size());
-    }
-
-    std::optional<TransformationAddedEvent> decodeTransformationAddedEvent(
-        const std::uint8_t* data,
-        std::size_t data_size,
-        const evmc::bytes32 topics[],
-        std::size_t num_topics)
-    {
-        if(data == nullptr || topics == nullptr || num_topics < 1 || data_size < 32 * 5)
-        {
-            return std::nullopt;
-        }
-
-        const evmc::bytes32 expected_topic = constructEventTopic(
-            "TransformationAdded(address,string,address,address,uint32)");
-
-        if(topics[0] != expected_topic)
-        {
-            return std::nullopt;
-        }
-
-        const auto caller = _readAddressWord(data, data_size, 0);
-        const auto name_offset = _readWordAsSizeT(data, data_size, 32);
-        const auto transformation_address = _readAddressWord(data, data_size, 64);
-        const auto owner = _readAddressWord(data, data_size, 96);
-        const auto args_count = _readUint32Word(data, data_size, 128);
-        if(!caller || !name_offset || !transformation_address || !owner || !args_count)
-        {
-            return std::nullopt;
-        }
-
-        const auto name = _decodeAbiString(data, data_size, *name_offset);
-        if(!name)
-        {
-            return std::nullopt;
-        }
-
-        return TransformationAddedEvent{
-            .caller = *caller,
-            .name = *name,
-            .transformation_address = *transformation_address,
-            .owner = *owner,
-            .args_count = *args_count
-        };
-    }
-
-    std::optional<TransformationAddedEvent> decodeTransformationAddedEvent(
-        const std::string & data_hex,
-        const std::vector<std::string> & topics_hex)
-    {
-        const auto data_bytes = evmc::from_hex(data_hex);
-        if(!data_bytes)
-        {
-            return std::nullopt;
-        }
-
-        const auto topic_words = _decodeTopicWords(topics_hex);
-        if(!topic_words)
-        {
-            return std::nullopt;
-        }
-
-        return decodeTransformationAddedEvent(
-            data_bytes->data(),
-            data_bytes->size(),
-            topic_words->data(),
-            topic_words->size());
-    }
-
-    std::optional<ConditionAddedEvent> decodeConditionAddedEvent(
-        const std::uint8_t* data,
-        std::size_t data_size,
-        const evmc::bytes32 topics[],
-        std::size_t num_topics)
-    {
-        if(data == nullptr || topics == nullptr || num_topics < 1 || data_size < 32 * 5)
-        {
-            return std::nullopt;
-        }
-
-        const evmc::bytes32 expected_topic = constructEventTopic(
-            "ConditionAdded(address,string,address,address,uint32)");
-
-        if(topics[0] != expected_topic)
-        {
-            return std::nullopt;
-        }
-
-        const auto caller = _readAddressWord(data, data_size, 0);
-        const auto name_offset = _readWordAsSizeT(data, data_size, 32);
-        const auto condition_address = _readAddressWord(data, data_size, 64);
-        const auto owner = _readAddressWord(data, data_size, 96);
-        const auto args_count = _readUint32Word(data, data_size, 128);
-        if(!caller || !name_offset || !condition_address || !owner || !args_count)
-        {
-            return std::nullopt;
-        }
-
-        const auto name = _decodeAbiString(data, data_size, *name_offset);
-        if(!name)
-        {
-            return std::nullopt;
-        }
-
-        return ConditionAddedEvent{
-            .caller = *caller,
-            .name = *name,
-            .condition_address = *condition_address,
-            .owner = *owner,
-            .args_count = *args_count
-        };
-    }
-
-    std::optional<ConditionAddedEvent> decodeConditionAddedEvent(
-        const std::string & data_hex,
-        const std::vector<std::string> & topics_hex)
-    {
-        const auto data_bytes = evmc::from_hex(data_hex);
-        if(!data_bytes)
-        {
-            return std::nullopt;
-        }
-
-        const auto topic_words = _decodeTopicWords(topics_hex);
-        if(!topic_words)
-        {
-            return std::nullopt;
-        }
-
-        return decodeConditionAddedEvent(
-            data_bytes->data(),
-            data_bytes->size(),
-            topic_words->data(),
-            topic_words->size());
-    }
-
-    DeployError _decodeDeployError(const evmc::Result& r)
-    {
-        if(r.output_data == nullptr || r.output_size < 4)
-        {
-            return DeployError{};
-        }
-
-        std::vector<std::uint8_t> selector;
-
-        selector = constructSelector("ParticleAlreadyRegistered(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::PARTICLE_ALREADY_REGISTERED};
-        }
-
-        selector = constructSelector("ParticleMissing(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::PARTICLE_MISSING};
-        }
-
-        selector = constructSelector("ParticleDimensionsMismatch(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::PARTICLE_DIMENSIONS_MISMATCH};
-        }
-
-        selector = constructSelector("FeatureAlreadyRegistered(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::FEATURE_ALREADY_REGISTERED};
-        }
-
-        selector = constructSelector("FeatureMissing(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::FEATURE_MISSING};
-        }
-
-        selector = constructSelector("TransformationAlreadyRegistered(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::TRANSFORMATION_ALREADY_REGISTERED};
-        }
-
-        selector = constructSelector("TransformationArgumentsMismatch(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::TRANSFORMATION_ARGUMENTS_MISMATCH};
-        }
-
-        selector = constructSelector("TransformationMissing(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::TRANSFORMATION_MISSING};
-        }
-
-        selector = constructSelector("ConditionAlreadyRegistered(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::CONDITION_ALREADY_REGISTERED};
-        }
-
-        selector = constructSelector("ConditionArgumentsMismatch(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::CONDITION_ARGUMENTS_MISMATCH};
-        }
-
-        selector = constructSelector("ConditionMissing(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::CONDITION_MISSING};
-        }
-
-        selector = constructSelector("RegistryError(uint32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::REGISTRY_ERROR};
-        }
-
-        return DeployError{};
-    }
-
-    ExecuteError _decodeExecuteError(const evmc::Result& r)
-    {
-        if(r.output_data == nullptr || r.output_size < 4)
-        {
-            return ExecuteError{};
-        }
-
-        std::vector<std::uint8_t> selector;
-
-        selector = constructSelector("ConditionNotMet(bytes32)");
-        spdlog::info(evmc::hex(selector.data()));
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return ExecuteError{ExecuteError::Kind::CONDITION_NOT_MET};
-        }
-
-        return ExecuteError{};
-    }
-
-
-    template<>
-    std::vector<std::vector<uint32_t>> decodeReturnedValue(const std::vector<std::uint8_t> & bytes)
-    {
-        assert(bytes.size() % 32 == 0);
-        std::vector<std::vector<uint32_t>> result;
-
-        std::size_t base_offset = _readUint256(bytes, 0);  // normally 32
-        std::size_t offset = base_offset;
-
-        uint64_t outer_len = _readUint256(bytes, offset);
-        offset += 32;
-
-        std::vector<std::size_t> inner_offsets;
-        for (uint64_t i = 0; i < outer_len; ++i) {
-            std::uint64_t inner_offset = _readUint256(bytes, offset);
-            inner_offsets.push_back(inner_offset + base_offset + 32);
-            offset += 32;
-        }
-
-        for (std::size_t inner_offset : inner_offsets) 
-        {
-            if (inner_offset + 32 > bytes.size()) {
-                throw std::runtime_error("Inner array header out of range");
-            }
-
-            std::uint64_t inner_len = _readUint256(bytes, inner_offset);
-            inner_offset += 32;
-
-            std::vector<uint32_t> inner_array;
-            for (std::uint64_t j = 0; j < inner_len; ++j) {
-                std::uint32_t val = _readUint32Padded(bytes, inner_offset + (j * 32));
-                inner_array.push_back(val);
-            }
-            result.push_back(std::move(inner_array));
-        }
-
-        return result;
-    }
-
-    template<>
-    Address decodeReturnedValue(const std::vector<std::uint8_t> & bytes)
-    {
-        if (bytes.size() < 32)
-            throw std::runtime_error("Invalid ABI data: less than 32 bytes");
-
-        Address result;
-        // Copy last 20 bytes from the 32-byte word (ABI stores address in the last 20 bytes)
-        std::copy(bytes.begin() + 12, bytes.begin() + 32, result.bytes);
-        return result;
-    }
-
-
-    template<>
-    std::vector<Samples> decodeReturnedValue(const std::vector<std::uint8_t>& bytes)
-    {
-        std::vector<Samples> result;
-
-        // Step 1: read base offset to array
-        std::size_t array_base = _readUint256(bytes, 0);  // should be 32
-
-        // Step 2: read array length
-        std::size_t array_len = _readUint256(bytes, array_base);  // at offset 32
-
-        // Step 3: read offsets to structs (relative to array_base)
-        std::vector<std::size_t> struct_offsets;
-        for (std::size_t i = 0; i < array_len; ++i) {
-            std::size_t struct_rel_offset = _readUint256(bytes, (array_base + 32) + (i * 32));
-            struct_offsets.push_back((array_base + 32) + struct_rel_offset);
-        }
-
-        // Step 4: parse each struct
-        for (std::size_t struct_offset : struct_offsets) 
-        {
-            Samples samples;
-
-            std::size_t path_rel = _readUint256(bytes, struct_offset);
-            std::size_t data_rel = _readUint256(bytes, struct_offset + 32);
-
-            // 4.2: resolve actual offsets
-            std::size_t path_offset = struct_offset + path_rel;
-            std::size_t data_offset = struct_offset + data_rel;
-
-            // 4.3: read string length and content
-            std::size_t str_len = _readUint256(bytes, path_offset);
-
-            samples.set_path(std::string(
-                reinterpret_cast<const char*>(&bytes[path_offset + 32]),
-                str_len
-            ));
-
-            // 4.4: read data length and entries
-            std::size_t data_len = _readUint256(bytes, data_offset);
-            std::vector<std::uint32_t> data;
-            for (std::size_t j = 0; j < data_len; ++j) {
-                std::uint32_t val = _readUint32Padded(bytes, data_offset + 32 + j * 32);
-                samples.add_data(val);
-            }
-
-            result.emplace_back(std::move(samples));
-        }
-
-        return result;
-    }
-
-    asio::awaitable<std::expected<std::vector<std::uint8_t>, ExecuteError>> fetchOwner(EVM & evm, const Address & address)
+    asio::awaitable<std::expected<std::vector<std::uint8_t>, chain::ExecuteError>> fetchOwner(EVM & evm, const chain::Address & address)
     {
         spdlog::debug(std::format("Fetching contract owner: {}", address));
         std::vector<uint8_t> input_data;
-        const auto selector = constructSelector("getOwner()");
+        const auto selector = crypto::constructSelector("getOwner()");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
         co_return co_await evm.execute(evm.getRegistryAddress(), address, input_data, 1'000'000, 0);
     }
@@ -897,12 +154,12 @@ namespace dcn::evm
         });
     }
     
-    Address EVM::getRegistryAddress() const
+    chain::Address EVM::getRegistryAddress() const
     {
         return _registry_address;
     }
 
-    Address EVM::getRunnerAddress() const
+    chain::Address EVM::getRunnerAddress() const
     {
         return _runner_address;
     }
@@ -917,7 +174,7 @@ namespace dcn::evm
         return _pt_path;
     }
 
-    asio::awaitable<bool> EVM::addAccount(Address address, std::uint64_t initial_gas) noexcept
+    asio::awaitable<bool> EVM::addAccount(chain::Address address, std::uint64_t initial_gas) noexcept
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -939,7 +196,7 @@ namespace dcn::evm
         co_return true;
     }
 
-    asio::awaitable<bool> EVM::setGas(Address address, std::uint64_t gas) noexcept
+    asio::awaitable<bool> EVM::setGas(chain::Address address, std::uint64_t gas) noexcept
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -1001,9 +258,9 @@ namespace dcn::evm
         co_return true;
     }
 
-    asio::awaitable<std::expected<Address, DeployError>> EVM::deploy(
+    asio::awaitable<std::expected<chain::Address, chain::DeployError>> EVM::deploy(
                         std::istream & code_stream,
-                        Address sender,
+                        chain::Address sender,
                         std::vector<std::uint8_t> constructor_args, 
                         std::uint64_t gas_limit,
                         std::uint64_t value) noexcept
@@ -1013,14 +270,20 @@ namespace dcn::evm
         if(!bytecode_result)
         {
             spdlog::error("Cannot parse bytecode");
-            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_BYTECODE});
+            co_return std::unexpected(chain::DeployError{
+                .kind = chain::DeployError::Kind::INVALID_INPUT,
+                .message = "Cannot parse bytecode"
+            });
         }
         const auto & bytecode = *bytecode_result;
 
         if(bytecode.size() == 0)
         {
             spdlog::error("Empty bytecode");
-            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_BYTECODE});
+            co_return std::unexpected(chain::DeployError{
+                .kind = chain::DeployError::Kind::INVALID_INPUT,
+                .message = "Empty bytecode"
+            });
         }
 
         if(!constructor_args.empty())
@@ -1063,7 +326,12 @@ namespace dcn::evm
 
         if (result.status_code != EVMC_SUCCESS)
         {
-            const DeployError error = _decodeDeployError(result);
+            const chain::DeployError error{
+                .kind = chain::DeployError::Kind::UNKNOWN,
+                .message = std::format("Failed to deploy contract: {}", result.status_code),
+                .result_bytes = std::vector<std::uint8_t>(result.output_data, result.output_data + result.output_size)
+            };
+
             spdlog::error(std::format("Failed to deploy contract: {}, error: {}", result.status_code, error.kind));
             co_return std::unexpected(error);
         }
@@ -1079,9 +347,9 @@ namespace dcn::evm
         co_return result.create_address;
      }
 
-    asio::awaitable<std::expected<Address, DeployError>> EVM::deploy(
+    asio::awaitable<std::expected<chain::Address, chain::DeployError>> EVM::deploy(
                         std::filesystem::path code_path,
-                        Address sender,
+                        chain::Address sender,
                         std::vector<uint8_t> constructor_args,
                         std::uint64_t gas_limit,
                         std::uint64_t value) noexcept
@@ -1091,9 +359,9 @@ namespace dcn::evm
         co_return co_await deploy(file, std::move(sender), std::move(constructor_args),  gas_limit, value);
     }
 
-    asio::awaitable<std::expected<std::vector<std::uint8_t>, ExecuteError>> EVM::execute(
-                    Address sender,
-                    Address recipient,
+    asio::awaitable<std::expected<std::vector<std::uint8_t>, chain::ExecuteError>> EVM::execute(
+                    chain::Address sender,
+                    chain::Address recipient,
                     std::vector<std::uint8_t> input_bytes,
                     std::uint64_t gas_limit,
                     std::uint64_t value) noexcept
@@ -1101,7 +369,10 @@ namespace dcn::evm
         if(std::ranges::all_of(recipient.bytes, [](uint8_t b) { return b == 0; }))
         {
             spdlog::error("Cannot create a contract with execute function. Use dedicated deploy method.");
-            co_return std::unexpected(ExecuteError{ExecuteError::Kind::UNKNOWN});
+            co_return std::unexpected(chain::ExecuteError{
+                .kind = chain::ExecuteError::Kind::INVALID_INPUT,
+                .message = "Cannot create a contract with execute function. Use dedicated deploy method."
+            });
         }
 
         evmc_message msg{};
@@ -1130,7 +401,12 @@ namespace dcn::evm
         
         if (result.status_code != EVMC_SUCCESS)
         {
-            const ExecuteError error = _decodeExecuteError(result);
+            const chain::ExecuteError error
+            {
+                .kind = chain::ExecuteError::Kind::TRANSACTION_REVERTED,
+                .result_bytes = std::vector<std::uint8_t>(result.output_data, result.output_data + result.output_size)
+            };
+
             std::string output_hex = "<empty>";
             if(result.output_data != nullptr && result.output_size > 0)
             {

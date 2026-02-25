@@ -10,10 +10,10 @@
 #include <asio.hpp>
 #include <nlohmann/json_fwd.hpp>
 
-#include "evm.hpp"
-#include "registry.hpp"
+#include "address.hpp"
+#include "crypto.hpp"
 
-namespace dcn::mainnet
+namespace dcn::chain
 {
     using RpcCall = std::function<std::optional<nlohmann::json>(const std::string & rpc_url, const nlohmann::json & request)>;
 
@@ -22,7 +22,7 @@ namespace dcn::mainnet
         bool enabled = false;
 
         std::string rpc_url;
-        evm::Address registry_address{};
+        chain::Address registry_address{};
 
         std::optional<std::uint64_t> start_block;
         std::uint64_t poll_interval_ms = 5000;
@@ -39,6 +39,6 @@ namespace dcn::mainnet
         bool skip_sleep = false;
     };
 
-    asio::awaitable<void> runEventIngestion(IngestionConfig cfg, registry::Registry & registry, IngestionRuntimeOptions runtime_options);
-    asio::awaitable<void> runEventIngestion(IngestionConfig cfg, registry::Registry & registry);
+    //asio::awaitable<void> runEventIngestion(IngestionConfig cfg, registry::Registry & registry, IngestionRuntimeOptions runtime_options);
+    //asio::awaitable<void> runEventIngestion(IngestionConfig cfg, registry::Registry & registry);
 }

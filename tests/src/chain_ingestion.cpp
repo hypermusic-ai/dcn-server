@@ -36,9 +36,9 @@ namespace
         return future.get();
     }
 
-    evm::Address makeAddressFromSuffix(const char* suffix)
+    chain::Address makeAddressFromSuffix(const char* suffix)
     {
-        evm::Address address{};
+        chain::Address address{};
         const std::size_t suffix_len = std::strlen(suffix);
         if(suffix_len <= 20)
         {
@@ -58,7 +58,7 @@ namespace
         return std::string("0x") + evmc::hex(value);
     }
 
-    std::string hexPrefixed(const evm::Address & value)
+    std::string hexPrefixed(const chain::Address & value)
     {
         return std::string("0x") + evmc::hex(value);
     }
@@ -78,7 +78,7 @@ namespace
         return out;
     }
 
-    std::vector<std::uint8_t> encodeAddressWord(const evm::Address & value)
+    std::vector<std::uint8_t> encodeAddressWord(const chain::Address & value)
     {
         std::vector<std::uint8_t> out(32, 0);
         std::memcpy(out.data() + 12, value.bytes, 20);
@@ -140,9 +140,9 @@ namespace
         return out;
     }
 
-    std::string encodeSimpleAddedEventDataLegacy(const evm::Address & caller,
+    std::string encodeSimpleAddedEventDataLegacy(const chain::Address & caller,
                                                  const std::string & name,
-                                                 const evm::Address & entity_address)
+                                                 const chain::Address & entity_address)
     {
         std::vector<std::uint8_t> out;
         const auto name_tail = encodeStringTail(name);
@@ -159,10 +159,10 @@ namespace
         return hexPrefixed(out);
     }
 
-    std::string encodeSimpleAddedEventDataV2(const evm::Address & caller,
+    std::string encodeSimpleAddedEventDataV2(const chain::Address & caller,
                                              const std::string & name,
-                                             const evm::Address & entity_address,
-                                             const evm::Address & owner,
+                                             const chain::Address & entity_address,
+                                             const chain::Address & owner,
                                              std::uint32_t count)
     {
         std::vector<std::uint8_t> out;
@@ -185,7 +185,7 @@ namespace
     }
 
     std::string encodeParticleAddedEventData(const std::string & name,
-                                             const evm::Address & particle_address,
+                                             const chain::Address & particle_address,
                                              const std::string & feature_name,
                                              const std::vector<std::string> & composite_names,
                                              const std::string & condition_name,
@@ -228,17 +228,17 @@ namespace
         return hexPrefixed(out);
     }
 
-    std::string encodeOwnerCallResult(const evm::Address & owner)
+    std::string encodeOwnerCallResult(const chain::Address & owner)
     {
         return hexPrefixed(encodeAddressWord(owner));
     }
 
     std::string topicForEvent(const std::string & signature)
     {
-        return hexPrefixed(evm::constructEventTopic(signature));
+        return hexPrefixed(crypto::constructEventTopic(signature));
     }
 
-    std::string topicForAddress(const evm::Address & address)
+    std::string topicForAddress(const chain::Address & address)
     {
         evmc::bytes32 topic_word{};
         std::memcpy(topic_word.bytes + 12, address.bytes, 20);
@@ -253,7 +253,7 @@ namespace
     std::filesystem::path makeStoragePath(const std::string & test_name)
     {
         const std::string unique_suffix = std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
-        const auto storage_path = buildPath() / "tests" / "mainnet_storage" / (test_name + "_" + unique_suffix);
+        const auto storage_path = buildPath() / "tests" / "chain_storage" / (test_name + "_" + unique_suffix);
 
         std::error_code ec;
         std::filesystem::remove_all(storage_path, ec);
@@ -335,18 +335,18 @@ namespace
     };
 }
 
-TEST_F(UnitTest, Mainnet_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
+TEST_F(UnitTest, Chain_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
 {
     asio::io_context io_context{};
     registry::Registry registry(io_context);
 
     const auto storage_path = makeStoragePath("feature_particle_events");
 
-    const evm::Address registry_address = makeAddressFromSuffix("registry");
-    const evm::Address caller = makeAddressFromSuffix("caller");
-    const evm::Address owner = makeAddressFromSuffix("owner");
-    const evm::Address feature_address = makeAddressFromSuffix("feature");
-    const evm::Address particle_address = makeAddressFromSuffix("particle");
+    const chain::Address registry_address = makeAddressFromSuffix("registry");
+    const chain::Address caller = makeAddressFromSuffix("caller");
+    const chain::Address owner = makeAddressFromSuffix("owner");
+    const chain::Address feature_address = makeAddressFromSuffix("feature");
+    const chain::Address particle_address = makeAddressFromSuffix("particle");
 
     const json particle_log = {
         {"blockNumber", "0x64"},
@@ -384,7 +384,7 @@ TEST_F(UnitTest, Mainnet_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
         toLower(hexPrefixed(feature_address)),
         encodeOwnerCallResult(owner));
 
-    mainnet::IngestionConfig config;
+    chain::IngestionConfig config;
     config.enabled = true;
     config.rpc_url = "mock://rpc";
     config.registry_address = registry_address;
@@ -394,7 +394,7 @@ TEST_F(UnitTest, Mainnet_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
     config.block_batch_size = 100;
     config.storage_path = storage_path;
 
-    mainnet::IngestionRuntimeOptions runtime_options;
+    chain::IngestionRuntimeOptions runtime_options;
     runtime_options.rpc_call = [&rpc](const std::string & rpc_url, const json & request)
     {
         return rpc.call(rpc_url, request);
@@ -402,7 +402,7 @@ TEST_F(UnitTest, Mainnet_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
     runtime_options.max_polls = 1;
     runtime_options.skip_sleep = true;
 
-    runAwaitable(io_context, mainnet::runEventIngestion(config, registry, runtime_options));
+    runAwaitable(io_context, chain::runEventIngestion(config, registry, runtime_options));
 
     const auto feature_res = runAwaitable(io_context, registry.getFeature("FeatureAlpha", feature_address));
     ASSERT_TRUE(feature_res.has_value());
@@ -424,7 +424,7 @@ TEST_F(UnitTest, Mainnet_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
     EXPECT_TRUE(std::filesystem::exists(storage_path / "features" / "FeatureAlpha.json"));
     EXPECT_TRUE(std::filesystem::exists(storage_path / "particles" / "ParticleAlpha.json"));
 
-    const json cursor_state = readJsonFile(storage_path / "mainnet" / "cursor.json");
+    const json cursor_state = readJsonFile(storage_path / "chain" / "cursor.json");
     ASSERT_TRUE(cursor_state.is_object());
     EXPECT_EQ(cursor_state.value("next_block", ""), "0x65");
 
@@ -433,19 +433,19 @@ TEST_F(UnitTest, Mainnet_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
     EXPECT_EQ(rpc.eth_call_calls, 1);
 }
 
-TEST_F(UnitTest, Mainnet_Ingestion_RegistersTransformationAndConditionFromFetchedEvents)
+TEST_F(UnitTest, Chain_Ingestion_RegistersTransformationAndConditionFromFetchedEvents)
 {
     asio::io_context io_context{};
     registry::Registry registry(io_context);
 
     const auto storage_path = makeStoragePath("transformation_condition_events");
 
-    const evm::Address registry_address = makeAddressFromSuffix("registry");
-    const evm::Address transformation_caller = makeAddressFromSuffix("txcaller");
-    const evm::Address condition_caller = makeAddressFromSuffix("ccaller");
-    const evm::Address owner = makeAddressFromSuffix("owner");
-    const evm::Address transformation_address = makeAddressFromSuffix("transform");
-    const evm::Address condition_address = makeAddressFromSuffix("condition");
+    const chain::Address registry_address = makeAddressFromSuffix("registry");
+    const chain::Address transformation_caller = makeAddressFromSuffix("txcaller");
+    const chain::Address condition_caller = makeAddressFromSuffix("ccaller");
+    const chain::Address owner = makeAddressFromSuffix("owner");
+    const chain::Address transformation_address = makeAddressFromSuffix("transform");
+    const chain::Address condition_address = makeAddressFromSuffix("condition");
 
     const json transformation_log = {
         {"blockNumber", "0x2a"},
@@ -482,7 +482,7 @@ TEST_F(UnitTest, Mainnet_Ingestion_RegistersTransformationAndConditionFromFetche
         toLower(hexPrefixed(transformation_address)),
         encodeOwnerCallResult(owner));
 
-    mainnet::IngestionConfig config;
+    chain::IngestionConfig config;
     config.enabled = true;
     config.rpc_url = "mock://rpc";
     config.registry_address = registry_address;
@@ -492,7 +492,7 @@ TEST_F(UnitTest, Mainnet_Ingestion_RegistersTransformationAndConditionFromFetche
     config.block_batch_size = 100;
     config.storage_path = storage_path;
 
-    mainnet::IngestionRuntimeOptions runtime_options;
+    chain::IngestionRuntimeOptions runtime_options;
     runtime_options.rpc_call = [&rpc](const std::string & rpc_url, const json & request)
     {
         return rpc.call(rpc_url, request);
@@ -500,7 +500,7 @@ TEST_F(UnitTest, Mainnet_Ingestion_RegistersTransformationAndConditionFromFetche
     runtime_options.max_polls = 1;
     runtime_options.skip_sleep = true;
 
-    runAwaitable(io_context, mainnet::runEventIngestion(config, registry, runtime_options));
+    runAwaitable(io_context, chain::runEventIngestion(config, registry, runtime_options));
 
     const auto transformation_res = runAwaitable(io_context, registry.getTransformation("TransformAlpha", transformation_address));
     ASSERT_TRUE(transformation_res.has_value());
@@ -517,7 +517,7 @@ TEST_F(UnitTest, Mainnet_Ingestion_RegistersTransformationAndConditionFromFetche
     EXPECT_TRUE(std::filesystem::exists(storage_path / "transformations" / "TransformAlpha.json"));
     EXPECT_TRUE(std::filesystem::exists(storage_path / "conditions" / "ConditionAlpha.json"));
 
-    const json cursor_state = readJsonFile(storage_path / "mainnet" / "cursor.json");
+    const json cursor_state = readJsonFile(storage_path / "chain" / "cursor.json");
     ASSERT_TRUE(cursor_state.is_object());
     EXPECT_EQ(cursor_state.value("next_block", ""), "0x2b");
 

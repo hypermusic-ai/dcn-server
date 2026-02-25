@@ -4,6 +4,7 @@
 #include "feature.pb.h"
 
 #include "parser.hpp"
+#include "address.hpp"
 
 namespace dcn
 {
@@ -61,6 +62,30 @@ namespace dcn
     }
 
     std::string constructFeatureSolidityCode(const Feature & feature);
+}
+
+
+namespace dcn::pt
+{
+    struct FeatureAddedEvent
+    {
+        chain::Address caller{};
+        std::string name;
+        chain::Address feature_address{};
+        chain::Address owner{};
+        std::uint32_t dimensions_count{};
+    };
+
+    std::optional<FeatureAddedEvent> decodeFeatureAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics);
+
+    std::optional<FeatureAddedEvent> decodeFeatureAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex);
+
 }
 
 namespace dcn::parse

@@ -29,20 +29,20 @@ namespace
         bool success = false;
         std::string error_message;
 
-        evm::Address registry_address{};
-        evm::Address runner_address{};
-        evm::Address registry_owner{};
-        evm::Address runner_owner{};
+        chain::Address registry_address{};
+        chain::Address runner_address{};
+        chain::Address registry_owner{};
+        chain::Address runner_owner{};
     };
 
-    bool isZeroAddress(const evm::Address & address)
+    bool isZeroAddress(const chain::Address & address)
     {
         return std::ranges::all_of(address.bytes, [](std::uint8_t b) { return b == 0; });
     }
 
-    evm::Address expectedGenesisAddress()
+    chain::Address expectedGenesisAddress()
     {
-        evm::Address genesis_address{};
+        chain::Address genesis_address{};
         std::memcpy(genesis_address.bytes + (20 - 7), "genesis", 7);
         return genesis_address;
     }
@@ -112,8 +112,24 @@ namespace
                 return snapshot;
             }
 
-            snapshot.registry_owner = evm::decodeReturnedValue<evm::Address>(registry_owner_result.value());
-            snapshot.runner_owner = evm::decodeReturnedValue<evm::Address>(runner_owner_result.value());
+            auto registry_owner_address_res = chain::readAddressWord(registry_owner_result.value());
+
+            if(!registry_owner_address_res)
+            {
+                snapshot.error_message = std::format("readAddressWord(registry_owner_result) failed");
+                return snapshot;
+            }
+
+            auto runner_owner_address_res = chain::readAddressWord(runner_owner_result.value());
+
+            if(!runner_owner_address_res)
+            {
+                snapshot.error_message = std::format("readAddressWord(runner_owner_result) failed");
+                return snapshot;
+            }
+
+            snapshot.registry_owner = registry_owner_address_res.value();
+            snapshot.runner_owner = runner_owner_address_res.value();
             snapshot.success = true;
         }
         catch(const std::exception & e)

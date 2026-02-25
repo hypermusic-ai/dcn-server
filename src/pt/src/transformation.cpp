@@ -1,3 +1,8 @@
+#include <format>
+
+#include "crypto.hpp"
+#include "utils.hpp"
+
 #include "transformation.hpp"
 
 namespace dcn
@@ -61,6 +66,76 @@ namespace dcn
                 "require(args.length == this.getArgsCount(), \"wrong number of arguments\");\n"
                 + transformation.sol_src() + "\n}" // close function
                 "\n}"; // close contract
+    }
+}
+
+namespace dcn::pt
+{
+    std::optional<TransformationAddedEvent> decodeTransformationAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics)
+    {
+        if(data == nullptr || topics == nullptr || num_topics < 1 || data_size < 32 * 5)
+        {
+            return std::nullopt;
+        }
+
+        const evmc::bytes32 expected_topic = crypto::constructEventTopic(
+            "TransformationAdded(address,string,address,address,uint32)");
+
+        if(topics[0] != expected_topic)
+        {
+            return std::nullopt;
+        }
+
+        const auto caller = chain::readAddressWord(data, data_size, 0);
+        const auto name_offset = utils::readWordAsSizeT(data, data_size, 32);
+        const auto transformation_address = chain::readAddressWord(data, data_size, 64);
+        const auto owner = chain::readAddressWord(data, data_size, 96);
+        const auto args_count = utils::readUint32Word(data, data_size, 128);
+        if(!caller || !name_offset || !transformation_address || !owner || !args_count)
+        {
+            return std::nullopt;
+        }
+
+        const auto name = utils::decodeAbiString(data, data_size, *name_offset);
+        if(!name)
+        {
+            return std::nullopt;
+        }
+
+        return TransformationAddedEvent{
+            .caller = *caller,
+            .name = *name,
+            .transformation_address = *transformation_address,
+            .owner = *owner,
+            .args_count = *args_count
+        };
+    }
+
+    std::optional<TransformationAddedEvent> decodeTransformationAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex)
+    {
+        const auto data_bytes = evmc::from_hex(data_hex);
+        if(!data_bytes)
+        {
+            return std::nullopt;
+        }
+
+        const auto topic_words = crypto::decodeTopicWords(topics_hex);
+        if(!topic_words)
+        {
+            return std::nullopt;
+        }
+
+        return decodeTransformationAddedEvent(
+            data_bytes->data(),
+            data_bytes->size(),
+            topic_words->data(),
+            topic_words->size());
     }
 }
 

@@ -11,6 +11,7 @@ add_module(NAME "Loader"
     "${PROJECT_PREFIX}::File"
     "${PROJECT_PREFIX}::Registry"
     "${PROJECT_PREFIX}::Crypto"
+    "${PROJECT_PREFIX}::Chain"
 
     spdlog::spdlog
     asio

@@ -25,7 +25,10 @@ using namespace asio::experimental::awaitable_operators;
 #include "utils.hpp"
 #include "version.hpp"
 #include "loader.hpp"
-#include "mainnet.hpp"
+#include "chain.hpp"
+#include "crypto.hpp"
+
+#include "sepolia_backend.hpp"
 
 namespace dcn
 {

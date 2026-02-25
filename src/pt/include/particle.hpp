@@ -5,6 +5,8 @@
 
 #include "parser.hpp"
 
+#include "address.hpp"
+
 namespace dcn
 {
     /**
@@ -29,6 +31,32 @@ namespace dcn
     }
 
     std::string constructParticleSolidityCode(const Particle & particle);
+}
+
+namespace dcn::pt
+{
+    struct ParticleAddedEvent
+    {
+        chain::Address caller{};
+        chain::Address owner{};
+        std::string name;
+        chain::Address particle_address{};
+        std::string feature_name;
+        std::vector<std::string> composite_names;
+        std::string condition_name;
+        std::vector<std::int32_t> condition_args;
+    };
+
+    std::optional<ParticleAddedEvent> decodeParticleAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics);
+
+    std::optional<ParticleAddedEvent> decodeParticleAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex);
+
 }
 
 namespace dcn::parse

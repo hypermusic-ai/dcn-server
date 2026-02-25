@@ -82,7 +82,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // runner function selector
-        const auto selector = evm::constructSelector("gen(string,uint32,(uint32,uint32)[])");
+        const auto selector = crypto::constructSelector("gen(string,uint32,(uint32,uint32)[])");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // 1. Offset to start of string data
@@ -136,7 +136,19 @@ namespace dcn
             co_return response;
         }
 
-        const auto samples = evm::decodeReturnedValue<std::vector<Samples>>(exec_result.value());
+        const auto samples_res = parse::decodeBytes<std::vector<Samples>>(exec_result.value());
+
+        if(!samples_res)
+        {
+            response.setCode(http::Code::InternalServerError)
+                .setBodyWithContentLength(json {
+                    {"message", "Failed to decode samples"}
+                }.dump());
+
+            co_return response;
+        }
+
+        const auto & samples = samples_res.value();
         const auto json_output = parse::parseToJson(samples, parse::use_json);
 
         if(!json_output)
