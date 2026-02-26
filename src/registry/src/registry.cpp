@@ -103,10 +103,29 @@ namespace dcn::registry
             co_return false;
         }
 
-        // check if composites exists
-        for(const std::string & composite : record.particle().composite_names())
+        const auto feature_res = co_await getNewestFeature(record.particle().feature_name());
+        if(!feature_res)
         {
-            if(composite.empty()) continue;
+            spdlog::error("Cannot fetch feature `{}` used in particle `{}`", record.particle().feature_name(), record.particle().name());
+            co_return false;
+        }
+
+        const std::uint32_t feature_dimensions_count = static_cast<std::uint32_t>(feature_res->dimensions_size());
+
+        // check if composites exist
+        for(const auto & [dim_id, composite] : record.particle().composites())
+        {
+            if(dim_id >= feature_dimensions_count)
+            {
+                spdlog::error("Composite dimension `{}` out of range for particle `{}`", dim_id, record.particle().name());
+                co_return false;
+            }
+
+            if(composite.empty())
+            {
+                spdlog::error("Composite name is empty at dimension `{}` for particle `{}`", dim_id, record.particle().name());
+                co_return false;
+            }
 
             if(! co_await containsParticleBucket(composite))
             {

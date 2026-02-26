@@ -7,7 +7,7 @@ message Particle
 {
     string name = 1;
     string feature_name = 2;
-    repeated string composite_names = 3;
+    map<uint32, string> composites = 3;
     string condition_name = 4;
     repeated int32 condition_args = 5;
 }

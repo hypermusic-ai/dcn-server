@@ -414,7 +414,6 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
     ParticleRecord particle_record;
     particle_record.mutable_particle()->set_name("PersistParticle");
     particle_record.mutable_particle()->set_feature_name("PersistFeature");
-    particle_record.mutable_particle()->add_composite_names("");
     particle_record.mutable_particle()->set_condition_name("PersistCondition");
     particle_record.set_owner(owner_hex);
 

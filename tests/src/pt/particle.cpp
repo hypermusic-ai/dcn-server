@@ -11,8 +11,8 @@ namespace
         Particle particle;
         particle.set_name("particle_beta");
         particle.set_feature_name("feature_alpha");
-        particle.add_composite_names("comp_a");
-        particle.add_composite_names("comp_b");
+        (*particle.mutable_composites())[0] = "comp_a";
+        (*particle.mutable_composites())[2] = "comp_b";
         particle.set_condition_name("condition_check");
         particle.add_condition_args(1);
         particle.add_condition_args(2);
@@ -31,10 +31,12 @@ namespace
     {
         ASSERT_EQ(lhs.name(), rhs.name());
         ASSERT_EQ(lhs.feature_name(), rhs.feature_name());
-        ASSERT_EQ(lhs.composite_names_size(), rhs.composite_names_size());
-        for (int i = 0; i < lhs.composite_names_size(); ++i)
+        ASSERT_EQ(lhs.composites().size(), rhs.composites().size());
+        for (const auto & [dim_id, composite_name] : lhs.composites())
         {
-            EXPECT_EQ(lhs.composite_names(i), rhs.composite_names(i));
+            const auto it = rhs.composites().find(dim_id);
+            ASSERT_NE(it, rhs.composites().end());
+            EXPECT_EQ(composite_name, it->second);
         }
         ASSERT_EQ(lhs.condition_name(), rhs.condition_name());
         ASSERT_EQ(lhs.condition_args_size(), rhs.condition_args_size());
@@ -56,7 +58,7 @@ TEST_F(UnitTest, Particle_ParseFromJson_JsonAndProtobufMatch)
     json json_input = {
         {"name", "particle_beta"},
         {"feature_name", "feature_alpha"},
-        {"composite_names", json::array({"comp_a", "comp_b"})},
+        {"composites", json::object({{"0", "comp_a"}, {"2", "comp_b"}})},
         {"condition_name", "condition_check"},
         {"condition_args", json::array({1, 2})}
     };
@@ -93,7 +95,7 @@ TEST_F(UnitTest, ParticleRecord_ParseFromJson_JsonAndProtobufMatch)
     json json_particle = {
         {"name", "particle_beta"},
         {"feature_name", "feature_alpha"},
-        {"composite_names", json::array({"comp_a", "comp_b"})},
+        {"composites", json::object({{"0", "comp_a"}, {"2", "comp_b"}})},
         {"condition_name", "condition_check"},
         {"condition_args", json::array({1, 2})}
     };
@@ -136,5 +138,8 @@ TEST_F(UnitTest, Particle_ConstructSolidityCode_UsesInitializerPattern)
 
     EXPECT_NE(solidity.find("function initialize(address registryAddr) external initializer"), std::string::npos);
     EXPECT_NE(solidity.find("__ParticleBase_init"), std::string::npos);
+    EXPECT_NE(solidity.find("function _compositeDimIds()"), std::string::npos);
+    EXPECT_NE(solidity.find("function _compositeNames()"), std::string::npos);
+    EXPECT_NE(solidity.find("_compositeDimIds(), _compositeNames()"), std::string::npos);
     EXPECT_EQ(solidity.find("constructor(address registryAddr)"), std::string::npos);
 }

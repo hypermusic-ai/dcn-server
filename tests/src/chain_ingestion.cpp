@@ -140,6 +140,20 @@ namespace
         return out;
     }
 
+    std::vector<std::uint8_t> encodeUint32ArrayTail(const std::vector<std::uint32_t> & values)
+    {
+        std::vector<std::uint8_t> out = encodeUint256Word(values.size());
+        for(const std::uint32_t value : values)
+        {
+            out.insert(out.end(), 28, 0);
+            out.push_back(static_cast<std::uint8_t>((value >> 24) & 0xFFu));
+            out.push_back(static_cast<std::uint8_t>((value >> 16) & 0xFFu));
+            out.push_back(static_cast<std::uint8_t>((value >> 8) & 0xFFu));
+            out.push_back(static_cast<std::uint8_t>(value & 0xFFu));
+        }
+        return out;
+    }
+
     std::string encodeSimpleAddedEventDataLegacy(const chain::Address & caller,
                                                  const std::string & name,
                                                  const chain::Address & entity_address)
@@ -187,41 +201,47 @@ namespace
     std::string encodeParticleAddedEventData(const std::string & name,
                                              const chain::Address & particle_address,
                                              const std::string & feature_name,
+                                             const std::vector<std::uint32_t> & composite_dim_ids,
                                              const std::vector<std::string> & composite_names,
                                              const std::string & condition_name,
                                              const std::vector<std::int32_t> & condition_args)
     {
         const auto name_tail = encodeStringTail(name);
         const auto feature_tail = encodeStringTail(feature_name);
-        const auto composite_tail = encodeStringArrayTail(composite_names);
+        const auto composite_dim_ids_tail = encodeUint32ArrayTail(composite_dim_ids);
+        const auto composite_names_tail = encodeStringArrayTail(composite_names);
         const auto condition_tail = encodeStringTail(condition_name);
         const auto condition_args_tail = encodeInt32ArrayTail(condition_args);
 
-        const std::size_t head_size = 6 * 32;
+        const std::size_t head_size = 7 * 32;
         const std::size_t name_offset = head_size;
         const std::size_t feature_offset = name_offset + name_tail.size();
-        const std::size_t composite_offset = feature_offset + feature_tail.size();
-        const std::size_t condition_offset = composite_offset + composite_tail.size();
+        const std::size_t composite_dim_ids_offset = feature_offset + feature_tail.size();
+        const std::size_t composite_names_offset = composite_dim_ids_offset + composite_dim_ids_tail.size();
+        const std::size_t condition_offset = composite_names_offset + composite_names_tail.size();
         const std::size_t condition_args_offset = condition_offset + condition_tail.size();
 
         std::vector<std::uint8_t> out;
         const auto name_offset_word = encodeUint256Word(name_offset);
         const auto particle_word = encodeAddressWord(particle_address);
         const auto feature_offset_word = encodeUint256Word(feature_offset);
-        const auto composite_offset_word = encodeUint256Word(composite_offset);
+        const auto composite_dim_ids_offset_word = encodeUint256Word(composite_dim_ids_offset);
+        const auto composite_names_offset_word = encodeUint256Word(composite_names_offset);
         const auto condition_offset_word = encodeUint256Word(condition_offset);
         const auto condition_args_offset_word = encodeUint256Word(condition_args_offset);
 
         out.insert(out.end(), name_offset_word.begin(), name_offset_word.end());
         out.insert(out.end(), particle_word.begin(), particle_word.end());
         out.insert(out.end(), feature_offset_word.begin(), feature_offset_word.end());
-        out.insert(out.end(), composite_offset_word.begin(), composite_offset_word.end());
+        out.insert(out.end(), composite_dim_ids_offset_word.begin(), composite_dim_ids_offset_word.end());
+        out.insert(out.end(), composite_names_offset_word.begin(), composite_names_offset_word.end());
         out.insert(out.end(), condition_offset_word.begin(), condition_offset_word.end());
         out.insert(out.end(), condition_args_offset_word.begin(), condition_args_offset_word.end());
 
         out.insert(out.end(), name_tail.begin(), name_tail.end());
         out.insert(out.end(), feature_tail.begin(), feature_tail.end());
-        out.insert(out.end(), composite_tail.begin(), composite_tail.end());
+        out.insert(out.end(), composite_dim_ids_tail.begin(), composite_dim_ids_tail.end());
+        out.insert(out.end(), composite_names_tail.begin(), composite_names_tail.end());
         out.insert(out.end(), condition_tail.begin(), condition_tail.end());
         out.insert(out.end(), condition_args_tail.begin(), condition_args_tail.end());
 
@@ -352,7 +372,7 @@ TEST_F(UnitTest, Chain_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
         {"blockNumber", "0x64"},
         {"logIndex", "0x1"},
         {"topics", json::array({
-            topicForEvent("ParticleAdded(address,address,string,address,string,string[],string,int32[])"),
+            topicForEvent("ParticleAdded(address,address,string,address,string,uint32[],string[],string,int32[])"),
             topicForAddress(caller),
             topicForAddress(owner)
         })},
@@ -360,6 +380,7 @@ TEST_F(UnitTest, Chain_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
             "ParticleAlpha",
             particle_address,
             "FeatureAlpha",
+            {},
             {},
             "",
             {7, -3})}

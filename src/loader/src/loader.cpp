@@ -1,6 +1,7 @@
 #include "loader.hpp"
 
 #include <array>
+#include <type_traits>
 
 namespace dcn::loader
 {
@@ -19,8 +20,6 @@ namespace dcn::loader
     template<class T>
     static absl::flat_hash_map<std::string, T> _loadJSONRecords(std::filesystem::path dir)
     {
-        std::ifstream file;
-
         absl::flat_hash_map<std::string, T> loaded_data;
         parse::Result<T> loaded_result;
         
@@ -32,7 +31,8 @@ namespace dcn::loader
                 if (!entry.is_regular_file() || entry.path().extension() != ".json") continue;
                 
                 spdlog::debug(std::format("Found JSON file: {}", entry.path().string()));
-                file.open(entry.path());
+
+                std::ifstream file(entry.path());
 
                 if (!file.is_open()) {
                     spdlog::error(std::format("Failed to open file: {}", entry.path().string()));
@@ -40,6 +40,7 @@ namespace dcn::loader
                 }
 
                 std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+                file.close();
 
                 loaded_result = parse::parseFromJson<T>(json, parse::use_protobuf);
                 if(!loaded_result)
@@ -49,8 +50,6 @@ namespace dcn::loader
                 }
 
                 loaded_data.try_emplace(entry.path().stem().string(), std::move(*loaded_result));
-
-                file.close();
             }
         } 
         catch (const std::filesystem::filesystem_error& e) 
@@ -507,9 +506,18 @@ namespace dcn::loader
             co_return false;
         }
 
-        const auto sorted_particles = utils::topologicalSort<ParticleRecord, std::string, google::protobuf::RepeatedPtrField>(
+        const auto sorted_particles = utils::topologicalSort<ParticleRecord, std::string, std::vector>(
                 loaded_particles,
-                [](const ParticleRecord & record){return record.particle().composite_names();},
+                [](const ParticleRecord & record)
+                {
+                    std::vector<std::string> composites;
+                    composites.reserve(record.particle().composites().size());
+                    for(const auto & [_, composite] : record.particle().composites())
+                    {
+                        composites.push_back(composite);
+                    }
+                    return composites;
+                },
                 [](const std::string & composite) {return composite;}
             );
 

@@ -239,4 +239,59 @@ namespace dcn::chain
         return out;
     }
 
+    std::optional<std::vector<std::uint32_t>> decodeAbiUint32Array(const std::uint8_t* data, std::size_t data_size, std::size_t array_offset)
+    {
+        const auto length_res = readWordAsSizeT(data, data_size, array_offset);
+        if(!length_res)
+        {
+            return std::nullopt;
+        }
+
+        const std::size_t length = *length_res;
+        const std::size_t first_value_offset = array_offset + 32;
+
+        if(first_value_offset > data_size)
+        {
+            return std::nullopt;
+        }
+
+        if(length > (std::numeric_limits<std::size_t>::max() / 32))
+        {
+            return std::nullopt;
+        }
+
+        const std::size_t values_size = length * 32;
+        if(values_size > (data_size - first_value_offset))
+        {
+            return std::nullopt;
+        }
+
+        std::vector<std::uint32_t> out;
+        out.reserve(length);
+
+        for(std::size_t i = 0; i < length; ++i)
+        {
+            const std::size_t word_offset = first_value_offset + i * 32;
+            const std::uint8_t* word = data + word_offset;
+
+            for(std::size_t b = 0; b < 28; ++b)
+            {
+                if(word[b] != 0)
+                {
+                    return std::nullopt;
+                }
+            }
+
+            const std::uint32_t raw_value =
+                (static_cast<std::uint32_t>(word[28]) << 24) |
+                (static_cast<std::uint32_t>(word[29]) << 16) |
+                (static_cast<std::uint32_t>(word[30]) << 8) |
+                static_cast<std::uint32_t>(word[31]);
+
+            out.push_back(raw_value);
+        }
+
+        return out;
+    }
+
 }

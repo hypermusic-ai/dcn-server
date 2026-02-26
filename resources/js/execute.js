@@ -92,31 +92,89 @@ function drawExecuteTree(treeData) {
     network.fit();
 }
 
-function getCompositeNames(particle) {
+async function fetchFeatureDimensions(featureName, cache) {
+    if (!featureName) {
+        return 0;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(cache, featureName)) {
+        return cache[featureName];
+    }
+
+    const response = await fetch(apiUrl(`/feature/${encodeURIComponent(featureName)}`));
+    if (!response.ok) {
+        throw new Error(`Failed to fetch feature ${featureName} (${response.status})`);
+    }
+
+    const feature = await response.json();
+    const dimensionsCount = Array.isArray(feature.dimensions) ? feature.dimensions.length : 0;
+    cache[featureName] = dimensionsCount;
+    return dimensionsCount;
+}
+
+function getCompositeNames(particle, dimensionsCount = 0) {
     if (!particle || typeof particle !== 'object') {
         return [];
     }
 
-    const rawComposites =
-        Array.isArray(particle.composite_names) ? particle.composite_names :
-            Array.isArray(particle.compositeNames) ? particle.compositeNames :
-                Array.isArray(particle.composites) ? particle.composites : [];
+    if (Array.isArray(particle.composite_names)) {
+        return particle.composite_names.map((entry) => (typeof entry === 'string' ? entry : ''));
+    }
 
-    return rawComposites.map((entry) => {
-        if (typeof entry === 'string') {
-            return entry;
+    if (Array.isArray(particle.compositeNames)) {
+        return particle.compositeNames.map((entry) => (typeof entry === 'string' ? entry : ''));
+    }
+
+    if (Array.isArray(particle.composites)) {
+        return particle.composites.map((entry) => {
+            if (typeof entry === 'string') {
+                return entry;
+            }
+            if (entry && typeof entry.name === 'string') {
+                return entry.name;
+            }
+            return '';
+        });
+    }
+
+    const compositeMap =
+        particle.composites && typeof particle.composites === 'object' && !Array.isArray(particle.composites)
+            ? particle.composites
+            : null;
+    if (!compositeMap) {
+        return [];
+    }
+
+    const entries = [];
+    let maxIndex = -1;
+    Object.entries(compositeMap).forEach(([indexKey, compositeName]) => {
+        const index = Number.parseInt(indexKey, 10);
+        if (!Number.isInteger(index) || index < 0 || typeof compositeName !== 'string') {
+            return;
         }
-        if (entry && typeof entry.name === 'string') {
-            return entry.name;
+        entries.push([index, compositeName]);
+        if (index > maxIndex) {
+            maxIndex = index;
         }
-        return '';
     });
+
+    const normalizedDimensionsCount = Number.isInteger(dimensionsCount) && dimensionsCount > 0
+        ? dimensionsCount
+        : 0;
+    const targetLength = Math.max(normalizedDimensionsCount, maxIndex + 1);
+    const compositeNames = Array.from({ length: targetLength }, () => '');
+    entries.forEach(([index, compositeName]) => {
+        compositeNames[index] = compositeName;
+    });
+
+    return compositeNames;
 }
 
 async function fetchParticleDepthFirst(rootName) {
     clearRunningInstances();
 
     let nodeIdCounter = 0;
+    const featureDimensionsCache = {};
     const childList = [];
     const stack = [{
         parent: -1,
@@ -143,9 +201,11 @@ async function fetchParticleDepthFirst(rootName) {
             const particle = await res.json();
 
             const particleName = typeof particle.name === 'string' ? particle.name : name;
-            const compositeNames = getCompositeNames(particle);
+            const featureName = typeof particle.feature_name === 'string' ? particle.feature_name : '';
+            const dimensionsCount = await fetchFeatureDimensions(featureName, featureDimensionsCache);
+            const compositeNames = getCompositeNames(particle, dimensionsCount);
             const fullPath = `${path}/${particleName}`;
-            const scalar = compositeNames.length === 0;
+            const scalar = compositeNames.every((compositeName) => compositeName.trim().length === 0);
 
             // Push children in reverse so they’re visited left-to-right.
             for (let i = compositeNames.length - 1; i >= 0; i--) {

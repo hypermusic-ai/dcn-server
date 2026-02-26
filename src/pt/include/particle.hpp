@@ -1,4 +1,10 @@
 #pragma once
+#include <algorithm>
+#include <cstdint>
+#include <map>
+#include <utility>
+#include <vector>
+
 #include <absl/hash/hash.h>
 
 #include "particle.pb.h"
@@ -19,9 +25,23 @@ namespace dcn
     template <typename H>
     inline H AbslHashValue(H h, const Particle & p) {
         h = H::combine(std::move(h), p.name(), p.feature_name());
-        for (const auto & c : p.composite_names()) {
-            h = H::combine(std::move(h), c);
+
+        std::vector<std::pair<std::uint32_t, std::string>> sorted_composites;
+        sorted_composites.reserve(p.composites().size());
+        for(const auto & [dim_id, composite_name] : p.composites())
+        {
+            sorted_composites.emplace_back(dim_id, composite_name);
         }
+        std::ranges::sort(sorted_composites, [](const auto & lhs, const auto & rhs)
+        {
+            return lhs.first < rhs.first;
+        });
+
+        for(const auto & [dim_id, composite_name] : sorted_composites)
+        {
+            h = H::combine(std::move(h), dim_id, composite_name);
+        }
+
         h = H::combine(std::move(h), p.condition_name());
         for(const auto & arg : p.condition_args()) {
             h = H::combine(std::move(h), arg);
@@ -41,7 +61,7 @@ namespace dcn::pt
         std::string name;
         chain::Address particle_address{};
         std::string feature_name;
-        std::vector<std::string> composite_names;
+        std::map<std::uint32_t, std::string> composites;
         std::string condition_name;
         std::vector<std::int32_t> condition_args;
     };
