@@ -40,7 +40,7 @@ namespace dcn
                 co_return response;
             }
 
-            const auto particle_address_result = evmc::from_hex<evm::Address>(particle_address_arg.value());
+            const auto particle_address_result = evmc::from_hex<chain::Address>(particle_address_arg.value());
 
             if (!particle_address_result) {
                 response.setCode(http::Code::BadRequest);
@@ -127,7 +127,7 @@ namespace dcn
                 co_return response;
             }
 
-            const auto particle_address_result = evmc::from_hex<evm::Address>(particle_address_arg.value());
+            const auto particle_address_result = evmc::from_hex<chain::Address>(particle_address_arg.value());
 
             if(!particle_address_result)
             {
@@ -170,7 +170,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // function selector
-        const auto selector = evm::constructSelector("getParticle(string)");
+        const auto selector = chain::constructSelector("getParticle(string)");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // Step 2: Offset to string data (32 bytes with value 0x20)
@@ -204,7 +204,19 @@ namespace dcn
             co_return response;
         }
 
-        const auto particle_address = evm::decodeReturnedValue<evm::Address>(exec_result.value());
+        const auto particle_address_res = chain::readAddressWord(exec_result.value());
+        if(!particle_address_res)
+        {
+            response.setCode(http::Code::InternalServerError)
+                .setBodyWithContentLength(json {
+                    {"message", "Failed to fetch particle address"}
+                }.dump());
+            
+            co_return response;
+        }
+
+        const auto & particle_address = particle_address_res.value();
+
         const auto owner_result = co_await fetchOwner(evm, particle_address);
         if(!owner_result)
         {
@@ -216,7 +228,19 @@ namespace dcn
             co_return response;
         }
 
-        const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
+        const auto owner_address_res = chain::readAddressWord(owner_result.value());
+
+        if(!owner_address_res)
+        {
+            response.setCode(http::Code::InternalServerError)
+                .setBodyWithContentLength(json {
+                    {"message", "Failed to fetch owner address"}
+                }.dump());
+            
+            co_return response;
+        }
+
+        const auto & owner_address = owner_address_res.value();
 
         (*json_res)["owner"] = evmc::hex(owner_address);
         (*json_res)["local_address"] = evmc::hex(particle_address);

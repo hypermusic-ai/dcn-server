@@ -12,7 +12,7 @@
 #include "utils.hpp"
 #include "file.hpp"
 #include "pt.hpp"
-#include "evm.hpp"
+#include "address.hpp"
 
 namespace dcn::registry
 {
@@ -35,9 +35,14 @@ namespace dcn::registry
             
             ~Registry() = default;
 
-            asio::awaitable<bool> addParticle(evm::Address address, ParticleRecord particle);
+            asio::awaitable<bool> add(chain::Address address, ParticleRecord particle);
+            asio::awaitable<bool> add(chain::Address address, FeatureRecord feature);
+            asio::awaitable<bool> add(chain::Address address, TransformationRecord transformation);
+            asio::awaitable<bool> add(chain::Address address, ConditionRecord condition);
+
+            asio::awaitable<bool> addParticle(chain::Address address, ParticleRecord particle);
             asio::awaitable<std::optional<Particle>> getNewestParticle(const std::string& name) const;
-            asio::awaitable<std::optional<Particle>> getParticle(const std::string& name, const evm::Address & address) const;
+            asio::awaitable<std::optional<Particle>> getParticle(const std::string& name, const chain::Address & address) const;
 
 
             /**
@@ -50,7 +55,7 @@ namespace dcn::registry
              * function returns `std::nullopt`. If the feature does not exist, it is
              * added and the hash of the feature is returned.
              */
-            asio::awaitable<bool> addFeature(evm::Address address, FeatureRecord feature);
+            asio::awaitable<bool> addFeature(chain::Address address, FeatureRecord feature);
             
             /**
              * @brief Retrieves the newest feature by name.
@@ -78,7 +83,7 @@ namespace dcn::registry
              * address. If the feature name or address is not found, it returns
              * `std::nullopt`.
              */
-            asio::awaitable<std::optional<Feature>> getFeature(const std::string& name, const evm::Address & address) const;
+            asio::awaitable<std::optional<Feature>> getFeature(const std::string& name, const chain::Address & address) const;
 
             /**
              * @brief Adds a transformation to the registry.
@@ -92,7 +97,7 @@ namespace dcn::registry
              * transformation does not exist, it is added and the hash of the
              * transformation is returned.
              */
-            asio::awaitable<bool> addTransformation(evm::Address address, TransformationRecord transformation);
+            asio::awaitable<bool> addTransformation(chain::Address address, TransformationRecord transformation);
 
             /**
              * @brief Retrieves the newest transformation by name.
@@ -121,7 +126,7 @@ namespace dcn::registry
              * and address. If the transformation name or address is not found, it
              * returns `std::nullopt`.
              */
-            asio::awaitable<std::optional<Transformation>> getTransformation(const std::string& name, const evm::Address & address) const;
+            asio::awaitable<std::optional<Transformation>> getTransformation(const std::string& name, const chain::Address & address) const;
 
             /**
              * @brief Adds a condition to the registry.
@@ -133,7 +138,7 @@ namespace dcn::registry
              * the function returns `std::nullopt`. If the condition does not exist, it
              * is added and the hash of the condition is returned.
              */
-            asio::awaitable<bool> addCondition(evm::Address address, ConditionRecord condition);
+            asio::awaitable<bool> addCondition(chain::Address address, ConditionRecord condition);
 
             /**
              * @brief Retrieves the newest condition by name.
@@ -161,12 +166,12 @@ namespace dcn::registry
              * address. If the condition name or address is not found, it returns
              * `std::nullopt`.
              */
-            asio::awaitable<std::optional<Condition>> getCondition(const std::string& name, const evm::Address & address) const;
+            asio::awaitable<std::optional<Condition>> getCondition(const std::string& name, const chain::Address & address) const;
 
-            asio::awaitable<absl::flat_hash_set<std::string>> getOwnedParticles(const evm::Address & address) const;
-            asio::awaitable<absl::flat_hash_set<std::string>> getOwnedFeatures(const evm::Address & address) const;
-            asio::awaitable<absl::flat_hash_set<std::string>> getOwnedTransformations(const evm::Address & address) const;
-            asio::awaitable<absl::flat_hash_set<std::string>> getOwnedConditions(const evm::Address & address) const;
+            asio::awaitable<absl::flat_hash_set<std::string>> getOwnedParticles(const chain::Address & address) const;
+            asio::awaitable<absl::flat_hash_set<std::string>> getOwnedFeatures(const chain::Address & address) const;
+            asio::awaitable<absl::flat_hash_set<std::string>> getOwnedTransformations(const chain::Address & address) const;
+            asio::awaitable<absl::flat_hash_set<std::string>> getOwnedConditions(const chain::Address & address) const;
 
         protected:
 
@@ -250,20 +255,20 @@ namespace dcn::registry
         private:
             asio::strand<asio::io_context::executor_type> _strand;
 
-            absl::flat_hash_map<std::string, evm::Address> _newest_particle;
-            absl::flat_hash_map<std::string, evm::Address> _newest_feature;
-            absl::flat_hash_map<std::string, evm::Address> _newest_transformation;
-            absl::flat_hash_map<std::string, evm::Address> _newest_condition;
+            absl::flat_hash_map<std::string, chain::Address> _newest_particle;
+            absl::flat_hash_map<std::string, chain::Address> _newest_feature;
+            absl::flat_hash_map<std::string, chain::Address> _newest_transformation;
+            absl::flat_hash_map<std::string, chain::Address> _newest_condition;
 
-            absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, ParticleRecord>> _particles;
-            absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, FeatureRecord>> _features;
-            absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, TransformationRecord>> _transformations;
-            absl::flat_hash_map<std::string, absl::flat_hash_map<evm::Address, ConditionRecord>> _conditions;
+            absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, ParticleRecord>> _particles;
+            absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, FeatureRecord>> _features;
+            absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, TransformationRecord>> _transformations;
+            absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, ConditionRecord>> _conditions;
 
 
-            absl::flat_hash_map<evm::Address, absl::flat_hash_set<std::string>> _owned_particles;
-            absl::flat_hash_map<evm::Address, absl::flat_hash_set<std::string>> _owned_features;
-            absl::flat_hash_map<evm::Address, absl::flat_hash_set<std::string>> _owned_transformations;
-            absl::flat_hash_map<evm::Address, absl::flat_hash_set<std::string>> _owned_conditions;
+            absl::flat_hash_map<chain::Address, absl::flat_hash_set<std::string>> _owned_particles;
+            absl::flat_hash_map<chain::Address, absl::flat_hash_set<std::string>> _owned_features;
+            absl::flat_hash_map<chain::Address, absl::flat_hash_set<std::string>> _owned_transformations;
+            absl::flat_hash_map<chain::Address, absl::flat_hash_set<std::string>> _owned_conditions;
     };
 }

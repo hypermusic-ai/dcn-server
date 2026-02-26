@@ -9,6 +9,7 @@
 #include "transformation.pb.h"
 
 #include "parser.hpp"
+#include "chain.hpp"
 
 namespace dcn
 {
@@ -26,6 +27,29 @@ namespace dcn
     }
     
     std::string constructTransformationSolidityCode(const Transformation & transformation);
+}
+
+namespace dcn::pt
+{
+    struct TransformationAddedEvent
+    {
+        chain::Address caller{};
+        std::string name;
+        chain::Address transformation_address{};
+        chain::Address owner{};
+        std::uint32_t args_count{};
+    };
+
+    std::optional<TransformationAddedEvent> decodeTransformationAddedEvent(
+        const std::uint8_t* data,
+        std::size_t data_size,
+        const evmc::bytes32 topics[],
+        std::size_t num_topics);
+
+    std::optional<TransformationAddedEvent> decodeTransformationAddedEvent(
+        const std::string & data_hex,
+        const std::vector<std::string> & topics_hex);
+
 }
 
 namespace dcn::parse

@@ -571,7 +571,8 @@ pre.request-body {
 }
 
 #particleCompositesContainer {
-    max-height: 220px;
+    min-height: 128px;
+    max-height: 512px;
     overflow: auto;
     padding-right: 0.2rem;
 }

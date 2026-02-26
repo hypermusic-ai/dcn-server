@@ -14,6 +14,7 @@ using namespace asio::experimental::awaitable_operators;
 #include "parser.hpp"
 #include "pt.hpp"
 #include "auth.hpp"
+#include "chain.hpp"
 #include "evm.hpp"
 #include "file.hpp"
 #include "version.hpp"
@@ -24,7 +25,7 @@ namespace dcn
     /**
      * @brief Helper function to handle authentication.
      */
-    asio::awaitable<std::expected<evm::Address, auth::AuthError>> authenticate(const http::Request & request, const auth::AuthManager & auth_manager);
+    asio::awaitable<std::expected<chain::Address, auth::AuthError>> authenticate(const http::Request & request, const auth::AuthManager & auth_manager);
 
 
     /**
@@ -82,7 +83,6 @@ namespace dcn
      * @return An HTTP response
      */
     asio::awaitable<http::Response> GET_serveBinaryFile(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, const std::string mime_type, const std::vector<std::byte> & file_content);
-
 
     /**
      * @brief Handle a GET request to /auth/nonce

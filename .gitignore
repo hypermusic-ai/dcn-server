@@ -1,4 +1,4 @@
 .vscode/
-build/
-install/
+build*/
+install*/
 docs_output/
