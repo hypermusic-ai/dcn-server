@@ -116,7 +116,7 @@ namespace dcn::evm
     {
         spdlog::debug(std::format("Fetching contract owner: {}", address));
         std::vector<uint8_t> input_data;
-        const auto selector = crypto::constructSelector("getOwner()");
+        const auto selector = chain::constructSelector("getOwner()");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
         co_return co_await evm.execute(evm.getRegistryAddress(), address, input_data, 1'000'000, 0);
     }

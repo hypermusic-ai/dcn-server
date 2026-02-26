@@ -10,12 +10,12 @@
 #include <utility>
 
 #include <nlohmann/json.hpp>
-
 #include <spdlog/spdlog.h>
 
 #include "native.h"
 #include "parser.hpp"
-#include "utils.hpp"
+#include "chain.hpp"
+#include "utils.hpp" //TODO: remove
 
 namespace dcn::chain
 {
@@ -78,31 +78,6 @@ namespace dcn::chain
             }
         }
 
-        std::optional<std::size_t> _readWordAsSizeT(const std::uint8_t* data, std::size_t data_size, std::size_t offset)
-        {
-            if(data == nullptr || offset + 32 > data_size)
-            {
-                return std::nullopt;
-            }
-
-            std::size_t value = 0;
-            constexpr std::size_t prefix = 32 - sizeof(std::size_t);
-            for(std::size_t i = 0; i < prefix; ++i)
-            {
-                if(data[offset + i] != 0)
-                {
-                    return std::nullopt;
-                }
-            }
-
-            for(std::size_t i = prefix; i < 32; ++i)
-            {
-                value = (value << 8) | data[offset + i];
-            }
-
-            return value;
-        }
-
         std::optional<SimpleAddedEvent> _decodeSimpleAddedEvent(const std::string & data_hex)
         {
             const auto bytes_res = evmc::from_hex(data_hex);
@@ -113,14 +88,14 @@ namespace dcn::chain
 
             const auto & bytes = *bytes_res;
             const auto caller_res = chain::readAddressWord(bytes.data(), bytes.size(), 0);
-            const auto name_offset_res = _readWordAsSizeT(bytes.data(), bytes.size(), 32);
+            const auto name_offset_res = chain::readWordAsSizeT(bytes.data(), bytes.size(), 32);
             const auto entity_res = chain::readAddressWord(bytes.data(), bytes.size(), 64);
             if(!caller_res || !name_offset_res || !entity_res)
             {
                 return std::nullopt;
             }
 
-            const auto name_res = utils::decodeAbiString(bytes.data(), bytes.size(), *name_offset_res);
+            const auto name_res = chain::decodeAbiString(bytes.data(), bytes.size(), *name_offset_res);
             if(!name_res)
             {
                 return std::nullopt;
@@ -227,7 +202,7 @@ namespace dcn::chain
 
         std::optional<chain::Address> _ethGetOwner(const RpcCall & rpc_call, const std::string & rpc_url, const chain::Address & contract_address)
         {
-            const auto selector = crypto::constructSelector("getOwner()");
+            const auto selector = chain::constructSelector("getOwner()");
             const std::string selector_hex = _withHexPrefix(evmc::hex(evmc::bytes_view{selector.data(), selector.size()}));
 
             json call_obj{

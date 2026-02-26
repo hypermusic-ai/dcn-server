@@ -1,7 +1,6 @@
 #include <format>
 
 #include "crypto.hpp"
-#include "utils.hpp"
 
 #include "particle.hpp"
 
@@ -83,7 +82,7 @@ namespace dcn::pt
             return std::nullopt;
         }
 
-        const evmc::bytes32 expected_topic = crypto::constructEventTopic(
+        const evmc::bytes32 expected_topic = chain::constructEventTopic(
             "ParticleAdded(address,address,string,address,string,string[],string,int32[])");
 
         if(topics[0] != expected_topic)
@@ -95,23 +94,23 @@ namespace dcn::pt
         event.caller = chain::topicWordToAddress(topics[1]);
         event.owner = chain::topicWordToAddress(topics[2]);
 
-        const auto name_offset = utils::readWordAsSizeT(data, data_size, 0);
+        const auto name_offset = chain::readWordAsSizeT(data, data_size, 0);
         const auto particle_address = chain::readAddressWord(data, data_size, 32);
-        const auto feature_offset = utils::readWordAsSizeT(data, data_size, 64);
-        const auto composites_offset = utils::readWordAsSizeT(data, data_size, 96);
-        const auto condition_offset = utils::readWordAsSizeT(data, data_size, 128);
-        const auto condition_args_offset = utils::readWordAsSizeT(data, data_size, 160);
+        const auto feature_offset = chain::readWordAsSizeT(data, data_size, 64);
+        const auto composites_offset = chain::readWordAsSizeT(data, data_size, 96);
+        const auto condition_offset = chain::readWordAsSizeT(data, data_size, 128);
+        const auto condition_args_offset = chain::readWordAsSizeT(data, data_size, 160);
 
         if(!name_offset || !particle_address || !feature_offset || !composites_offset || !condition_offset || !condition_args_offset)
         {
             return std::nullopt;
         }
 
-        const auto name = utils::decodeAbiString(data, data_size, *name_offset);
-        const auto feature_name = utils::decodeAbiString(data, data_size, *feature_offset);
-        const auto composite_names = utils::decodeAbiStringArray(data, data_size, *composites_offset);
-        const auto condition_name = utils::decodeAbiString(data, data_size, *condition_offset);
-        const auto condition_args = utils::decodeAbiInt32Array(data, data_size, *condition_args_offset);
+        const auto name = chain::decodeAbiString(data, data_size, *name_offset);
+        const auto feature_name = chain::decodeAbiString(data, data_size, *feature_offset);
+        const auto composite_names = chain::decodeAbiStringArray(data, data_size, *composites_offset);
+        const auto condition_name = chain::decodeAbiString(data, data_size, *condition_offset);
+        const auto condition_args = chain::decodeAbiInt32Array(data, data_size, *condition_args_offset);
 
         if(!name || !feature_name || !composite_names || !condition_name || !condition_args)
         {
@@ -138,7 +137,7 @@ namespace dcn::pt
             return std::nullopt;
         }
 
-        const auto topic_words = crypto::decodeTopicWords(topics_hex);
+        const auto topic_words = chain::decodeTopicWords(topics_hex);
         if(!topic_words)
         {
             return std::nullopt;

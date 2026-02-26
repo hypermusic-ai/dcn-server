@@ -4,8 +4,7 @@
 #include "particle.pb.h"
 
 #include "parser.hpp"
-
-#include "address.hpp"
+#include "chain.hpp"
 
 namespace dcn
 {

@@ -179,7 +179,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // function selector
-        const auto selector = crypto::constructSelector("getCondition(string)");
+        const auto selector = chain::constructSelector("getCondition(string)");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // Step 2: Offset to string data (32 bytes with value 0x20)

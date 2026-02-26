@@ -79,7 +79,7 @@ namespace
     {
         std::vector<std::uint8_t> input;
 
-        const auto selector = crypto::constructSelector("upgradeToAndCall(address,bytes)");
+        const auto selector = chain::constructSelector("upgradeToAndCall(address,bytes)");
         input.insert(input.end(), selector.begin(), selector.end());
 
         const auto implementation_arg = evm::encodeAsArg(new_implementation);
@@ -104,7 +104,7 @@ namespace
     {
         std::vector<std::uint8_t> input_data;
 
-        const auto selector = crypto::constructSelector("gen(string,uint32,(uint32,uint32)[])");
+        const auto selector = chain::constructSelector("gen(string,uint32,(uint32,uint32)[])");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         std::vector<std::uint8_t> offset_to_string(32, 0);
@@ -303,7 +303,7 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradeRequiresOwnerAndSwapsImplementatio
     const auto runner_v2_implementation = *runner_v2_result;
 
     // `version()` does not exist before upgrade
-    std::vector<std::uint8_t> version_input = crypto::constructSelector("version()");
+    std::vector<std::uint8_t> version_input = chain::constructSelector("version()");
     {
         // This revert is expected: V1 does not expose `version()`.
         const ScopedLogLevel suppress_expected_revert_logs(spdlog::level::critical);
@@ -491,7 +491,7 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
         env.evm_instance.execute(
             env.genesis_address,
             runner_proxy,
-            crypto::constructSelector("version()"),
+            chain::constructSelector("version()"),
             evm::DEFAULT_GAS_LIMIT,
             0));
     ASSERT_TRUE(version_after_upgrade.has_value());

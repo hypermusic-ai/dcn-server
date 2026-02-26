@@ -82,7 +82,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // runner function selector
-        const auto selector = crypto::constructSelector("gen(string,uint32,(uint32,uint32)[])");
+        const auto selector = chain::constructSelector("gen(string,uint32,(uint32,uint32)[])");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // 1. Offset to start of string data

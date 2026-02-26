@@ -8,6 +8,5 @@ add_module(NAME "Crypto"
         absl::hash
         secp256k1
         jwt-cpp
-        evmc
 )
 

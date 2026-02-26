@@ -1,7 +1,6 @@
 #include <format>
 
 #include "crypto.hpp"
-#include "utils.hpp"
 
 #include "feature.hpp"
 
@@ -103,7 +102,7 @@ namespace dcn::pt
             return std::nullopt;
         }
 
-        const evmc::bytes32 expected_topic = crypto::constructEventTopic(
+        const evmc::bytes32 expected_topic = chain::constructEventTopic(
             "FeatureAdded(address,string,address,address,uint32)");
 
         if(topics[0] != expected_topic)
@@ -112,16 +111,16 @@ namespace dcn::pt
         }
 
         const auto caller = chain::readAddressWord(data, data_size, 0);
-        const auto name_offset = utils::readWordAsSizeT(data, data_size, 32);
+        const auto name_offset = chain::readWordAsSizeT(data, data_size, 32);
         const auto feature_address = chain::readAddressWord(data, data_size, 64);
         const auto owner = chain::readAddressWord(data, data_size, 96);
-        const auto dimensions_count = utils::readUint32Word(data, data_size, 128);
+        const auto dimensions_count = chain::readUint32Word(data, data_size, 128);
         if(!caller || !name_offset || !feature_address || !owner || !dimensions_count)
         {
             return std::nullopt;
         }
 
-        const auto name = utils::decodeAbiString(data, data_size, *name_offset);
+        const auto name = chain::decodeAbiString(data, data_size, *name_offset);
         if(!name)
         {
             return std::nullopt;
@@ -146,7 +145,7 @@ namespace dcn::pt
             return std::nullopt;
         }
 
-        const auto topic_words = crypto::decodeTopicWords(topics_hex);
+        const auto topic_words = chain::decodeTopicWords(topics_hex);
         if(!topic_words)
         {
             return std::nullopt;

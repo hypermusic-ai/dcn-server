@@ -4,14 +4,7 @@
 #include <format>
 #include <vector>
 
-#ifdef interface
-    #undef interface
-#endif
-#include <evmc/evmc.hpp>
-#ifndef interface
-    #define interface __STRUCT__
-#endif
-
+#include "chain.hpp"
 #include "parser.hpp"
 #include "crypto.hpp"
 
