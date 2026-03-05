@@ -44,7 +44,7 @@ namespace dcn
                 co_return response;
             }
 
-            const auto transformation_address_result = evmc::from_hex<evm::Address>(*transformation_address_arg);
+            const auto transformation_address_result = evmc::from_hex<chain::Address>(*transformation_address_arg);
 
             if (!transformation_address_result) {
                 response.setCode(http::Code::BadRequest);
@@ -136,7 +136,7 @@ namespace dcn
                 co_return response;
             }
 
-            const auto transformation_address_result = evmc::from_hex<evm::Address>(*transformation_address_arg);
+            const auto transformation_address_result = evmc::from_hex<chain::Address>(*transformation_address_arg);
 
             if(!transformation_address_result)
             {
@@ -179,7 +179,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // function selector
-        const auto selector = evm::constructSelector("getTransformation(string)");
+        const auto selector = chain::constructSelector("getTransformation(string)");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // Step 2: Offset to string data (32 bytes with value 0x20)
@@ -213,7 +213,20 @@ namespace dcn
             co_return response;
         }
 
-        const auto transformation_address = evm::decodeReturnedValue<evm::Address>(exec_result.value());
+        const auto transformation_address_res = chain::readAddressWord(exec_result.value());
+        
+        if(!transformation_address_res)
+        {
+            response.setCode(http::Code::InternalServerError)
+                .setBodyWithContentLength(json {
+                    {"message", "Failed to fetch transformation address"}
+                }.dump());
+
+            co_return response;
+        }
+
+        const auto & transformation_address = transformation_address_res.value();
+        
         const auto owner_result = co_await fetchOwner(evm, transformation_address);
         if(!owner_result)
         {
@@ -225,7 +238,19 @@ namespace dcn
             co_return response;
         }
 
-        const auto owner_address = evm::decodeReturnedValue<evm::Address>(owner_result.value());
+        const auto owner_address_res = chain::readAddressWord(owner_result.value());
+
+        if(!owner_address_res)
+        {
+            response.setCode(http::Code::InternalServerError)
+                .setBodyWithContentLength(json {
+                    {"message", "Failed to fetch owner address"}
+                }.dump());
+
+            co_return response;
+        }
+
+        const auto & owner_address = owner_address_res.value();
 
         (*json_res)["owner"] = evmc::hex(owner_address);
         (*json_res)["local_address"] = evmc::hex(transformation_address);

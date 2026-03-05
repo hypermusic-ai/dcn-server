@@ -29,7 +29,7 @@ namespace dcn
         return match[1].str();
     }
 
-    asio::awaitable<std::expected<evm::Address, auth::AuthError>> authenticate(const http::Request & request, const auth::AuthManager & auth_manager)
+    asio::awaitable<std::expected<chain::Address, auth::AuthError>> authenticate(const http::Request & request, const auth::AuthManager & auth_manager)
     {
         // try to obtain token from authorization header
         const parse::Result<std::string> token_res = _getAccessTokenFromHeader(request);
@@ -82,7 +82,7 @@ namespace dcn
             co_return response;
         }
 
-        const std::optional<evm::Address> address_res = evmc::from_hex<evm::Address>(address_arg.value());
+        const std::optional<chain::Address> address_res = evmc::from_hex<chain::Address>(address_arg.value());
         if(!address_res)
         {
             response.setCode(http::Code::BadRequest)
@@ -190,7 +190,7 @@ namespace dcn
         // Extract everything after prefix
         const std::string request_nonce = message.substr(NONCE_PREFIX.size());
 
-        auto address_res = evmc::from_hex<evm::Address>(address_str);
+        auto address_res = evmc::from_hex<chain::Address>(address_str);
         if(!address_res)
         {
             response.setCode(http::Code::BadRequest)
@@ -200,7 +200,7 @@ namespace dcn
 
             co_return response;
         }
-        const evm::Address & address = address_res.value();
+        const chain::Address & address = address_res.value();
 
         if(co_await auth_manager.verifyNonce(address, request_nonce) == false)
         {

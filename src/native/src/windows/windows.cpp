@@ -1,5 +1,7 @@
 #include "windows/windows.h"
 
+#include <vector>
+
 #include <spdlog/spdlog.h>
 
 namespace dcn::native{
@@ -67,13 +69,9 @@ namespace dcn::native{
         }
 
         const std::string& full_cmd = oss.str();
-        
-        char cmd_line[1024];
 
-        if (full_cmd.size() >= sizeof(cmd_line))
-            throw std::runtime_error("Command line too long");
-
-        strcpy_s(cmd_line, full_cmd.c_str());
+        std::vector<char> cmd_line(full_cmd.size() + 1, '\0');
+        strcpy_s(cmd_line.data(), cmd_line.size(), full_cmd.c_str());
 
         // Create pipe
         HANDLE read_pipe = NULL, write_pipe = NULL;
@@ -100,7 +98,7 @@ namespace dcn::native{
 
         if (!CreateProcessA(
             NULL,         // No module name (use command line)
-            cmd_line,     // Command line
+            cmd_line.data(), // Command line
             NULL,         // Process handle not inheritable
             NULL,         // Thread handle not inheritable
             TRUE,        // Set handle inheritance to FALSE

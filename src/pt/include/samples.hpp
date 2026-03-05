@@ -21,4 +21,7 @@ namespace dcn::parse
      */
     template<>
     Result<std::vector<Samples>> parseFromJson(json json, use_json_t);
+
+    template<>
+    Result<std::vector<Samples>> decodeBytes(const std::vector<uint8_t> & bytes);
 }

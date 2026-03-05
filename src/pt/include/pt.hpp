@@ -11,7 +11,9 @@
 #include "condition.hpp"
 #include "execute.hpp"
 #include "samples.hpp"
-#include "keccak256.hpp"
+#include "error.hpp"
+#include "crypto.hpp"
+
 
 namespace dcn
 {

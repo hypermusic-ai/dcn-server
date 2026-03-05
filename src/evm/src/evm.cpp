@@ -1,16 +1,10 @@
 #include "evm.hpp"
+#include <limits>
 
 namespace dcn::evm
 {
-    std::vector<std::uint8_t> constructSelector(std::string signature)
-    {
-        std::uint8_t hash[32];
-        crypto::Keccak256::getHash(reinterpret_cast<const uint8_t*>(signature.data()), signature.size(), hash);
-        return std::vector<std::uint8_t>(hash, hash + 4);
-    }
-
     template<>
-    std::vector<std::uint8_t> encodeAsArg<Address>(const Address & address)
+    std::vector<std::uint8_t> encodeAsArg<chain::Address>(const chain::Address & address)
     {
         std::vector<std::uint8_t> encoded(32, 0); // Initialize with 32 zero bytes
         std::copy(address.bytes, address.bytes + 20, encoded.begin() + 12); // Right-align in last 20 bytes
@@ -118,257 +112,11 @@ namespace dcn::evm
         return encoded;
     }
 
-
-    static std::uint32_t _readUint32(const std::vector<std::uint8_t> & bytes, std::size_t offset) {
-        std::uint32_t value = 0;
-        for (std::size_t i = 0; i < 4; ++i) {
-            value <<= 8;
-            value |= bytes[offset + i];
-        }
-        return value;
-    }
-
-    static std::uint32_t _readUint32Padded(const std::vector<uint8_t>& bytes, std::size_t offset) {
-        // Read last 4 bytes of 32-byte ABI word
-        assert(offset + 32 <= bytes.size());
-        uint32_t value = 0;
-        for (int i = 28; i < 32; ++i) {
-            value = (value << 8) | bytes[offset + i];
-        }
-        return value;
-    }
-
-    static std::uint64_t _readUint256(const std::vector<std::uint8_t> & bytes, std::size_t offset) {
-        std::uint64_t value = 0;
-        for (std::size_t i = 0; i < 32; ++i) {
-            value <<= 8;
-            value |= bytes[offset + i];
-        }
-        return value;
-    }
-
-
-    static std::uint64_t _readOffset(const std::vector<std::uint8_t> & bytes, std::size_t offset) {
-        std::size_t return_offset = 0;
-        for (int i = 0; i < 32; ++i)
-            return_offset = (return_offset << 8) | bytes[offset + i];
-        return_offset += 32;
-        return return_offset;
-    }
-
-    DeployError _decodeDeployError(const evmc::Result& r)
-    {
-        if(r.output_data == nullptr || r.output_size < 4)
-        {
-            return DeployError{};
-        }
-
-        std::vector<std::uint8_t> selector;
-
-        selector = constructSelector("ParticleAlreadyRegistered(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::PARTICLE_ALREADY_REGISTERED};
-        }
-
-        selector = constructSelector("ParticleMissing(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::PARTICLE_MISSING};
-        }
-
-        selector = constructSelector("ParticleDimensionsMismatch(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::PARTICLE_DIMENSIONS_MISMATCH};
-        }
-
-        selector = constructSelector("FeatureAlreadyRegistered(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::FEATURE_ALREADY_REGISTERED};
-        }
-
-        selector = constructSelector("FeatureMissing(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::FEATURE_MISSING};
-        }
-
-        selector = constructSelector("TransformationAlreadyRegistered(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::TRANSFORMATION_ALREADY_REGISTERED};
-        }
-
-        selector = constructSelector("TransformationArgumentsMismatch(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::TRANSFORMATION_ARGUMENTS_MISMATCH};
-        }
-
-        selector = constructSelector("TransformationMissing(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::TRANSFORMATION_MISSING};
-        }
-
-        selector = constructSelector("ConditionAlreadyRegistered(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::CONDITION_ALREADY_REGISTERED};
-        }
-
-        selector = constructSelector("ConditionArgumentsMismatch(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::CONDITION_ARGUMENTS_MISMATCH};
-        }
-
-        selector = constructSelector("ConditionMissing(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::CONDITION_MISSING};
-        }
-
-        selector = constructSelector("RegistryError(uint32)");
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return DeployError{DeployError::Kind::REGISTRY_ERROR};
-        }
-
-        return DeployError{};
-    }
-
-    ExecuteError _decodeExecuteError(const evmc::Result& r)
-    {
-        if(r.output_data == nullptr || r.output_size < 4)
-        {
-            return ExecuteError{};
-        }
-
-        std::vector<std::uint8_t> selector;
-
-        selector = constructSelector("ConditionNotMet(bytes32)");
-        spdlog::info(evmc::hex(selector.data()));
-        if (std::equal(selector.begin(), selector.end(), r.output_data))
-        {
-            return ExecuteError{ExecuteError::Kind::CONDITION_NOT_MET};
-        }
-
-        return ExecuteError{};
-    }
-
-
-    template<>
-    std::vector<std::vector<uint32_t>> decodeReturnedValue(const std::vector<std::uint8_t> & bytes)
-    {
-        assert(bytes.size() % 32 == 0);
-        std::vector<std::vector<uint32_t>> result;
-
-        std::size_t base_offset = _readUint256(bytes, 0);  // normally 32
-        std::size_t offset = base_offset;
-
-        uint64_t outer_len = _readUint256(bytes, offset);
-        offset += 32;
-
-        std::vector<std::size_t> inner_offsets;
-        for (uint64_t i = 0; i < outer_len; ++i) {
-            std::uint64_t inner_offset = _readUint256(bytes, offset);
-            inner_offsets.push_back(inner_offset + base_offset + 32);
-            offset += 32;
-        }
-
-        for (std::size_t inner_offset : inner_offsets) 
-        {
-            if (inner_offset + 32 > bytes.size()) {
-                throw std::runtime_error("Inner array header out of range");
-            }
-
-            std::uint64_t inner_len = _readUint256(bytes, inner_offset);
-            inner_offset += 32;
-
-            std::vector<uint32_t> inner_array;
-            for (std::uint64_t j = 0; j < inner_len; ++j) {
-                std::uint32_t val = _readUint32Padded(bytes, inner_offset + (j * 32));
-                inner_array.push_back(val);
-            }
-            result.push_back(std::move(inner_array));
-        }
-
-        return result;
-    }
-
-    template<>
-    Address decodeReturnedValue(const std::vector<std::uint8_t> & bytes)
-    {
-        if (bytes.size() < 32)
-            throw std::runtime_error("Invalid ABI data: less than 32 bytes");
-
-        Address result;
-        // Copy last 20 bytes from the 32-byte word (ABI stores address in the last 20 bytes)
-        std::copy(bytes.begin() + 12, bytes.begin() + 32, result.bytes);
-        return result;
-    }
-
-
-    template<>
-    std::vector<Samples> decodeReturnedValue(const std::vector<std::uint8_t>& bytes)
-    {
-        std::vector<Samples> result;
-
-        // Step 1: read base offset to array
-        std::size_t array_base = _readUint256(bytes, 0);  // should be 32
-
-        // Step 2: read array length
-        std::size_t array_len = _readUint256(bytes, array_base);  // at offset 32
-
-        // Step 3: read offsets to structs (relative to array_base)
-        std::vector<std::size_t> struct_offsets;
-        for (std::size_t i = 0; i < array_len; ++i) {
-            std::size_t struct_rel_offset = _readUint256(bytes, (array_base + 32) + (i * 32));
-            struct_offsets.push_back((array_base + 32) + struct_rel_offset);
-        }
-
-        // Step 4: parse each struct
-        for (std::size_t struct_offset : struct_offsets) 
-        {
-            Samples samples;
-
-            std::size_t path_rel = _readUint256(bytes, struct_offset);
-            std::size_t data_rel = _readUint256(bytes, struct_offset + 32);
-
-            // 4.2: resolve actual offsets
-            std::size_t path_offset = struct_offset + path_rel;
-            std::size_t data_offset = struct_offset + data_rel;
-
-            // 4.3: read string length and content
-            std::size_t str_len = _readUint256(bytes, path_offset);
-
-            samples.set_path(std::string(
-                reinterpret_cast<const char*>(&bytes[path_offset + 32]),
-                str_len
-            ));
-
-            // 4.4: read data length and entries
-            std::size_t data_len = _readUint256(bytes, data_offset);
-            std::vector<std::uint32_t> data;
-            for (std::size_t j = 0; j < data_len; ++j) {
-                std::uint32_t val = _readUint32Padded(bytes, data_offset + 32 + j * 32);
-                samples.add_data(val);
-            }
-
-            result.emplace_back(std::move(samples));
-        }
-
-        return result;
-    }
-
-    asio::awaitable<std::expected<std::vector<std::uint8_t>, ExecuteError>> fetchOwner(EVM & evm, const Address & address)
+    asio::awaitable<std::expected<std::vector<std::uint8_t>, chain::ExecuteError>> fetchOwner(EVM & evm, const chain::Address & address)
     {
         spdlog::debug(std::format("Fetching contract owner: {}", address));
         std::vector<uint8_t> input_data;
-        const auto selector = constructSelector("getOwner()");
+        const auto selector = chain::constructSelector("getOwner()");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
         co_return co_await evm.execute(evm.getRegistryAddress(), address, input_data, 1'000'000, 0);
     }
@@ -406,12 +154,12 @@ namespace dcn::evm
         });
     }
     
-    Address EVM::getRegistryAddress() const
+    chain::Address EVM::getRegistryAddress() const
     {
         return _registry_address;
     }
 
-    Address EVM::getRunnerAddress() const
+    chain::Address EVM::getRunnerAddress() const
     {
         return _runner_address;
     }
@@ -426,7 +174,7 @@ namespace dcn::evm
         return _pt_path;
     }
 
-    asio::awaitable<bool> EVM::addAccount(Address address, std::uint64_t initial_gas) noexcept
+    asio::awaitable<bool> EVM::addAccount(chain::Address address, std::uint64_t initial_gas) noexcept
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -448,7 +196,7 @@ namespace dcn::evm
         co_return true;
     }
 
-    asio::awaitable<bool> EVM::setGas(Address address, std::uint64_t gas) noexcept
+    asio::awaitable<bool> EVM::setGas(chain::Address address, std::uint64_t gas) noexcept
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -510,9 +258,9 @@ namespace dcn::evm
         co_return true;
     }
 
-    asio::awaitable<std::expected<Address, DeployError>> EVM::deploy(
+    asio::awaitable<std::expected<chain::Address, chain::DeployError>> EVM::deploy(
                         std::istream & code_stream,
-                        Address sender,
+                        chain::Address sender,
                         std::vector<std::uint8_t> constructor_args, 
                         std::uint64_t gas_limit,
                         std::uint64_t value) noexcept
@@ -522,14 +270,20 @@ namespace dcn::evm
         if(!bytecode_result)
         {
             spdlog::error("Cannot parse bytecode");
-            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_BYTECODE});
+            co_return std::unexpected(chain::DeployError{
+                .kind = chain::DeployError::Kind::INVALID_INPUT,
+                .message = "Cannot parse bytecode"
+            });
         }
         const auto & bytecode = *bytecode_result;
 
         if(bytecode.size() == 0)
         {
             spdlog::error("Empty bytecode");
-            co_return std::unexpected(DeployError{DeployError::Kind::INVALID_BYTECODE});
+            co_return std::unexpected(chain::DeployError{
+                .kind = chain::DeployError::Kind::INVALID_INPUT,
+                .message = "Empty bytecode"
+            });
         }
 
         if(!constructor_args.empty())
@@ -572,7 +326,12 @@ namespace dcn::evm
 
         if (result.status_code != EVMC_SUCCESS)
         {
-            const DeployError error = _decodeDeployError(result);
+            const chain::DeployError error{
+                .kind = chain::DeployError::Kind::UNKNOWN,
+                .message = std::format("Failed to deploy contract: {}", result.status_code),
+                .result_bytes = std::vector<std::uint8_t>(result.output_data, result.output_data + result.output_size)
+            };
+
             spdlog::error(std::format("Failed to deploy contract: {}, error: {}", result.status_code, error.kind));
             co_return std::unexpected(error);
         }
@@ -588,9 +347,9 @@ namespace dcn::evm
         co_return result.create_address;
      }
 
-    asio::awaitable<std::expected<Address, DeployError>> EVM::deploy(
+    asio::awaitable<std::expected<chain::Address, chain::DeployError>> EVM::deploy(
                         std::filesystem::path code_path,
-                        Address sender,
+                        chain::Address sender,
                         std::vector<uint8_t> constructor_args,
                         std::uint64_t gas_limit,
                         std::uint64_t value) noexcept
@@ -600,9 +359,9 @@ namespace dcn::evm
         co_return co_await deploy(file, std::move(sender), std::move(constructor_args),  gas_limit, value);
     }
 
-    asio::awaitable<std::expected<std::vector<std::uint8_t>, ExecuteError>> EVM::execute(
-                    Address sender,
-                    Address recipient,
+    asio::awaitable<std::expected<std::vector<std::uint8_t>, chain::ExecuteError>> EVM::execute(
+                    chain::Address sender,
+                    chain::Address recipient,
                     std::vector<std::uint8_t> input_bytes,
                     std::uint64_t gas_limit,
                     std::uint64_t value) noexcept
@@ -610,7 +369,10 @@ namespace dcn::evm
         if(std::ranges::all_of(recipient.bytes, [](uint8_t b) { return b == 0; }))
         {
             spdlog::error("Cannot create a contract with execute function. Use dedicated deploy method.");
-            co_return std::unexpected(ExecuteError{ExecuteError::Kind::UNKNOWN});
+            co_return std::unexpected(chain::ExecuteError{
+                .kind = chain::ExecuteError::Kind::INVALID_INPUT,
+                .message = "Cannot create a contract with execute function. Use dedicated deploy method."
+            });
         }
 
         evmc_message msg{};
@@ -639,7 +401,12 @@ namespace dcn::evm
         
         if (result.status_code != EVMC_SUCCESS)
         {
-            const ExecuteError error = _decodeExecuteError(result);
+            const chain::ExecuteError error
+            {
+                .kind = chain::ExecuteError::Kind::TRANSACTION_REVERTED,
+                .result_bytes = std::vector<std::uint8_t>(result.output_data, result.output_data + result.output_size)
+            };
+
             std::string output_hex = "<empty>";
             if(result.output_data != nullptr && result.output_size > 0)
             {

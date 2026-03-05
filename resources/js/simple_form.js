@@ -397,6 +397,19 @@ function getParticleCompositeValues() {
     return Array.from(inputs).map(input => input.value.trim());
 }
 
+function buildParticleCompositesMap() {
+    const compositeValues = getParticleCompositeValues();
+    const composites = {};
+
+    compositeValues.forEach((compositeName, dimId) => {
+        if (compositeName.length > 0) {
+            composites[String(dimId)] = compositeName;
+        }
+    });
+
+    return composites;
+}
+
 function renderParticleCompositeInputs(count, existingValues = []) {
     const container = document.getElementById('particleCompositesContainer');
     if (!container) return;
@@ -468,11 +481,11 @@ export async function fetchParticleFeatureDimensions() {
 function constructStructuredParticle() {
     const name = document.getElementById('in_particleName').value.trim();
     const feature_name = document.getElementById('in_particleFeatureName').value.trim();
-    const composite_names = getParticleCompositeValues();
+    const composites = buildParticleCompositesMap();
     const condition_name = document.getElementById('in_particleConditionName').value.trim();
     const condition_args = parseIntList(document.getElementById('in_particleConditionArgs').value);
 
-    return JSON.stringify({ name, feature_name, composite_names, condition_name, condition_args }, null, 2);
+    return JSON.stringify({ name, feature_name, composites, condition_name, condition_args }, null, 2);
 }
 
 export function updateParticlePreview() {
@@ -490,8 +503,27 @@ export function populateStructuredParticle(jsonOrObject) {
 
     document.getElementById('in_particleName').value = data.name || '';
     document.getElementById('in_particleFeatureName').value = data.feature_name || '';
-    const compositeNames = Array.isArray(data.composite_names) ? data.composite_names : [];
-    renderParticleCompositeInputs(compositeNames.length, compositeNames);
+
+    const compositesObject =
+        data.composites && typeof data.composites === 'object' && !Array.isArray(data.composites)
+            ? data.composites
+            : {};
+
+    const compositeValues = [];
+    let maxCompositeIndex = -1;
+    Object.entries(compositesObject).forEach(([indexKey, compositeName]) => {
+        const index = Number.parseInt(indexKey, 10);
+        if (!Number.isInteger(index) || index < 0 || typeof compositeName !== 'string') {
+            return;
+        }
+        compositeValues[index] = compositeName;
+        maxCompositeIndex = Math.max(maxCompositeIndex, index);
+    });
+
+    const currentInputsCount = document.querySelectorAll('.particle-composite-input').length;
+    const renderCount = Math.max(currentInputsCount, maxCompositeIndex + 1);
+    renderParticleCompositeInputs(renderCount, compositeValues);
+
     document.getElementById('in_particleConditionName').value = data.condition_name || '';
     document.getElementById('in_particleConditionArgs').value = Array.isArray(data.condition_args)
         ? data.condition_args.join(', ')

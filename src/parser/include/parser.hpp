@@ -72,4 +72,8 @@ namespace dcn::parse
      */
     template<class T>
     Result<std::string> parseToJson(T message, use_protobuf_t);
+
+
+    template<class T>
+    Result<T> decodeBytes(const std::vector<uint8_t> & bytes);
 }

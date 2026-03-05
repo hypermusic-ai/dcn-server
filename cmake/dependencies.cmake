@@ -489,6 +489,7 @@ set(PT_SOLIDITY_DIR "${PT_REPO_PREFIX}/solidity")
 set(PT_INSTALL_DIR "${CMAKE_BINARY_DIR}/_install/pt")
 set(PT_NPM_MARKER "${PT_INSTALL_DIR}/pt_npm_success.txt")
 set(PT_CONFIG_MARKER "${PT_INSTALL_DIR}/pt_config_success.txt")
+file(GLOB_RECURSE PT_SOLIDITY_CONTRACT_FILES CONFIGURE_DEPENDS "${PT_SOLIDITY_DIR}/contracts/*.sol")
 
 message(STATUS "PT repository location : ${PT_REPO_PREFIX}")
 message (STATUS "PT solidity location : ${PT_SOLIDITY_DIR}")
@@ -518,6 +519,7 @@ add_custom_target(pt_npm_configure DEPENDS ${PT_NPM_MARKER})
 
 add_custom_command(
     OUTPUT ${PT_CONFIG_MARKER}
+    DEPENDS ${PT_NPM_MARKER} ${PT_SOLIDITY_CONTRACT_FILES}
     COMMAND ${CMAKE_COMMAND} -E echo "Configuring PT"
     ${_pt_npm_commands}
     COMMAND  ${CMAKE_COMMAND} -E copy_directory "${PT_SOLIDITY_DIR}/contracts" "${PT_INSTALL_DIR}/contracts"

@@ -2,6 +2,7 @@ add_module(NAME "Crypto"
     DEPENDENCIES
         "${PROJECT_PREFIX}::Utils"
         "${PROJECT_PREFIX}::Native"
+        
         spdlog::spdlog
         asio
         absl::hash
