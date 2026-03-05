@@ -16,7 +16,6 @@ using namespace asio::experimental::awaitable_operators;
 #include "auth.hpp"
 #include "chain.hpp"
 #include "evm.hpp"
-#include "file.hpp"
 #include "version.hpp"
 #include "loader.hpp"
 

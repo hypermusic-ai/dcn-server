@@ -3,10 +3,7 @@ add_module(NAME "Auth"
         "${PROJECT_PREFIX}::Utils"
         "${PROJECT_PREFIX}::Native"
         "${PROJECT_PREFIX}::Crypto"
-        "${PROJECT_PREFIX}::HTTP"
-        "${PROJECT_PREFIX}::Parser"
         "${PROJECT_PREFIX}::Chain"
-        "${PROJECT_PREFIX}::File"
 
         spdlog::spdlog
         asio

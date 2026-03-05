@@ -19,8 +19,6 @@ using namespace asio::experimental::awaitable_operators;
 
 #include "utils.hpp"
 #include "keccak256.hpp"
-#include "http.hpp"
-#include "parse_error.hpp"
 #include "chain.hpp"
 
 namespace dcn::auth

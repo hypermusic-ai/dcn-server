@@ -1,20 +1,5 @@
 #include "auth.hpp"
 
-namespace dcn::parse
-{
-    // Get Ethereum address from public key (last 20 bytes of Keccak256(pubkey))
-    static chain::Address _parseEthAddressFromPublicKey(const std::uint8_t* pubkey, std::size_t len) 
-    {
-        uint8_t hash[crypto::Keccak256::HASH_LEN];
-        // skip 0x04 prefix
-        dcn::crypto::Keccak256::getHash(pubkey + 1, len - 1, hash);
-        chain::Address address;
-        // last 20 bytes
-        std::copy(hash + 12, hash + 32, address.bytes);
-        return address; 
-    }
-}
-
 namespace dcn::auth
 {
     // initialize random number generator
@@ -96,7 +81,7 @@ namespace dcn::auth
         secp256k1_ec_pubkey_serialize(ctx, pubkey_serialized, &pubkey_len, &pubkey, SECP256K1_EC_UNCOMPRESSED);
         secp256k1_context_destroy(ctx);
 
-        co_return address == parse::_parseEthAddressFromPublicKey(pubkey_serialized, pubkey_len);
+        co_return address == chain::ethAddressFromPublicKey(pubkey_serialized, pubkey_len);
     }
 
     asio::awaitable<std::string> AuthManager::generateAccessToken(const chain::Address & address)

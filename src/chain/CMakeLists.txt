@@ -5,7 +5,6 @@ add_module(NAME "Chain"
         "${PROJECT_PREFIX}::Native"
         "${PROJECT_PREFIX}::Parser"
         "${PROJECT_PREFIX}::Utils"
-        "${PROJECT_PREFIX}::File"
         "${PROJECT_PREFIX}::Crypto"
 
         absl::hash

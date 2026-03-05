@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 
+#include "native.h"
 #include <asio.hpp>
 #include <nlohmann/json_fwd.hpp>
 

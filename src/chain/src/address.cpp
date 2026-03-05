@@ -1,6 +1,7 @@
 #include <memory>
 
 #include "address.hpp"
+#include "crypto.hpp"
 
 namespace dcn::chain
 {
@@ -28,4 +29,14 @@ namespace dcn::chain
         return addr;
     }
 
+    chain::Address ethAddressFromPublicKey(const std::uint8_t* pubkey, std::size_t len) 
+    {
+        uint8_t hash[crypto::Keccak256::HASH_LEN];
+        // skip 0x04 prefix
+        dcn::crypto::Keccak256::getHash(pubkey + 1, len - 1, hash);
+        chain::Address address;
+        // last 20 bytes
+        std::copy(hash + 12, hash + 32, address.bytes);
+        return address; 
+    }
 }
