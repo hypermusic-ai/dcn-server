@@ -148,19 +148,19 @@ $(document).ready(function(){initNavTree('utils_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        absl::flat_hash_set&lt;std::string&gt; visited;</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        absl::flat_hash_set&lt;std::string&gt; on_stack;</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span> </div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        std::function&lt;void(<span class="keyword">const</span> std::string&amp;)&gt; visit = [&amp;](<span class="keyword">const</span> std::string&amp; name)  {</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            <span class="keywordflow">if</span> (visited.contains(name)) <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>            <span class="keywordflow">if</span> (on_stack.contains(name)) {</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                spdlog::error(std::format(<span class="stringliteral">&quot;Cycle detected involving : {}&quot;</span>, name));</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        std::function&lt;void(<span class="keyword">const</span> std::string&amp;)&gt; visit = [&amp;](<span class="keyword">const</span> std::string&amp; <a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>)  {</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>            <span class="keywordflow">if</span> (visited.contains(<a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>)) <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>            <span class="keywordflow">if</span> (on_stack.contains(<a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>)) {</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>                spdlog::error(std::format(<span class="stringliteral">&quot;Cycle detected involving : {}&quot;</span>, <a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>));</div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>                <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Cyclic dependency&quot;</span>);</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>            }</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>            on_stack.insert(name);</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>            on_stack.insert(<a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>);</div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>            <span class="keyword">auto</span> it = data.find(name);</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>            <span class="keyword">auto</span> it = data.find(<a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>);</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>            <span class="keywordflow">if</span> (it == data.end()) {</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                spdlog::warn(std::format(<span class="stringliteral">&quot;Missing dependency: {}&quot;</span>, name));</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                on_stack.erase(name);</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>                spdlog::warn(std::format(<span class="stringliteral">&quot;Missing dependency: {}&quot;</span>, <a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>));</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                on_stack.erase(<a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>);</div>
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>                <span class="keywordflow">return</span>;</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>            }</div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
@@ -172,14 +172,14 @@ $(document).ready(function(){initNavTree('utils_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>                visit(child_name);</div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>            }</div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>            visited.insert(name);</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>            on_stack.erase(name);</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            sorted.push_back(name);</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>            visited.insert(<a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>);</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>            on_stack.erase(<a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>);</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>            sorted.push_back(<a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>);</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        };</div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="comment">// perform the sort</span></div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; [name, _] : data) {</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>            visit(name);</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; [<a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, _] : data) {</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>            visit(<a class="code hl_variable" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>);</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        }</div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        <span class="keywordflow">return</span> sorted;</div>
@@ -188,6 +188,7 @@ $(document).ready(function(){initNavTree('utils_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="namespacedcn_1_1utils.html#ac5be949d9e1bfe957e75587b3ef85c4e">equalsIgnoreCase</a>(<span class="keyword">const</span> std::string&amp; a, <span class="keyword">const</span> std::string&amp; b);</div>
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>}</div>
+<div class="ttc" id="aingestion_8cpp_html_a9b45b3e13bd9167aab02e17e08916231"><div class="ttname"><a href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a></div><div class="ttdeci">std::string name</div><div class="ttdef"><b>Definition</b> ingestion.cpp:29</div></div>
 <div class="ttc" id="alogo_8hpp_html"><div class="ttname"><a href="logo_8hpp.html">logo.hpp</a></div></div>
 <div class="ttc" id="anamespacedcn_1_1utils_html"><div class="ttname"><a href="namespacedcn_1_1utils.html">dcn::utils</a></div><div class="ttdef"><b>Definition</b> logo.hpp:6</div></div>
 <div class="ttc" id="anamespacedcn_1_1utils_html_a07545fa1ab2d1ccc349667eae8ba746f"><div class="ttname"><a href="namespacedcn_1_1utils.html#a07545fa1ab2d1ccc349667eae8ba746f">dcn::utils::currentTimestamp</a></div><div class="ttdeci">std::string currentTimestamp()</div><div class="ttdef"><b>Definition</b> utils.cpp:14</div></div>

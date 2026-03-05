@@ -1,9 +1,8 @@
 var searchData=
 [
-  ['handleconnection_0',['handleConnection',['../classdcn_1_1server_1_1Server.html#a2de80db5852a886c42d4e09ca16ba7e1',1,'dcn::server::Server']]],
-  ['head_5fcondition_1',['HEAD_condition',['../namespacedcn.html#aa271e2b09326820191ff2b566f241012',1,'dcn']]],
-  ['head_5ffeature_2',['HEAD_feature',['../namespacedcn.html#a137b4c4019526ceaa6f245535501be5f',1,'dcn']]],
-  ['head_5fparticle_3',['HEAD_particle',['../namespacedcn.html#aa4a01ef96f2f3af6defb6eac3c506c74',1,'dcn']]],
-  ['head_5fservefile_4',['HEAD_serveFile',['../namespacedcn.html#a218fd3681c3c254f43dd075ac0022902',1,'dcn']]],
-  ['head_5ftransformation_5',['HEAD_transformation',['../namespacedcn.html#a8549c85764ed74d1a2563643fa64d885',1,'dcn']]]
+  ['invalidateaccesstoken_0',['invalidateAccessToken',['../classdcn_1_1auth_1_1AuthManager.html#a84ede0a39c6ca519a16921d6bce0b86f',1,'dcn::auth::AuthManager']]],
+  ['isconditionbucketempty_1',['isConditionBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#afed9f3429f9bda5075ba07fee43698ce',1,'dcn::registry::Registry']]],
+  ['isfeaturebucketempty_2',['isFeatureBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#a2bf10417ade06367c790fb82887970af',1,'dcn::registry::Registry']]],
+  ['isparticlebucketempty_3',['isParticleBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#ad527b08d064d9d4675381899f37ff521',1,'dcn::registry::Registry']]],
+  ['istransformationbucketempty_4',['isTransformationBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#a8af408cd164c32ff17497fc99b901f2c',1,'dcn::registry::Registry']]]
 ];

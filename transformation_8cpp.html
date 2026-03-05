@@ -102,11 +102,15 @@ $(document).ready(function(){initNavTree('transformation_8cpp.html',''); initRes
   <div class="headertitle"><div class="title">transformation.cpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;<a class="el" href="transformation_8hpp_source.html">transformation.hpp</a>&quot;</code><br />
+<div class="textblock"><code>#include &lt;format&gt;</code><br />
+<code>#include &quot;<a class="el" href="crypto_8hpp_source.html">crypto.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="transformation_8hpp_source.html">transformation.hpp</a>&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacedcn" id="r_namespacedcn"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html">dcn</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespacedcn_1_1pt" id="r_namespacedcn_1_1pt"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html">dcn::pt</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespacedcn_1_1parse" id="r_namespacedcn_1_1parse"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html">dcn::parse</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -115,6 +119,10 @@ Namespaces</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:a67a11873bbeb568aab7c419a130ce237" id="r_a67a11873bbeb568aab7c419a130ce237"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a67a11873bbeb568aab7c419a130ce237">dcn::constructTransformationSolidityCode</a> (const Transformation &amp;transformation)</td></tr>
 <tr class="separator:a67a11873bbeb568aab7c419a130ce237"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4c13e15f227acb0a303c7ce32ddcd97" id="r_ac4c13e15f227acb0a303c7ce32ddcd97"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structdcn_1_1pt_1_1TransformationAddedEvent.html">TransformationAddedEvent</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html#ac4c13e15f227acb0a303c7ce32ddcd97">dcn::pt::decodeTransformationAddedEvent</a> (const std::uint8_t *data, std::size_t data_size, const evmc::bytes32 topics[], std::size_t num_topics)</td></tr>
+<tr class="separator:ac4c13e15f227acb0a303c7ce32ddcd97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaaa753b78e219797a79ba32f6f3de6b6" id="r_aaaa753b78e219797a79ba32f6f3de6b6"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structdcn_1_1pt_1_1TransformationAddedEvent.html">TransformationAddedEvent</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html#aaaa753b78e219797a79ba32f6f3de6b6">dcn::pt::decodeTransformationAddedEvent</a> (const std::string &amp;data_hex, const std::vector&lt; std::string &gt; &amp;topics_hex)</td></tr>
+<tr class="separator:aaaa753b78e219797a79ba32f6f3de6b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a89009fd74765f3cbd2de272c34486fde" id="r_a89009fd74765f3cbd2de272c34486fde"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
 <tr class="memitem:a89009fd74765f3cbd2de272c34486fde"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a89009fd74765f3cbd2de272c34486fde">dcn::parse::parseToJson</a> (Transformation transformation, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
 <tr class="memdesc:a89009fd74765f3cbd2de272c34486fde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a Transformation object to a JSON object.  <br /></td></tr>

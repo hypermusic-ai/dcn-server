@@ -113,8 +113,8 @@ $(document).ready(function(){initNavTree('api_8hpp.html',''); initResizable(); }
 <code>#include &quot;<a class="el" href="parser_8hpp_source.html">parser.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="pt_8hpp_source.html">pt.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="auth_8hpp_source.html">auth.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="chain_8hpp_source.html">chain.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="evm_8hpp_source.html">evm.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="file_8hpp_source.html">file.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="version_8hpp_source.html">version.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="loader_8hpp_source.html">loader.hpp</a>&quot;</code><br />
 </div>
@@ -127,9 +127,9 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a84b0570154c9b68b554f6cf40f0e37a0" id="r_a84b0570154c9b68b554f6cf40f0e37a0"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b">evm::Address</a>, <a class="el" href="structdcn_1_1auth_1_1AuthError.html">auth::AuthError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a84b0570154c9b68b554f6cf40f0e37a0">dcn::authenticate</a> (const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;request, const <a class="el" href="classdcn_1_1auth_1_1AuthManager.html">auth::AuthManager</a> &amp;auth_manager)</td></tr>
-<tr class="memdesc:a84b0570154c9b68b554f6cf40f0e37a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to handle authentication.  <br /></td></tr>
-<tr class="separator:a84b0570154c9b68b554f6cf40f0e37a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a2acf9c82baff1797c6531791e0d27b" id="r_a2a2acf9c82baff1797c6531791e0d27b"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a>, <a class="el" href="structdcn_1_1auth_1_1AuthError.html">auth::AuthError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a2a2acf9c82baff1797c6531791e0d27b">dcn::authenticate</a> (const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;request, const <a class="el" href="classdcn_1_1auth_1_1AuthManager.html">auth::AuthManager</a> &amp;auth_manager)</td></tr>
+<tr class="memdesc:a2a2acf9c82baff1797c6531791e0d27b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to handle authentication.  <br /></td></tr>
+<tr class="separator:a2a2acf9c82baff1797c6531791e0d27b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acc904b1552c270b2f98d874a59eaf7ac" id="r_acc904b1552c270b2f98d874a59eaf7ac"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#acc904b1552c270b2f98d874a59eaf7ac">dcn::GET_version</a> (const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;request, std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">server::RouteArg</a> &gt; route_args, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">server::QueryArgsList</a> query_args, const std::string &amp;build_timestamp)</td></tr>
 <tr class="memdesc:acc904b1552c270b2f98d874a59eaf7ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handles GET requests for the version endpoint.  <br /></td></tr>
 <tr class="separator:acc904b1552c270b2f98d874a59eaf7ac"><td class="memSeparator" colspan="2">&#160;</td></tr>

@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['loader_2ecpp_0',['loader.cpp',['../loader_8cpp.html',1,'']]],
-  ['loader_2ehpp_1',['loader.hpp',['../loader_8hpp.html',1,'']]],
-  ['logo_2ecpp_2',['logo.cpp',['../logo_8cpp.html',1,'']]],
-  ['logo_2ehpp_3',['logo.hpp',['../logo_8hpp.html',1,'']]]
+  ['keccak256_2ecpp_0',['keccak256.cpp',['../keccak256_8cpp.html',1,'']]],
+  ['keccak256_2ehpp_1',['keccak256.hpp',['../keccak256_8hpp.html',1,'']]]
 ];

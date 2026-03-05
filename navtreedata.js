@@ -29,7 +29,7 @@ var NAVTREE =
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
         [ "All", "namespacemembers.html", "namespacemembers_dup" ],
-        [ "Functions", "namespacemembers_func.html", null ],
+        [ "Functions", "namespacemembers_func.html", "namespacemembers_func" ],
         [ "Variables", "namespacemembers_vars.html", null ],
         [ "Typedefs", "namespacemembers_type.html", null ],
         [ "Enumerations", "namespacemembers_enum.html", null ]
@@ -42,7 +42,7 @@ var NAVTREE =
       [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", "functions_dup" ],
-        [ "Functions", "functions_func.html", null ],
+        [ "Functions", "functions_func.html", "functions_func" ],
         [ "Variables", "functions_vars.html", null ],
         [ "Enumerations", "functions_enum.html", null ]
       ] ]
@@ -52,6 +52,7 @@ var NAVTREE =
       [ "File Members", "globals.html", [
         [ "All", "globals.html", null ],
         [ "Functions", "globals_func.html", null ],
+        [ "Variables", "globals_vars.html", null ],
         [ "Typedefs", "globals_type.html", null ],
         [ "Macros", "globals_defs.html", null ]
       ] ]
@@ -61,12 +62,13 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"annotated.html",
-"classdcn_1_1http_1_1Response.html",
-"dir_aec46070e25e2e5fb0789c4048a4272f.html",
-"namespacedcn.html#a184b90896887dec190467e00f2cd1bdb",
-"namespacedcn_1_1utils.html",
-"structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857be"
+"address_8cpp.html",
+"classdcn_1_1evm_1_1EVMStorage.html#ae1ef0b47edbf07df9434c74064f48843",
+"classdcn_1_1server_1_1Server.html#afc794d3d34b5aa4d779ec626b61276a8",
+"globals_defs.html",
+"namespacedcn_1_1parse.html#a099e01b41b2ee816c860b1a7eeae0a20",
+"route__arg_8cpp.html#ad58c377369051cf1c6e1333bb34bc1e0",
+"structdcn_1_1pt_1_1PTDeployError.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

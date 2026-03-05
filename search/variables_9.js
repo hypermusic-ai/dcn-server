@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['patch_5fversion_0',['PATCH_VERSION',['../namespacedcn.html#a97b781d3fe9573a23ed6606389674f3c',1,'dcn']]]
+  ['logs_5fpath_0',['logs_path',['../structdcn_1_1config_1_1Config.html#a50c16c7fb07ccaca4f22c405997a7b3d',1,'dcn::config::Config']]]
 ];

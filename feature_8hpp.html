@@ -97,6 +97,7 @@ $(document).ready(function(){initNavTree('feature_8hpp.html',''); initResizable(
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">feature.hpp File Reference</div></div>
@@ -105,12 +106,20 @@ $(document).ready(function(){initNavTree('feature_8hpp.html',''); initResizable(
 <div class="textblock"><code>#include &lt;absl/hash/hash.h&gt;</code><br />
 <code>#include &quot;feature.pb.h&quot;</code><br />
 <code>#include &quot;<a class="el" href="parser_8hpp_source.html">parser.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="chain_8hpp_source.html">chain.hpp</a>&quot;</code><br />
 </div>
 <p><a href="feature_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1pt_1_1FeatureAddedEvent.html">dcn::pt::FeatureAddedEvent</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacedcn" id="r_namespacedcn"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html">dcn</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespacedcn_1_1pt" id="r_namespacedcn_1_1pt"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html">dcn::pt</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespacedcn_1_1parse" id="r_namespacedcn_1_1parse"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html">dcn::parse</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -131,6 +140,10 @@ Functions</h2></td></tr>
 <tr class="separator:a9497290fb638adb984f9fda75041a12f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a30e89e0e4b7a8001225150709705697c" id="r_a30e89e0e4b7a8001225150709705697c"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a30e89e0e4b7a8001225150709705697c">dcn::constructFeatureSolidityCode</a> (const Feature &amp;feature)</td></tr>
 <tr class="separator:a30e89e0e4b7a8001225150709705697c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4d04f2ad8fe0ee23a90a159ad1c1241" id="r_ac4d04f2ad8fe0ee23a90a159ad1c1241"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structdcn_1_1pt_1_1FeatureAddedEvent.html">FeatureAddedEvent</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html#ac4d04f2ad8fe0ee23a90a159ad1c1241">dcn::pt::decodeFeatureAddedEvent</a> (const std::uint8_t *data, std::size_t data_size, const evmc::bytes32 topics[], std::size_t num_topics)</td></tr>
+<tr class="separator:ac4d04f2ad8fe0ee23a90a159ad1c1241"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab89c7a7a8e87cf44fe8430f7efc8d85f" id="r_ab89c7a7a8e87cf44fe8430f7efc8d85f"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structdcn_1_1pt_1_1FeatureAddedEvent.html">FeatureAddedEvent</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html#ab89c7a7a8e87cf44fe8430f7efc8d85f">dcn::pt::decodeFeatureAddedEvent</a> (const std::string &amp;data_hex, const std::vector&lt; std::string &gt; &amp;topics_hex)</td></tr>
+<tr class="separator:ab89c7a7a8e87cf44fe8430f7efc8d85f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f737eb90d5726a833d0264cc3af5a9f" id="r_a6f737eb90d5726a833d0264cc3af5a9f"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
 <tr class="memitem:a6f737eb90d5726a833d0264cc3af5a9f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a6f737eb90d5726a833d0264cc3af5a9f">dcn::parse::parseToJson</a> (TransformationDef transform_def, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
 <tr class="memdesc:a6f737eb90d5726a833d0264cc3af5a9f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a TransformationDef object to a JSON object.  <br /></td></tr>

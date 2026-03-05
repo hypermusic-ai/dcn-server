@@ -155,6 +155,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a7b262237c366f80cd25debbb4566392a"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::string &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a7b262237c366f80cd25debbb4566392a">parseToJson</a> (T message, <a class="el" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>)</td></tr>
 <tr class="memdesc:a7b262237c366f80cd25debbb4566392a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a T to a JSON string using Protobuf.  <br /></td></tr>
 <tr class="separator:a7b262237c366f80cd25debbb4566392a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1b0a71bd827db3afc8643d61a0f664e" id="r_ac1b0a71bd827db3afc8643d61a0f664e"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:ac1b0a71bd827db3afc8643d61a0f664e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#ac1b0a71bd827db3afc8643d61a0f664e">decodeBytes</a> (const std::vector&lt; uint8_t &gt; &amp;bytes)</td></tr>
+<tr class="separator:ac1b0a71bd827db3afc8643d61a0f664e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a01251d226360d607dacf42d683174913" id="r_a01251d226360d607dacf42d683174913"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
 <tr class="memitem:a01251d226360d607dacf42d683174913"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a01251d226360d607dacf42d683174913">parseToJson</a> (Condition condition, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
 <tr class="memdesc:a01251d226360d607dacf42d683174913"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a condition object to a JSON object.  <br /></td></tr>
@@ -187,6 +190,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a5d3ec1879a6be9a9b61ee665f722cde9"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; ConditionRecord &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a5d3ec1879a6be9a9b61ee665f722cde9">parseFromJson</a> (std::string json_str, <a class="el" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>)</td></tr>
 <tr class="memdesc:a5d3ec1879a6be9a9b61ee665f722cde9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a JSON string to a ConditionRecord object using Protobuf.  <br /></td></tr>
 <tr class="separator:a5d3ec1879a6be9a9b61ee665f722cde9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a099e01b41b2ee816c860b1a7eeae0a20" id="r_a099e01b41b2ee816c860b1a7eeae0a20"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:a099e01b41b2ee816c860b1a7eeae0a20"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a099e01b41b2ee816c860b1a7eeae0a20">decodeBytes</a> (const std::vector&lt; uint8_t &gt; &amp;bytes)</td></tr>
+<tr class="separator:a099e01b41b2ee816c860b1a7eeae0a20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab842ce842aa5ef5326b365830c24213c" id="r_ab842ce842aa5ef5326b365830c24213c"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:ab842ce842aa5ef5326b365830c24213c"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1pt_1_1PTExecuteError.html">pt::PTExecuteError</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#ab842ce842aa5ef5326b365830c24213c">decodeBytes</a> (const std::vector&lt; uint8_t &gt; &amp;bytes)</td></tr>
+<tr class="separator:ab842ce842aa5ef5326b365830c24213c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2043ea76a7f63b2ab5ef4770843c2bdf" id="r_a2043ea76a7f63b2ab5ef4770843c2bdf"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
 <tr class="memitem:a2043ea76a7f63b2ab5ef4770843c2bdf"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a2043ea76a7f63b2ab5ef4770843c2bdf">parseToJson</a> (RunningInstance running_instance, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
 <tr class="memdesc:a2043ea76a7f63b2ab5ef4770843c2bdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a RunningInstance to a JSON object.  <br /></td></tr>
@@ -315,6 +324,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a1523f4d7601ce7909fff3bcaffc48cd8"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::vector&lt; Samples &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a1523f4d7601ce7909fff3bcaffc48cd8">parseFromJson</a> (<a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a>, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
 <tr class="memdesc:a1523f4d7601ce7909fff3bcaffc48cd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a JSON string to a Samples object using JSON.  <br /></td></tr>
 <tr class="separator:a1523f4d7601ce7909fff3bcaffc48cd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d313bf95fe0fa1245ee599236a38ba8" id="r_a3d313bf95fe0fa1245ee599236a38ba8"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:a3d313bf95fe0fa1245ee599236a38ba8"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::vector&lt; Samples &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a3d313bf95fe0fa1245ee599236a38ba8">decodeBytes</a> (const std::vector&lt; uint8_t &gt; &amp;bytes)</td></tr>
+<tr class="separator:a3d313bf95fe0fa1245ee599236a38ba8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a89009fd74765f3cbd2de272c34486fde" id="r_a89009fd74765f3cbd2de272c34486fde"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
 <tr class="memitem:a89009fd74765f3cbd2de272c34486fde"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a89009fd74765f3cbd2de272c34486fde">parseToJson</a> (Transformation transformation, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
 <tr class="memdesc:a89009fd74765f3cbd2de272c34486fde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a Transformation object to a JSON object.  <br /></td></tr>
@@ -379,6 +391,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a5d3ec1879a6be9a9b61ee665f722cde9"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; ConditionRecord &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a5d3ec1879a6be9a9b61ee665f722cde9">parseFromJson</a> (std::string json_str, <a class="el" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>)</td></tr>
 <tr class="memdesc:a5d3ec1879a6be9a9b61ee665f722cde9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a JSON string to a condition object using Protobuf.  <br /></td></tr>
 <tr class="separator:a5d3ec1879a6be9a9b61ee665f722cde9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a83d90b09636ed9da5b3e1db88e456c71" id="r_a83d90b09636ed9da5b3e1db88e456c71"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:a83d90b09636ed9da5b3e1db88e456c71"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1pt_1_1PTExecuteError.html">pt::PTExecuteError</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a83d90b09636ed9da5b3e1db88e456c71">decodeBytes</a> (const std::vector&lt; std::uint8_t &gt; &amp;r)</td></tr>
+<tr class="separator:a83d90b09636ed9da5b3e1db88e456c71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08d7c47a44d996213f5e5740bf927bea" id="r_a08d7c47a44d996213f5e5740bf927bea"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:a08d7c47a44d996213f5e5740bf927bea"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a08d7c47a44d996213f5e5740bf927bea">decodeBytes</a> (const std::vector&lt; std::uint8_t &gt; &amp;r)</td></tr>
+<tr class="separator:a08d7c47a44d996213f5e5740bf927bea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2043ea76a7f63b2ab5ef4770843c2bdf" id="r_a2043ea76a7f63b2ab5ef4770843c2bdf"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
 <tr class="memitem:a2043ea76a7f63b2ab5ef4770843c2bdf"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a2043ea76a7f63b2ab5ef4770843c2bdf">parseToJson</a> (RunningInstance running_instance, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
 <tr class="memdesc:a2043ea76a7f63b2ab5ef4770843c2bdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a RunningInstance to a JSON object.  <br /></td></tr>
@@ -507,6 +525,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ab40829b76c4b5c76f1bbdda15351d4cd"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::vector&lt; Samples &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#ab40829b76c4b5c76f1bbdda15351d4cd">parseFromJson</a> (<a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> json_val, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
 <tr class="memdesc:ab40829b76c4b5c76f1bbdda15351d4cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a JSON object to a condition object.  <br /></td></tr>
 <tr class="separator:ab40829b76c4b5c76f1bbdda15351d4cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a305ae586dcd2e9f5e94ddda379914036" id="r_a305ae586dcd2e9f5e94ddda379914036"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:a305ae586dcd2e9f5e94ddda379914036"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::vector&lt; Samples &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a305ae586dcd2e9f5e94ddda379914036">decodeBytes</a> (const std::vector&lt; std::uint8_t &gt; &amp;bytes)</td></tr>
+<tr class="separator:a305ae586dcd2e9f5e94ddda379914036"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a89009fd74765f3cbd2de272c34486fde" id="r_a89009fd74765f3cbd2de272c34486fde"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
 <tr class="memitem:a89009fd74765f3cbd2de272c34486fde"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a89009fd74765f3cbd2de272c34486fde">parseToJson</a> (Transformation transformation, <a class="el" href="structdcn_1_1parse_1_1use__json__t.html">use_json_t</a>)</td></tr>
 <tr class="memdesc:a89009fd74765f3cbd2de272c34486fde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a Transformation object to a JSON object.  <br /></td></tr>
@@ -570,6 +591,146 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="a305ae586dcd2e9f5e94ddda379914036" name="a305ae586dcd2e9f5e94ddda379914036"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a305ae586dcd2e9f5e94ddda379914036">&#9670;&#160;</a></span>decodeBytes() <span class="overload">[1/7]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::vector&lt; Samples &gt; &gt; dcn::parse::decodeBytes </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::uint8_t &gt; &amp;&#160;</td>
+          <td class="paramname"><em>bytes</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a83d90b09636ed9da5b3e1db88e456c71" name="a83d90b09636ed9da5b3e1db88e456c71"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a83d90b09636ed9da5b3e1db88e456c71">&#9670;&#160;</a></span>decodeBytes() <span class="overload">[2/7]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1pt_1_1PTExecuteError.html">pt::PTExecuteError</a> &gt; dcn::parse::decodeBytes </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::uint8_t &gt; &amp;&#160;</td>
+          <td class="paramname"><em>r</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a08d7c47a44d996213f5e5740bf927bea" name="a08d7c47a44d996213f5e5740bf927bea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a08d7c47a44d996213f5e5740bf927bea">&#9670;&#160;</a></span>decodeBytes() <span class="overload">[3/7]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt; dcn::parse::decodeBytes </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::uint8_t &gt; &amp;&#160;</td>
+          <td class="paramname"><em>r</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac1b0a71bd827db3afc8643d61a0f664e" name="ac1b0a71bd827db3afc8643d61a0f664e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac1b0a71bd827db3afc8643d61a0f664e">&#9670;&#160;</a></span>decodeBytes() <span class="overload">[4/7]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; T &gt; dcn::parse::decodeBytes </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; uint8_t &gt; &amp;&#160;</td>
+          <td class="paramname"><em>bytes</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a099e01b41b2ee816c860b1a7eeae0a20" name="a099e01b41b2ee816c860b1a7eeae0a20"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a099e01b41b2ee816c860b1a7eeae0a20">&#9670;&#160;</a></span>decodeBytes() <span class="overload">[5/7]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt; dcn::parse::decodeBytes </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; uint8_t &gt; &amp;&#160;</td>
+          <td class="paramname"><em>bytes</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab842ce842aa5ef5326b365830c24213c" name="ab842ce842aa5ef5326b365830c24213c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab842ce842aa5ef5326b365830c24213c">&#9670;&#160;</a></span>decodeBytes() <span class="overload">[6/7]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1pt_1_1PTExecuteError.html">pt::PTExecuteError</a> &gt; dcn::parse::decodeBytes </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; uint8_t &gt; &amp;&#160;</td>
+          <td class="paramname"><em>bytes</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3d313bf95fe0fa1245ee599236a38ba8" name="a3d313bf95fe0fa1245ee599236a38ba8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3d313bf95fe0fa1245ee599236a38ba8">&#9670;&#160;</a></span>decodeBytes() <span class="overload">[7/7]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::vector&lt; Samples &gt; &gt; dcn::parse::decodeBytes </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; uint8_t &gt; &amp;&#160;</td>
+          <td class="paramname"><em>bytes</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a8590eca51c163e212a5f0a7450145aa5" name="a8590eca51c163e212a5f0a7450145aa5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8590eca51c163e212a5f0a7450145aa5">&#9670;&#160;</a></span>parseFromJson() <span class="overload">[1/50]</span></h2>
 

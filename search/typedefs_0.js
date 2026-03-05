@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['address_0',['Address',['../namespacedcn_1_1evm.html#ac26a2f64103f6db9c14cfb2af683f41b',1,'dcn::evm']]]
+  ['address_0',['Address',['../namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb',1,'dcn::chain']]]
 ];

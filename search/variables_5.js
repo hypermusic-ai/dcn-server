@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['kind_0',['kind',['../structdcn_1_1auth_1_1AuthError.html#a8c901a4b06b98951892f4b01318c9830',1,'dcn::auth::AuthError::kind'],['../structdcn_1_1evm_1_1DeployError.html#a197f4c088854a69f154ae4bdd8d45325',1,'dcn::evm::DeployError::kind'],['../structdcn_1_1evm_1_1ExecuteError.html#a610962e9fa90b57d73ee4641da149998',1,'dcn::evm::ExecuteError::kind'],['../structdcn_1_1parse_1_1ParseError.html#aa94c1db558f501648bae658030d3d76f',1,'dcn::parse::ParseError::kind']]]
+  ['fallback_5fmax_5fpriority_5ffee_5fwei_0',['fallback_max_priority_fee_wei',['../structdcn_1_1sepolia_1_1BackendConfig.html#a7a7c2ba4e099503520098c0807b6f666',1,'dcn::sepolia::BackendConfig']]],
+  ['feature_5faddress_1',['feature_address',['../structdcn_1_1pt_1_1FeatureAddedEvent.html#a7b876f7781175d2e743eb039e0171c88',1,'dcn::pt::FeatureAddedEvent']]],
+  ['feature_5fname_2',['feature_name',['../structdcn_1_1pt_1_1ParticleAddedEvent.html#ae352c4029c91891fe676eb9cf0a41135',1,'dcn::pt::ParticleAddedEvent']]]
 ];

@@ -1,6 +1,8 @@
 var transformation_8cpp =
 [
     [ "constructTransformationSolidityCode", "transformation_8cpp.html#a67a11873bbeb568aab7c419a130ce237", null ],
+    [ "decodeTransformationAddedEvent", "transformation_8cpp.html#aaaa753b78e219797a79ba32f6f3de6b6", null ],
+    [ "decodeTransformationAddedEvent", "transformation_8cpp.html#ac4c13e15f227acb0a303c7ce32ddcd97", null ],
     [ "parseFromJson", "transformation_8cpp.html#a4be8e0788b1d95bc112383c26bfee595", null ],
     [ "parseFromJson", "transformation_8cpp.html#a9a224cc7d9cc1920378dd1edaaf0f62f", null ],
     [ "parseFromJson", "transformation_8cpp.html#a2b40abbcb25598d39077c9d82a2f6a12", null ],

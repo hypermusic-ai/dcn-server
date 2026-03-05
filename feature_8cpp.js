@@ -1,6 +1,8 @@
 var feature_8cpp =
 [
     [ "constructFeatureSolidityCode", "feature_8cpp.html#a30e89e0e4b7a8001225150709705697c", null ],
+    [ "decodeFeatureAddedEvent", "feature_8cpp.html#ab89c7a7a8e87cf44fe8430f7efc8d85f", null ],
+    [ "decodeFeatureAddedEvent", "feature_8cpp.html#ac4d04f2ad8fe0ee23a90a159ad1c1241", null ],
     [ "parseFromJson", "feature_8cpp.html#a7188503fe48fa0ef98710191d7866f41", null ],
     [ "parseFromJson", "feature_8cpp.html#a477b0f2d24abc8519db12c7e97b8cc37", null ],
     [ "parseFromJson", "feature_8cpp.html#a7827cbaf2f1216bdc71d5a277fc85b05", null ],

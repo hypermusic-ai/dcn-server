@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['hash_5flen_0',['HASH_LEN',['../classdcn_1_1crypto_1_1Keccak256.html#a683d63f4fef82cd4baf4d5bf797da865',1,'dcn::crypto::Keccak256']]]
+  ['enabled_0',['enabled',['../structdcn_1_1chain_1_1IngestionConfig.html#a20a6907398a16aad019ec6fce0a78716',1,'dcn::chain::IngestionConfig']]],
+  ['entity_5faddress_1',['entity_address',['../ingestion_8cpp.html#a5fe813a6f078b79741c5fc4e331af72c',1,'ingestion.cpp']]]
 ];

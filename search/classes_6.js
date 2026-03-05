@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['logoascii_5ft_0',['LogoASCII_t',['../structdcn_1_1utils_1_1LogoASCII__t.html',1,'dcn::utils']]],
-  ['logounicode_5ft_1',['LogoUnicode_t',['../structdcn_1_1utils_1_1LogoUnicode__t.html',1,'dcn::utils']]]
+  ['ichain_0',['IChain',['../classdcn_1_1chain_1_1IChain.html',1,'dcn::chain']]],
+  ['ingestionconfig_1',['IngestionConfig',['../structdcn_1_1chain_1_1IngestionConfig.html',1,'dcn::chain']]],
+  ['ingestionruntimeoptions_2',['IngestionRuntimeOptions',['../structdcn_1_1chain_1_1IngestionRuntimeOptions.html',1,'dcn::chain']]]
 ];
