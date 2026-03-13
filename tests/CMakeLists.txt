@@ -24,6 +24,7 @@ add_executable("${PROJECT_NAME}"
     "src/pt/connector.cpp"
     "src/pt/execute.cpp"
     "src/pt/initial_deployment.cpp"
+    "src/pt/deploy_entities.cpp"
     "src/pt/proxy_upgrade.cpp"
     #"src/chain_ingestion.cpp"
 )
