@@ -6,7 +6,7 @@ var searchData=
   ['feature_5faddress_3',['feature_address',['../structdcn_1_1pt_1_1FeatureAddedEvent.html#a7b876f7781175d2e743eb039e0171c88',1,'dcn::pt::FeatureAddedEvent']]],
   ['feature_5falready_5fregistered_4',['FEATURE_ALREADY_REGISTERED',['../structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba6000814bcd9f1acc80413f9ed7e47152',1,'dcn::pt::PTDeployError']]],
   ['feature_5fmissing_5',['FEATURE_MISSING',['../structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba5642847ed2b5d8b6fd56dd8332a43210',1,'dcn::pt::PTDeployError']]],
-  ['feature_5fname_6',['feature_name',['../structdcn_1_1pt_1_1ParticleAddedEvent.html#ae352c4029c91891fe676eb9cf0a41135',1,'dcn::pt::ParticleAddedEvent']]],
+  ['feature_5fname_6',['feature_name',['../structdcn_1_1pt_1_1ConnectorAddedEvent.html#a09b44a530de5defbae1e39131718f8fd',1,'dcn::pt::ConnectorAddedEvent']]],
   ['featureaddedevent_7',['FeatureAddedEvent',['../structdcn_1_1pt_1_1FeatureAddedEvent.html',1,'dcn::pt']]],
   ['fetchowner_8',['fetchOwner',['../namespacedcn_1_1evm.html#a716becebc2f36b4dab152e56ac110da6',1,'dcn::evm']]],
   ['file_2ecpp_9',['file.cpp',['../file_8cpp.html',1,'']]],

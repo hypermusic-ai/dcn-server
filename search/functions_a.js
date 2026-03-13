@@ -6,9 +6,9 @@ var searchData=
   ['options_5faccountinfo_3',['OPTIONS_accountInfo',['../namespacedcn.html#ac704b8ac290f947ad74d0b7892706867',1,'dcn']]],
   ['options_5fauth_4',['OPTIONS_auth',['../namespacedcn.html#a76e97d279e1df38ef0192ed9d331dda2',1,'dcn']]],
   ['options_5fcondition_5',['OPTIONS_condition',['../namespacedcn.html#a904e9f3837f9a97930b5c9c51c8eaf8f',1,'dcn']]],
-  ['options_5fexecute_6',['OPTIONS_execute',['../namespacedcn.html#ae80aef70056ddf10141946bff365b30c',1,'dcn']]],
-  ['options_5ffeature_7',['OPTIONS_feature',['../namespacedcn.html#ade7694d84c751667d22ba357fe0654b4',1,'dcn']]],
-  ['options_5fparticle_8',['OPTIONS_particle',['../namespacedcn.html#a1347f7193f1aebc57699529e8b9e2973',1,'dcn']]],
+  ['options_5fconnector_6',['OPTIONS_connector',['../namespacedcn.html#a826ed0d422537dfd844cb94b05a492a9',1,'dcn']]],
+  ['options_5fexecute_7',['OPTIONS_execute',['../namespacedcn.html#ae80aef70056ddf10141946bff365b30c',1,'dcn']]],
+  ['options_5ffeature_8',['OPTIONS_feature',['../namespacedcn.html#ade7694d84c751667d22ba357fe0654b4',1,'dcn']]],
   ['options_5fservefile_9',['OPTIONS_serveFile',['../namespacedcn.html#a003883cd0e94a60ab953276fb19c1735',1,'dcn']]],
   ['options_5ftransformation_10',['OPTIONS_transformation',['../namespacedcn.html#aa6d7a2272298dad645e6ffce70bb7112',1,'dcn']]]
 ];

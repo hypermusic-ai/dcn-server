@@ -17,7 +17,7 @@ var searchData=
   ['invalid_5fvalue_14',['INVALID_VALUE',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bead8f24f388e990b9ccf8905b7993b99ae',1,'dcn::parse::ParseError']]],
   ['invalidateaccesstoken_15',['invalidateAccessToken',['../classdcn_1_1auth_1_1AuthManager.html#a84ede0a39c6ca519a16921d6bce0b86f',1,'dcn::auth::AuthManager']]],
   ['isconditionbucketempty_16',['isConditionBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#afed9f3429f9bda5075ba07fee43698ce',1,'dcn::registry::Registry']]],
-  ['isfeaturebucketempty_17',['isFeatureBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#a2bf10417ade06367c790fb82887970af',1,'dcn::registry::Registry']]],
-  ['isparticlebucketempty_18',['isParticleBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#ad527b08d064d9d4675381899f37ff521',1,'dcn::registry::Registry']]],
+  ['isconnectorbucketempty_17',['isConnectorBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#a932a92773ae6cef9a4b13fe4b57f084a',1,'dcn::registry::Registry']]],
+  ['isfeaturebucketempty_18',['isFeatureBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#a2bf10417ade06367c790fb82887970af',1,'dcn::registry::Registry']]],
   ['istransformationbucketempty_19',['isTransformationBucketEmpty',['../classdcn_1_1registry_1_1Registry.html#a8af408cd164c32ff17497fc99b901f2c',1,'dcn::registry::Registry']]]
 ];

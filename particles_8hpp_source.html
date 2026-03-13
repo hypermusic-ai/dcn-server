@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Decentralised Art Server: src/pt/include/samples.hpp Source File</title>
+<title>Decentralised Art Server: src/pt/include/particles.hpp Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -70,7 +70,7 @@ var searchBox = new SearchBox("searchBox", "search/",'.html');
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(document).ready(function(){initNavTree('samples_8hpp_source.html',''); initResizable(); });
+$(document).ready(function(){initNavTree('particles_8hpp_source.html',''); initResizable(); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -96,27 +96,27 @@ $(document).ready(function(){initNavTree('samples_8hpp_source.html',''); initRes
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">samples.hpp</div></div>
+  <div class="headertitle"><div class="title">particles.hpp</div></div>
 </div><!--header-->
 <div class="contents">
-<a href="samples_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#pragma once</span></div>
+<a href="particles_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#include &lt;string&gt;</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span> </div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;samples.pb.h&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;particles.pb.h&quot;</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &quot;<a class="code" href="parser_8hpp.html">parser.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedcn_1_1parse.html">dcn::parse</a></div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span>{</div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    Result&lt;json&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(std::vector&lt;Samples&gt; samples, use_json_t);</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    Result&lt;json&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">parseToJson</a>(std::vector&lt;Particles&gt; particles, use_json_t);</div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    Result&lt;std::vector&lt;Samples&gt;&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> <a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a>, use_json_t);</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    Result&lt;std::vector&lt;Particles&gt;&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5">parseFromJson</a>(<a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> <a class="code hl_typedef" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a>, use_json_t);</div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">template</span>&lt;&gt;</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="namespacedcn_1_1parse.html#a3d313bf95fe0fa1245ee599236a38ba8">   26</a></span>    <a class="code hl_typedef" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result&lt;std::vector&lt;Samples&gt;</a>&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#ac1b0a71bd827db3afc8643d61a0f664e">decodeBytes</a>(<span class="keyword">const</span> std::vector&lt;uint8_t&gt; &amp; bytes);</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="namespacedcn_1_1parse.html#a7a6fb9bc564ee8a9be6c2217d2f18159">   26</a></span>    <a class="code hl_typedef" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result&lt;std::vector&lt;Particles&gt;</a>&gt; <a class="code hl_function" href="namespacedcn_1_1parse.html#ac1b0a71bd827db3afc8643d61a0f664e">decodeBytes</a>(<span class="keyword">const</span> std::vector&lt;uint8_t&gt; &amp; bytes);</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>}</div>
 <div class="ttc" id="anamespacedcn_1_1parse_html"><div class="ttname"><a href="namespacedcn_1_1parse.html">dcn::parse</a></div><div class="ttdef"><b>Definition</b> http.hpp:190</div></div>
 <div class="ttc" id="anamespacedcn_1_1parse_html_a38511241c866711fb934a87e56365016"><div class="ttname"><a href="namespacedcn_1_1parse.html#a38511241c866711fb934a87e56365016">dcn::parse::parseToJson</a></div><div class="ttdeci">Result&lt; json &gt; parseToJson(T message, use_json_t)</div><div class="ttdoc">Converts a T to a JSON object using JSON.</div></div>
@@ -130,7 +130,7 @@ $(document).ready(function(){initNavTree('samples_8hpp_source.html',''); initRes
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_bc9eead6ec2870f7e5588680a36ec65c.html">pt</a></li><li class="navelem"><a class="el" href="dir_3b5614aeeb7baf817bb4424562a73808.html">include</a></li><li class="navelem"><a class="el" href="samples_8hpp.html">samples.hpp</a></li>
+    <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_bc9eead6ec2870f7e5588680a36ec65c.html">pt</a></li><li class="navelem"><a class="el" href="dir_3b5614aeeb7baf817bb4424562a73808.html">include</a></li><li class="navelem"><a class="el" href="particles_8hpp.html">particles.hpp</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
   </ul>
 </div>

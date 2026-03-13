@@ -15,6 +15,6 @@ var searchData=
   ['transformation_5fmissing_12',['TRANSFORMATION_MISSING',['../structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba4c2c0dc6f56d831a44db6e61704b1946',1,'dcn::pt::PTDeployError']]],
   ['transformationaddedevent_13',['TransformationAddedEvent',['../structdcn_1_1pt_1_1TransformationAddedEvent.html',1,'dcn::pt']]],
   ['tx_5fhash_14',['tx_hash',['../structdcn_1_1chain_1_1DeployReceipt.html#aa4741651ded75b3bc06a01771ad38d59',1,'dcn::chain::DeployReceipt']]],
-  ['type_15',['type',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a1ef6eb8d1ae3e55c12258ec8b075926b',1,'dcn::cmd::CommandLineArgDef::type'],['../structdcn_1_1server_1_1RouteArgDef.html#aa4a11a8d56ef2b25816b936673fd0c1e',1,'dcn::server::RouteArgDef::type'],['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053b',1,'dcn::cmd::CommandLineArgDef::Type']]],
+  ['type_15',['type',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053b',1,'dcn::cmd::CommandLineArgDef::Type'],['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a1ef6eb8d1ae3e55c12258ec8b075926b',1,'dcn::cmd::CommandLineArgDef::type'],['../structdcn_1_1server_1_1RouteArgDef.html#aa4a11a8d56ef2b25816b936673fd0c1e',1,'dcn::server::RouteArgDef::type']]],
   ['type_5fmismatch_16',['TYPE_MISMATCH',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bea2f93918ef99e03b7b8e7230b2a28fb52',1,'dcn::parse::ParseError']]]
 ];

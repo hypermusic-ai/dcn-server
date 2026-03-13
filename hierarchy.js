@@ -8,6 +8,7 @@ var hierarchy =
     [ "dcn::cmd::CommandLineArgDef", "structdcn_1_1cmd_1_1CommandLineArgDef.html", null ],
     [ "dcn::pt::ConditionAddedEvent", "structdcn_1_1pt_1_1ConditionAddedEvent.html", null ],
     [ "dcn::config::Config", "structdcn_1_1config_1_1Config.html", null ],
+    [ "dcn::pt::ConnectorAddedEvent", "structdcn_1_1pt_1_1ConnectorAddedEvent.html", null ],
     [ "dcn::chain::DeployError", "structdcn_1_1chain_1_1DeployError.html", null ],
     [ "dcn::chain::DeployReceipt", "structdcn_1_1chain_1_1DeployReceipt.html", null ],
     [ "dcn::evm::EVM", "classdcn_1_1evm_1_1EVM.html", null ],
@@ -54,7 +55,6 @@ var hierarchy =
       [ "dcn::http::Response", "classdcn_1_1http_1_1Response.html", null ]
     ] ],
     [ "dcn::parse::ParseError", "structdcn_1_1parse_1_1ParseError.html", null ],
-    [ "dcn::pt::ParticleAddedEvent", "structdcn_1_1pt_1_1ParticleAddedEvent.html", null ],
     [ "dcn::pt::PTDeployError", "structdcn_1_1pt_1_1PTDeployError.html", null ],
     [ "dcn::pt::PTExecuteError", "structdcn_1_1pt_1_1PTExecuteError.html", null ],
     [ "dcn::registry::Registry", "classdcn_1_1registry_1_1Registry.html", null ],
