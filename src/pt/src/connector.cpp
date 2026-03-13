@@ -3,6 +3,8 @@
 #include <format>
 #include <limits>
 #include <ranges>
+#include <set>
+#include <string_view>
 #include <system_error>
 #include <tuple>
 #include <vector>
@@ -17,6 +19,53 @@ namespace dcn
 {
     namespace
     {
+        std::string _escapeSolidityStringLiteral(std::string_view value)
+        {
+            auto toHex = [](std::uint8_t nibble) -> char
+            {
+                return static_cast<char>((nibble < 10) ? ('0' + nibble) : ('A' + (nibble - 10)));
+            };
+
+            std::string escaped;
+            escaped.reserve(value.size());
+
+            for(unsigned char ch : value)
+            {
+                switch(ch)
+                {
+                case '\\':
+                    escaped += "\\\\";
+                    break;
+                case '"':
+                    escaped += "\\\"";
+                    break;
+                case '\n':
+                    escaped += "\\n";
+                    break;
+                case '\r':
+                    escaped += "\\r";
+                    break;
+                case '\t':
+                    escaped += "\\t";
+                    break;
+                default:
+                    if(ch < 0x20 || ch == 0x7F)
+                    {
+                        escaped += "\\x";
+                        escaped.push_back(toHex(static_cast<std::uint8_t>((ch >> 4) & 0x0F)));
+                        escaped.push_back(toHex(static_cast<std::uint8_t>(ch & 0x0F)));
+                    }
+                    else
+                    {
+                        escaped.push_back(static_cast<char>(ch));
+                    }
+                    break;
+                }
+            }
+
+            return escaped;
+        }
+
         std::optional<std::uint32_t> _parseSlotId(const std::string & slot)
         {
             if(slot.empty())
@@ -47,8 +96,18 @@ namespace dcn
 
         std::vector<std::pair<std::uint32_t, std::string>> sorted_composites;
         std::vector<std::tuple<std::uint32_t, std::uint32_t, std::string>> sorted_bindings;
+        std::set<std::pair<std::uint32_t, std::uint32_t>> canonical_binding_slots;
+        const std::string escaped_connector_name = _escapeSolidityStringLiteral(connector.name());
+        const std::string escaped_condition_name = _escapeSolidityStringLiteral(connector.condition_name());
+
+        std::size_t total_bindings_count = 0;
+        for(int dim_idx = 0; dim_idx < connector.dimensions_size(); ++dim_idx)
+        {
+            total_bindings_count += static_cast<std::size_t>(connector.dimensions(dim_idx).bindings_size());
+        }
+
         sorted_composites.reserve(static_cast<std::size_t>(connector.dimensions_size()));
-        sorted_bindings.reserve(static_cast<std::size_t>(connector.dimensions_size()));
+        sorted_bindings.reserve(total_bindings_count);
         for(std::uint32_t dim_id = 0; dim_id < static_cast<std::uint32_t>(connector.dimensions_size()); ++dim_id)
         {
             const Dimension & dimension = connector.dimensions(static_cast<int>(dim_id));
@@ -78,6 +137,13 @@ namespace dcn
                 if(!slot_id)
                 {
                     spdlog::error("Connector `{}` has non-numeric binding slot `{}` at dim {}", connector.name(), slot, dim_id);
+                    return "";
+                }
+
+                const auto canonical_slot = std::make_pair(dim_id, *slot_id);
+                if(!canonical_binding_slots.insert(canonical_slot).second)
+                {
+                    spdlog::error("Connector `{}` has duplicate binding slot id {} at dim {}", connector.name(), *slot_id, dim_id);
                     return "";
                 }
 
@@ -112,14 +178,20 @@ namespace dcn
         for(std::size_t i = 0; i < sorted_composites.size(); ++i)
         {
             composite_dim_ids_code += std::format("compositeDimIds[{}] = uint32({});\n", i, sorted_composites[i].first);
-            composite_names_code += std::format("compositeNames[{}] = \"{}\";\n", i, sorted_composites[i].second);
+            composite_names_code += std::format(
+                "compositeNames[{}] = \"{}\";\n",
+                i,
+                _escapeSolidityStringLiteral(sorted_composites[i].second));
         }
 
         for(std::size_t i = 0; i < sorted_bindings.size(); ++i)
         {
             binding_dim_ids_code += std::format("bindingDimIds[{}] = uint32({});\n", i, std::get<0>(sorted_bindings[i]));
             binding_slot_ids_code += std::format("bindingSlotIds[{}] = uint32({});\n", i, std::get<1>(sorted_bindings[i]));
-            binding_names_code += std::format("bindingNames[{}] = \"{}\";\n", i, std::get<2>(sorted_bindings[i]));
+            binding_names_code += std::format(
+                "bindingNames[{}] = \"{}\";\n",
+                i,
+                _escapeSolidityStringLiteral(std::get<2>(sorted_bindings[i])));
         }
 
         for(int i = 0; i < connector.dimensions_size(); ++i)
@@ -129,7 +201,10 @@ namespace dcn
                 const auto & transform = connector.dimensions(i).transformations(j);
                 if(transform.args_size() == 0)
                 {
-                    transform_def_code += std::format("getCallDef().push({}, \"{}\");\n", i, transform.name());
+                    transform_def_code += std::format(
+                        "getCallDef().push({}, \"{}\");\n",
+                        i,
+                        _escapeSolidityStringLiteral(transform.name()));
                     continue;
                 }
 
@@ -146,7 +221,7 @@ namespace dcn
                 transform_def_code += std::format(
                     "getCallDef().push({}, \"{}\", [{}]);\n",
                     i,
-                    transform.name(),
+                    _escapeSolidityStringLiteral(transform.name()),
                     transform_args_code);
             }
         }
@@ -180,7 +255,7 @@ namespace dcn
             "conditionArgs = new int32[]({8});"
             "{9}"
             "}}\n"
-            "constructor(address registryAddr) ConnectorBase(registryAddr, \"{0}\", {10}) {{\n"
+            "constructor(address registryAddr) ConnectorBase(registryAddr, \"{13}\", {10}) {{\n"
             "{11}"
             "__ConnectorBase_finalizeInit(_compositeDimIds(), _compositeNames(), _bindingDimIds(), _bindingSlotIds(), _bindingNames(), \"{12}\", _conditionArgs());\n"
             "}}\n"
@@ -198,7 +273,8 @@ namespace dcn
             std::move(condition_args_code),           // 9
             connector.dimensions_size(),              // 10
             std::move(transform_def_code),            // 11
-            connector.condition_name()                // 12
+            escaped_condition_name,                   // 12
+            escaped_connector_name                   // 13
         );
     }
 }

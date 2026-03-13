@@ -277,3 +277,26 @@ TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsNonNumericBindingSlots)
     const std::string solidity = constructConnectorSolidityCode(connector);
     EXPECT_TRUE(solidity.empty());
 }
+
+TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsCanonicalDuplicateBindingSlots)
+{
+    Connector connector = makeConnectorSample();
+    connector.mutable_dimensions(0)->clear_bindings();
+    (*connector.mutable_dimensions(0)->mutable_bindings())["1"] = "comp_slot_a";
+    (*connector.mutable_dimensions(0)->mutable_bindings())["01"] = "comp_slot_b";
+
+    const std::string solidity = constructConnectorSolidityCode(connector);
+    EXPECT_TRUE(solidity.empty());
+}
+
+TEST_F(UnitTest, Connector_ConstructSolidityCode_EscapesBindingTargetNamesInStringLiterals)
+{
+    Connector connector = makeConnectorSample();
+    connector.mutable_dimensions(0)->clear_bindings();
+    (*connector.mutable_dimensions(0)->mutable_bindings())["0"] = "bad\"target\\name\nline";
+
+    const std::string solidity = constructConnectorSolidityCode(connector);
+    ASSERT_FALSE(solidity.empty());
+
+    EXPECT_NE(solidity.find("bindingNames[0] = \"bad\\\"target\\\\name\\nline\";"), std::string::npos);
+}

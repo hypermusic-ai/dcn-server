@@ -117,72 +117,6 @@ namespace dcn::registry
             }
         }
 
-        const std::uint32_t dimensions_count = static_cast<std::uint32_t>(record.connector().dimensions_size());
-        for(std::uint32_t dim_id = 0; dim_id < dimensions_count; ++dim_id)
-        {
-            const Dimension & dimension = record.connector().dimensions(static_cast<int>(dim_id));
-            const std::string & composite = dimension.composite();
-            if(composite.empty())
-            {
-                if(dimension.bindings_size() != 0)
-                {
-                    spdlog::error(
-                        "Connector `{}` has bindings on scalar dimension {}",
-                        record.connector().name(),
-                        dim_id);
-                    co_return false;
-                }
-                continue;
-            }
-
-            if(!co_await containsConnectorBucket(composite))
-            {
-                spdlog::error("Cannot find connector `{}` used in connector `{}`", composite, record.connector().name());
-                co_return false;
-            }
-
-            if(co_await isConnectorBucketEmpty(composite))
-            {
-                spdlog::error("Cannot find connector `{}` used in connector `{}`", composite, record.connector().name());
-                co_return false;
-            }
-
-            for(const auto & [slot, binding_target] : dimension.bindings())
-            {
-                if(binding_target.empty())
-                {
-                    spdlog::error(
-                        "Connector `{}` has empty binding target at dim {} slot `{}`",
-                        record.connector().name(),
-                        dim_id,
-                        slot);
-                    co_return false;
-                }
-
-                if(!co_await containsConnectorBucket(binding_target))
-                {
-                    spdlog::error(
-                        "Cannot find connector `{}` used in binding at connector `{}` dim {} slot `{}`",
-                        binding_target,
-                        record.connector().name(),
-                        dim_id,
-                        slot);
-                    co_return false;
-                }
-
-                if(co_await isConnectorBucketEmpty(binding_target))
-                {
-                    spdlog::error(
-                        "Cannot find connector `{}` used in binding at connector `{}` dim {} slot `{}`",
-                        binding_target,
-                        record.connector().name(),
-                        dim_id,
-                        slot);
-                    co_return false;
-                }
-            }
-        }
-
         if(!record.connector().condition_name().empty())
         {
             const std::string & condition_name = record.connector().condition_name();
@@ -275,6 +209,16 @@ namespace dcn::registry
 
                     open_slots += 1;
                     continue;
+                }
+
+                if(resolveConnector(composite_name) == nullptr)
+                {
+                    spdlog::error(
+                        "Cannot resolve composite connector `{}` in connector `{}` dim {}",
+                        composite_name,
+                        connector_name,
+                        dim_id);
+                    return std::nullopt;
                 }
 
                 const auto child_open_slots_opt = computeOpenSlots(composite_name);
