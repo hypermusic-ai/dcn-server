@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package dcn;
 
-message Samples
+message Particles
 {
     string path = 1;
     repeated int32 data = 2;

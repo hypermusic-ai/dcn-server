@@ -68,13 +68,13 @@ namespace dcn
         }
         const ExecuteRequest & execute_request = *execute_request_res;
 
-        static constexpr uint32_t MAX_SAMPLES_COUNT = 65536;
+        static constexpr uint32_t MAX_PARTICLES_COUNT = 65536;
 
-        if(execute_request.samples_count() > MAX_SAMPLES_COUNT)
+        if(execute_request.particles_count() > MAX_PARTICLES_COUNT)
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json {
-                    {"message", "samples_count is too large"}
+                    {"message", "particles_count is too large"}
                 }.dump());
 
             co_return response;
@@ -91,8 +91,8 @@ namespace dcn
         input_data.insert(input_data.end(), offset_to_string.begin(), offset_to_string.end());
 
         // 2. uint32 argument, properly encoded as a 32-byte word
-        const std::vector<std::uint8_t> samples_count_bytes = evm::encodeAsArg(execute_request.samples_count());
-        input_data.insert(input_data.end(), samples_count_bytes.begin(), samples_count_bytes.end());
+        const std::vector<std::uint8_t> particles_count_bytes = evm::encodeAsArg(execute_request.particles_count());
+        input_data.insert(input_data.end(), particles_count_bytes.begin(), particles_count_bytes.end());
 
         // (String encoding)
         const std::vector<std::uint8_t> name_bytes = evm::encodeAsArg(execute_request.connector_name());
@@ -136,20 +136,20 @@ namespace dcn
             co_return response;
         }
 
-        const auto samples_res = parse::decodeBytes<std::vector<Samples>>(exec_result.value());
+        const auto particles_res = parse::decodeBytes<std::vector<Particles>>(exec_result.value());
 
-        if(!samples_res)
+        if(!particles_res)
         {
             response.setCode(http::Code::InternalServerError)
                 .setBodyWithContentLength(json {
-                    {"message", "Failed to decode samples"}
+                    {"message", "Failed to decode particles"}
                 }.dump());
 
             co_return response;
         }
 
-        const auto & samples = samples_res.value();
-        const auto json_output = parse::parseToJson(samples, parse::use_json);
+        const auto & particles = particles_res.value();
+        const auto json_output = parse::parseToJson(particles, parse::use_json);
 
         if(!json_output)
         {

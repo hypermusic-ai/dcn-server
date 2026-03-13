@@ -267,7 +267,7 @@ export async function fetchBeforeExecute() {
 
 export async function execute() {
     const connector_name = document.getElementById('executeName').value.trim();
-    const samples_count = document.getElementById('executeN').value.trim();
+    const particles_count = document.getElementById('executeN').value.trim();
     const running_instances = runningInstanceData.map(([start_point, transformation_shift]) => ({ start_point, transformation_shift }));
 
     const codeDiv = document.getElementById('executeCode');
@@ -283,7 +283,7 @@ export async function execute() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ connector_name, samples_count, running_instances }),
+                body: JSON.stringify({ connector_name, particles_count, running_instances }),
             }
         );
         const text = await res.text();

@@ -99,7 +99,7 @@ namespace
 
     std::vector<std::uint8_t> makeRunnerGenInput(
         const std::string & connector_name,
-        std::uint32_t samples_count,
+        std::uint32_t particles_count,
         const std::vector<std::tuple<std::uint32_t, std::uint32_t>> & running_instances)
     {
         std::vector<std::uint8_t> input_data;
@@ -111,8 +111,8 @@ namespace
         offset_to_string[31] = 0x60;
         input_data.insert(input_data.end(), offset_to_string.begin(), offset_to_string.end());
 
-        const auto samples_count_arg = evm::encodeAsArg(samples_count);
-        input_data.insert(input_data.end(), samples_count_arg.begin(), samples_count_arg.end());
+        const auto particles_count_arg = evm::encodeAsArg(particles_count);
+        input_data.insert(input_data.end(), particles_count_arg.begin(), particles_count_arg.end());
 
         const auto connector_name_arg = evm::encodeAsArg(connector_name);
 
@@ -274,7 +274,7 @@ contract RunnerV2 is Runner {
         return deploy_result.value();
     }
 
-    void expectSamplesEqual(const std::vector<Samples> & lhs, const std::vector<Samples> & rhs)
+    void expectParticlesEqual(const std::vector<Particles> & lhs, const std::vector<Particles> & rhs)
     {
         ASSERT_EQ(lhs.size(), rhs.size());
         for(std::size_t i = 0; i < lhs.size(); ++i)
@@ -458,16 +458,16 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
             0));
 
     ASSERT_TRUE(generation_before_upgrade.has_value());
-    const auto samples_before_upgrade_res = parse::decodeBytes<std::vector<Samples>>(generation_before_upgrade.value());
-    ASSERT_TRUE(samples_before_upgrade_res.has_value());
+    const auto particles_before_upgrade_res = parse::decodeBytes<std::vector<Particles>>(generation_before_upgrade.value());
+    ASSERT_TRUE(particles_before_upgrade_res.has_value());
 
-    const auto & samples_before_upgrade = samples_before_upgrade_res.value();
-    ASSERT_EQ(samples_before_upgrade.size(), 1u);
-    EXPECT_EQ(samples_before_upgrade[0].path(), "/PersistConnector:0");
-    ASSERT_EQ(samples_before_upgrade[0].data_size(), 8);
-    for(int i = 0; i < samples_before_upgrade[0].data_size(); ++i)
+    const auto & particles_before_upgrade = particles_before_upgrade_res.value();
+    ASSERT_EQ(particles_before_upgrade.size(), 1u);
+    EXPECT_EQ(particles_before_upgrade[0].path(), "/PersistConnector:0");
+    ASSERT_EQ(particles_before_upgrade[0].data_size(), 8);
+    for(int i = 0; i < particles_before_upgrade[0].data_size(); ++i)
     {
-        EXPECT_EQ(samples_before_upgrade[0].data(i), i);
+        EXPECT_EQ(particles_before_upgrade[0].data(i), i);
     }
 
     const auto runner_v2_result = deployRunnerV2(env);
@@ -507,10 +507,10 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
             0));
 
     ASSERT_TRUE(generation_after_upgrade.has_value());
-    const auto samples_after_upgrade_res = parse::decodeBytes<std::vector<Samples>>(generation_after_upgrade.value());
-    ASSERT_TRUE(samples_after_upgrade_res.has_value());
+    const auto particles_after_upgrade_res = parse::decodeBytes<std::vector<Particles>>(generation_after_upgrade.value());
+    ASSERT_TRUE(particles_after_upgrade_res.has_value());
 
-    const auto & samples_after_upgrade = samples_after_upgrade_res.value();
+    const auto & particles_after_upgrade = particles_after_upgrade_res.value();
     
-    expectSamplesEqual(samples_before_upgrade, samples_after_upgrade);
+    expectParticlesEqual(particles_before_upgrade, particles_after_upgrade);
 }
