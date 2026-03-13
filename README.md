@@ -8,6 +8,8 @@
 
 [View Doxygen API Docs](https://hypermusic-ai.github.io/dcn-server/)
 
+[View Changelog](CHANGELOG.md)
+
 </br>
 
 ---
