@@ -4,207 +4,6 @@ import { requestWithLogin, formatJSON, configureLoginHandler, apiUrl } from "./u
 export { copyTextFromElement } from "./utils";
 
 // --------------------------------------------------------------------------
-// Feature
-// --------------------------------------------------------------------------
-export async function updateFeatureRequestPreview() {
-    const json = constructStructuredFeature();
-    document.getElementById('POST_featureRequestBody').textContent = json;
-}
-
-export function clearDimensions() {
-    const container = document.getElementById('dimensionsContainer');
-    container.innerHTML = '';
-    updateFeatureRequestPreview();
-}
-
-export function addDimension() {
-    const container = document.getElementById('dimensionsContainer');
-    const index = container.children.length;
-
-    const dim = document.createElement('div');
-    dim.className = 'dimension';
-
-    const fieldset = document.createElement('fieldset');
-    fieldset.className = 'dimension-fieldset';
-
-    const legend = document.createElement('legend');
-    legend.textContent = `Dimension ${index + 1}`;
-
-    const transformationsDiv = document.createElement('div');
-    transformationsDiv.className = 'transformations';
-
-    const addBtn = document.createElement('button');
-    addBtn.type = 'button';
-    addBtn.textContent = '➕ Add transformation';
-    addBtn.addEventListener('click', () => addTransformation(addBtn));
-
-    fieldset.appendChild(legend);
-    fieldset.appendChild(transformationsDiv);
-    fieldset.appendChild(addBtn);
-
-    dim.appendChild(fieldset);
-    container.appendChild(dim);
-
-    updateFeatureRequestPreview();
-}
-
-export function addTransformation(button) {
-    const container = button.previousElementSibling;
-
-    const t = document.createElement('div');
-    t.className = 'feature-transformation';
-
-    const hr = document.createElement('hr');
-    t.appendChild(hr);
-
-    // Create row container
-    const row = document.createElement('div');
-    row.className = 'transformation-row';
-
-    // Column 1: name
-    const nameCol = document.createElement('div');
-    nameCol.className = 'transformation-col';
-
-    const nameLabel = document.createElement('label');
-    nameLabel.textContent = 'Transformation name';
-
-    const nameInput = document.createElement('input');
-    nameInput.type = 'text';
-    nameInput.className = 'transformation-name';
-    nameInput.placeholder = 'add';
-    nameInput.addEventListener('input', updateFeatureRequestPreview);
-
-    nameCol.appendChild(nameLabel);
-    nameCol.appendChild(nameInput);
-
-    // Column 2: args
-    const argsCol = document.createElement('div');
-    argsCol.className = 'transformation-col';
-
-    const argsLabel = document.createElement('label');
-    argsLabel.textContent = 'args (comma-separated)';
-
-    const argsInput = document.createElement('input');
-    argsInput.type = 'text';
-    argsInput.className = 'transformation-args';
-    argsInput.placeholder = '...';
-    argsInput.addEventListener('input', updateFeatureRequestPreview);
-
-    argsCol.appendChild(argsLabel);
-    argsCol.appendChild(argsInput);
-
-    // Assemble row
-    row.appendChild(nameCol);
-    row.appendChild(argsCol);
-    t.appendChild(row);
-
-    container.appendChild(t);
-    updateFeatureRequestPreview();
-}
-
-function constructStructuredFeature() {
-    const name = document.getElementById('in_featureName').value.trim();
-    const dimensions = [];
-
-    document.querySelectorAll('.dimension').forEach(dimEl => {
-        const transformations = [];
-        dimEl.querySelectorAll('.transformations > div').forEach(tEl => {
-            const tname = tEl.querySelector('.transformation-name').value.trim();
-            const targs = tEl.querySelector('.transformation-args').value.trim().split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
-            if (tname) {
-                transformations.push({ name: tname, args: targs });
-            }
-        });
-        if (transformations.length > 0) {
-            dimensions.push({ transformations });
-        }
-    });
-
-    return JSON.stringify({ name, dimensions }, null, 2);
-}
-
-function populateStructuredFeature(jsonOrObject) {
-    const data = typeof jsonOrObject === 'string' ? JSON.parse(jsonOrObject) : jsonOrObject;
-
-    // Set name field
-    document.getElementById('in_featureName').value = data.name || '';
-
-    // Clear any existing dimensions
-    clearDimensions();
-
-    const container = document.getElementById('dimensionsContainer');
-    data.dimensions?.forEach((dim, dimIndex) => {
-        addDimension(); // creates and appends a new .dimension block
-
-        const dimEl = container.children[dimIndex];
-
-        const transformationsDiv = dimEl.querySelector('.transformations');
-
-        dim.transformations?.forEach(t => {
-            // Add a new transformation
-            const addBtn = dimEl.querySelector('button'); // the addTransformation button
-            addTransformation(addBtn);
-
-            const tEl = transformationsDiv.lastElementChild;
-
-            // Set transformation name
-            tEl.querySelector('.transformation-name').value = t.name || '';
-
-            // Set transformation args
-            tEl.querySelector('.transformation-args').value = Array.isArray(t.args)
-                ? t.args.join(', ')
-                : '';
-        });
-    });
-
-    updateFeatureRequestPreview(); // trigger preview update
-}
-
-export async function sendStructuredFeature() {
-    const requestBody = constructStructuredFeature();
-
-    const responseCodeDiv = document.getElementById('POST_featureResponseCode');
-    const responseBodyDiv = document.getElementById('POST_featureResponseBody');
-
-    try {
-        const res = await requestWithLogin(apiUrl('/feature'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: requestBody,
-        });
-        const text = await res.text();
-        responseCodeDiv.textContent = res.status;
-        responseBodyDiv.textContent = formatJSON(text);
-    } catch (error) {
-        responseCodeDiv.textContent = 'Error';
-        responseBodyDiv.textContent = error.message;
-    }
-}
-
-export async function getFeature() {
-    const name = document.getElementById('in_featureName').value.trim();
-    const address = document.getElementById('GET_featureAddress').value.trim();
-
-    const responseCodeDiv = document.getElementById('GET_featureResponseCode');
-    const responseBodyDiv = document.getElementById('GET_featureResponseBody');
-    if (!name) {
-        alert("Feature name is required.");
-        return;
-    }
-    const url = apiUrl(`/feature/${name}${address ? `/${address}` : ''}`);
-    try {
-        const res = await fetch(url);
-        const text = await res.text();
-        responseCodeDiv.textContent = res.status;
-        responseBodyDiv.textContent = formatJSON(text);
-        populateStructuredFeature(JSON.parse(text));
-    } catch (error) {
-        responseCodeDiv.textContent = 'Error';
-        responseBodyDiv.textContent = error.message;
-    }
-}
-
-// --------------------------------------------------------------------------
 // Transformation
 // --------------------------------------------------------------------------
 export async function getTransformation() {
@@ -369,13 +168,6 @@ export async function sendStructuredCondition() {
 // --------------------------------------------------------------------------
 // Connector
 // --------------------------------------------------------------------------
-function parseCsvList(value) {
-    if (!value) return [];
-    return value.split(',')
-        .map(item => item.trim())
-        .filter(item => item.length > 0);
-}
-
 function parseIntList(value) {
     if (!value) return [];
     return value.split(',')
@@ -385,107 +177,243 @@ function parseIntList(value) {
         .filter(item => !Number.isNaN(item));
 }
 
-function setConnectorFeatureInfo(message, isError = false) {
-    const info = document.getElementById('connectorFeatureInfo');
-    if (!info) return;
-    info.textContent = message;
-    info.style.color = isError ? '#ff8a8a' : '#888';
-}
+function parseConnectorDimensionsFromForm() {
+    const dimensions = [];
+    document.querySelectorAll('.connector-dimension').forEach((dimensionElement) => {
+        const compositeInput = dimensionElement.querySelector('.connector-dimension-composite');
+        const bindings = {};
+        dimensionElement.querySelectorAll('.connector-bindings > .connector-binding').forEach((bindingElement) => {
+            const slotInput = bindingElement.querySelector('.connector-binding-slot');
+            const targetInput = bindingElement.querySelector('.connector-binding-target');
 
-function getConnectorCompositeValues() {
-    const inputs = document.querySelectorAll('.connector-composite-input');
-    return Array.from(inputs).map(input => input.value.trim());
-}
+            const slot = slotInput ? slotInput.value.trim() : '';
+            if (!slot) {
+                return;
+            }
 
-function buildConnectorCompositesMap() {
-    const compositeValues = getConnectorCompositeValues();
-    const composites = {};
+            const target = targetInput ? targetInput.value.trim() : '';
+            bindings[slot] = target;
+        });
 
-    compositeValues.forEach((compositeName, dimId) => {
-        if (compositeName.length > 0) {
-            composites[String(dimId)] = compositeName;
-        }
+        const transformations = [];
+        dimensionElement.querySelectorAll('.connector-transformations > .connector-transformation').forEach((transformationElement) => {
+            const transformationNameInput = transformationElement.querySelector('.connector-transformation-name');
+            const transformationArgsInput = transformationElement.querySelector('.connector-transformation-args');
+            const transformationName = transformationNameInput ? transformationNameInput.value.trim() : '';
+            if (!transformationName) {
+                return;
+            }
+
+            const transformationArgs = parseIntList(transformationArgsInput ? transformationArgsInput.value : '');
+            transformations.push({ name: transformationName, args: transformationArgs });
+        });
+        dimensions.push({
+            composite: compositeInput ? compositeInput.value.trim() : '',
+            bindings,
+            transformations
+        });
     });
-
-    return composites;
+    return dimensions;
 }
 
-function renderConnectorCompositeInputs(count, existingValues = []) {
-    const container = document.getElementById('connectorCompositesContainer');
-    if (!container) return;
+function renumberConnectorDimensions() {
+    const legends = document.querySelectorAll('.connector-dimension .dimension-fieldset > legend');
+    legends.forEach((legend, index) => {
+        legend.textContent = `Dimension ${index + 1}`;
+    });
+}
 
-    container.innerHTML = '';
-
-    const safeCount = Number.isFinite(count) && count > 0 ? count : 0;
-    if (safeCount === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'muted-note';
-        empty.textContent = 'No dimensions to configure.';
-        container.appendChild(empty);
-        updateConnectorPreview();
+function addConnectorTransformation(addButton, transformation = {}) {
+    const container = addButton.previousElementSibling;
+    if (!container) {
         return;
     }
 
-    for (let i = 0; i < safeCount; i += 1) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'connector-composite-row';
+    const transformationElement = document.createElement('div');
+    transformationElement.className = 'connector-transformation';
 
-        const label = document.createElement('label');
-        label.textContent = `Dimension ${i + 1} composite`;
+    const separator = document.createElement('hr');
+    transformationElement.appendChild(separator);
 
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'connector-composite-input';
-        input.placeholder = 'leave empty for scalar';
-        if (existingValues[i] !== undefined) {
-            input.value = existingValues[i];
-        }
+    const row = document.createElement('div');
+    row.className = 'transformation-row';
 
-        wrapper.appendChild(label);
-        wrapper.appendChild(input);
-        container.appendChild(wrapper);
-    }
+    const nameColumn = document.createElement('div');
+    nameColumn.className = 'transformation-col';
+    const nameLabel = document.createElement('label');
+    nameLabel.textContent = 'Transformation name';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'connector-transformation-name';
+    nameInput.placeholder = 'add';
+    nameInput.value = typeof transformation.name === 'string' ? transformation.name : '';
+    nameInput.addEventListener('input', updateConnectorPreview);
+    nameColumn.appendChild(nameLabel);
+    nameColumn.appendChild(nameInput);
 
+    const argsColumn = document.createElement('div');
+    argsColumn.className = 'transformation-col';
+    const argsLabel = document.createElement('label');
+    argsLabel.textContent = 'Args (comma-separated)';
+    const argsInput = document.createElement('input');
+    argsInput.type = 'text';
+    argsInput.className = 'connector-transformation-args';
+    argsInput.placeholder = '...';
+    argsInput.value = Array.isArray(transformation.args) ? transformation.args.join(', ') : '';
+    argsInput.addEventListener('input', updateConnectorPreview);
+    argsColumn.appendChild(argsLabel);
+    argsColumn.appendChild(argsInput);
+
+    row.appendChild(nameColumn);
+    row.appendChild(argsColumn);
+    transformationElement.appendChild(row);
+    container.appendChild(transformationElement);
     updateConnectorPreview();
 }
 
-export async function fetchConnectorFeatureDimensions() {
-    const feature_name = document.getElementById('in_connectorFeatureName').value.trim();
-    if (!feature_name) {
-        alert("Feature name is required.");
-        setConnectorFeatureInfo("Feature name is required.", true);
+function addConnectorBinding(addButton, binding = {}) {
+    const container = addButton.previousElementSibling;
+    if (!container) {
         return;
     }
 
-    setConnectorFeatureInfo("Fetching feature...", false);
+    const bindingElement = document.createElement('div');
+    bindingElement.className = 'connector-binding';
 
-    try {
-        const res = await fetch(apiUrl(`/feature/${feature_name}`));
-        if (!res.ok) {
-            throw new Error(`Failed to fetch feature (${res.status})`);
-        }
-        const data = await res.json();
-        const dims = Array.isArray(data.dimensions) ? data.dimensions.length : 0;
+    const row = document.createElement('div');
+    row.className = 'binding-row';
 
-        const existingValues = getConnectorCompositeValues();
-        renderConnectorCompositeInputs(dims, existingValues);
+    const slotColumn = document.createElement('div');
+    slotColumn.className = 'binding-col';
+    const slotLabel = document.createElement('label');
+    slotLabel.textContent = 'Slot id';
+    const slotInput = document.createElement('input');
+    slotInput.type = 'text';
+    slotInput.className = 'connector-binding-slot';
+    slotInput.placeholder = '0';
+    slotInput.value = typeof binding.slot === 'string' ? binding.slot : '';
+    slotInput.addEventListener('input', updateConnectorPreview);
+    slotColumn.appendChild(slotLabel);
+    slotColumn.appendChild(slotInput);
 
-        const label = dims === 1 ? 'dimension' : 'dimensions';
-        setConnectorFeatureInfo(`Loaded ${dims} ${label} from feature "${data.name || feature_name}".`, false);
-    } catch (error) {
-        console.error(error);
-        setConnectorFeatureInfo(`Failed to fetch feature: ${error.message}`, true);
+    const targetColumn = document.createElement('div');
+    targetColumn.className = 'binding-col';
+    const targetLabel = document.createElement('label');
+    targetLabel.textContent = 'Composite connector';
+    const targetInput = document.createElement('input');
+    targetInput.type = 'text';
+    targetInput.className = 'connector-binding-target';
+    targetInput.placeholder = 'TIME';
+    targetInput.value = typeof binding.target === 'string' ? binding.target : '';
+    targetInput.addEventListener('input', updateConnectorPreview);
+    targetColumn.appendChild(targetLabel);
+    targetColumn.appendChild(targetInput);
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'connector-binding-remove';
+    removeButton.textContent = 'Remove';
+    removeButton.addEventListener('click', () => {
+        bindingElement.remove();
+        updateConnectorPreview();
+    });
+
+    row.appendChild(slotColumn);
+    row.appendChild(targetColumn);
+    row.appendChild(removeButton);
+    bindingElement.appendChild(row);
+
+    container.appendChild(bindingElement);
+    updateConnectorPreview();
+}
+
+function appendConnectorDimension(dimension = {}) {
+    const container = document.getElementById('connectorDimensionsContainer');
+    if (!container) {
+        return;
     }
+
+    const dimensionElement = document.createElement('div');
+    dimensionElement.className = 'connector-dimension';
+
+    const fieldset = document.createElement('fieldset');
+    fieldset.className = 'dimension-fieldset';
+    const legend = document.createElement('legend');
+    fieldset.appendChild(legend);
+
+    const compositeLabel = document.createElement('label');
+    compositeLabel.textContent = 'Composite connector name';
+    const compositeInput = document.createElement('input');
+    compositeInput.type = 'text';
+    compositeInput.className = 'connector-dimension-composite';
+    compositeInput.placeholder = 'leave empty for scalar';
+    compositeInput.value = typeof dimension.composite === 'string' ? dimension.composite : '';
+    compositeInput.addEventListener('input', updateConnectorPreview);
+    fieldset.appendChild(compositeLabel);
+    fieldset.appendChild(compositeInput);
+
+    const bindingsContainer = document.createElement('div');
+    bindingsContainer.className = 'connector-bindings';
+    fieldset.appendChild(bindingsContainer);
+
+    const addBindingButton = document.createElement('button');
+    addBindingButton.type = 'button';
+    addBindingButton.textContent = 'Add binding';
+    addBindingButton.addEventListener('click', () => addConnectorBinding(addBindingButton));
+    fieldset.appendChild(addBindingButton);
+
+    const transformationsContainer = document.createElement('div');
+    transformationsContainer.className = 'connector-transformations';
+    fieldset.appendChild(transformationsContainer);
+
+    const addTransformationButton = document.createElement('button');
+    addTransformationButton.type = 'button';
+    addTransformationButton.textContent = 'Add transformation';
+    addTransformationButton.addEventListener('click', () => addConnectorTransformation(addTransformationButton));
+    fieldset.appendChild(addTransformationButton);
+
+    dimensionElement.appendChild(fieldset);
+    container.appendChild(dimensionElement);
+
+    if (dimension.bindings && typeof dimension.bindings === 'object' && !Array.isArray(dimension.bindings)) {
+        Object.entries(dimension.bindings).forEach(([slot, target]) => {
+            addConnectorBinding(addBindingButton, {
+                slot,
+                target: typeof target === 'string' ? target : ''
+            });
+        });
+    }
+
+    if (Array.isArray(dimension.transformations)) {
+        dimension.transformations.forEach((transformation) => {
+            addConnectorTransformation(addTransformationButton, transformation);
+        });
+    }
+
+    renumberConnectorDimensions();
+}
+
+export function addConnectorDimension() {
+    appendConnectorDimension();
+    updateConnectorPreview();
+}
+
+export function clearConnectorDimensions() {
+    const container = document.getElementById('connectorDimensionsContainer');
+    if (!container) {
+        return;
+    }
+    container.innerHTML = '';
+    updateConnectorPreview();
 }
 
 function constructStructuredConnector() {
     const name = document.getElementById('in_connectorName').value.trim();
-    const feature_name = document.getElementById('in_connectorFeatureName').value.trim();
-    const composites = buildConnectorCompositesMap();
+    const dimensions = parseConnectorDimensionsFromForm();
     const condition_name = document.getElementById('in_connectorConditionName').value.trim();
     const condition_args = parseIntList(document.getElementById('in_connectorConditionArgs').value);
 
-    return JSON.stringify({ name, feature_name, composites, condition_name, condition_args }, null, 2);
+    return JSON.stringify({ name, dimensions, condition_name, condition_args }, null, 2);
 }
 
 export function updateConnectorPreview() {
@@ -502,27 +430,10 @@ export function populateStructuredConnector(jsonOrObject) {
     }
 
     document.getElementById('in_connectorName').value = data.name || '';
-    document.getElementById('in_connectorFeatureName').value = data.feature_name || '';
 
-    const compositesObject =
-        data.composites && typeof data.composites === 'object' && !Array.isArray(data.composites)
-            ? data.composites
-            : {};
-
-    const compositeValues = [];
-    let maxCompositeIndex = -1;
-    Object.entries(compositesObject).forEach(([indexKey, compositeName]) => {
-        const index = Number.parseInt(indexKey, 10);
-        if (!Number.isInteger(index) || index < 0 || typeof compositeName !== 'string') {
-            return;
-        }
-        compositeValues[index] = compositeName;
-        maxCompositeIndex = Math.max(maxCompositeIndex, index);
-    });
-
-    const currentInputsCount = document.querySelectorAll('.connector-composite-input').length;
-    const renderCount = Math.max(currentInputsCount, maxCompositeIndex + 1);
-    renderConnectorCompositeInputs(renderCount, compositeValues);
+    clearConnectorDimensions();
+    const dimensions = Array.isArray(data.dimensions) ? data.dimensions : [];
+    dimensions.forEach((dimension) => appendConnectorDimension(dimension));
 
     document.getElementById('in_connectorConditionName').value = data.condition_name || '';
     document.getElementById('in_connectorConditionArgs').value = Array.isArray(data.condition_args)
@@ -598,7 +509,6 @@ export async function fetchVersionInfo() {
 // --------------------------------------------------------------------------
 let currentAccountPage = 0;
 const accountPageSize = 10;
-let totalAccountFeaturePages = 0;
 let totalAccountTransformationPages = 0;
 let totalAccountConditionPages = 0;
 let totalAccountConnectorPages = 0;
@@ -606,13 +516,12 @@ let totalAccountConnectorPages = 0;
 export function nextPage()
 {
     const maxPages = Math.max(
-        totalAccountFeaturePages,
         totalAccountTransformationPages,
         totalAccountConditionPages,
         totalAccountConnectorPages
     );
 
-    if(currentAccountPage < maxPages)
+    if(currentAccountPage < maxPages - 1)
     {
         currentAccountPage += 1;
         fetchAccountResources();
@@ -629,19 +538,16 @@ export function prevPage()
 
 export async function fetchAccountResources() {
     const address = document.getElementById('accountAddressInput').value.trim();
-    const featuresDiv = document.getElementById('accountFeaturesList');
     const transformationsDiv = document.getElementById('accountTransformationsList');
     const conditionsDiv = document.getElementById('accountConditionsList');
     const connectorsDiv = document.getElementById('accountConnectorsList');
 
-    featuresDiv.textContent = 'Loading...';
     transformationsDiv.textContent = 'Loading...';
     conditionsDiv.textContent = 'Loading...';
     connectorsDiv.textContent = 'Loading...';
 
     if (!address) {
         alert("Address is required.");
-        featuresDiv.textContent = '❌ Invalid address';
         transformationsDiv.textContent = '';
         conditionsDiv.textContent = '';
         connectorsDiv.textContent = '';
@@ -655,10 +561,6 @@ export async function fetchAccountResources() {
         });
 
         const data = await res.json();
-        
-        featuresDiv.innerHTML = data.owned_features?.length
-            ? data.owned_features.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
-            : '(none)';
 
         transformationsDiv.innerHTML = data.owned_transformations?.length
             ? data.owned_transformations.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
@@ -673,30 +575,28 @@ export async function fetchAccountResources() {
             : '(none)';
 
         // Compute total pages based on backend totals
-        totalAccountFeaturePages = Math.ceil((data.total_features ?? 0) / accountPageSize);
         totalAccountTransformationPages = Math.ceil((data.total_transformations ?? 0) / accountPageSize);
         totalAccountConditionPages = Math.ceil((data.total_conditions ?? 0) / accountPageSize);
         totalAccountConnectorPages = Math.ceil((data.total_connectors ?? 0) / accountPageSize);
 
         // Show page number as: Page X of Y
         const maxPages = Math.max(
-            totalAccountFeaturePages,
             totalAccountTransformationPages,
             totalAccountConditionPages,
             totalAccountConnectorPages
         );
+        const totalPages = Math.max(1, maxPages);
 
         document.getElementById('accountPageLabel').textContent =
-            `Page ${currentAccountPage + 1} of ${maxPages}`;
+            `Page ${Math.min(currentAccountPage + 1, totalPages)} of ${totalPages}`;
 
         // Disable next if on last page
-        const isLastPage = currentAccountPage >= maxPages - 1;
+        const isLastPage = currentAccountPage >= totalPages - 1;
         document.getElementById('btn_prevAccountPage').disabled = currentAccountPage === 0;
         document.getElementById('btn_nextAccountPage').disabled = isLastPage;
 
     } catch (err) {
-        featuresDiv.textContent = '❌ Failed to fetch account data';
-        transformationsDiv.textContent = err.message;
+        transformationsDiv.textContent = '❌ Failed to fetch account data';
         conditionsDiv.textContent = '';
         connectorsDiv.textContent = '';
     }

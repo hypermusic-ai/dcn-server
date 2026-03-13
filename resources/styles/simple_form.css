@@ -538,7 +538,7 @@ pre.request-body {
 #treeContainer {
     display: none;
     width: 100%;
-    height: clamp(250px, 32vh, 380px);
+    height: clamp(250px, 72vh, 768px);
     overflow: visible;
     position: relative;
     z-index: 0;
@@ -555,7 +555,6 @@ pre.request-body {
     min-height: 140px;
 }
 
-#POST_featureRequestBody,
 #POST_transformationRequestBody,
 #POST_conditionRequestBody,
 #POST_connectorRequestBody {
@@ -570,15 +569,11 @@ pre.request-body {
     white-space: pre-wrap;
 }
 
-#connectorCompositesContainer {
-    min-height: 128px;
-    max-height: 512px;
+#connectorDimensionsContainer {
+    min-height: 512px;
+    max-height: 768px;
     overflow: auto;
     padding-right: 0.2rem;
-}
-
-.connector-composite-row {
-    margin-bottom: 0.5rem;
 }
 
 .muted-note {
@@ -599,8 +594,22 @@ pre.request-body {
     font-size: 0.78rem;
 }
 
-.feature-transformation {
+.connector-transformation {
     margin-bottom: 0.9rem;
+}
+
+.connector-bindings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-bottom: 0.7rem;
+}
+
+.connector-binding {
+    border: 1px solid var(--line);
+    border-radius: 0.45rem;
+    padding: 0.5rem;
+    background: #fcfcfc;
 }
 
 .transformation-row {
@@ -609,9 +618,25 @@ pre.request-body {
     align-items: flex-start;
 }
 
+.binding-row {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-end;
+}
+
 .transformation-col {
     flex: 1;
     min-width: 0;
+}
+
+.binding-col {
+    flex: 1;
+    min-width: 0;
+}
+
+.connector-binding-remove {
+    margin: 0 0 0.72rem;
+    flex: 0 0 auto;
 }
 
 .account-grid {
@@ -780,6 +805,7 @@ pre.request-body {
     .response-row,
     .request-row,
     .transformation-row,
+    .binding-row,
     .page-controls,
     .login-compact {
         flex-direction: column;

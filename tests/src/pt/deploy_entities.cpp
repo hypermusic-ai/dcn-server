@@ -83,9 +83,8 @@ namespace
             return false;
         }
 
-        static const std::array<std::filesystem::path, 4> build_dirs{
+        static const std::array<std::filesystem::path, 3> build_dirs{
             std::filesystem::path("connectors") / "build",
-            std::filesystem::path("features") / "build",
             std::filesystem::path("transformations") / "build",
             std::filesystem::path("conditions") / "build",
         };
@@ -193,17 +192,12 @@ namespace
             condition_record.mutable_condition()->set_sol_src("return true;");
             condition_record.set_owner(owner_hex);
 
-            FeatureRecord feature_record;
-            feature_record.mutable_feature()->set_name("DeployFeature");
-            auto * dimension = feature_record.mutable_feature()->add_dimensions();
-            auto * transformation_def = dimension->add_transformations();
-            transformation_def->set_name("DeployTransformation");
-            transformation_def->add_args(7);
-            feature_record.set_owner(owner_hex);
-
             ConnectorRecord connector_record;
             connector_record.mutable_connector()->set_name("DeployConnector");
-            connector_record.mutable_connector()->set_feature_name("DeployFeature");
+            auto * connector_dimension = connector_record.mutable_connector()->add_dimensions();
+            auto * connector_transformation = connector_dimension->add_transformations();
+            connector_transformation->set_name("DeployTransformation");
+            connector_transformation->add_args(7);
             connector_record.mutable_connector()->set_condition_name("DeployCondition");
             connector_record.set_owner(owner_hex);
 
@@ -226,15 +220,6 @@ namespace
                 return snapshot;
             }
             snapshot.condition_address = condition_deploy_result.value();
-
-            const auto feature_deploy_result = runAwaitable(
-                io_context,
-                loader::deployFeature(evm_instance, registry, feature_record, storage_path));
-            if(!feature_deploy_result)
-            {
-                snapshot.error_message = std::format("deployFeature failed: {}", feature_deploy_result.error().kind);
-                return snapshot;
-            }
 
             const auto connector_deploy_result = runAwaitable(
                 io_context,
@@ -350,8 +335,12 @@ TEST_F(UnitTest, PT_Deploy_Connector_DeploysAndRegisters)
     EXPECT_EQ(snapshot.connector_owner, snapshot.owner);
 
     EXPECT_EQ(snapshot.connector.name(), "DeployConnector");
-    EXPECT_EQ(snapshot.connector.feature_name(), "DeployFeature");
+    ASSERT_EQ(snapshot.connector.dimensions_size(), 1);
+    ASSERT_EQ(snapshot.connector.dimensions(0).transformations_size(), 1);
+    EXPECT_EQ(snapshot.connector.dimensions(0).transformations(0).name(), "DeployTransformation");
+    ASSERT_EQ(snapshot.connector.dimensions(0).transformations(0).args_size(), 1);
+    EXPECT_EQ(snapshot.connector.dimensions(0).transformations(0).args(0), 7);
+    EXPECT_EQ(snapshot.connector.dimensions(0).composite(), "");
     EXPECT_EQ(snapshot.connector.condition_name(), "DeployCondition");
-    EXPECT_TRUE(snapshot.connector.composites().empty());
     EXPECT_EQ(snapshot.connector.condition_args_size(), 0);
 }

@@ -147,9 +147,8 @@ namespace
             return false;
         }
 
-        static const std::array<std::filesystem::path, 4> build_dirs{
+        static const std::array<std::filesystem::path, 3> build_dirs{
             std::filesystem::path("connectors") / "build",
-            std::filesystem::path("features") / "build",
             std::filesystem::path("transformations") / "build",
             std::filesystem::path("conditions") / "build",
         };
@@ -403,17 +402,12 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
     condition_record.mutable_condition()->set_sol_src("return true;");
     condition_record.set_owner(owner_hex);
 
-    FeatureRecord feature_record;
-    feature_record.mutable_feature()->set_name("PersistFeature");
-    auto * dimension = feature_record.mutable_feature()->add_dimensions();
-    auto * transformation_def = dimension->add_transformations();
-    transformation_def->set_name("PersistTransformation");
-    transformation_def->add_args(1);
-    feature_record.set_owner(owner_hex);
-
     ConnectorRecord connector_record;
     connector_record.mutable_connector()->set_name("PersistConnector");
-    connector_record.mutable_connector()->set_feature_name("PersistFeature");
+    auto * connector_dimension = connector_record.mutable_connector()->add_dimensions();
+    auto * connector_transformation = connector_dimension->add_transformations();
+    connector_transformation->set_name("PersistTransformation");
+    connector_transformation->add_args(1);
     connector_record.mutable_connector()->set_condition_name("PersistCondition");
     connector_record.set_owner(owner_hex);
 
@@ -430,13 +424,6 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
     ASSERT_TRUE(condition_deploy_result.has_value())
         << std::format("deployCondition failed: {}", condition_deploy_result.error().kind);
     EXPECT_FALSE(isZeroAddress(condition_deploy_result.value()));
-
-    const auto feature_deploy_result = runAwaitable(
-        env.io_context,
-        loader::deployFeature(env.evm_instance, registry, feature_record, storage_path));
-    ASSERT_TRUE(feature_deploy_result.has_value())
-        << std::format("deployFeature failed: {}", feature_deploy_result.error().kind);
-    EXPECT_FALSE(isZeroAddress(feature_deploy_result.value()));
 
     const auto connector_deploy_result = runAwaitable(
         env.io_context,

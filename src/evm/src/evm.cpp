@@ -223,7 +223,7 @@ namespace dcn::evm
         std::vector<std::string> args = {
             "--evm-version", "shanghai",
             "--overwrite", "-o", out_dir.string(),
-            "--optimize", "--bin",
+            "--via-ir", "--bin",
             "--abi",
             code_path.string()
         };

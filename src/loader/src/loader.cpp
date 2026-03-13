@@ -7,11 +7,10 @@ namespace dcn::loader
 {
     namespace
     {
-        constexpr const char* PT_BUILD_VERSION = "uups-v1";
+        constexpr const char* PT_BUILD_VERSION = "constructors-v1";
 
-        const std::array<std::string, 4> PT_STORAGE_ENTITY_DIRS{
+        const std::array<std::string, 3> PT_STORAGE_ENTITY_DIRS{
             "connectors",
-            "features",
             "transformations",
             "conditions"
         };
@@ -163,29 +162,6 @@ namespace dcn::loader
         return true;
     }
 
-    static asio::awaitable<bool> _ensurePTContractProxyBin(evm::EVM & evm)
-    {
-        const std::filesystem::path proxy_out_dir = evm.getPTPath() / "out" / "proxy";
-        const std::filesystem::path proxy_bin_path = proxy_out_dir / "PTContractProxy.bin";
-
-        if(std::filesystem::exists(proxy_bin_path))
-        {
-            co_return true;
-        }
-
-        if(!co_await evm.compile(
-            evm.getPTPath() / "contracts" / "proxy" / "PTContractProxy.sol",
-            proxy_out_dir,
-            evm.getPTPath() / "contracts",
-            evm.getPTPath() / "node_modules"))
-        {
-            spdlog::error("Failed to compile PT contract proxy");
-            co_return false;
-        }
-
-        co_return true;
-    }
-
     template<class RecordType>
     static asio::awaitable<bool> _saveJsonRecord(const std::string & name, RecordType record, const std::filesystem::path out_dir)
     {
@@ -315,80 +291,39 @@ namespace dcn::loader
         co_await evm.addAccount(address, evm::DEFAULT_GAS_LIMIT);
         co_await evm.setGas(address, evm::DEFAULT_GAS_LIMIT);
         
-        auto implementation_deploy_res = co_await evm.deploy(
+        std::vector<std::uint8_t> ctor_args = evm::encodeAsArg(evm.getRegistryAddress());
+        auto deploy_res = co_await evm.deploy(
             bin_dir / (name + ".bin"),
             address, 
-            {},
+            std::move(ctor_args),
             evm::DEFAULT_GAS_LIMIT, 
             0);
 
-
-        if(!implementation_deploy_res)
+        if(!deploy_res)
         {
-            spdlog::error(std::format("Failed to deploy object implementation: {}", implementation_deploy_res.error().kind));
-            _loadCleanup(bin_dir, name);
-
-            const auto & error = implementation_deploy_res.error();
+            spdlog::error(std::format("Failed to deploy object: {}", deploy_res.error().kind));
+            const auto & error = deploy_res.error();
             const auto pt_error = parse::decodeBytes<pt::PTDeployError>(error.result_bytes);
 
             if(!pt_error)
             {
                 spdlog::error(std::format("Failed to parse PTDeployError: {}", pt_error.error().kind));
+                _loadCleanup(bin_dir, name);
                 co_return std::unexpected(pt::PTDeployError{});
             }
 
-            co_return std::unexpected(pt_error.value());
-        }
-
-        const auto implementation_address = implementation_deploy_res.value();
-        spdlog::info("Object implementation address '{}': {}", name, evmc::hex(implementation_address));
-
-        if(!co_await _ensurePTContractProxyBin(evm))
-        {
-            spdlog::error("Failed to ensure PTContractProxy.bin");
-            _loadCleanup(bin_dir, name);
-            co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
-        }
-
-        std::vector<std::uint8_t> proxy_ctor_args = evm::encodeAsArg(implementation_address);
-        const auto registry_arg = evm::encodeAsArg(evm.getRegistryAddress());
-        proxy_ctor_args.insert(proxy_ctor_args.end(), registry_arg.begin(), registry_arg.end());
-
-        auto proxy_deploy_res = co_await evm.deploy(
-            evm.getPTPath() / "out" / "proxy" / "PTContractProxy.bin",
-            address,
-            std::move(proxy_ctor_args),
-            evm::DEFAULT_GAS_LIMIT,
-            0);
-
-        if(!proxy_deploy_res)
-        {
-            spdlog::error(std::format("Failed to deploy object proxy : {}", proxy_deploy_res.error().kind));
-
-            const auto & error = proxy_deploy_res.error();
-
-            const auto pt_error = parse::decodeBytes<pt::PTDeployError>(error.result_bytes);
-
-            if(!pt_error)
-            {
-                spdlog::error(std::format("Failed to parse PTDeployError: {}", pt_error.error().kind));
-                co_return std::unexpected(pt::PTDeployError{});
-            }
-
-            // deploy can fail in case when this name is already taken - then we don't want to remove binary file
-            // if it fails for another reason - we want to remove binary file
             if(pt_error->kind != expected_conflict_error)
             {
-                // remove binary file
                 _loadCleanup(bin_dir, name);
             }
+
             co_return std::unexpected(pt_error.value());
         }
 
-        const auto object_proxy_address = proxy_deploy_res.value();
-        spdlog::info("Object proxy address '{}': {}", name, evmc::hex(object_proxy_address));
+        const auto object_address = deploy_res.value();
+        spdlog::info("Object address '{}': {}", name, evmc::hex(object_address));
 
-        const auto owner_result = co_await fetchOwner(evm, object_proxy_address);
+        const auto owner_result = co_await fetchOwner(evm, object_address);
 
         // check execution status
         if(!owner_result)
@@ -425,7 +360,7 @@ namespace dcn::loader
             co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
-        if(!co_await registry.add(object_proxy_address, object))
+        if(!co_await registry.add(object_address, object))
         {
             spdlog::error("Failed to add object '{}'", name);
 
@@ -446,7 +381,7 @@ namespace dcn::loader
         }
 
         spdlog::debug("Object '{}' added", name);
-        co_return object_proxy_address;
+        co_return object_address;
     }
 
 
@@ -459,17 +394,6 @@ namespace dcn::loader
             storage_path / "connectors",
             &constructConnectorSolidityCode,
             pt::PTDeployError::Kind::CONNECTOR_ALREADY_REGISTERED);
-    }
-
-    asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployFeature(evm::EVM & evm, registry::Registry & registry, FeatureRecord feature_record, const std::filesystem::path & storage_path)
-    {
-        return _deployObjectLocally(evm,
-            registry, 
-            std::move(feature_record), 
-            &FeatureRecord::feature, 
-            storage_path / "features",
-            &constructFeatureSolidityCode,
-            pt::PTDeployError::Kind::FEATURE_ALREADY_REGISTERED);
     }
 
     asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployTransformation(evm::EVM & evm, registry::Registry & registry, TransformationRecord transformation_record, const std::filesystem::path & storage_path)
@@ -510,13 +434,37 @@ namespace dcn::loader
                 loaded_connectors,
                 [](const ConnectorRecord & record)
                 {
-                    std::vector<std::string> composites;
-                    composites.reserve(record.connector().composites().size());
-                    for(const auto & [_, composite] : record.connector().composites())
+                    std::vector<std::string> dependencies;
+                    dependencies.reserve(static_cast<std::size_t>(record.connector().dimensions_size()));
+                    for(const auto & dimension : record.connector().dimensions())
                     {
-                        composites.push_back(composite);
+                        if(dimension.composite().empty())
+                        {
+                            if(dimension.bindings_size() != 0)
+                            {
+                                for(const auto & [_, binding_target] : dimension.bindings())
+                                {
+                                    if(!binding_target.empty())
+                                    {
+                                        dependencies.push_back(binding_target);
+                                    }
+                                }
+                            }
+                            continue;
+                        }
+
+                        dependencies.push_back(dimension.composite());
+
+                        for(const auto & [_, binding_target] : dimension.bindings())
+                        {
+                            if(binding_target.empty())
+                            {
+                                continue;
+                            }
+                            dependencies.push_back(binding_target);
+                        }
                     }
-                    return composites;
+                    return dependencies;
                 },
                 [](const std::string & composite) {return composite;}
             );
@@ -540,35 +488,6 @@ namespace dcn::loader
         co_return success;
     }
 
-
-    asio::awaitable<bool> loadStoredFeatures(evm::EVM & evm, registry::Registry & registry, const std::filesystem::path & storage_path)
-    {
-        spdlog::info("Loading stored features...");
-
-        auto loaded_features = _loadJSONRecords<FeatureRecord>(storage_path / "features");
-        if(loaded_features.empty())
-        {
-            co_return false;
-        }
-
-        bool success = true;
-        std::size_t i = 0;
-        const std::size_t batch_size = (loaded_features.size() / 100) + 1;
-        assert(batch_size > 0);
-        
-        for(const auto & [name, feature] : loaded_features)
-        {
-            if(!co_await deployFeature(evm, registry, std::move(feature), storage_path))
-            {
-                spdlog::error("Failed to deploy feature `{}`", name);
-                success = false;
-            }
-
-            if(++i % batch_size == 0) {spdlog::debug("{}/{} features loaded", i, loaded_features.size());}
-        }
-
-        co_return success;
-    }
 
     asio::awaitable<bool> loadStoredTransformations(evm::EVM & evm, registry::Registry & registry, const std::filesystem::path & storage_path)
     {

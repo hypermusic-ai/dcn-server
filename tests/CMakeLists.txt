@@ -18,10 +18,10 @@ add_executable("${PROJECT_NAME}"
     "src/tests.cpp"
 
     # --- pt module test files ---
-    "src/pt/feature.cpp"
     "src/pt/transformation.cpp"
     "src/pt/condition.cpp"
     "src/pt/connector.cpp"
+    "src/pt/bindings.cpp"
     "src/pt/execute.cpp"
     "src/pt/initial_deployment.cpp"
     "src/pt/deploy_entities.cpp"

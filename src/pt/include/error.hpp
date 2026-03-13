@@ -23,9 +23,6 @@ namespace dcn::pt
             CONNECTOR_MISSING,
             CONNECTOR_DIMENSIONS_MISMATCH,
 
-            FEATURE_ALREADY_REGISTERED,
-            FEATURE_MISSING,
-
             TRANSFORMATION_ALREADY_REGISTERED,
             TRANSFORMATION_ARGUMENTS_MISMATCH,
             TRANSFORMATION_MISSING,
@@ -75,9 +72,6 @@ struct std::formatter<dcn::pt::PTDeployError::Kind> : std::formatter<std::string
             case dcn::pt::PTDeployError::Kind::CONNECTOR_ALREADY_REGISTERED : return formatter<string>::format("Connector already registered", ctx);
             case dcn::pt::PTDeployError::Kind::CONNECTOR_MISSING : return formatter<string>::format("Connector missing", ctx);
             case dcn::pt::PTDeployError::Kind::CONNECTOR_DIMENSIONS_MISMATCH : return formatter<string>::format("Connector dimensions mismatch", ctx);
-
-            case dcn::pt::PTDeployError::Kind::FEATURE_ALREADY_REGISTERED : return formatter<string>::format("Feature already registered", ctx);
-            case dcn::pt::PTDeployError::Kind::FEATURE_MISSING : return formatter<string>::format("Feature missing", ctx);
 
             case dcn::pt::PTDeployError::Kind::TRANSFORMATION_ALREADY_REGISTERED : return formatter<string>::format("Transformation already registered", ctx);
             case dcn::pt::PTDeployError::Kind::TRANSFORMATION_ARGUMENTS_MISMATCH : return formatter<string>::format("Transformation arguments mismatch", ctx);
