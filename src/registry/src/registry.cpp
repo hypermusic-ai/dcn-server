@@ -8,19 +8,19 @@ namespace dcn::registry
 
     }
 
-    asio::awaitable<bool> Registry::containsParticleBucket(const std::string& name) const 
+    asio::awaitable<bool> Registry::containsConnectorBucket(const std::string& name) const 
     {
         co_await utils::ensureOnStrand(_strand);
 
-        co_return _particles.contains(name);
+        co_return _connectors.contains(name);
     }
 
-    asio::awaitable<bool> Registry::isParticleBucketEmpty(const std::string& name) const 
+    asio::awaitable<bool> Registry::isConnectorBucketEmpty(const std::string& name) const 
     {
         co_await utils::ensureOnStrand(_strand);
 
-        if(co_await containsParticleBucket(name) == false)co_return true;
-        co_return _particles.at(name).empty();
+        if(co_await containsConnectorBucket(name) == false)co_return true;
+        co_return _connectors.at(name).empty();
     }
 
     asio::awaitable<bool> Registry::containsFeatureBucket(const std::string& name) const 
@@ -68,73 +68,73 @@ namespace dcn::registry
         co_return _conditions.at(name).empty();
     }
 
-    asio::awaitable<bool> Registry::addParticle(chain::Address address, ParticleRecord record)
+    asio::awaitable<bool> Registry::addConnector(chain::Address address, ConnectorRecord record)
     {
-        if(record.particle().name().empty())
+        if(record.connector().name().empty())
         {
-            spdlog::error("Particle name is empty");
+            spdlog::error("Connector name is empty");
             co_return false;
         }
 
         co_await utils::ensureOnStrand(_strand);
 
-        if(! co_await containsParticleBucket(record.particle().name()))
+        if(! co_await containsConnectorBucket(record.connector().name()))
         {
-            spdlog::debug("Particle bucket `{}` does not exists, creating new one ... ", record.particle().name());
-            _particles.try_emplace(record.particle().name(), absl::flat_hash_map<chain::Address, ParticleRecord>());
+            spdlog::debug("Connector bucket `{}` does not exists, creating new one ... ", record.connector().name());
+            _connectors.try_emplace(record.connector().name(), absl::flat_hash_map<chain::Address, ConnectorRecord>());
         }       
 
-        if(_particles.at(record.particle().name()).contains(address))
+        if(_connectors.at(record.connector().name()).contains(address))
         {
-            spdlog::error("Particle `{}` of this signature already exists", record.particle().name());
+            spdlog::error("Connector `{}` of this signature already exists", record.connector().name());
             co_return false;
         }
 
         // check if root feature exists
-        if(! co_await containsFeatureBucket(record.particle().feature_name()))
+        if(! co_await containsFeatureBucket(record.connector().feature_name()))
         {
-            spdlog::error("Cannot find feature `{}` used in particle `{}`", record.particle().feature_name(), record.particle().name());
+            spdlog::error("Cannot find feature `{}` used in connector `{}`", record.connector().feature_name(), record.connector().name());
             co_return false;
         }
 
-        if(co_await isFeatureBucketEmpty(record.particle().feature_name()))
+        if(co_await isFeatureBucketEmpty(record.connector().feature_name()))
         {
-            spdlog::error("Cannot find feature `{}` used in particle `{}`", record.particle().feature_name(), record.particle().name());
+            spdlog::error("Cannot find feature `{}` used in connector `{}`", record.connector().feature_name(), record.connector().name());
             co_return false;
         }
 
-        const auto feature_res = co_await getNewestFeature(record.particle().feature_name());
+        const auto feature_res = co_await getNewestFeature(record.connector().feature_name());
         if(!feature_res)
         {
-            spdlog::error("Cannot fetch feature `{}` used in particle `{}`", record.particle().feature_name(), record.particle().name());
+            spdlog::error("Cannot fetch feature `{}` used in connector `{}`", record.connector().feature_name(), record.connector().name());
             co_return false;
         }
 
         const std::uint32_t feature_dimensions_count = static_cast<std::uint32_t>(feature_res->dimensions_size());
 
         // check if composites exist
-        for(const auto & [dim_id, composite] : record.particle().composites())
+        for(const auto & [dim_id, composite] : record.connector().composites())
         {
             if(dim_id >= feature_dimensions_count)
             {
-                spdlog::error("Composite dimension `{}` out of range for particle `{}`", dim_id, record.particle().name());
+                spdlog::error("Composite dimension `{}` out of range for connector `{}`", dim_id, record.connector().name());
                 co_return false;
             }
 
             if(composite.empty())
             {
-                spdlog::error("Composite name is empty at dimension `{}` for particle `{}`", dim_id, record.particle().name());
+                spdlog::error("Composite name is empty at dimension `{}` for connector `{}`", dim_id, record.connector().name());
                 co_return false;
             }
 
-            if(! co_await containsParticleBucket(composite))
+            if(! co_await containsConnectorBucket(composite))
             {
-                spdlog::error("Cannot find particle `{}` used in particle `{}`", composite, record.particle().name());
+                spdlog::error("Cannot find connector `{}` used in connector `{}`", composite, record.connector().name());
                 co_return false;
             }
-            if(co_await isParticleBucketEmpty(composite))
+            if(co_await isConnectorBucketEmpty(composite))
             {
-                spdlog::error("Cannot find particle `{}` used in particle `{}`", composite, record.particle().name());
+                spdlog::error("Cannot find connector `{}` used in connector `{}`", composite, record.connector().name());
                 co_return false;
             }
         }
@@ -146,28 +146,28 @@ namespace dcn::registry
             co_return false;
         }
 
-        _owned_particles[*owner_res].emplace(record.particle().name());
+        _owned_connectors[*owner_res].emplace(record.connector().name());
 
-        _newest_particle[record.particle().name()] = address;
-        _particles.at(record.particle().name()).try_emplace(std::move(address), std::move(record));
+        _newest_connector[record.connector().name()] = address;
+        _connectors.at(record.connector().name()).try_emplace(std::move(address), std::move(record));
 
         co_return true;
     }
 
-    asio::awaitable<std::optional<Particle>> Registry::getNewestParticle(const std::string& name) const
+    asio::awaitable<std::optional<Connector>> Registry::getNewestConnector(const std::string& name) const
     {
         co_await utils::ensureOnStrand(_strand);
 
-        if(_newest_particle.contains(name) == false)co_return std::nullopt;
-        co_return (co_await getParticle(name, _newest_particle.at(name)));
+        if(_newest_connector.contains(name) == false)co_return std::nullopt;
+        co_return (co_await getConnector(name, _newest_connector.at(name)));
     }
 
-    asio::awaitable<std::optional<Particle>> Registry::getParticle(const std::string& name, const chain::Address & address) const
+    asio::awaitable<std::optional<Connector>> Registry::getConnector(const std::string& name, const chain::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 
-        auto bucket_it = _particles.find(name);
-        if(bucket_it == _particles.end()) 
+        auto bucket_it = _connectors.find(name);
+        if(bucket_it == _connectors.end()) 
         {
             co_return std::nullopt;
         }
@@ -176,7 +176,7 @@ namespace dcn::registry
         {
             co_return std::nullopt;
         }
-        co_return it->second.particle();
+        co_return it->second.connector();
     }
 
     asio::awaitable<bool> Registry::addFeature(chain::Address address, FeatureRecord record)
@@ -385,12 +385,12 @@ namespace dcn::registry
         co_return it->second.condition();
     }
 
-    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedParticles(const chain::Address & address) const
+    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedConnectors(const chain::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 
-        if(_owned_particles.contains(address) == false)co_return absl::flat_hash_set<std::string>{};
-        co_return _owned_particles.at(address);
+        if(_owned_connectors.contains(address) == false)co_return absl::flat_hash_set<std::string>{};
+        co_return _owned_connectors.at(address);
     }
 
     asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedFeatures(const chain::Address & address) const
@@ -419,9 +419,9 @@ namespace dcn::registry
 
 
 
-    asio::awaitable<bool> Registry::add(chain::Address address, ParticleRecord particle)
+    asio::awaitable<bool> Registry::add(chain::Address address, ConnectorRecord connector)
     {
-        return addParticle(address, std::move(particle));
+        return addConnector(address, std::move(connector));
     }
 
     asio::awaitable<bool> Registry::add(chain::Address address, FeatureRecord feature)

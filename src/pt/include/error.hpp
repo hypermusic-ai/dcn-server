@@ -19,9 +19,9 @@ namespace dcn::pt
             
             INVALID_INPUT,
 
-            PARTICLE_ALREADY_REGISTERED,
-            PARTICLE_MISSING,
-            PARTICLE_DIMENSIONS_MISMATCH,
+            CONNECTOR_ALREADY_REGISTERED,
+            CONNECTOR_MISSING,
+            CONNECTOR_DIMENSIONS_MISMATCH,
 
             FEATURE_ALREADY_REGISTERED,
             FEATURE_MISSING,
@@ -72,9 +72,9 @@ struct std::formatter<dcn::pt::PTDeployError::Kind> : std::formatter<std::string
         {
             case dcn::pt::PTDeployError::Kind::INVALID_INPUT : return formatter<string>::format("Invalid input", ctx);
 
-            case dcn::pt::PTDeployError::Kind::PARTICLE_ALREADY_REGISTERED : return formatter<string>::format("Particle already registered", ctx);
-            case dcn::pt::PTDeployError::Kind::PARTICLE_MISSING : return formatter<string>::format("Particle missing", ctx);
-            case dcn::pt::PTDeployError::Kind::PARTICLE_DIMENSIONS_MISMATCH : return formatter<string>::format("Particle dimensions mismatch", ctx);
+            case dcn::pt::PTDeployError::Kind::CONNECTOR_ALREADY_REGISTERED : return formatter<string>::format("Connector already registered", ctx);
+            case dcn::pt::PTDeployError::Kind::CONNECTOR_MISSING : return formatter<string>::format("Connector missing", ctx);
+            case dcn::pt::PTDeployError::Kind::CONNECTOR_DIMENSIONS_MISMATCH : return formatter<string>::format("Connector dimensions mismatch", ctx);
 
             case dcn::pt::PTDeployError::Kind::FEATURE_ALREADY_REGISTERED : return formatter<string>::format("Feature already registered", ctx);
             case dcn::pt::PTDeployError::Kind::FEATURE_MISSING : return formatter<string>::format("Feature missing", ctx);

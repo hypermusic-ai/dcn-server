@@ -17,7 +17,7 @@ namespace
     ExecuteRequest makeExecuteRequestSample()
     {
         ExecuteRequest execute_request;
-        execute_request.set_particle_name("particle_beta");
+        execute_request.set_connector_name("connector_beta");
         execute_request.set_samples_count(256);
         *execute_request.add_running_instances() = makeRunningInstanceSample(0, 2);
         *execute_request.add_running_instances() = makeRunningInstanceSample(12, 4);
@@ -32,7 +32,7 @@ namespace
 
     void expectEqual(const ExecuteRequest & lhs, const ExecuteRequest & rhs)
     {
-        ASSERT_EQ(lhs.particle_name(), rhs.particle_name());
+        ASSERT_EQ(lhs.connector_name(), rhs.connector_name());
         ASSERT_EQ(lhs.samples_count(), rhs.samples_count());
         ASSERT_EQ(lhs.running_instances_size(), rhs.running_instances_size());
         for(int i = 0; i < lhs.running_instances_size(); ++i)
@@ -45,7 +45,7 @@ namespace
 TEST_F(UnitTest, ExecuteRequest_ParseFromJson_JsonAndProtobufMatch)
 {
     json json_input = {
-        {"particle_name", "particle_beta"},
+        {"connector_name", "connector_beta"},
         {"samples_count", 256},
         {"running_instances", json::array({
             json{{"start_point", 0}, {"transformation_shift", 2}},

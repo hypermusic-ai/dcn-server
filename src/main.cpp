@@ -240,10 +240,10 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::OPTIONS, "/account/<string>?limit=<uint>&page=<uint>"}, dcn::OPTIONS_accountInfo);
     server.addRoute({dcn::http::Method::GET,    "/account/<string>?limit=<uint>&page=<uint>"},  dcn::GET_accountInfo, std::ref(registry));
 
-    server.addRoute({dcn::http::Method::HEAD, "/particle/<string>/<~string>"},       dcn::HEAD_particle, std::ref(registry));
-    server.addRoute({dcn::http::Method::OPTIONS, "/particle/<string>/<~string>"},    dcn::OPTIONS_particle);
-    server.addRoute({dcn::http::Method::GET,     "/particle/<string>/<~string>"},    dcn::GET_particle, std::ref(registry), std::ref(evm));
-    server.addRoute({dcn::http::Method::POST,    "/particle"},                       dcn::POST_particle, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
+    server.addRoute({dcn::http::Method::HEAD, "/connector/<string>/<~string>"},       dcn::HEAD_connector, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/connector/<string>/<~string>"},    dcn::OPTIONS_connector);
+    server.addRoute({dcn::http::Method::GET,     "/connector/<string>/<~string>"},    dcn::GET_connector, std::ref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::POST,    "/connector"},                       dcn::POST_connector, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
     server.addRoute({dcn::http::Method::HEAD, "/feature/<string>/<~string>"},       dcn::HEAD_feature, std::ref(registry));
     server.addRoute({dcn::http::Method::OPTIONS, "/feature/<string>/<~string>"},    dcn::OPTIONS_feature);
@@ -265,8 +265,8 @@ int main(int argc, char* argv[])
 
     // create directories
     std::filesystem::create_directory(cfg.storage_path);
-    std::filesystem::create_directory(cfg.storage_path / "particles");
-    std::filesystem::create_directory(cfg.storage_path / "particles" / "build");
+    std::filesystem::create_directory(cfg.storage_path / "connectors");
+    std::filesystem::create_directory(cfg.storage_path / "connectors" / "build");
     std::filesystem::create_directory(cfg.storage_path / "features");
     std::filesystem::create_directory(cfg.storage_path / "features" / "build");
     std::filesystem::create_directory(cfg.storage_path / "transformations");
@@ -290,10 +290,10 @@ int main(int argc, char* argv[])
                 [&io_context, &registry, &evm, &server, &cfg, &chain_ingestion_cfg](std::exception_ptr, bool)
                 {
                     // features loaded
-                    asio::co_spawn(io_context, dcn::loader::loadStoredParticles(evm, registry, cfg.storage_path), 
+                    asio::co_spawn(io_context, dcn::loader::loadStoredConnectors(evm, registry, cfg.storage_path), 
                 [&io_context, &server, &registry, &chain_ingestion_cfg](std::exception_ptr, bool)
                         {
-                            // particles loaded
+                            // connectors loaded
                             if(chain_ingestion_cfg.enabled)
                             {
                                 //asio::co_spawn(io_context, dcn::chain::runEventIngestion(chain_ingestion_cfg, registry), asio::detached);

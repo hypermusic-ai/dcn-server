@@ -140,15 +140,15 @@ namespace dcn
 
 
     /**
-     * @brief Handles HEAD requests for the particle endpoint.
+     * @brief Handles HEAD requests for the connector endpoint.
      *
      * @param request The incoming HTTP request
      * @param route_args Route arguments
      * @param query_args Query arguments
-     * @param registry Registry instance for retrieving particles
+     * @param registry Registry instance for retrieving connectors
      * @return An HTTP response
     */
-    asio::awaitable<http::Response> HEAD_particle(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry);
+    asio::awaitable<http::Response> HEAD_connector(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry);
     
     /**
      * @brief Handles OPTIONS requests by returning a response with CORS headers.
@@ -158,29 +158,29 @@ namespace dcn
      * @param query_args Query arguments
      * @return An HTTP response with CORS headers
      */
-    asio::awaitable<http::Response> OPTIONS_particle(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args);
+    asio::awaitable<http::Response> OPTIONS_connector(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args);
 
     /**
-     * @brief Handle a GET request to /particles
+     * @brief Handle a GET request to /connectors
      * 
      * @param request The incoming HTTP request
      * @param route_args Route arguments
      * @param query_args Query arguments
-     * @param registry Registry instance for retrieving particles
+     * @param registry Registry instance for retrieving connectors
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> GET_particle(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> GET_connector(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry, evm::EVM & evm);
 
     /**
-     * @brief Handle a POST request to /particles
+     * @brief Handle a POST request to /connectors
      *
      * @param request The incoming HTTP request
      * @param route_args Route arguments
      * @param query_args Query arguments
-     * @param registry Registry instance for retrieving particles
+     * @param registry Registry instance for retrieving connectors
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> POST_particle(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args,
+    asio::awaitable<http::Response> POST_connector(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args,
         auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config);
 
 

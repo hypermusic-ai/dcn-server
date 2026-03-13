@@ -33,22 +33,22 @@ namespace dcn::parse
 
         std::vector<std::uint8_t> selector;
 
-        selector = chain::constructSelector("ParticleAlreadyRegistered(bytes32)");
+        selector = chain::constructSelector("ConnectorAlreadyRegistered(bytes32)");
         if (std::equal(selector.begin(), selector.end(), r.data()))
         {
-            return pt::PTDeployError{pt::PTDeployError::Kind::PARTICLE_ALREADY_REGISTERED};
+            return pt::PTDeployError{pt::PTDeployError::Kind::CONNECTOR_ALREADY_REGISTERED};
         }
 
-        selector = chain::constructSelector("ParticleMissing(bytes32)");
+        selector = chain::constructSelector("ConnectorMissing(bytes32)");
         if (std::equal(selector.begin(), selector.end(), r.data()))
         {
-            return pt::PTDeployError{pt::PTDeployError::Kind::PARTICLE_MISSING};
+            return pt::PTDeployError{pt::PTDeployError::Kind::CONNECTOR_MISSING};
         }
 
-        selector = chain::constructSelector("ParticleDimensionsMismatch(bytes32)");
+        selector = chain::constructSelector("ConnectorDimensionsMismatch(bytes32)");
         if (std::equal(selector.begin(), selector.end(), r.data()))
         {
-            return pt::PTDeployError{pt::PTDeployError::Kind::PARTICLE_DIMENSIONS_MISMATCH};
+            return pt::PTDeployError{pt::PTDeployError::Kind::CONNECTOR_DIMENSIONS_MISMATCH};
         }
 
         selector = chain::constructSelector("FeatureAlreadyRegistered(bytes32)");

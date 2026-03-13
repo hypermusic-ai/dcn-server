@@ -367,7 +367,7 @@ export async function sendStructuredCondition() {
 }
 
 // --------------------------------------------------------------------------
-// Particle
+// Connector
 // --------------------------------------------------------------------------
 function parseCsvList(value) {
     if (!value) return [];
@@ -385,20 +385,20 @@ function parseIntList(value) {
         .filter(item => !Number.isNaN(item));
 }
 
-function setParticleFeatureInfo(message, isError = false) {
-    const info = document.getElementById('particleFeatureInfo');
+function setConnectorFeatureInfo(message, isError = false) {
+    const info = document.getElementById('connectorFeatureInfo');
     if (!info) return;
     info.textContent = message;
     info.style.color = isError ? '#ff8a8a' : '#888';
 }
 
-function getParticleCompositeValues() {
-    const inputs = document.querySelectorAll('.particle-composite-input');
+function getConnectorCompositeValues() {
+    const inputs = document.querySelectorAll('.connector-composite-input');
     return Array.from(inputs).map(input => input.value.trim());
 }
 
-function buildParticleCompositesMap() {
-    const compositeValues = getParticleCompositeValues();
+function buildConnectorCompositesMap() {
+    const compositeValues = getConnectorCompositeValues();
     const composites = {};
 
     compositeValues.forEach((compositeName, dimId) => {
@@ -410,8 +410,8 @@ function buildParticleCompositesMap() {
     return composites;
 }
 
-function renderParticleCompositeInputs(count, existingValues = []) {
-    const container = document.getElementById('particleCompositesContainer');
+function renderConnectorCompositeInputs(count, existingValues = []) {
+    const container = document.getElementById('connectorCompositesContainer');
     if (!container) return;
 
     container.innerHTML = '';
@@ -422,20 +422,20 @@ function renderParticleCompositeInputs(count, existingValues = []) {
         empty.className = 'muted-note';
         empty.textContent = 'No dimensions to configure.';
         container.appendChild(empty);
-        updateParticlePreview();
+        updateConnectorPreview();
         return;
     }
 
     for (let i = 0; i < safeCount; i += 1) {
         const wrapper = document.createElement('div');
-        wrapper.className = 'particle-composite-row';
+        wrapper.className = 'connector-composite-row';
 
         const label = document.createElement('label');
         label.textContent = `Dimension ${i + 1} composite`;
 
         const input = document.createElement('input');
         input.type = 'text';
-        input.className = 'particle-composite-input';
+        input.className = 'connector-composite-input';
         input.placeholder = 'leave empty for scalar';
         if (existingValues[i] !== undefined) {
             input.value = existingValues[i];
@@ -446,18 +446,18 @@ function renderParticleCompositeInputs(count, existingValues = []) {
         container.appendChild(wrapper);
     }
 
-    updateParticlePreview();
+    updateConnectorPreview();
 }
 
-export async function fetchParticleFeatureDimensions() {
-    const feature_name = document.getElementById('in_particleFeatureName').value.trim();
+export async function fetchConnectorFeatureDimensions() {
+    const feature_name = document.getElementById('in_connectorFeatureName').value.trim();
     if (!feature_name) {
         alert("Feature name is required.");
-        setParticleFeatureInfo("Feature name is required.", true);
+        setConnectorFeatureInfo("Feature name is required.", true);
         return;
     }
 
-    setParticleFeatureInfo("Fetching feature...", false);
+    setConnectorFeatureInfo("Fetching feature...", false);
 
     try {
         const res = await fetch(apiUrl(`/feature/${feature_name}`));
@@ -467,42 +467,42 @@ export async function fetchParticleFeatureDimensions() {
         const data = await res.json();
         const dims = Array.isArray(data.dimensions) ? data.dimensions.length : 0;
 
-        const existingValues = getParticleCompositeValues();
-        renderParticleCompositeInputs(dims, existingValues);
+        const existingValues = getConnectorCompositeValues();
+        renderConnectorCompositeInputs(dims, existingValues);
 
         const label = dims === 1 ? 'dimension' : 'dimensions';
-        setParticleFeatureInfo(`Loaded ${dims} ${label} from feature "${data.name || feature_name}".`, false);
+        setConnectorFeatureInfo(`Loaded ${dims} ${label} from feature "${data.name || feature_name}".`, false);
     } catch (error) {
         console.error(error);
-        setParticleFeatureInfo(`Failed to fetch feature: ${error.message}`, true);
+        setConnectorFeatureInfo(`Failed to fetch feature: ${error.message}`, true);
     }
 }
 
-function constructStructuredParticle() {
-    const name = document.getElementById('in_particleName').value.trim();
-    const feature_name = document.getElementById('in_particleFeatureName').value.trim();
-    const composites = buildParticleCompositesMap();
-    const condition_name = document.getElementById('in_particleConditionName').value.trim();
-    const condition_args = parseIntList(document.getElementById('in_particleConditionArgs').value);
+function constructStructuredConnector() {
+    const name = document.getElementById('in_connectorName').value.trim();
+    const feature_name = document.getElementById('in_connectorFeatureName').value.trim();
+    const composites = buildConnectorCompositesMap();
+    const condition_name = document.getElementById('in_connectorConditionName').value.trim();
+    const condition_args = parseIntList(document.getElementById('in_connectorConditionArgs').value);
 
     return JSON.stringify({ name, feature_name, composites, condition_name, condition_args }, null, 2);
 }
 
-export function updateParticlePreview() {
-    const json = constructStructuredParticle();
-    document.getElementById('POST_particleRequestBody').textContent = json;
+export function updateConnectorPreview() {
+    const json = constructStructuredConnector();
+    document.getElementById('POST_connectorRequestBody').textContent = json;
 }
 
-export function populateStructuredParticle(jsonOrObject) {
+export function populateStructuredConnector(jsonOrObject) {
     const data = typeof jsonOrObject === 'string' ? JSON.parse(jsonOrObject) : jsonOrObject;
 
     if (!data || typeof data !== 'object') {
-        console.warn("Invalid particle data:", data);
+        console.warn("Invalid connector data:", data);
         return;
     }
 
-    document.getElementById('in_particleName').value = data.name || '';
-    document.getElementById('in_particleFeatureName').value = data.feature_name || '';
+    document.getElementById('in_connectorName').value = data.name || '';
+    document.getElementById('in_connectorFeatureName').value = data.feature_name || '';
 
     const compositesObject =
         data.composites && typeof data.composites === 'object' && !Array.isArray(data.composites)
@@ -520,26 +520,26 @@ export function populateStructuredParticle(jsonOrObject) {
         maxCompositeIndex = Math.max(maxCompositeIndex, index);
     });
 
-    const currentInputsCount = document.querySelectorAll('.particle-composite-input').length;
+    const currentInputsCount = document.querySelectorAll('.connector-composite-input').length;
     const renderCount = Math.max(currentInputsCount, maxCompositeIndex + 1);
-    renderParticleCompositeInputs(renderCount, compositeValues);
+    renderConnectorCompositeInputs(renderCount, compositeValues);
 
-    document.getElementById('in_particleConditionName').value = data.condition_name || '';
-    document.getElementById('in_particleConditionArgs').value = Array.isArray(data.condition_args)
+    document.getElementById('in_connectorConditionName').value = data.condition_name || '';
+    document.getElementById('in_connectorConditionArgs').value = Array.isArray(data.condition_args)
         ? data.condition_args.join(', ')
         : '';
 
-    updateParticlePreview();
+    updateConnectorPreview();
 }
 
-export async function sendStructuredParticle() {
-    const requestBody = constructStructuredParticle();
+export async function sendStructuredConnector() {
+    const requestBody = constructStructuredConnector();
 
-    const responseCodeDiv = document.getElementById('POST_particleResponseCode');
-    const responseBodyDiv = document.getElementById('POST_particleResponseBody');
+    const responseCodeDiv = document.getElementById('POST_connectorResponseCode');
+    const responseBodyDiv = document.getElementById('POST_connectorResponseBody');
 
     try {
-        const res = await requestWithLogin(apiUrl('/particle'), {
+        const res = await requestWithLogin(apiUrl('/connector'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: requestBody,
@@ -553,25 +553,25 @@ export async function sendStructuredParticle() {
     }
 }
 
-export async function getParticle() {
-    const name = document.getElementById('in_particleName').value.trim();
-    const address = document.getElementById('GET_particleAddress').value.trim();
+export async function getConnector() {
+    const name = document.getElementById('in_connectorName').value.trim();
+    const address = document.getElementById('GET_connectorAddress').value.trim();
 
-    const responseCodeDiv = document.getElementById('GET_particleResponseCode');
-    const responseBodyDiv = document.getElementById('GET_particleResponseBody');
+    const responseCodeDiv = document.getElementById('GET_connectorResponseCode');
+    const responseBodyDiv = document.getElementById('GET_connectorResponseBody');
 
     if (!name) {
-        alert("Particle name is required.");
+        alert("Connector name is required.");
         return;
     }
 
-    const url = apiUrl(`/particle/${name}${address ? `/${address}` : ''}`);
+    const url = apiUrl(`/connector/${name}${address ? `/${address}` : ''}`);
     try {
         const res = await fetch(url);
         const text = await res.text();
         responseCodeDiv.textContent = res.status;
         responseBodyDiv.textContent = formatJSON(text);
-        populateStructuredParticle(JSON.parse(text));
+        populateStructuredConnector(JSON.parse(text));
     } catch (error) {
         responseCodeDiv.textContent = 'Error';
         responseBodyDiv.textContent = error.message;
@@ -601,7 +601,7 @@ const accountPageSize = 10;
 let totalAccountFeaturePages = 0;
 let totalAccountTransformationPages = 0;
 let totalAccountConditionPages = 0;
-let totalAccountParticlePages = 0;
+let totalAccountConnectorPages = 0;
 
 export function nextPage()
 {
@@ -609,7 +609,7 @@ export function nextPage()
         totalAccountFeaturePages,
         totalAccountTransformationPages,
         totalAccountConditionPages,
-        totalAccountParticlePages
+        totalAccountConnectorPages
     );
 
     if(currentAccountPage < maxPages)
@@ -632,19 +632,19 @@ export async function fetchAccountResources() {
     const featuresDiv = document.getElementById('accountFeaturesList');
     const transformationsDiv = document.getElementById('accountTransformationsList');
     const conditionsDiv = document.getElementById('accountConditionsList');
-    const particlesDiv = document.getElementById('accountParticlesList');
+    const connectorsDiv = document.getElementById('accountConnectorsList');
 
     featuresDiv.textContent = 'Loading...';
     transformationsDiv.textContent = 'Loading...';
     conditionsDiv.textContent = 'Loading...';
-    particlesDiv.textContent = 'Loading...';
+    connectorsDiv.textContent = 'Loading...';
 
     if (!address) {
         alert("Address is required.");
         featuresDiv.textContent = '❌ Invalid address';
         transformationsDiv.textContent = '';
         conditionsDiv.textContent = '';
-        particlesDiv.textContent = '';
+        connectorsDiv.textContent = '';
         return;
     }
 
@@ -668,22 +668,22 @@ export async function fetchAccountResources() {
             ? data.owned_conditions.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
             : '(none)';
 
-        particlesDiv.innerHTML = data.owned_particles?.length
-            ? data.owned_particles.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
+        connectorsDiv.innerHTML = data.owned_connectors?.length
+            ? data.owned_connectors.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
             : '(none)';
 
         // Compute total pages based on backend totals
         totalAccountFeaturePages = Math.ceil((data.total_features ?? 0) / accountPageSize);
         totalAccountTransformationPages = Math.ceil((data.total_transformations ?? 0) / accountPageSize);
         totalAccountConditionPages = Math.ceil((data.total_conditions ?? 0) / accountPageSize);
-        totalAccountParticlePages = Math.ceil((data.total_particles ?? 0) / accountPageSize);
+        totalAccountConnectorPages = Math.ceil((data.total_connectors ?? 0) / accountPageSize);
 
         // Show page number as: Page X of Y
         const maxPages = Math.max(
             totalAccountFeaturePages,
             totalAccountTransformationPages,
             totalAccountConditionPages,
-            totalAccountParticlePages
+            totalAccountConnectorPages
         );
 
         document.getElementById('accountPageLabel').textContent =
@@ -698,7 +698,7 @@ export async function fetchAccountResources() {
         featuresDiv.textContent = '❌ Failed to fetch account data';
         transformationsDiv.textContent = err.message;
         conditionsDiv.textContent = '';
-        particlesDiv.textContent = '';
+        connectorsDiv.textContent = '';
     }
 }
 

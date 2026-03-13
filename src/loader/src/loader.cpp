@@ -10,7 +10,7 @@ namespace dcn::loader
         constexpr const char* PT_BUILD_VERSION = "uups-v1";
 
         const std::array<std::string, 4> PT_STORAGE_ENTITY_DIRS{
-            "particles",
+            "connectors",
             "features",
             "transformations",
             "conditions"
@@ -229,7 +229,7 @@ namespace dcn::loader
     //             co_return std::unexpected(evm::DeployError{});
     //         }
 
-    //         out_file << constructSolidityCode(record.particle());
+    //         out_file << constructSolidityCode(record.connector());
     //         out_file.close();
 
     //         // compile code
@@ -450,15 +450,15 @@ namespace dcn::loader
     }
 
 
-    asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployParticle(evm::EVM & evm, registry::Registry & registry, ParticleRecord particle_record, const std::filesystem::path & storage_path)
+    asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployConnector(evm::EVM & evm, registry::Registry & registry, ConnectorRecord connector_record, const std::filesystem::path & storage_path)
     {
         return _deployObjectLocally(evm,
             registry, 
-            std::move(particle_record), 
-            &ParticleRecord::particle, 
-            storage_path / "particles",
-            &constructParticleSolidityCode,
-            pt::PTDeployError::Kind::PARTICLE_ALREADY_REGISTERED);
+            std::move(connector_record), 
+            &ConnectorRecord::connector, 
+            storage_path / "connectors",
+            &constructConnectorSolidityCode,
+            pt::PTDeployError::Kind::CONNECTOR_ALREADY_REGISTERED);
     }
 
     asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployFeature(evm::EVM & evm, registry::Registry & registry, FeatureRecord feature_record, const std::filesystem::path & storage_path)
@@ -496,23 +496,23 @@ namespace dcn::loader
     }
 
 
-    asio::awaitable<bool> loadStoredParticles(evm::EVM & evm, registry::Registry & registry, const std::filesystem::path & storage_path)
+    asio::awaitable<bool> loadStoredConnectors(evm::EVM & evm, registry::Registry & registry, const std::filesystem::path & storage_path)
     {
-        spdlog::info("Loading stored particles...");
+        spdlog::info("Loading stored connectors...");
 
-        auto loaded_particles = _loadJSONRecords<ParticleRecord>(storage_path / "particles");
-        if(loaded_particles.empty())
+        auto loaded_connectors = _loadJSONRecords<ConnectorRecord>(storage_path / "connectors");
+        if(loaded_connectors.empty())
         {
             co_return false;
         }
 
-        const auto sorted_particles = utils::topologicalSort<ParticleRecord, std::string, std::vector>(
-                loaded_particles,
-                [](const ParticleRecord & record)
+        const auto sorted_connectors = utils::topologicalSort<ConnectorRecord, std::string, std::vector>(
+                loaded_connectors,
+                [](const ConnectorRecord & record)
                 {
                     std::vector<std::string> composites;
-                    composites.reserve(record.particle().composites().size());
-                    for(const auto & [_, composite] : record.particle().composites())
+                    composites.reserve(record.connector().composites().size());
+                    for(const auto & [_, composite] : record.connector().composites())
                     {
                         composites.push_back(composite);
                     }
@@ -523,18 +523,18 @@ namespace dcn::loader
 
         bool success = true;
         std::size_t i = 0;
-        const std::size_t batch_size = (sorted_particles.size() / 100) + 1;
+        const std::size_t batch_size = (sorted_connectors.size() / 100) + 1;
         assert(batch_size > 0);
         
-        for(const auto & name : sorted_particles)
+        for(const auto & name : sorted_connectors)
         {
-            if(!co_await deployParticle(evm, registry, std::move(loaded_particles.at(name)), storage_path))
+            if(!co_await deployConnector(evm, registry, std::move(loaded_connectors.at(name)), storage_path))
             {
-                spdlog::error("Failed to deploy particle `{}`", name);
+                spdlog::error("Failed to deploy connector `{}`", name);
                 success = false;
             }
 
-            if(++i % batch_size == 0) {spdlog::debug("{}/{} particles loaded", i, loaded_particles.size());}
+            if(++i % batch_size == 0) {spdlog::debug("{}/{} connectors loaded", i, loaded_connectors.size());}
         }
 
         co_return success;

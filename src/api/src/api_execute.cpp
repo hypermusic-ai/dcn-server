@@ -95,7 +95,7 @@ namespace dcn
         input_data.insert(input_data.end(), samples_count_bytes.begin(), samples_count_bytes.end());
 
         // (String encoding)
-        const std::vector<std::uint8_t> name_bytes = evm::encodeAsArg(execute_request.particle_name());
+        const std::vector<std::uint8_t> name_bytes = evm::encodeAsArg(execute_request.connector_name());
 
         // 3. Offset to vector<tuple>, will be right after string
         std::vector<uint8_t> offset_tuple_vec(32, 0);

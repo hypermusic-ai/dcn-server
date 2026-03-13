@@ -270,39 +270,39 @@ namespace dcn::evm
                               const evmc::bytes32 topics[],
                               size_t num_topics) noexcept
     {
-        // const auto particle_added_event = decodeParticleAddedEvent(data, data_size, topics, num_topics);
-        // if(particle_added_event)
+        // const auto connector_added_event = decodeConnectorAddedEvent(data, data_size, topics, num_topics);
+        // if(connector_added_event)
         // {
         //     std::string composite_names_str;
-        //     for(std::size_t i = 0; i < particle_added_event->composite_names.size(); ++i)
+        //     for(std::size_t i = 0; i < connector_added_event->composite_names.size(); ++i)
         //     {
-        //         const auto & composite_name = particle_added_event->composite_names[i];
+        //         const auto & composite_name = connector_added_event->composite_names[i];
         //         composite_names_str += std::format("    [{}] {}\n", i, composite_name.length() > 0 ? composite_name : "<none>");
         //     }
 
         //     std::string condition_args_str;
-        //     for(std::size_t i = 0; i < particle_added_event->condition_args.size(); ++i)
+        //     for(std::size_t i = 0; i < connector_added_event->condition_args.size(); ++i)
         //     {
-        //         condition_args_str += std::format("    [{}]: {}\n", i, particle_added_event->condition_args[i]);
+        //         condition_args_str += std::format("    [{}]: {}\n", i, connector_added_event->condition_args[i]);
         //     }
 
         //     spdlog::info(std::format(
-        //         "Decoded PT event ParticleAdded from {}:\n"
+        //         "Decoded PT event ConnectorAdded from {}:\n"
         //         "  Caller: {}\n"
         //         "  Owner: {}\n"
         //         "  Name: {}\n"
-        //         "  Particle: {}\n"
+        //         "  Connector: {}\n"
         //         "  Feature: {}\n"
         //         "  Condition: {}\n"
         //         "  CompositeNames:\n{}"
         //         "  ConditionArgs:\n{}",
         //         addr,
-        //         particle_added_event->caller,
-        //         particle_added_event->owner,
-        //         particle_added_event->name,
-        //         particle_added_event->particle_address,
-        //         particle_added_event->feature_name,
-        //         particle_added_event->condition_name.empty() ? "    <none>\n" : particle_added_event->condition_name,
+        //         connector_added_event->caller,
+        //         connector_added_event->owner,
+        //         connector_added_event->name,
+        //         connector_added_event->connector_address,
+        //         connector_added_event->feature_name,
+        //         connector_added_event->condition_name.empty() ? "    <none>\n" : connector_added_event->condition_name,
         //         composite_names_str.empty() ? "    <none>\n" : composite_names_str,
         //         condition_args_str.empty() ? "    <none>\n" : condition_args_str
         //     )

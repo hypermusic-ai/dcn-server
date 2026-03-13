@@ -98,7 +98,7 @@ namespace
     }
 
     std::vector<std::uint8_t> makeRunnerGenInput(
-        const std::string & particle_name,
+        const std::string & connector_name,
         std::uint32_t samples_count,
         const std::vector<std::tuple<std::uint32_t, std::uint32_t>> & running_instances)
     {
@@ -114,17 +114,17 @@ namespace
         const auto samples_count_arg = evm::encodeAsArg(samples_count);
         input_data.insert(input_data.end(), samples_count_arg.begin(), samples_count_arg.end());
 
-        const auto particle_name_arg = evm::encodeAsArg(particle_name);
+        const auto connector_name_arg = evm::encodeAsArg(connector_name);
 
         std::vector<std::uint8_t> offset_to_tuple(32, 0);
-        const std::size_t tuple_offset = 0x60 + particle_name_arg.size();
+        const std::size_t tuple_offset = 0x60 + connector_name_arg.size();
         for(std::size_t i = 0; i < sizeof(std::size_t); ++i)
         {
             offset_to_tuple[31 - i] = static_cast<std::uint8_t>((tuple_offset >> (8 * i)) & 0xFFu);
         }
         input_data.insert(input_data.end(), offset_to_tuple.begin(), offset_to_tuple.end());
 
-        input_data.insert(input_data.end(), particle_name_arg.begin(), particle_name_arg.end());
+        input_data.insert(input_data.end(), connector_name_arg.begin(), connector_name_arg.end());
 
         const auto running_instances_arg = evm::encodeAsArg(running_instances);
         input_data.insert(input_data.end(), running_instances_arg.begin(), running_instances_arg.end());
@@ -148,7 +148,7 @@ namespace
         }
 
         static const std::array<std::filesystem::path, 4> build_dirs{
-            std::filesystem::path("particles") / "build",
+            std::filesystem::path("connectors") / "build",
             std::filesystem::path("features") / "build",
             std::filesystem::path("transformations") / "build",
             std::filesystem::path("conditions") / "build",
@@ -411,11 +411,11 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
     transformation_def->add_args(1);
     feature_record.set_owner(owner_hex);
 
-    ParticleRecord particle_record;
-    particle_record.mutable_particle()->set_name("PersistParticle");
-    particle_record.mutable_particle()->set_feature_name("PersistFeature");
-    particle_record.mutable_particle()->set_condition_name("PersistCondition");
-    particle_record.set_owner(owner_hex);
+    ConnectorRecord connector_record;
+    connector_record.mutable_connector()->set_name("PersistConnector");
+    connector_record.mutable_connector()->set_feature_name("PersistFeature");
+    connector_record.mutable_connector()->set_condition_name("PersistCondition");
+    connector_record.set_owner(owner_hex);
 
     const auto transformation_deploy_result = runAwaitable(
         env.io_context,
@@ -438,16 +438,16 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
         << std::format("deployFeature failed: {}", feature_deploy_result.error().kind);
     EXPECT_FALSE(isZeroAddress(feature_deploy_result.value()));
 
-    const auto particle_deploy_result = runAwaitable(
+    const auto connector_deploy_result = runAwaitable(
         env.io_context,
-        loader::deployParticle(env.evm_instance, registry, particle_record, storage_path));
-    ASSERT_TRUE(particle_deploy_result.has_value())
-        << std::format("deployParticle failed: {}", particle_deploy_result.error().kind);
-    EXPECT_FALSE(isZeroAddress(particle_deploy_result.value()));
+        loader::deployConnector(env.evm_instance, registry, connector_record, storage_path));
+    ASSERT_TRUE(connector_deploy_result.has_value())
+        << std::format("deployConnector failed: {}", connector_deploy_result.error().kind);
+    EXPECT_FALSE(isZeroAddress(connector_deploy_result.value()));
 
     runAwaitable(env.io_context, env.evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
 
-    const auto gen_input = makeRunnerGenInput("PersistParticle", 8, {{0u, 0u}});
+    const auto gen_input = makeRunnerGenInput("PersistConnector", 8, {{0u, 0u}});
     const auto generation_before_upgrade = runAwaitable(
         env.io_context,
         env.evm_instance.execute(
@@ -463,7 +463,7 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
 
     const auto & samples_before_upgrade = samples_before_upgrade_res.value();
     ASSERT_EQ(samples_before_upgrade.size(), 1u);
-    EXPECT_EQ(samples_before_upgrade[0].path(), "/PersistParticle:0");
+    EXPECT_EQ(samples_before_upgrade[0].path(), "/PersistConnector:0");
     ASSERT_EQ(samples_before_upgrade[0].data_size(), 8);
     for(int i = 0; i < samples_before_upgrade[0].data_size(); ++i)
     {

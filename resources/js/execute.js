@@ -112,21 +112,21 @@ async function fetchFeatureDimensions(featureName, cache) {
     return dimensionsCount;
 }
 
-function getCompositeNames(particle, dimensionsCount = 0) {
-    if (!particle || typeof particle !== 'object') {
+function getCompositeNames(connector, dimensionsCount = 0) {
+    if (!connector || typeof connector !== 'object') {
         return [];
     }
 
-    if (Array.isArray(particle.composite_names)) {
-        return particle.composite_names.map((entry) => (typeof entry === 'string' ? entry : ''));
+    if (Array.isArray(connector.composite_names)) {
+        return connector.composite_names.map((entry) => (typeof entry === 'string' ? entry : ''));
     }
 
-    if (Array.isArray(particle.compositeNames)) {
-        return particle.compositeNames.map((entry) => (typeof entry === 'string' ? entry : ''));
+    if (Array.isArray(connector.compositeNames)) {
+        return connector.compositeNames.map((entry) => (typeof entry === 'string' ? entry : ''));
     }
 
-    if (Array.isArray(particle.composites)) {
-        return particle.composites.map((entry) => {
+    if (Array.isArray(connector.composites)) {
+        return connector.composites.map((entry) => {
             if (typeof entry === 'string') {
                 return entry;
             }
@@ -138,8 +138,8 @@ function getCompositeNames(particle, dimensionsCount = 0) {
     }
 
     const compositeMap =
-        particle.composites && typeof particle.composites === 'object' && !Array.isArray(particle.composites)
-            ? particle.composites
+        connector.composites && typeof connector.composites === 'object' && !Array.isArray(connector.composites)
+            ? connector.composites
             : null;
     if (!compositeMap) {
         return [];
@@ -170,7 +170,7 @@ function getCompositeNames(particle, dimensionsCount = 0) {
     return compositeNames;
 }
 
-async function fetchParticleDepthFirst(rootName) {
+async function fetchConnectorDepthFirst(rootName) {
     clearRunningInstances();
 
     let nodeIdCounter = 0;
@@ -196,15 +196,15 @@ async function fetchParticleDepthFirst(rootName) {
         }
 
         try {
-            const res = await fetch(apiUrl(`/particle/${encodeURIComponent(name)}`));
+            const res = await fetch(apiUrl(`/connector/${encodeURIComponent(name)}`));
             if (!res.ok) throw new Error(`Failed to fetch ${name}`);
-            const particle = await res.json();
+            const connector = await res.json();
 
-            const particleName = typeof particle.name === 'string' ? particle.name : name;
-            const featureName = typeof particle.feature_name === 'string' ? particle.feature_name : '';
+            const connectorName = typeof connector.name === 'string' ? connector.name : name;
+            const featureName = typeof connector.feature_name === 'string' ? connector.feature_name : '';
             const dimensionsCount = await fetchFeatureDimensions(featureName, featureDimensionsCache);
-            const compositeNames = getCompositeNames(particle, dimensionsCount);
-            const fullPath = `${path}/${particleName}`;
+            const compositeNames = getCompositeNames(connector, dimensionsCount);
+            const fullPath = `${path}/${connectorName}`;
             const scalar = compositeNames.every((compositeName) => compositeName.trim().length === 0);
 
             // Push children in reverse so they’re visited left-to-right.
@@ -226,7 +226,7 @@ async function fetchParticleDepthFirst(rootName) {
                     stack.push({
                         parent: id,
                         path: fullPath,
-                        name: `${particleName}_${i}`,
+                        name: `${connectorName}_${i}`,
                         assignId: () => nodeIdCounter++,
                         isScalarLeaf: true
                     });
@@ -249,30 +249,30 @@ async function fetchParticleDepthFirst(rootName) {
 export async function fetchBeforeExecute() {
     rootExecuteName = document.getElementById('executeName').value.trim();
     if (!rootExecuteName) {
-        alert("Please provide a particle name.");
+        alert("Please provide a connector name.");
         return;
     }
 
     try {
-        const particles = await fetchParticleDepthFirst(rootExecuteName);
-        drawExecuteTree(particles);
+        const connectors = await fetchConnectorDepthFirst(rootExecuteName);
+        drawExecuteTree(connectors);
     } catch (e) {
         console.error(e);
 
         const container = document.getElementById('treeContainer');
         container.style.display = 'block';
-        container.innerHTML = `<p>Failed to fetch particles. ${e.message} </p>`;
+        container.innerHTML = `<p>Failed to fetch connectors. ${e.message} </p>`;
     }
 }
 
 export async function execute() {
-    const particle_name = document.getElementById('executeName').value.trim();
+    const connector_name = document.getElementById('executeName').value.trim();
     const samples_count = document.getElementById('executeN').value.trim();
     const running_instances = runningInstanceData.map(([start_point, transformation_shift]) => ({ start_point, transformation_shift }));
 
     const codeDiv = document.getElementById('executeCode');
     const bodyDiv = document.getElementById('executeBody');
-    if (!particle_name) {
+    if (!connector_name) {
         alert("Contract name is required.");
         return;
     }
@@ -283,7 +283,7 @@ export async function execute() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ particle_name, samples_count, running_instances }),
+                body: JSON.stringify({ connector_name, samples_count, running_instances }),
             }
         );
         const text = await res.text();

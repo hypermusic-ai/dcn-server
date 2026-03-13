@@ -6,28 +6,28 @@ using namespace dcn::tests;
 
 namespace
 {
-    Particle makeParticleSample()
+    Connector makeConnectorSample()
     {
-        Particle particle;
-        particle.set_name("particle_beta");
-        particle.set_feature_name("feature_alpha");
-        (*particle.mutable_composites())[0] = "comp_a";
-        (*particle.mutable_composites())[2] = "comp_b";
-        particle.set_condition_name("condition_check");
-        particle.add_condition_args(1);
-        particle.add_condition_args(2);
-        return particle;
+        Connector connector;
+        connector.set_name("connector_beta");
+        connector.set_feature_name("feature_alpha");
+        (*connector.mutable_composites())[0] = "comp_a";
+        (*connector.mutable_composites())[2] = "comp_b";
+        connector.set_condition_name("condition_check");
+        connector.add_condition_args(1);
+        connector.add_condition_args(2);
+        return connector;
     }
 
-    ParticleRecord makeParticleRecordSample()
+    ConnectorRecord makeConnectorRecordSample()
     {
-        ParticleRecord record;
-        *record.mutable_particle() = makeParticleSample();
+        ConnectorRecord record;
+        *record.mutable_connector() = makeConnectorSample();
         record.set_owner("0xabc123");
         return record;
     }
 
-    void expectEqual(const Particle & lhs, const Particle & rhs)
+    void expectEqual(const Connector & lhs, const Connector & rhs)
     {
         ASSERT_EQ(lhs.name(), rhs.name());
         ASSERT_EQ(lhs.feature_name(), rhs.feature_name());
@@ -46,75 +46,75 @@ namespace
         }
     }
 
-    void expectEqual(const ParticleRecord & lhs, const ParticleRecord & rhs)
+    void expectEqual(const ConnectorRecord & lhs, const ConnectorRecord & rhs)
     {
-        expectEqual(lhs.particle(), rhs.particle());
+        expectEqual(lhs.connector(), rhs.connector());
         EXPECT_EQ(lhs.owner(), rhs.owner());
     }
 }
 
-TEST_F(UnitTest, Particle_ParseFromJson_JsonAndProtobufMatch)
+TEST_F(UnitTest, Connector_ParseFromJson_JsonAndProtobufMatch)
 {
     json json_input = {
-        {"name", "particle_beta"},
+        {"name", "connector_beta"},
         {"feature_name", "feature_alpha"},
         {"composites", json::object({{"0", "comp_a"}, {"2", "comp_b"}})},
         {"condition_name", "condition_check"},
         {"condition_args", json::array({1, 2})}
     };
 
-    auto json_particle = parseFromJson<Particle>(json_input, use_json);
-    auto protobuf_particle = parseFromJson<Particle>(json_input.dump(), use_protobuf);
+    auto json_connector = parseFromJson<Connector>(json_input, use_json);
+    auto protobuf_connector = parseFromJson<Connector>(json_input.dump(), use_protobuf);
 
-    ASSERT_TRUE(json_particle.has_value());
-    ASSERT_TRUE(protobuf_particle.has_value());
-    expectEqual(*json_particle, *protobuf_particle);
+    ASSERT_TRUE(json_connector.has_value());
+    ASSERT_TRUE(protobuf_connector.has_value());
+    expectEqual(*json_connector, *protobuf_connector);
 }
 
-TEST_F(UnitTest, Particle_ParseToJson_RoundTripAcrossParsers)
+TEST_F(UnitTest, Connector_ParseToJson_RoundTripAcrossParsers)
 {
-    Particle particle = makeParticleSample();
+    Connector connector = makeConnectorSample();
 
-    auto json_out = parseToJson(particle, use_json);
-    auto protobuf_out = parseToJson(particle, use_protobuf);
+    auto json_out = parseToJson(connector, use_json);
+    auto protobuf_out = parseToJson(connector, use_protobuf);
 
     ASSERT_TRUE(json_out.has_value());
     ASSERT_TRUE(protobuf_out.has_value());
 
-    auto from_json_via_protobuf = parseFromJson<Particle>(json_out->dump(), use_protobuf);
-    auto from_protobuf_via_json = parseFromJson<Particle>(json::parse(*protobuf_out), use_json);
+    auto from_json_via_protobuf = parseFromJson<Connector>(json_out->dump(), use_protobuf);
+    auto from_protobuf_via_json = parseFromJson<Connector>(json::parse(*protobuf_out), use_json);
 
     ASSERT_TRUE(from_json_via_protobuf.has_value());
     ASSERT_TRUE(from_protobuf_via_json.has_value());
-    expectEqual(particle, *from_json_via_protobuf);
-    expectEqual(particle, *from_protobuf_via_json);
+    expectEqual(connector, *from_json_via_protobuf);
+    expectEqual(connector, *from_protobuf_via_json);
 }
 
-TEST_F(UnitTest, ParticleRecord_ParseFromJson_JsonAndProtobufMatch)
+TEST_F(UnitTest, ConnectorRecord_ParseFromJson_JsonAndProtobufMatch)
 {
-    json json_particle = {
-        {"name", "particle_beta"},
+    json json_connector = {
+        {"name", "connector_beta"},
         {"feature_name", "feature_alpha"},
         {"composites", json::object({{"0", "comp_a"}, {"2", "comp_b"}})},
         {"condition_name", "condition_check"},
         {"condition_args", json::array({1, 2})}
     };
     json json_input = {
-        {"particle", json_particle},
+        {"connector", json_connector},
         {"owner", "0xabc123"}
     };
 
-    auto json_record = parseFromJson<ParticleRecord>(json_input, use_json);
-    auto protobuf_record = parseFromJson<ParticleRecord>(json_input.dump(), use_protobuf);
+    auto json_record = parseFromJson<ConnectorRecord>(json_input, use_json);
+    auto protobuf_record = parseFromJson<ConnectorRecord>(json_input.dump(), use_protobuf);
 
     ASSERT_TRUE(json_record.has_value());
     ASSERT_TRUE(protobuf_record.has_value());
     expectEqual(*json_record, *protobuf_record);
 }
 
-TEST_F(UnitTest, ParticleRecord_ParseToJson_RoundTripAcrossParsers)
+TEST_F(UnitTest, ConnectorRecord_ParseToJson_RoundTripAcrossParsers)
 {
-    ParticleRecord record = makeParticleRecordSample();
+    ConnectorRecord record = makeConnectorRecordSample();
 
     auto json_out = parseToJson(record, use_json);
     auto protobuf_out = parseToJson(record, use_protobuf);
@@ -122,8 +122,8 @@ TEST_F(UnitTest, ParticleRecord_ParseToJson_RoundTripAcrossParsers)
     ASSERT_TRUE(json_out.has_value());
     ASSERT_TRUE(protobuf_out.has_value());
 
-    auto from_json_via_protobuf = parseFromJson<ParticleRecord>(json_out->dump(), use_protobuf);
-    auto from_protobuf_via_json = parseFromJson<ParticleRecord>(json::parse(*protobuf_out), use_json);
+    auto from_json_via_protobuf = parseFromJson<ConnectorRecord>(json_out->dump(), use_protobuf);
+    auto from_protobuf_via_json = parseFromJson<ConnectorRecord>(json::parse(*protobuf_out), use_json);
 
     ASSERT_TRUE(from_json_via_protobuf.has_value());
     ASSERT_TRUE(from_protobuf_via_json.has_value());
@@ -131,13 +131,13 @@ TEST_F(UnitTest, ParticleRecord_ParseToJson_RoundTripAcrossParsers)
     expectEqual(record, *from_protobuf_via_json);
 }
 
-TEST_F(UnitTest, Particle_ConstructSolidityCode_UsesInitializerPattern)
+TEST_F(UnitTest, Connector_ConstructSolidityCode_UsesInitializerPattern)
 {
-    Particle particle = makeParticleSample();
-    std::string solidity = constructParticleSolidityCode(particle);
+    Connector connector = makeConnectorSample();
+    std::string solidity = constructConnectorSolidityCode(connector);
 
     EXPECT_NE(solidity.find("function initialize(address registryAddr) external initializer"), std::string::npos);
-    EXPECT_NE(solidity.find("__ParticleBase_init"), std::string::npos);
+    EXPECT_NE(solidity.find("__ConnectorBase_init"), std::string::npos);
     EXPECT_NE(solidity.find("function _compositeDimIds()"), std::string::npos);
     EXPECT_NE(solidity.find("function _compositeNames()"), std::string::npos);
     EXPECT_NE(solidity.find("_compositeDimIds(), _compositeNames()"), std::string::npos);
