@@ -256,7 +256,9 @@ TEST_F(UnitTest, ConnectorRecord_ParseToJson_RoundTripAcrossParsers)
 TEST_F(UnitTest, Connector_ConstructSolidityCode_UsesConstructorPattern)
 {
     Connector connector = makeConnectorSample();
-    std::string solidity = constructConnectorSolidityCode(connector);
+    auto solidity_result = constructConnectorSolidityCode(connector);
+    ASSERT_TRUE(solidity_result.has_value());
+    const std::string & solidity = *solidity_result;
 
     EXPECT_NE(solidity.find("constructor(address registryAddr) ConnectorBase("), std::string::npos);
     EXPECT_NE(solidity.find("__ConnectorBase_finalizeInit"), std::string::npos);
@@ -274,8 +276,8 @@ TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsNonNumericBindingSlots)
     connector.mutable_dimensions(0)->clear_bindings();
     (*connector.mutable_dimensions(0)->mutable_bindings())["dim:0"] = "comp_slot_a";
 
-    const std::string solidity = constructConnectorSolidityCode(connector);
-    EXPECT_TRUE(solidity.empty());
+    auto solidity_result = constructConnectorSolidityCode(connector);
+    EXPECT_FALSE(solidity_result.has_value());
 }
 
 TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsCanonicalDuplicateBindingSlots)
@@ -285,8 +287,8 @@ TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsCanonicalDuplicateBindin
     (*connector.mutable_dimensions(0)->mutable_bindings())["1"] = "comp_slot_a";
     (*connector.mutable_dimensions(0)->mutable_bindings())["01"] = "comp_slot_b";
 
-    const std::string solidity = constructConnectorSolidityCode(connector);
-    EXPECT_TRUE(solidity.empty());
+    auto solidity_result = constructConnectorSolidityCode(connector);
+    EXPECT_FALSE(solidity_result.has_value());
 }
 
 TEST_F(UnitTest, Connector_ConstructSolidityCode_EscapesBindingTargetNamesInStringLiterals)
@@ -295,8 +297,27 @@ TEST_F(UnitTest, Connector_ConstructSolidityCode_EscapesBindingTargetNamesInStri
     connector.mutable_dimensions(0)->clear_bindings();
     (*connector.mutable_dimensions(0)->mutable_bindings())["0"] = "bad\"target\\name\nline";
 
-    const std::string solidity = constructConnectorSolidityCode(connector);
-    ASSERT_FALSE(solidity.empty());
+    auto solidity_result = constructConnectorSolidityCode(connector);
+    ASSERT_TRUE(solidity_result.has_value());
+    const std::string & solidity = *solidity_result;
 
     EXPECT_NE(solidity.find("bindingNames[0] = \"bad\\\"target\\\\name\\nline\";"), std::string::npos);
+}
+
+TEST_F(UnitTest, Connector_ConstructSolidityCode_EscapesNonAsciiBindingTargetBytes)
+{
+    Connector connector = makeConnectorSample();
+    connector.mutable_dimensions(0)->clear_bindings();
+
+    std::string non_ascii_name = "raw_";
+    non_ascii_name.push_back(static_cast<char>(0xC3));
+    non_ascii_name.push_back(static_cast<char>(0xA9));
+    non_ascii_name.push_back(static_cast<char>(0xFF));
+    (*connector.mutable_dimensions(0)->mutable_bindings())["0"] = non_ascii_name;
+
+    auto solidity_result = constructConnectorSolidityCode(connector);
+    ASSERT_TRUE(solidity_result.has_value());
+    const std::string & solidity = *solidity_result;
+
+    EXPECT_NE(solidity.find("bindingNames[0] = \"raw_\\xC3\\xA9\\xFF\";"), std::string::npos);
 }

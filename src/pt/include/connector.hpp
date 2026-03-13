@@ -72,7 +72,7 @@ namespace dcn
         return h;
     }
 
-    std::string constructConnectorSolidityCode(const Connector & connector);
+    parse::Result<std::string> constructConnectorSolidityCode(const Connector & connector);
 }
 
 namespace dcn::pt

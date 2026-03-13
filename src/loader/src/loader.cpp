@@ -271,8 +271,42 @@ namespace dcn::loader
                 spdlog::error("Failed to create file");
                 co_return std::unexpected(pt::PTDeployError{});
             }
-            
-            out_file << std::invoke(std::forward<SolidityCodeCtor>(solidity_code_ctor), internal);
+
+            using SolidityCodeResult_t = std::decay_t<std::invoke_result_t<SolidityCodeCtor, Internal_t>>;
+            const auto solidity_code_result = std::invoke(std::forward<SolidityCodeCtor>(solidity_code_ctor), internal);
+
+            std::string solidity_code;
+            if constexpr(std::is_same_v<SolidityCodeResult_t, parse::Result<std::string>>)
+            {
+                if(!solidity_code_result)
+                {
+                    spdlog::error(
+                        "Failed to construct Solidity code for `{}`: parse error kind={} ({})",
+                        name,
+                        static_cast<int>(solidity_code_result.error().kind),
+                        solidity_code_result.error().message);
+                    _removeFileNoThrow(code_path);
+                    co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
+                }
+
+                solidity_code = *solidity_code_result;
+            }
+            else if constexpr(std::is_same_v<SolidityCodeResult_t, std::string>)
+            {
+                solidity_code = solidity_code_result;
+                if(solidity_code.empty())
+                {
+                    spdlog::error("Failed to construct Solidity code for `{}`: empty source", name);
+                    _removeFileNoThrow(code_path);
+                    co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
+                }
+            }
+            else
+            {
+                static_assert(utils::always_false<SolidityCodeResult_t>, "Unsupported Solidity code constructor return type");
+            }
+
+            out_file << solidity_code;
             out_file.close();
 
             // compile code

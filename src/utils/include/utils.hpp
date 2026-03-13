@@ -28,6 +28,9 @@
 
 namespace dcn::utils
 {
+    template<class T>
+    inline constexpr bool always_false = false;
+
     std::string loadBuildTimestamp(const std::filesystem::path & path);
     
     std::string currentTimestamp();

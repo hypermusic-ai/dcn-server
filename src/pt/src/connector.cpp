@@ -49,7 +49,7 @@ namespace dcn
                     escaped += "\\t";
                     break;
                 default:
-                    if(ch < 0x20 || ch == 0x7F)
+                    if(ch < 0x20 || ch >= 0x7F)
                     {
                         escaped += "\\x";
                         escaped.push_back(toHex(static_cast<std::uint8_t>((ch >> 4) & 0x0F)));
@@ -84,7 +84,7 @@ namespace dcn
         }
     }
 
-    std::string constructConnectorSolidityCode(const Connector & connector)
+    parse::Result<std::string> constructConnectorSolidityCode(const Connector & connector)
     {
         std::string composite_dim_ids_code;
         std::string composite_names_code;
@@ -117,7 +117,9 @@ namespace dcn
                 if(dimension.bindings_size() != 0)
                 {
                     spdlog::error("Connector `{}` has bindings on scalar dimension {}", connector.name(), dim_id);
-                    return "";
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        std::format("Connector `{}` has bindings on scalar dimension {}", connector.name(), dim_id)});
                 }
             }
             else
@@ -130,21 +132,27 @@ namespace dcn
                 if(binding_name.empty())
                 {
                     spdlog::error("Connector `{}` has empty binding target at dim {} slot `{}`", connector.name(), dim_id, slot);
-                    return "";
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        std::format("Connector `{}` has empty binding target at dim {} slot `{}`", connector.name(), dim_id, slot)});
                 }
 
                 const auto slot_id = _parseSlotId(slot);
                 if(!slot_id)
                 {
                     spdlog::error("Connector `{}` has non-numeric binding slot `{}` at dim {}", connector.name(), slot, dim_id);
-                    return "";
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        std::format("Connector `{}` has non-numeric binding slot `{}` at dim {}", connector.name(), slot, dim_id)});
                 }
 
                 const auto canonical_slot = std::make_pair(dim_id, *slot_id);
                 if(!canonical_binding_slots.insert(canonical_slot).second)
                 {
                     spdlog::error("Connector `{}` has duplicate binding slot id {} at dim {}", connector.name(), *slot_id, dim_id);
-                    return "";
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        std::format("Connector `{}` has duplicate binding slot id {} at dim {}", connector.name(), *slot_id, dim_id)});
                 }
 
                 sorted_bindings.emplace_back(dim_id, *slot_id, binding_name);
