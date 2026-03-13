@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <charconv>
 #include <format>
+#include <limits>
 #include <ranges>
 #include <system_error>
 #include <tuple>
@@ -342,6 +343,37 @@ namespace dcn::pt
 
 namespace dcn::parse
 {
+    namespace
+    {
+        std::optional<std::int32_t> _parseJsonInt32(const json & json_value)
+        {
+            if(json_value.is_number_unsigned())
+            {
+                const auto value = json_value.get<json::number_unsigned_t>();
+                if(value > static_cast<json::number_unsigned_t>(std::numeric_limits<std::int32_t>::max()))
+                {
+                    return std::nullopt;
+                }
+
+                return static_cast<std::int32_t>(value);
+            }
+
+            if(json_value.is_number_integer())
+            {
+                const auto value = json_value.get<json::number_integer_t>();
+                if(value < static_cast<json::number_integer_t>(std::numeric_limits<std::int32_t>::min()) ||
+                   value > static_cast<json::number_integer_t>(std::numeric_limits<std::int32_t>::max()))
+                {
+                    return std::nullopt;
+                }
+
+                return static_cast<std::int32_t>(value);
+            }
+
+            return std::nullopt;
+        }
+    }
+
     template<>
     Result<json> parseToJson(TransformationDef transform_def, use_json_t)
     {
@@ -370,7 +402,13 @@ namespace dcn::parse
             }
             for(const auto & arg : json_obj["args"])
             {
-                transform_def.add_args(arg.get<int32_t>());
+                const auto parsed_arg = _parseJsonInt32(arg);
+                if(!parsed_arg.has_value())
+                {
+                    return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid args"});
+                }
+
+                transform_def.add_args(*parsed_arg);
             }
         }
 
@@ -580,9 +618,15 @@ namespace dcn::parse
         {
             return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid condition_args"});
         }
-        for(const int32_t & condition_arg : json_obj["condition_args"].get<std::vector<int32_t>>())
+        for(const auto & condition_arg_json : json_obj["condition_args"])
         {
-            connector.add_condition_args(condition_arg);
+            const auto parsed_arg = _parseJsonInt32(condition_arg_json);
+            if(!parsed_arg.has_value())
+            {
+                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid condition_args"});
+            }
+
+            connector.add_condition_args(*parsed_arg);
         }
 
         return connector;

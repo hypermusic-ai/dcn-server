@@ -160,6 +160,44 @@ TEST_F(UnitTest, Connector_ParseFromJson_RejectsLegacySlotBindings)
     ASSERT_FALSE(connector.has_value());
 }
 
+TEST_F(UnitTest, Connector_ParseFromJson_RejectsNonIntegerTransformationArgs)
+{
+    json json_input = {
+        {"name", "connector_beta"},
+        {"dimensions", json::array({
+            json{
+                {"composite", ""},
+                {"transformations", json::array({
+                    json{{"name", "transform_a"}, {"args", json::array({"bad"})}}
+                })}
+            }
+        })},
+        {"condition_name", ""},
+        {"condition_args", json::array()}
+    };
+
+    auto connector = parseFromJson<Connector>(json_input, use_json);
+    ASSERT_FALSE(connector.has_value());
+}
+
+TEST_F(UnitTest, Connector_ParseFromJson_RejectsOutOfRangeConditionArgs)
+{
+    json json_input = {
+        {"name", "connector_beta"},
+        {"dimensions", json::array({
+            json{
+                {"composite", ""},
+                {"transformations", json::array()}
+            }
+        })},
+        {"condition_name", "condition_check"},
+        {"condition_args", json::array({2147483648})}
+    };
+
+    auto connector = parseFromJson<Connector>(json_input, use_json);
+    ASSERT_FALSE(connector.has_value());
+}
+
 TEST_F(UnitTest, ConnectorRecord_ParseFromJson_JsonAndProtobufMatch)
 {
     json json_connector = {

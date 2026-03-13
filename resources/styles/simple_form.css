@@ -379,6 +379,7 @@ label {
 }
 
 input,
+select,
 textarea {
     display: block;
     width: 100%;
@@ -398,6 +399,7 @@ textarea {
 }
 
 input:focus,
+select:focus,
 textarea:focus {
     outline: none;
     border-color: #111111;
@@ -637,6 +639,10 @@ pre.request-body {
 .connector-binding-remove {
     margin: 0 0 0.72rem;
     flex: 0 0 auto;
+}
+
+.connector-binding-status {
+    margin: 0 0 0.58rem;
 }
 
 .account-grid {

@@ -177,6 +177,312 @@ function parseIntList(value) {
         .filter(item => !Number.isNaN(item));
 }
 
+const connectorDefinitionCache = new Map();
+const connectorBindingPointCache = new Map();
+const connectorBindingRefreshTimers = new WeakMap();
+const connectorBindingRefreshTokens = new WeakMap();
+
+function normalizeConnectorName(value) {
+    if (typeof value !== 'string') {
+        return '';
+    }
+
+    return value.trim();
+}
+
+function parseApiConnectorDimensions(connector) {
+    if (!connector || typeof connector !== 'object' || !Array.isArray(connector.dimensions)) {
+        return [];
+    }
+
+    return connector.dimensions.map((dimension) => {
+        if (!dimension || typeof dimension !== 'object') {
+            return {
+                composite: '',
+                bindings: {}
+            };
+        }
+
+        const composite = typeof dimension.composite === 'string'
+            ? dimension.composite.trim()
+            : '';
+        const bindings = (dimension.bindings && typeof dimension.bindings === 'object' && !Array.isArray(dimension.bindings))
+            ? dimension.bindings
+            : {};
+
+        return { composite, bindings };
+    });
+}
+
+function getSortedBindingEntries(bindings) {
+    if (!bindings || typeof bindings !== 'object' || Array.isArray(bindings)) {
+        return [];
+    }
+
+    const entries = [];
+    for (const [slotRaw, targetRaw] of Object.entries(bindings)) {
+        const slotStr = String(slotRaw).trim();
+        if (!/^\d+$/.test(slotStr)) {
+            continue;
+        }
+
+        const slotId = Number.parseInt(slotStr, 10);
+        if (!Number.isInteger(slotId) || slotId < 0) {
+            continue;
+        }
+
+        const targetName = typeof targetRaw === 'string' ? targetRaw.trim() : '';
+        if (!targetName) {
+            continue;
+        }
+
+        entries.push({ slotId, targetName });
+    }
+
+    entries.sort((lhs, rhs) => {
+        if (lhs.slotId !== rhs.slotId) {
+            return lhs.slotId - rhs.slotId;
+        }
+        return lhs.targetName.localeCompare(rhs.targetName);
+    });
+
+    return entries;
+}
+
+async function fetchConnectorDefinition(connectorName) {
+    const normalizedName = normalizeConnectorName(connectorName);
+    if (!normalizedName) {
+        throw new Error('Connector name is empty');
+    }
+
+    if (connectorDefinitionCache.has(normalizedName)) {
+        return connectorDefinitionCache.get(normalizedName);
+    }
+
+    const request = (async () => {
+        const res = await fetch(apiUrl(`/connector/${encodeURIComponent(normalizedName)}`));
+        if (!res.ok) {
+            throw new Error(`Failed to fetch connector '${normalizedName}' (${res.status})`);
+        }
+        return await res.json();
+    })();
+
+    connectorDefinitionCache.set(normalizedName, request);
+    try {
+        return await request;
+    } catch (error) {
+        connectorDefinitionCache.delete(normalizedName);
+        throw error;
+    }
+}
+
+async function computeOpenBindingPointLabels(connectorName, visiting = new Set(), memo = new Map()) {
+    const normalizedName = normalizeConnectorName(connectorName);
+    if (!normalizedName) {
+        return [];
+    }
+
+    if (memo.has(normalizedName)) {
+        return memo.get(normalizedName);
+    }
+
+    if (visiting.has(normalizedName)) {
+        throw new Error(`Connector cycle detected at '${normalizedName}'`);
+    }
+
+    visiting.add(normalizedName);
+    try {
+        const connector = await fetchConnectorDefinition(normalizedName);
+        const resolvedName = normalizeConnectorName(connector?.name) || normalizedName;
+        const dimensions = parseApiConnectorDimensions(connector);
+
+        const labels = [];
+        for (let dimId = 0; dimId < dimensions.length; dimId++) {
+            const dimension = dimensions[dimId];
+            const dimLabel = `${resolvedName}:${dimId}`;
+
+            if (!dimension.composite) {
+                labels.push(dimLabel);
+                continue;
+            }
+
+            const childLabels = await computeOpenBindingPointLabels(dimension.composite, visiting, memo);
+            const staticBindings = new Set();
+            getSortedBindingEntries(dimension.bindings).forEach(({ slotId }) => {
+                if (slotId < childLabels.length && !staticBindings.has(slotId)) {
+                    staticBindings.add(slotId);
+                }
+            });
+
+            for (let childSlotId = 0; childSlotId < childLabels.length; childSlotId++) {
+                if (staticBindings.has(childSlotId)) {
+                    continue;
+                }
+
+                labels.push(`${dimLabel}/${childLabels[childSlotId]}`);
+            }
+        }
+
+        memo.set(normalizedName, labels);
+        return labels;
+    } finally {
+        visiting.delete(normalizedName);
+    }
+}
+
+async function fetchBindingPointOptions(connectorName) {
+    const normalizedName = normalizeConnectorName(connectorName);
+    if (!normalizedName) {
+        return [];
+    }
+
+    if (connectorBindingPointCache.has(normalizedName)) {
+        return connectorBindingPointCache.get(normalizedName);
+    }
+
+    const request = (async () => {
+        const labels = await computeOpenBindingPointLabels(normalizedName, new Set(), new Map());
+        return labels.map((label, slotId) => ({ slotId, label }));
+    })();
+
+    connectorBindingPointCache.set(normalizedName, request);
+    try {
+        return await request;
+    } catch (error) {
+        connectorBindingPointCache.delete(normalizedName);
+        throw error;
+    }
+}
+
+function setBindingPointStatus(dimensionElement, message) {
+    const statusElement = dimensionElement.querySelector('.connector-binding-status');
+    if (!statusElement) {
+        return;
+    }
+
+    statusElement.textContent = message;
+}
+
+function setBindingSlotSelectOptions(slotSelect, options, selectedSlot = '', emptyLabel = 'Select binding point') {
+    const normalizedSelectedSlot = typeof selectedSlot === 'string' ? selectedSlot.trim() : '';
+
+    slotSelect.innerHTML = '';
+
+    const placeholderOption = document.createElement('option');
+    placeholderOption.value = '';
+    placeholderOption.textContent = emptyLabel;
+    slotSelect.appendChild(placeholderOption);
+
+    let hasSelectedOption = false;
+    options.forEach(({ slotId, label }) => {
+        const option = document.createElement('option');
+        option.value = String(slotId);
+        option.textContent = `${slotId} - ${label}`;
+        slotSelect.appendChild(option);
+
+        if (option.value === normalizedSelectedSlot) {
+            hasSelectedOption = true;
+        }
+    });
+
+    if (normalizedSelectedSlot && !hasSelectedOption) {
+        const unresolvedOption = document.createElement('option');
+        unresolvedOption.value = normalizedSelectedSlot;
+        unresolvedOption.textContent = `${normalizedSelectedSlot} - unresolved`;
+        slotSelect.appendChild(unresolvedOption);
+        hasSelectedOption = true;
+    }
+
+    slotSelect.value = hasSelectedOption ? normalizedSelectedSlot : '';
+    slotSelect.disabled = options.length === 0 && !hasSelectedOption;
+}
+
+function scheduleBindingPointRefresh(dimensionElement, immediate = false) {
+    const previousTimeout = connectorBindingRefreshTimers.get(dimensionElement);
+    if (previousTimeout) {
+        clearTimeout(previousTimeout);
+    }
+
+    const runRefresh = () => {
+        connectorBindingRefreshTimers.delete(dimensionElement);
+        void refreshDimensionBindingPoints(dimensionElement);
+    };
+
+    if (immediate) {
+        runRefresh();
+        return;
+    }
+
+    const timeoutHandle = setTimeout(runRefresh, 250);
+    connectorBindingRefreshTimers.set(dimensionElement, timeoutHandle);
+}
+
+async function refreshDimensionBindingPoints(dimensionElement) {
+    const token = (connectorBindingRefreshTokens.get(dimensionElement) || 0) + 1;
+    connectorBindingRefreshTokens.set(dimensionElement, token);
+
+    const slotSelects = Array.from(dimensionElement.querySelectorAll('.connector-binding-slot'));
+    if (slotSelects.length === 0) {
+        setBindingPointStatus(dimensionElement, 'Binding points are loaded from selected composite.');
+        return;
+    }
+
+    const compositeInput = dimensionElement.querySelector('.connector-dimension-composite');
+    const compositeName = compositeInput ? compositeInput.value.trim() : '';
+
+    if (!compositeName) {
+        slotSelects.forEach((slotSelect) => {
+            const preferredSlot = slotSelect.dataset.preferredSlot || slotSelect.value;
+            setBindingSlotSelectOptions(slotSelect, [], preferredSlot, 'Enter composite name first');
+        });
+        setBindingPointStatus(dimensionElement, 'Set composite name to load binding points.');
+        updateConnectorPreview();
+        return;
+    }
+
+    slotSelects.forEach((slotSelect) => {
+        const preferredSlot = slotSelect.dataset.preferredSlot || slotSelect.value;
+        setBindingSlotSelectOptions(slotSelect, [], preferredSlot, 'Loading binding points...');
+    });
+    setBindingPointStatus(dimensionElement, `Loading binding points from '${compositeName}'...`);
+
+    try {
+        const options = await fetchBindingPointOptions(compositeName);
+        if (connectorBindingRefreshTokens.get(dimensionElement) !== token) {
+            return;
+        }
+
+        slotSelects.forEach((slotSelect) => {
+            const preferredSlot = slotSelect.dataset.preferredSlot || slotSelect.value;
+            setBindingSlotSelectOptions(
+                slotSelect,
+                options,
+                preferredSlot,
+                options.length === 0 ? 'No open binding points' : 'Select binding point'
+            );
+            delete slotSelect.dataset.preferredSlot;
+        });
+
+        if (options.length === 0) {
+            setBindingPointStatus(dimensionElement, `No open binding points exported by '${compositeName}'.`);
+        } else {
+            setBindingPointStatus(dimensionElement, `${options.length} binding point(s) loaded from '${compositeName}'.`);
+        }
+    } catch (error) {
+        if (connectorBindingRefreshTokens.get(dimensionElement) !== token) {
+            return;
+        }
+
+        slotSelects.forEach((slotSelect) => {
+            const preferredSlot = slotSelect.dataset.preferredSlot || slotSelect.value;
+            setBindingSlotSelectOptions(slotSelect, [], preferredSlot, 'Failed to load binding points');
+        });
+        setBindingPointStatus(dimensionElement, error?.message || 'Failed to load binding points.');
+    }
+
+    updateConnectorPreview();
+}
+
 function parseConnectorDimensionsFromForm() {
     const dimensions = [];
     document.querySelectorAll('.connector-dimension').forEach((dimensionElement) => {
@@ -192,6 +498,9 @@ function parseConnectorDimensionsFromForm() {
             }
 
             const target = targetInput ? targetInput.value.trim() : '';
+            if (!target) {
+                return;
+            }
             bindings[slot] = target;
         });
 
@@ -224,7 +533,8 @@ function renumberConnectorDimensions() {
 }
 
 function addConnectorTransformation(addButton, transformation = {}) {
-    const container = addButton.previousElementSibling;
+    const fieldset = addButton.closest('.dimension-fieldset');
+    const container = fieldset ? fieldset.querySelector('.connector-transformations') : null;
     if (!container) {
         return;
     }
@@ -272,8 +582,13 @@ function addConnectorTransformation(addButton, transformation = {}) {
 }
 
 function addConnectorBinding(addButton, binding = {}) {
-    const container = addButton.previousElementSibling;
+    const fieldset = addButton.closest('.dimension-fieldset');
+    const container = fieldset ? fieldset.querySelector('.connector-bindings') : null;
     if (!container) {
+        return;
+    }
+    const dimensionElement = addButton.closest('.connector-dimension');
+    if (!dimensionElement) {
         return;
     }
 
@@ -286,13 +601,15 @@ function addConnectorBinding(addButton, binding = {}) {
     const slotColumn = document.createElement('div');
     slotColumn.className = 'binding-col';
     const slotLabel = document.createElement('label');
-    slotLabel.textContent = 'Slot id';
-    const slotInput = document.createElement('input');
-    slotInput.type = 'text';
+    slotLabel.textContent = 'Binding point id';
+    const slotInput = document.createElement('select');
     slotInput.className = 'connector-binding-slot';
-    slotInput.placeholder = '0';
-    slotInput.value = typeof binding.slot === 'string' ? binding.slot : '';
-    slotInput.addEventListener('input', updateConnectorPreview);
+    const initialSlot = typeof binding.slot === 'string' ? binding.slot.trim() : '';
+    if (initialSlot) {
+        slotInput.dataset.preferredSlot = initialSlot;
+    }
+    setBindingSlotSelectOptions(slotInput, [], initialSlot, 'Enter composite name first');
+    slotInput.addEventListener('change', updateConnectorPreview);
     slotColumn.appendChild(slotLabel);
     slotColumn.appendChild(slotInput);
 
@@ -324,6 +641,7 @@ function addConnectorBinding(addButton, binding = {}) {
     bindingElement.appendChild(row);
 
     container.appendChild(bindingElement);
+    scheduleBindingPointRefresh(dimensionElement, true);
     updateConnectorPreview();
 }
 
@@ -348,13 +666,21 @@ function appendConnectorDimension(dimension = {}) {
     compositeInput.className = 'connector-dimension-composite';
     compositeInput.placeholder = 'leave empty for scalar';
     compositeInput.value = typeof dimension.composite === 'string' ? dimension.composite : '';
-    compositeInput.addEventListener('input', updateConnectorPreview);
+    compositeInput.addEventListener('input', () => {
+        updateConnectorPreview();
+        scheduleBindingPointRefresh(dimensionElement);
+    });
     fieldset.appendChild(compositeLabel);
     fieldset.appendChild(compositeInput);
 
     const bindingsContainer = document.createElement('div');
     bindingsContainer.className = 'connector-bindings';
     fieldset.appendChild(bindingsContainer);
+
+    const bindingsStatus = document.createElement('div');
+    bindingsStatus.className = 'connector-binding-status muted-note';
+    bindingsStatus.textContent = 'Set composite name to load binding points.';
+    fieldset.appendChild(bindingsStatus);
 
     const addBindingButton = document.createElement('button');
     addBindingButton.type = 'button';
@@ -390,6 +716,7 @@ function appendConnectorDimension(dimension = {}) {
         });
     }
 
+    scheduleBindingPointRefresh(dimensionElement, true);
     renumberConnectorDimensions();
 }
 
