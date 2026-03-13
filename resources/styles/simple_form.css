@@ -558,7 +558,7 @@ pre.request-body {
 #POST_featureRequestBody,
 #POST_transformationRequestBody,
 #POST_conditionRequestBody,
-#POST_particleRequestBody {
+#POST_connectorRequestBody {
     min-height: 150px;
 }
 
@@ -570,14 +570,14 @@ pre.request-body {
     white-space: pre-wrap;
 }
 
-#particleCompositesContainer {
+#connectorCompositesContainer {
     min-height: 128px;
     max-height: 512px;
     overflow: auto;
     padding-right: 0.2rem;
 }
 
-.particle-composite-row {
+.connector-composite-row {
     margin-bottom: 0.5rem;
 }
 

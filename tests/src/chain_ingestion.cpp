@@ -198,8 +198,8 @@ namespace
         return hexPrefixed(out);
     }
 
-    std::string encodeParticleAddedEventData(const std::string & name,
-                                             const chain::Address & particle_address,
+    std::string encodeConnectorAddedEventData(const std::string & name,
+                                             const chain::Address & connector_address,
                                              const std::string & feature_name,
                                              const std::vector<std::uint32_t> & composite_dim_ids,
                                              const std::vector<std::string> & composite_names,
@@ -223,7 +223,7 @@ namespace
 
         std::vector<std::uint8_t> out;
         const auto name_offset_word = encodeUint256Word(name_offset);
-        const auto particle_word = encodeAddressWord(particle_address);
+        const auto connector_word = encodeAddressWord(connector_address);
         const auto feature_offset_word = encodeUint256Word(feature_offset);
         const auto composite_dim_ids_offset_word = encodeUint256Word(composite_dim_ids_offset);
         const auto composite_names_offset_word = encodeUint256Word(composite_names_offset);
@@ -231,7 +231,7 @@ namespace
         const auto condition_args_offset_word = encodeUint256Word(condition_args_offset);
 
         out.insert(out.end(), name_offset_word.begin(), name_offset_word.end());
-        out.insert(out.end(), particle_word.begin(), particle_word.end());
+        out.insert(out.end(), connector_word.begin(), connector_word.end());
         out.insert(out.end(), feature_offset_word.begin(), feature_offset_word.end());
         out.insert(out.end(), composite_dim_ids_offset_word.begin(), composite_dim_ids_offset_word.end());
         out.insert(out.end(), composite_names_offset_word.begin(), composite_names_offset_word.end());
@@ -355,30 +355,30 @@ namespace
     };
 }
 
-TEST_F(UnitTest, Chain_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
+TEST_F(UnitTest, Chain_Ingestion_RegistersFeatureAndConnectorFromFetchedEvents)
 {
     asio::io_context io_context{};
     registry::Registry registry(io_context);
 
-    const auto storage_path = makeStoragePath("feature_particle_events");
+    const auto storage_path = makeStoragePath("feature_connector_events");
 
     const chain::Address registry_address = makeAddressFromSuffix("registry");
     const chain::Address caller = makeAddressFromSuffix("caller");
     const chain::Address owner = makeAddressFromSuffix("owner");
     const chain::Address feature_address = makeAddressFromSuffix("feature");
-    const chain::Address particle_address = makeAddressFromSuffix("particle");
+    const chain::Address connector_address = makeAddressFromSuffix("connector");
 
-    const json particle_log = {
+    const json connector_log = {
         {"blockNumber", "0x64"},
         {"logIndex", "0x1"},
         {"topics", json::array({
-            topicForEvent("ParticleAdded(address,address,string,address,string,uint32[],string[],string,int32[])"),
+            topicForEvent("ConnectorAdded(address,address,string,address,string,uint32[],string[],string,int32[])"),
             topicForAddress(caller),
             topicForAddress(owner)
         })},
-        {"data", encodeParticleAddedEventData(
-            "ParticleAlpha",
-            particle_address,
+        {"data", encodeConnectorAddedEventData(
+            "ConnectorAlpha",
+            connector_address,
             "FeatureAlpha",
             {},
             {},
@@ -400,7 +400,7 @@ TEST_F(UnitTest, Chain_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
 
     MockRpcNode rpc;
     rpc.block_number_hex = "0x64";
-    rpc.logs = json::array({feature_log, particle_log});
+    rpc.logs = json::array({feature_log, connector_log});
     rpc.owner_results.emplace(
         toLower(hexPrefixed(feature_address)),
         encodeOwnerCallResult(owner));
@@ -428,22 +428,22 @@ TEST_F(UnitTest, Chain_Ingestion_RegistersFeatureAndParticleFromFetchedEvents)
     const auto feature_res = runAwaitable(io_context, registry.getFeature("FeatureAlpha", feature_address));
     ASSERT_TRUE(feature_res.has_value());
 
-    const auto particle_res = runAwaitable(io_context, registry.getParticle("ParticleAlpha", particle_address));
-    ASSERT_TRUE(particle_res.has_value());
-    EXPECT_EQ(particle_res->feature_name(), "FeatureAlpha");
-    EXPECT_EQ(particle_res->condition_name(), "");
-    ASSERT_EQ(particle_res->condition_args_size(), 2);
-    EXPECT_EQ(particle_res->condition_args(0), 7);
-    EXPECT_EQ(particle_res->condition_args(1), -3);
+    const auto connector_res = runAwaitable(io_context, registry.getConnector("ConnectorAlpha", connector_address));
+    ASSERT_TRUE(connector_res.has_value());
+    EXPECT_EQ(connector_res->feature_name(), "FeatureAlpha");
+    EXPECT_EQ(connector_res->condition_name(), "");
+    ASSERT_EQ(connector_res->condition_args_size(), 2);
+    EXPECT_EQ(connector_res->condition_args(0), 7);
+    EXPECT_EQ(connector_res->condition_args(1), -3);
 
     const auto owned_features = runAwaitable(io_context, registry.getOwnedFeatures(owner));
     EXPECT_TRUE(owned_features.contains("FeatureAlpha"));
 
-    const auto owned_particles = runAwaitable(io_context, registry.getOwnedParticles(owner));
-    EXPECT_TRUE(owned_particles.contains("ParticleAlpha"));
+    const auto owned_connectors = runAwaitable(io_context, registry.getOwnedConnectors(owner));
+    EXPECT_TRUE(owned_connectors.contains("ConnectorAlpha"));
 
     EXPECT_TRUE(std::filesystem::exists(storage_path / "features" / "FeatureAlpha.json"));
-    EXPECT_TRUE(std::filesystem::exists(storage_path / "particles" / "ParticleAlpha.json"));
+    EXPECT_TRUE(std::filesystem::exists(storage_path / "connectors" / "ConnectorAlpha.json"));
 
     const json cursor_state = readJsonFile(storage_path / "chain" / "cursor.json");
     ASSERT_TRUE(cursor_state.is_object());

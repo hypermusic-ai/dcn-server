@@ -30,10 +30,10 @@ namespace dcn::chain
             chain::Address entity_address{};
         };
 
-        // struct PendingParticle
+        // struct PendingConnector
         // {
         //     chain::Address address{};
-        //     ParticleRecord record;
+        //     ConnectorRecord record;
         // };
 
         std::string _toLower(std::string value)
@@ -395,45 +395,45 @@ namespace dcn::chain
         //     co_return added;
         // }
 
-        // asio::awaitable<bool> _addParticleRecord(registry::Registry & registry, const std::filesystem::path & storage_path,
-        //                                          const chain::Address & address, const ParticleRecord & record)
+        // asio::awaitable<bool> _addConnectorRecord(registry::Registry & registry, const std::filesystem::path & storage_path,
+        //                                          const chain::Address & address, const ConnectorRecord & record)
         // {
-        //     bool added = co_await registry.addParticle(address, record);
+        //     bool added = co_await registry.addConnector(address, record);
         //     if(!added)
         //     {
-        //         const auto existing = co_await registry.getParticle(record.particle().name(), address);
+        //         const auto existing = co_await registry.getConnector(record.connector().name(), address);
         //         added = existing.has_value();
         //     }
 
         //     if(added)
         //     {
-        //         _saveRecordJson(storage_path / "particles", record.particle().name(), record);
+        //         _saveRecordJson(storage_path / "connectors", record.connector().name(), record);
         //     }
 
         //     co_return added;
         // }
 
-        // bool _isSamePendingParticle(const PendingParticle & item, const chain::Address & address, const std::string & name)
+        // bool _isSamePendingConnector(const PendingConnector & item, const chain::Address & address, const std::string & name)
         // {
-        //     return item.address == address && item.record.particle().name() == name;
+        //     return item.address == address && item.record.connector().name() == name;
         // }
 
-        // asio::awaitable<void> _retryPendingParticles(std::vector<PendingParticle> & pending_particles,
+        // asio::awaitable<void> _retryPendingConnectors(std::vector<PendingConnector> & pending_connectors,
         //                                              registry::Registry & registry,
         //                                              const std::filesystem::path & storage_path)
         // {
-        //     std::vector<PendingParticle> unresolved;
-        //     unresolved.reserve(pending_particles.size());
+        //     std::vector<PendingConnector> unresolved;
+        //     unresolved.reserve(pending_connectors.size());
 
-        //     for(PendingParticle & pending : pending_particles)
+        //     for(PendingConnector & pending : pending_connectors)
         //     {
-        //         if(!co_await _addParticleRecord(registry, storage_path, pending.address, pending.record))
+        //         if(!co_await _addConnectorRecord(registry, storage_path, pending.address, pending.record))
         //         {
         //             unresolved.push_back(std::move(pending));
         //         }
         //     }
 
-        //     pending_particles = std::move(unresolved);
+        //     pending_connectors = std::move(unresolved);
         // }
 
         asio::awaitable<void> _sleepFor(const std::uint64_t ms)
@@ -485,8 +485,8 @@ namespace dcn::chain
     //         evm::constructEventTopic("TransformationAdded(address,string,address)"))));
     //     const std::string condition_added_topic_legacy = _toLower(_withHexPrefix(evmc::hex(
     //         evm::constructEventTopic("ConditionAdded(address,string,address)"))));
-    //     const std::string particle_added_topic = _toLower(_withHexPrefix(evmc::hex(
-    //         evm::constructEventTopic("ParticleAdded(address,address,string,address,string,string[],string,int32[])"))));
+    //     const std::string connector_added_topic = _toLower(_withHexPrefix(evmc::hex(
+    //         evm::constructEventTopic("ConnectorAdded(address,address,string,address,string,string[],string,int32[])"))));
 
     //     const std::vector<std::string> tracked_topics{
     //         feature_added_topic,
@@ -495,10 +495,10 @@ namespace dcn::chain
     //         feature_added_topic_legacy,
     //         transformation_added_topic_legacy,
     //         condition_added_topic_legacy,
-    //         particle_added_topic
+    //         connector_added_topic
     //     };
 
-    //     std::vector<PendingParticle> pending_particles;
+    //     std::vector<PendingConnector> pending_connectors;
 
     //     spdlog::info("Chain ingestion started for registry {}", evmc::hex(cfg.registry_address));
 
@@ -656,37 +656,37 @@ namespace dcn::chain
     //                 continue;
     //             }
 
-    //             if(topic0 == particle_added_topic)
+    //             if(topic0 == connector_added_topic)
     //             {
-    //                 const auto event = evm::decodeParticleAddedEvent(data_hex, topics_hex);
+    //                 const auto event = evm::decodeConnectorAddedEvent(data_hex, topics_hex);
     //                 if(!event)
     //                 {
     //                     continue;
     //                 }
 
-    //                 ParticleRecord record;
-    //                 record.mutable_particle()->set_name(event->name);
-    //                 record.mutable_particle()->set_feature_name(event->feature_name);
+    //                 ConnectorRecord record;
+    //                 record.mutable_connector()->set_name(event->name);
+    //                 record.mutable_connector()->set_feature_name(event->feature_name);
     //                 for(const std::string & composite_name : event->composite_names)
     //                 {
-    //                     record.mutable_particle()->add_composite_names(composite_name);
+    //                     record.mutable_connector()->add_composite_names(composite_name);
     //                 }
-    //                 record.mutable_particle()->set_condition_name(event->condition_name);
+    //                 record.mutable_connector()->set_condition_name(event->condition_name);
     //                 for(const std::int32_t arg : event->condition_args)
     //                 {
-    //                     record.mutable_particle()->add_condition_args(arg);
+    //                     record.mutable_connector()->add_condition_args(arg);
     //                 }
     //                 record.set_owner(evmc::hex(event->owner));
 
-    //                 if(!co_await _addParticleRecord(registry, cfg.storage_path, event->particle_address, record))
+    //                 if(!co_await _addConnectorRecord(registry, cfg.storage_path, event->connector_address, record))
     //                 {
-    //                     if(std::ranges::none_of(pending_particles, [&](const PendingParticle & item)
+    //                     if(std::ranges::none_of(pending_connectors, [&](const PendingConnector & item)
     //                         {
-    //                             return _isSamePendingParticle(item, event->particle_address, event->name);
+    //                             return _isSamePendingConnector(item, event->connector_address, event->name);
     //                         }))
     //                     {
-    //                         pending_particles.push_back(PendingParticle{
-    //                             .address = event->particle_address,
+    //                         pending_connectors.push_back(PendingConnector{
+    //                             .address = event->connector_address,
     //                             .record = std::move(record)
     //                         });
     //                     }
@@ -694,9 +694,9 @@ namespace dcn::chain
     //             }
     //         }
 
-    //         if(!pending_particles.empty())
+    //         if(!pending_connectors.empty())
     //         {
-    //             co_await _retryPendingParticles(pending_particles, registry, cfg.storage_path);
+    //             co_await _retryPendingConnectors(pending_connectors, registry, cfg.storage_path);
     //         }
 
     //         if(to_block == std::numeric_limits<std::uint64_t>::max())

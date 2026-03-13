@@ -7,7 +7,7 @@
 
 namespace dcn
 {
-    asio::awaitable<http::Response> HEAD_particle(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry)
+    asio::awaitable<http::Response> HEAD_connector(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -17,54 +17,54 @@ namespace dcn
                 .setHeader(http::Header::ContentLength, "0")
                 .setHeader(http::Header::Connection, "close");
 
-        // Validate path: /particle/<name> or /particle/<name>/<address>
+        // Validate path: /connector/<name> or /connector/<name>/<address>
         if (args.size() > 2 || args.size() == 0) {
             response.setCode(http::Code::BadRequest);
             co_return response;
         }
 
-        const auto particle_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
-        if (!particle_name_result) {
+        const auto connector_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
+        if (!connector_name_result) {
             response.setCode(http::Code::BadRequest);
             co_return response;
         }
-        const auto & particle_name = particle_name_result.value();
+        const auto & connector_name = connector_name_result.value();
 
-        std::optional<Particle> particle_res;
+        std::optional<Connector> connector_res;
 
         if (args.size() == 2) {
-            // /particle/<name>/<address>
-            const auto particle_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
-            if (!particle_address_arg) {
+            // /connector/<name>/<address>
+            const auto connector_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
+            if (!connector_address_arg) {
                 response.setCode(http::Code::BadRequest);
                 co_return response;
             }
 
-            const auto particle_address_result = evmc::from_hex<chain::Address>(particle_address_arg.value());
+            const auto connector_address_result = evmc::from_hex<chain::Address>(connector_address_arg.value());
 
-            if (!particle_address_result) {
+            if (!connector_address_result) {
                 response.setCode(http::Code::BadRequest);
                 co_return response;
             }
 
-            particle_res = co_await registry.getParticle(particle_name, particle_address_result.value());
+            connector_res = co_await registry.getConnector(connector_name, connector_address_result.value());
         } else {
-            // /particle/<name>
-            particle_res = co_await registry.getNewestParticle(particle_name);
+            // /connector/<name>
+            connector_res = co_await registry.getNewestConnector(connector_name);
         }
 
-        if (!particle_res) {
-            // particle not found
+        if (!connector_res) {
+            // connector not found
             response.setCode(http::Code::NotFound);
             co_return response;
         }
 
-        // particle exists
+        // connector exists
         response.setCode(http::Code::OK);
         co_return response;
     }
 
-    asio::awaitable<http::Response> OPTIONS_particle(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
+    asio::awaitable<http::Response> OPTIONS_connector(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
         response.setCode(http::Code::NoContent)
@@ -78,7 +78,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_particle(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry, evm::EVM & evm)
+    asio::awaitable<http::Response> GET_connector(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry, evm::EVM & evm)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -98,65 +98,65 @@ namespace dcn
             co_return response;
         }
 
-        auto particle_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
+        auto connector_name_result = parse::parseRouteArgAs<std::string>(args.at(0));
 
-        if(!particle_name_result)
+        if(!connector_name_result)
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json{
-                    {"message", "Invalid particle name"}
+                    {"message", "Invalid connector name"}
                 }.dump());
 
             co_return response;
         }
-        const auto & particle_name = particle_name_result.value();
+        const auto & connector_name = connector_name_result.value();
 
-        std::optional<Particle> particle_res;
+        std::optional<Connector> connector_res;
 
         if(args.size() == 2)
         {
-            const auto particle_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
+            const auto connector_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
 
-            if(!particle_address_arg)
+            if(!connector_address_arg)
             {
                 response.setCode(http::Code::BadRequest)
                     .setBodyWithContentLength(json {
-                        {"message", "Invalid particle address argument"}
+                        {"message", "Invalid connector address argument"}
                     }.dump());
 
                 co_return response;
             }
 
-            const auto particle_address_result = evmc::from_hex<chain::Address>(particle_address_arg.value());
+            const auto connector_address_result = evmc::from_hex<chain::Address>(connector_address_arg.value());
 
-            if(!particle_address_result)
+            if(!connector_address_result)
             {
                 response.setCode(http::Code::BadRequest)
                     .setBodyWithContentLength(json{
-                        {"message", "Invalid particle address argument value"}
+                        {"message", "Invalid connector address argument value"}
                     }.dump());
 
                 co_return response;
             }
 
-            particle_res = co_await registry.getParticle(particle_name_result.value(), particle_address_result.value());
+            connector_res = co_await registry.getConnector(connector_name_result.value(), connector_address_result.value());
         }
         else if(args.size() == 1)
         {
-            particle_res = co_await registry.getNewestParticle(particle_name_result.value());
+            connector_res = co_await registry.getNewestConnector(connector_name_result.value());
         }
 
-        if(!particle_res) 
+        if(!connector_res) 
         {
             response.setCode(http::Code::NotFound)
                 .setBodyWithContentLength(json {
-                    {"message", "Particle not found"}
+                    {"message", "Connector not found"}
                 }.dump());
 
             co_return response;
         }
         
-        auto json_res = parse::parseToJson(*particle_res, parse::use_json);
+        auto json_res = parse::parseToJson(*connector_res, parse::use_json);
 
         if(!json_res)
         {
@@ -170,7 +170,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // function selector
-        const auto selector = chain::constructSelector("getParticle(string)");
+        const auto selector = chain::constructSelector("getConnector(string)");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // Step 2: Offset to string data (32 bytes with value 0x20)
@@ -180,14 +180,14 @@ namespace dcn
 
         // Step 3: String length
         std::vector<uint8_t> str_len(32, 0);
-        str_len[31] = static_cast<uint8_t>(particle_name.size());
+        str_len[31] = static_cast<uint8_t>(connector_name.size());
         input_data.insert(input_data.end(), str_len.begin(), str_len.end());
 
         // Step 4: String bytes
-        input_data.insert(input_data.end(), particle_name.begin(), particle_name.end());
+        input_data.insert(input_data.end(), connector_name.begin(), connector_name.end());
 
         // Step 5: Padding to 32-byte boundary
-        const std::size_t padding = (32 - (particle_name.size() % 32)) % 32;
+        const std::size_t padding = (32 - (connector_name.size() % 32)) % 32;
         input_data.insert(input_data.end(), padding, 0);
         
         co_await evm.setGas(evm.getRegistryAddress(), evm::DEFAULT_GAS_LIMIT);
@@ -198,26 +198,26 @@ namespace dcn
         {
             response.setCode(http::Code::InternalServerError)
                 .setBodyWithContentLength(json {
-                    {"message", std::format("Failed to fetch particle : {}", exec_result.error().kind)}
+                    {"message", std::format("Failed to fetch connector : {}", exec_result.error().kind)}
                 }.dump());
             
             co_return response;
         }
 
-        const auto particle_address_res = chain::readAddressWord(exec_result.value());
-        if(!particle_address_res)
+        const auto connector_address_res = chain::readAddressWord(exec_result.value());
+        if(!connector_address_res)
         {
             response.setCode(http::Code::InternalServerError)
                 .setBodyWithContentLength(json {
-                    {"message", "Failed to fetch particle address"}
+                    {"message", "Failed to fetch connector address"}
                 }.dump());
             
             co_return response;
         }
 
-        const auto & particle_address = particle_address_res.value();
+        const auto & connector_address = connector_address_res.value();
 
-        const auto owner_result = co_await fetchOwner(evm, particle_address);
+        const auto owner_result = co_await fetchOwner(evm, connector_address);
         if(!owner_result)
         {
             response.setCode(http::Code::InternalServerError)
@@ -243,7 +243,7 @@ namespace dcn
         const auto & owner_address = owner_address_res.value();
 
         (*json_res)["owner"] = evmc::hex(owner_address);
-        (*json_res)["local_address"] = evmc::hex(particle_address);
+        (*json_res)["local_address"] = evmc::hex(connector_address);
         (*json_res)["address"] = "0x0";
 
         response.setCode(http::Code::OK)
@@ -252,7 +252,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> POST_particle(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList,
+    asio::awaitable<http::Response> POST_connector(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList,
         auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config)
     {
         http::Response response;
@@ -287,39 +287,39 @@ namespace dcn
 
         spdlog::debug(std::format("token verified address : {}", address));
 
-        // parse particle from json_string
-        const auto particle_res = parse::parseFromJson<Particle>(request.getBody(), parse::use_protobuf);
+        // parse connector from json_string
+        const auto connector_res = parse::parseFromJson<Connector>(request.getBody(), parse::use_protobuf);
 
-        if(!particle_res) 
+        if(!connector_res) 
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json {
-                    {"message", "Failed to parse particle"}
+                    {"message", "Failed to parse connector"}
                 }.dump());
 
             co_return response;
         }
 
-        const Particle & particle = *particle_res;
+        const Connector & connector = *connector_res;
 
-        ParticleRecord particle_record;
-        particle_record.set_owner(evmc::hex(address));
-        *particle_record.mutable_particle() = std::move(particle);
+        ConnectorRecord connector_record;
+        connector_record.set_owner(evmc::hex(address));
+        *connector_record.mutable_connector() = std::move(connector);
 
-        const auto deploy_res = co_await loader::deployParticle(evm, registry, particle_record, config.storage_path);
+        const auto deploy_res = co_await loader::deployConnector(evm, registry, connector_record, config.storage_path);
         if(!deploy_res)
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json {
-                    {"message", std::format("Failed to deploy particle. Error: {}", deploy_res.error().kind)}
+                    {"message", std::format("Failed to deploy connector. Error: {}", deploy_res.error().kind)}
                 }.dump());
 
             co_return response;
         }
 
         json json_output;
-        json_output["name"] = particle_record.particle().name();
-        json_output["owner"] = particle_record.owner();
+        json_output["name"] = connector_record.connector().name();
+        json_output["owner"] = connector_record.owner();
         json_output["local_address"] = evmc::hex(deploy_res.value());
         json_output["address"] = "0x0";
 

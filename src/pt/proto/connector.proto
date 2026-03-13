@@ -3,7 +3,7 @@ syntax = "proto3";
 package dcn;
 
 // Public-facing minimal definition
-message Particle 
+message Connector 
 {
     string name = 1;
     string feature_name = 2;
@@ -13,8 +13,8 @@ message Particle
 }
 
 // Internal full record (used in storage, indexing, etc.)
-message ParticleRecord 
+message ConnectorRecord 
 {
-  Particle particle = 1;
+  Connector connector = 1;
   string owner = 2;
 }

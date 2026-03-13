@@ -43,10 +43,10 @@
             sendStructuredCondition,
             getCondition,
 
-            updateParticlePreview,
-            fetchParticleFeatureDimensions,
-            sendStructuredParticle,
-            getParticle,
+            updateConnectorPreview,
+            fetchConnectorFeatureDimensions,
+            sendStructuredConnector,
+            getConnector,
 
             fetchAccountResources,
             nextPage,
@@ -84,15 +84,15 @@
         document.getElementById('btn_getCondition').addEventListener('click', getCondition);
         document.getElementById('btn_conditionCopyRequest').addEventListener('click', () => copyTextFromElement('POST_conditionRequestBody'));
 
-        document.getElementById('in_particleName').addEventListener('input', updateParticlePreview);
-        document.getElementById('in_particleFeatureName').addEventListener('input', updateParticlePreview);
-        document.getElementById('btn_particleLoadFeature').addEventListener('click', fetchParticleFeatureDimensions);
-        document.getElementById('particleCompositesContainer').addEventListener('input', updateParticlePreview);
-        document.getElementById('in_particleConditionName').addEventListener('input', updateParticlePreview);
-        document.getElementById('in_particleConditionArgs').addEventListener('input', updateParticlePreview);
-        document.getElementById('btn_sendStructuredParticle').addEventListener('click', sendStructuredParticle);
-        document.getElementById('btn_getParticle').addEventListener('click', getParticle);
-        document.getElementById('btn_particleCopyRequest').addEventListener('click', () => copyTextFromElement('POST_particleRequestBody'));
+        document.getElementById('in_connectorName').addEventListener('input', updateConnectorPreview);
+        document.getElementById('in_connectorFeatureName').addEventListener('input', updateConnectorPreview);
+        document.getElementById('btn_connectorLoadFeature').addEventListener('click', fetchConnectorFeatureDimensions);
+        document.getElementById('connectorCompositesContainer').addEventListener('input', updateConnectorPreview);
+        document.getElementById('in_connectorConditionName').addEventListener('input', updateConnectorPreview);
+        document.getElementById('in_connectorConditionArgs').addEventListener('input', updateConnectorPreview);
+        document.getElementById('btn_sendStructuredConnector').addEventListener('click', sendStructuredConnector);
+        document.getElementById('btn_getConnector').addEventListener('click', getConnector);
+        document.getElementById('btn_connectorCopyRequest').addEventListener('click', () => copyTextFromElement('POST_connectorRequestBody'));
 
         document.getElementById('btn_fetchAccountData').addEventListener('click', fetchAccountResources);
         document.getElementById('btn_prevAccountPage').addEventListener('click', prevPage);
@@ -191,7 +191,7 @@
 
             <div class="group-tabs" role="tablist" aria-label="API Sections">
                 <button type="button" id="tab-btn-execute" class="group-tab is-active" role="tab" aria-selected="true" data-tab-target="execute">Execute</button>
-                <button type="button" id="tab-btn-particles" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="particles">Particles</button>
+                <button type="button" id="tab-btn-connectors" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="connectors">Connectors</button>
                 <button type="button" id="tab-btn-features" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="features">Features</button>
                 <button type="button" id="tab-btn-transformations" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="transformations">Transformations</button>
                 <button type="button" id="tab-btn-conditions" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="conditions">Conditions</button>
@@ -202,13 +202,13 @@
                 <section class="tab-panel is-active" data-tab-panel="execute" role="tabpanel" aria-labelledby="tab-btn-execute">
                     <div class="group-head">
                       <h2>Execute</h2>
-                      <p>Run a particle</p>
+                      <p>Run a connector</p>
                     </div>
                     <div class="tab-grid">
                         <div class="tab-column">
                             <div class="form-row">
                                 <div class="form-field">
-                                    <label>Particle name</label>
+                                    <label>Connector name</label>
                                     <input id="executeName" type="text" placeholder="pitch">
                                 </div>
                                 <button id="btn_fetchBeforeExecute" class="action-button">Fetch dependency graph</button>
@@ -216,7 +216,7 @@
 
                             <div class="form-row">
                                 <div class="form-field">
-                                    <label>Sample count</label>
+                                    <label>Particle count</label>
                                     <input id="executeN" type="number" placeholder="5">
                                 </div>
                                 <button id="btn_execute" class="action-button">🔒 Execute</button>
@@ -249,40 +249,40 @@
                     </div>
                 </section>
 
-                <section class="tab-panel" data-tab-panel="particles" role="tabpanel" aria-labelledby="tab-btn-particles">
+                <section class="tab-panel" data-tab-panel="connectors" role="tabpanel" aria-labelledby="tab-btn-connectors">
                     <div class="group-head">
-                      <h2>Particles</h2>
-                      <p>Interact with existing particles or create a new particle</p>
+                      <h2>Connectors</h2>
+                      <p>Interact with existing connectors or create a new connector</p>
                     </div>
                     <div class="tab-grid">
                         <div class="tab-column">
                             <label>Name</label>
-                            <input type="text" id="in_particleName" placeholder="melody_particle">
+                            <input type="text" id="in_connectorName" placeholder="melody_connector">
 
                             <label>Feature name</label>
-                            <input id="in_particleFeatureName" type="text" placeholder="melody">
+                            <input id="in_connectorFeatureName" type="text" placeholder="melody">
 
                             <div class="form-row single-action-row">
-                                <button id="btn_particleLoadFeature" type="button" class="action-button">Fetch feature dimensions</button>
-                                <div id="particleFeatureInfo" class="helper-info">Fetch the feature to load composite inputs.</div>
+                                <button id="btn_connectorLoadFeature" type="button" class="action-button">Fetch feature dimensions</button>
+                                <div id="connectorFeatureInfo" class="helper-info">Fetch the feature to load composite inputs.</div>
                             </div>
 
                             <label>Composite names (per dimension)</label>
                             <div class="helper-text">Leave empty for scalar. Non-empty inputs become sparse `composites` map entries.</div>
-                            <div id="particleCompositesContainer"></div>
+                            <div id="connectorCompositesContainer"></div>
 
                             <label>Condition name</label>
-                            <input id="in_particleConditionName" type="text" placeholder="is_active">
+                            <input id="in_connectorConditionName" type="text" placeholder="is_active">
 
                             <label>Condition args (comma-separated)</label>
-                            <input id="in_particleConditionArgs" type="text" placeholder="1, 2">
+                            <input id="in_connectorConditionArgs" type="text" placeholder="1, 2">
 
                             <label>Address (optional)</label>
-                            <input id="GET_particleAddress" type="text" placeholder="0x0...">
+                            <input id="GET_connectorAddress" type="text" placeholder="0x0...">
 
                             <div class="button-row">
-                                <button id="btn_sendStructuredParticle" class="action-button">🔒 Send</button>
-                                <button id="btn_getParticle" class="action-button">Fetch</button>
+                                <button id="btn_sendStructuredConnector" class="action-button">🔒 Send</button>
+                                <button id="btn_getConnector" class="action-button">Fetch</button>
                             </div>
                         </div>
 
@@ -290,21 +290,21 @@
                             <label>Request body</label>
                             <div class="request-row">
                                 <div class="response-wrapper">
-                                    <button id="btn_particleCopyRequest" class="copy-button">📋</button>
-                                    <pre id="POST_particleRequestBody" class="request-body">...</pre>
+                                    <button id="btn_connectorCopyRequest" class="copy-button">📋</button>
+                                    <pre id="POST_connectorRequestBody" class="request-body">...</pre>
                                 </div>
                             </div>
 
                             <label>Create response</label>
                             <div class="response-row">
-                                <div id="POST_particleResponseCode" class="response-code">-</div>
-                                <div id="POST_particleResponseBody" class="response-body">Waiting...</div>
+                                <div id="POST_connectorResponseCode" class="response-code">-</div>
+                                <div id="POST_connectorResponseBody" class="response-body">Waiting...</div>
                             </div>
 
                             <label>Fetch response</label>
                             <div class="response-row">
-                                <div id="GET_particleResponseCode" class="response-code">-</div>
-                                <div id="GET_particleResponseBody" class="response-body">Waiting...</div>
+                                <div id="GET_connectorResponseCode" class="response-code">-</div>
+                                <div id="GET_connectorResponseBody" class="response-body">Waiting...</div>
                             </div>
                         </div>
                     </div>
@@ -479,8 +479,8 @@
                         <div class="tab-column">
                             <div class="account-grid">
                                 <div>
-                                    <h3>Owned Particles</h3>
-                                    <div id="accountParticlesList" class="response-body">Waiting...</div>
+                                    <h3>Owned Connectors</h3>
+                                    <div id="accountConnectorsList" class="response-body">Waiting...</div>
                                 </div>
                                 <div>
                                     <h3>Owned Features</h3>
