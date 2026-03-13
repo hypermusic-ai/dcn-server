@@ -13,7 +13,7 @@ jobs:
 
     - name: Configure and build (Debug)
       run: |
-        cmake -S . -B build-windows-debug -DDECENTRALISED_ART_BUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=install-windows-debug -DCMAKE_BUILD_TYPE=Debug
+        cmake -S . -B build-windows-debug -DDECENTRALISED_ART_BUILD_TESTS=ON -DDECENTRALISED_ART_USE_SUBMODULE_PT=ON -DCMAKE_INSTALL_PREFIX=install-windows-debug -DCMAKE_BUILD_TYPE=Debug
         cmake --build build-windows-debug --config Debug --target DecentralisedArtServerTests -j 4
 
     - name: Run tests
