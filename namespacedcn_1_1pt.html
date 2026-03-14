@@ -109,8 +109,6 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1pt_1_1ConnectorAddedEvent.html">ConnectorAddedEvent</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1pt_1_1FeatureAddedEvent.html">FeatureAddedEvent</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">PTDeployError</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1pt_1_1PTExecuteError.html">PTExecuteError</a></td></tr>
@@ -128,10 +126,8 @@ Functions</h2></td></tr>
 <tr class="separator:abd3cddecc42b0dfe76108b652effe758"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49e1a50491b38fa35df4f0be696a392b" id="r_a49e1a50491b38fa35df4f0be696a392b"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structdcn_1_1pt_1_1ConnectorAddedEvent.html">ConnectorAddedEvent</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html#a49e1a50491b38fa35df4f0be696a392b">decodeConnectorAddedEvent</a> (const std::string &amp;data_hex, const std::vector&lt; std::string &gt; &amp;topics_hex)</td></tr>
 <tr class="separator:a49e1a50491b38fa35df4f0be696a392b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac4d04f2ad8fe0ee23a90a159ad1c1241" id="r_ac4d04f2ad8fe0ee23a90a159ad1c1241"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structdcn_1_1pt_1_1FeatureAddedEvent.html">FeatureAddedEvent</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html#ac4d04f2ad8fe0ee23a90a159ad1c1241">decodeFeatureAddedEvent</a> (const std::uint8_t *data, std::size_t data_size, const evmc::bytes32 topics[], std::size_t num_topics)</td></tr>
-<tr class="separator:ac4d04f2ad8fe0ee23a90a159ad1c1241"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab89c7a7a8e87cf44fe8430f7efc8d85f" id="r_ab89c7a7a8e87cf44fe8430f7efc8d85f"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structdcn_1_1pt_1_1FeatureAddedEvent.html">FeatureAddedEvent</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html#ab89c7a7a8e87cf44fe8430f7efc8d85f">decodeFeatureAddedEvent</a> (const std::string &amp;data_hex, const std::vector&lt; std::string &gt; &amp;topics_hex)</td></tr>
-<tr class="separator:ab89c7a7a8e87cf44fe8430f7efc8d85f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4251e4ac308073e4be8e830c15ff5a5" id="r_aa4251e4ac308073e4be8e830c15ff5a5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html#aa4251e4ac308073e4be8e830c15ff5a5">isValidSolidityIdentifier</a> (std::string_view value)</td></tr>
+<tr class="separator:aa4251e4ac308073e4be8e830c15ff5a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac4c13e15f227acb0a303c7ce32ddcd97" id="r_ac4c13e15f227acb0a303c7ce32ddcd97"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structdcn_1_1pt_1_1TransformationAddedEvent.html">TransformationAddedEvent</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html#ac4c13e15f227acb0a303c7ce32ddcd97">decodeTransformationAddedEvent</a> (const std::uint8_t *data, std::size_t data_size, const evmc::bytes32 topics[], std::size_t num_topics)</td></tr>
 <tr class="separator:ac4c13e15f227acb0a303c7ce32ddcd97"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaaa753b78e219797a79ba32f6f3de6b6" id="r_aaaa753b78e219797a79ba32f6f3de6b6"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structdcn_1_1pt_1_1TransformationAddedEvent.html">TransformationAddedEvent</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1pt.html#aaaa753b78e219797a79ba32f6f3de6b6">decodeTransformationAddedEvent</a> (const std::string &amp;data_hex, const std::vector&lt; std::string &gt; &amp;topics_hex)</td></tr>
@@ -274,74 +270,6 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ab89c7a7a8e87cf44fe8430f7efc8d85f" name="ab89c7a7a8e87cf44fe8430f7efc8d85f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab89c7a7a8e87cf44fe8430f7efc8d85f">&#9670;&#160;</a></span>decodeFeatureAddedEvent() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::optional&lt; <a class="el" href="structdcn_1_1pt_1_1FeatureAddedEvent.html">FeatureAddedEvent</a> &gt; dcn::pt::decodeFeatureAddedEvent </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>data_hex</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::vector&lt; std::string &gt; &amp;&#160;</td>
-          <td class="paramname"><em>topics_hex</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="ac4d04f2ad8fe0ee23a90a159ad1c1241" name="ac4d04f2ad8fe0ee23a90a159ad1c1241"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac4d04f2ad8fe0ee23a90a159ad1c1241">&#9670;&#160;</a></span>decodeFeatureAddedEvent() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::optional&lt; <a class="el" href="structdcn_1_1pt_1_1FeatureAddedEvent.html">FeatureAddedEvent</a> &gt; dcn::pt::decodeFeatureAddedEvent </td>
-          <td>(</td>
-          <td class="paramtype">const std::uint8_t *&#160;</td>
-          <td class="paramname"><em>data</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">std::size_t&#160;</td>
-          <td class="paramname"><em>data_size</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const evmc::bytes32&#160;</td>
-          <td class="paramname"><em>topics</em>[], </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">std::size_t&#160;</td>
-          <td class="paramname"><em>num_topics</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="aaaa753b78e219797a79ba32f6f3de6b6" name="aaaa753b78e219797a79ba32f6f3de6b6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aaaa753b78e219797a79ba32f6f3de6b6">&#9670;&#160;</a></span>decodeTransformationAddedEvent() <span class="overload">[1/2]</span></h2>
 
@@ -404,6 +332,24 @@ Functions</h2></td></tr>
           <td></td>
           <td>)</td>
           <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa4251e4ac308073e4be8e830c15ff5a5" name="aa4251e4ac308073e4be8e830c15ff5a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa4251e4ac308073e4be8e830c15ff5a5">&#9670;&#160;</a></span>isValidSolidityIdentifier()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool dcn::pt::isValidSolidityIdentifier </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
         </tr>
       </table>
 </div><div class="memdoc">

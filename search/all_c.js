@@ -8,12 +8,11 @@ var searchData=
   ['loadpt_5',['loadPT',['../classdcn_1_1evm_1_1EVM.html#a4471921f55317988b02c4fa3d4f8d085',1,'dcn::evm::EVM']]],
   ['loadstoredconditions_6',['loadStoredConditions',['../namespacedcn_1_1loader.html#a1ad7bab1f6fffbeec5e8fe2e0ff8b1fc',1,'dcn::loader']]],
   ['loadstoredconnectors_7',['loadStoredConnectors',['../namespacedcn_1_1loader.html#a1a2a08134ea5eeecf2ff1c06dddcc588',1,'dcn::loader']]],
-  ['loadstoredfeatures_8',['loadStoredFeatures',['../namespacedcn_1_1loader.html#a38783eff6bf0bfe0dcf0d9e1a22bae4b',1,'dcn::loader']]],
-  ['loadstoredtransformations_9',['loadStoredTransformations',['../namespacedcn_1_1loader.html#a91f278da6af894bfc8ca35a593175505',1,'dcn::loader']]],
-  ['loadtextfile_10',['loadTextFile',['../namespacedcn_1_1file.html#aa8691407ea5dcd69fa48b99616323244',1,'dcn::file']]],
-  ['logo_2ecpp_11',['logo.cpp',['../logo_8cpp.html',1,'']]],
-  ['logo_2ehpp_12',['logo.hpp',['../logo_8hpp.html',1,'']]],
-  ['logoascii_5ft_13',['LogoASCII_t',['../structdcn_1_1utils_1_1LogoASCII__t.html',1,'dcn::utils']]],
-  ['logounicode_5ft_14',['LogoUnicode_t',['../structdcn_1_1utils_1_1LogoUnicode__t.html',1,'dcn::utils']]],
-  ['logs_5fpath_15',['logs_path',['../structdcn_1_1config_1_1Config.html#a50c16c7fb07ccaca4f22c405997a7b3d',1,'dcn::config::Config']]]
+  ['loadstoredtransformations_8',['loadStoredTransformations',['../namespacedcn_1_1loader.html#a91f278da6af894bfc8ca35a593175505',1,'dcn::loader']]],
+  ['loadtextfile_9',['loadTextFile',['../namespacedcn_1_1file.html#aa8691407ea5dcd69fa48b99616323244',1,'dcn::file']]],
+  ['logo_2ecpp_10',['logo.cpp',['../logo_8cpp.html',1,'']]],
+  ['logo_2ehpp_11',['logo.hpp',['../logo_8hpp.html',1,'']]],
+  ['logoascii_5ft_12',['LogoASCII_t',['../structdcn_1_1utils_1_1LogoASCII__t.html',1,'dcn::utils']]],
+  ['logounicode_5ft_13',['LogoUnicode_t',['../structdcn_1_1utils_1_1LogoUnicode__t.html',1,'dcn::utils']]],
+  ['logs_5fpath_14',['logs_path',['../structdcn_1_1config_1_1Config.html#a50c16c7fb07ccaca4f22c405997a7b3d',1,'dcn::config::Config']]]
 ];

@@ -6,7 +6,6 @@ var searchData=
   ['loadpt_3',['loadPT',['../classdcn_1_1evm_1_1EVM.html#a4471921f55317988b02c4fa3d4f8d085',1,'dcn::evm::EVM']]],
   ['loadstoredconditions_4',['loadStoredConditions',['../namespacedcn_1_1loader.html#a1ad7bab1f6fffbeec5e8fe2e0ff8b1fc',1,'dcn::loader']]],
   ['loadstoredconnectors_5',['loadStoredConnectors',['../namespacedcn_1_1loader.html#a1a2a08134ea5eeecf2ff1c06dddcc588',1,'dcn::loader']]],
-  ['loadstoredfeatures_6',['loadStoredFeatures',['../namespacedcn_1_1loader.html#a38783eff6bf0bfe0dcf0d9e1a22bae4b',1,'dcn::loader']]],
-  ['loadstoredtransformations_7',['loadStoredTransformations',['../namespacedcn_1_1loader.html#a91f278da6af894bfc8ca35a593175505',1,'dcn::loader']]],
-  ['loadtextfile_8',['loadTextFile',['../namespacedcn_1_1file.html#aa8691407ea5dcd69fa48b99616323244',1,'dcn::file']]]
+  ['loadstoredtransformations_6',['loadStoredTransformations',['../namespacedcn_1_1loader.html#a91f278da6af894bfc8ca35a593175505',1,'dcn::loader']]],
+  ['loadtextfile_7',['loadTextFile',['../namespacedcn_1_1file.html#aa8691407ea5dcd69fa48b99616323244',1,'dcn::file']]]
 ];

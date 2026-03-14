@@ -42,7 +42,6 @@ var annotated_dup =
       [ "pt", "namespacedcn_1_1pt.html", [
         [ "ConditionAddedEvent", "structdcn_1_1pt_1_1ConditionAddedEvent.html", "structdcn_1_1pt_1_1ConditionAddedEvent" ],
         [ "ConnectorAddedEvent", "structdcn_1_1pt_1_1ConnectorAddedEvent.html", "structdcn_1_1pt_1_1ConnectorAddedEvent" ],
-        [ "FeatureAddedEvent", "structdcn_1_1pt_1_1FeatureAddedEvent.html", "structdcn_1_1pt_1_1FeatureAddedEvent" ],
         [ "PTDeployError", "structdcn_1_1pt_1_1PTDeployError.html", "structdcn_1_1pt_1_1PTDeployError" ],
         [ "PTExecuteError", "structdcn_1_1pt_1_1PTExecuteError.html", "structdcn_1_1pt_1_1PTExecuteError" ],
         [ "TransformationAddedEvent", "structdcn_1_1pt_1_1TransformationAddedEvent.html", "structdcn_1_1pt_1_1TransformationAddedEvent" ]

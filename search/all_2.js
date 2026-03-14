@@ -5,7 +5,8 @@ var searchData=
   ['balance_2',['balance',['../structdcn_1_1evm_1_1EVMStorage_1_1Account.html#ad8653744a01b62570ce4c40129da8392',1,'dcn::evm::EVMStorage::Account']]],
   ['base58_3',['base58',['../namespacedcn_1_1server.html#aa0ab598ae418cd408597c83cff2534c3a7b0fa6566c1595bea826217774606c2c',1,'dcn::server']]],
   ['bin_5fpath_4',['bin_path',['../structdcn_1_1config_1_1Config.html#a0e78cdefbc941ced66d4571024abfe84',1,'dcn::config::Config']]],
-  ['block_5fbatch_5fsize_5',['block_batch_size',['../structdcn_1_1chain_1_1IngestionConfig.html#a125658a8116a46aa24e53ad3c4a7edc2',1,'dcn::chain::IngestionConfig']]],
-  ['block_5fnumber_5fhex_6',['block_number_hex',['../structdcn_1_1chain_1_1DeployReceipt.html#acf30eea38bfb6e1b52f4f493245b98f1',1,'dcn::chain::DeployReceipt']]],
-  ['bool_7',['Bool',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053bac26f15e86e3de4c398a8273272aba034',1,'dcn::cmd::CommandLineArgDef']]]
+  ['bindings_5',['bindings',['../structdcn_1_1pt_1_1ConnectorAddedEvent.html#a60881203337d728dd9403a501a17dc70',1,'dcn::pt::ConnectorAddedEvent']]],
+  ['block_5fbatch_5fsize_6',['block_batch_size',['../structdcn_1_1chain_1_1IngestionConfig.html#a125658a8116a46aa24e53ad3c4a7edc2',1,'dcn::chain::IngestionConfig']]],
+  ['block_5fnumber_5fhex_7',['block_number_hex',['../structdcn_1_1chain_1_1DeployReceipt.html#acf30eea38bfb6e1b52f4f493245b98f1',1,'dcn::chain::DeployReceipt']]],
+  ['bool_8',['Bool',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053bac26f15e86e3de4c398a8273272aba034',1,'dcn::cmd::CommandLineArgDef']]]
 ];

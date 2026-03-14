@@ -186,18 +186,6 @@ Functions</h2></td></tr>
 <tr class="memitem:a1cbb98b47368a38377effbe55b2be736" id="r_a1cbb98b47368a38377effbe55b2be736"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a1cbb98b47368a38377effbe55b2be736">POST_connector</a> (const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;request, std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">server::RouteArg</a> &gt; route_args, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">server::QueryArgsList</a> query_args, <a class="el" href="classdcn_1_1auth_1_1AuthManager.html">auth::AuthManager</a> &amp;auth_manager, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry, <a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, const <a class="el" href="structdcn_1_1config_1_1Config.html">config::Config</a> &amp;config)</td></tr>
 <tr class="memdesc:a1cbb98b47368a38377effbe55b2be736"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle a POST request to /connectors.  <br /></td></tr>
 <tr class="separator:a1cbb98b47368a38377effbe55b2be736"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a137b4c4019526ceaa6f245535501be5f" id="r_a137b4c4019526ceaa6f245535501be5f"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a137b4c4019526ceaa6f245535501be5f">HEAD_feature</a> (const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;request, std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">server::RouteArg</a> &gt; route_args, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">server::QueryArgsList</a> query_args, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry)</td></tr>
-<tr class="memdesc:a137b4c4019526ceaa6f245535501be5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handles HEAD requests for the feature endpoint.  <br /></td></tr>
-<tr class="separator:a137b4c4019526ceaa6f245535501be5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade7694d84c751667d22ba357fe0654b4" id="r_ade7694d84c751667d22ba357fe0654b4"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#ade7694d84c751667d22ba357fe0654b4">OPTIONS_feature</a> (const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;request, std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">server::RouteArg</a> &gt; route_args, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">server::QueryArgsList</a> query_args)</td></tr>
-<tr class="memdesc:ade7694d84c751667d22ba357fe0654b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handles OPTIONS requests by returning a response with CORS headers.  <br /></td></tr>
-<tr class="separator:ade7694d84c751667d22ba357fe0654b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6b4174c793664be8490d49148dcf5ac9" id="r_a6b4174c793664be8490d49148dcf5ac9"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a6b4174c793664be8490d49148dcf5ac9">GET_feature</a> (const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;request, std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">server::RouteArg</a> &gt; route_args, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">server::QueryArgsList</a> query_args, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry, <a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm)</td></tr>
-<tr class="memdesc:a6b4174c793664be8490d49148dcf5ac9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle a GET request to /features.  <br /></td></tr>
-<tr class="separator:a6b4174c793664be8490d49148dcf5ac9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4e6094c77c3b1e4a3f677d7577143f11" id="r_a4e6094c77c3b1e4a3f677d7577143f11"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a4e6094c77c3b1e4a3f677d7577143f11">POST_feature</a> (const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;request, std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">server::RouteArg</a> &gt; route_args, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">server::QueryArgsList</a> query_args, <a class="el" href="classdcn_1_1auth_1_1AuthManager.html">auth::AuthManager</a> &amp;auth_manager, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry, <a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, const <a class="el" href="structdcn_1_1config_1_1Config.html">config::Config</a> &amp;config)</td></tr>
-<tr class="memdesc:a4e6094c77c3b1e4a3f677d7577143f11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle a POST request to /features.  <br /></td></tr>
-<tr class="separator:a4e6094c77c3b1e4a3f677d7577143f11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8549c85764ed74d1a2563643fa64d885" id="r_a8549c85764ed74d1a2563643fa64d885"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a8549c85764ed74d1a2563643fa64d885">HEAD_transformation</a> (const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;request, std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">server::RouteArg</a> &gt; route_args, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">server::QueryArgsList</a> query_args, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry)</td></tr>
 <tr class="memdesc:a8549c85764ed74d1a2563643fa64d885"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handles HEAD requests for the transformation endpoint.  <br /></td></tr>
 <tr class="separator:a8549c85764ed74d1a2563643fa64d885"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -232,34 +220,25 @@ Functions</h2></td></tr>
 <tr class="memitem:a9cf5a424396b387e6a9fd155e8fe1f4d"><td class="memTemplItemLeft" align="right" valign="top">H&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a9cf5a424396b387e6a9fd155e8fe1f4d">AbslHashValue</a> (H h, const Condition &amp;c)</td></tr>
 <tr class="memdesc:a9cf5a424396b387e6a9fd155e8fe1f4d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combines hash values for a Condition object.  <br /></td></tr>
 <tr class="separator:a9cf5a424396b387e6a9fd155e8fe1f4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abf7c08b4477babc0797344c7ad1b28af" id="r_abf7c08b4477babc0797344c7ad1b28af"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#abf7c08b4477babc0797344c7ad1b28af">constructConditionSolidityCode</a> (const Condition &amp;condition)</td></tr>
-<tr class="separator:abf7c08b4477babc0797344c7ad1b28af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7af90988ca06cbb9081aee471993be0b" id="r_a7af90988ca06cbb9081aee471993be0b"><td class="memTemplParams" colspan="2">template&lt;typename H &gt; </td></tr>
-<tr class="memitem:a7af90988ca06cbb9081aee471993be0b"><td class="memTemplItemLeft" align="right" valign="top">H&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a7af90988ca06cbb9081aee471993be0b">AbslHashValue</a> (H h, const Connector &amp;p)</td></tr>
-<tr class="memdesc:a7af90988ca06cbb9081aee471993be0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combines hash values for a Connector object.  <br /></td></tr>
-<tr class="separator:a7af90988ca06cbb9081aee471993be0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa847ff415affd4860ba2f09176f6ba24" id="r_aa847ff415affd4860ba2f09176f6ba24"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#aa847ff415affd4860ba2f09176f6ba24">constructConnectorSolidityCode</a> (const Connector &amp;connector)</td></tr>
-<tr class="separator:aa847ff415affd4860ba2f09176f6ba24"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61a0cc1a2e7cd37db231e6740ebba414" id="r_a61a0cc1a2e7cd37db231e6740ebba414"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">parse::Result</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a61a0cc1a2e7cd37db231e6740ebba414">constructConditionSolidityCode</a> (const Condition &amp;condition)</td></tr>
+<tr class="separator:a61a0cc1a2e7cd37db231e6740ebba414"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a71f06c3021ab1304a4c7300f2a3d33ff" id="r_a71f06c3021ab1304a4c7300f2a3d33ff"><td class="memTemplParams" colspan="2">template&lt;typename H &gt; </td></tr>
 <tr class="memitem:a71f06c3021ab1304a4c7300f2a3d33ff"><td class="memTemplItemLeft" align="right" valign="top">H&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a71f06c3021ab1304a4c7300f2a3d33ff">AbslHashValue</a> (H h, const TransformationDef &amp;td)</td></tr>
-<tr class="memdesc:a71f06c3021ab1304a4c7300f2a3d33ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combines hash values for a TransformationDef object.  <br /></td></tr>
 <tr class="separator:a71f06c3021ab1304a4c7300f2a3d33ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f6d611651213b04f6be1cce6359f071" id="r_a7f6d611651213b04f6be1cce6359f071"><td class="memTemplParams" colspan="2">template&lt;typename H &gt; </td></tr>
 <tr class="memitem:a7f6d611651213b04f6be1cce6359f071"><td class="memTemplItemLeft" align="right" valign="top">H&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a7f6d611651213b04f6be1cce6359f071">AbslHashValue</a> (H h, const Dimension &amp;d)</td></tr>
-<tr class="memdesc:a7f6d611651213b04f6be1cce6359f071"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combines hash values for a Dimension object.  <br /></td></tr>
 <tr class="separator:a7f6d611651213b04f6be1cce6359f071"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9497290fb638adb984f9fda75041a12f" id="r_a9497290fb638adb984f9fda75041a12f"><td class="memTemplParams" colspan="2">template&lt;typename H &gt; </td></tr>
-<tr class="memitem:a9497290fb638adb984f9fda75041a12f"><td class="memTemplItemLeft" align="right" valign="top">H&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a9497290fb638adb984f9fda75041a12f">AbslHashValue</a> (H h, const Feature &amp;f)</td></tr>
-<tr class="memdesc:a9497290fb638adb984f9fda75041a12f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combines hash values for a Feature object.  <br /></td></tr>
-<tr class="separator:a9497290fb638adb984f9fda75041a12f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30e89e0e4b7a8001225150709705697c" id="r_a30e89e0e4b7a8001225150709705697c"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a30e89e0e4b7a8001225150709705697c">constructFeatureSolidityCode</a> (const Feature &amp;feature)</td></tr>
-<tr class="separator:a30e89e0e4b7a8001225150709705697c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7af90988ca06cbb9081aee471993be0b" id="r_a7af90988ca06cbb9081aee471993be0b"><td class="memTemplParams" colspan="2">template&lt;typename H &gt; </td></tr>
+<tr class="memitem:a7af90988ca06cbb9081aee471993be0b"><td class="memTemplItemLeft" align="right" valign="top">H&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a7af90988ca06cbb9081aee471993be0b">AbslHashValue</a> (H h, const Connector &amp;p)</td></tr>
+<tr class="separator:a7af90988ca06cbb9081aee471993be0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a359036b088fe7787052e751f343b694c" id="r_a359036b088fe7787052e751f343b694c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">parse::Result</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a359036b088fe7787052e751f343b694c">constructConnectorSolidityCode</a> (const Connector &amp;connector)</td></tr>
+<tr class="separator:a359036b088fe7787052e751f343b694c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad68d134a5679130fc24f619b183b124c" id="r_ad68d134a5679130fc24f619b183b124c"><td class="memTemplParams" colspan="2">template&lt;typename H &gt; </td></tr>
 <tr class="memitem:ad68d134a5679130fc24f619b183b124c"><td class="memTemplItemLeft" align="right" valign="top">H&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn.html#ad68d134a5679130fc24f619b183b124c">AbslHashValue</a> (H h, const Transformation &amp;t)</td></tr>
 <tr class="memdesc:ad68d134a5679130fc24f619b183b124c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combines hash values for a Transformation object.  <br /></td></tr>
 <tr class="separator:ad68d134a5679130fc24f619b183b124c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a67a11873bbeb568aab7c419a130ce237" id="r_a67a11873bbeb568aab7c419a130ce237"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a67a11873bbeb568aab7c419a130ce237">constructTransformationSolidityCode</a> (const Transformation &amp;transformation)</td></tr>
-<tr class="separator:a67a11873bbeb568aab7c419a130ce237"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86e161243c3a483c0f214212250b50d8" id="r_a86e161243c3a483c0f214212250b50d8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">parse::Result</a>&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a86e161243c3a483c0f214212250b50d8">constructTransformationSolidityCode</a> (const Transformation &amp;transformation)</td></tr>
+<tr class="separator:a86e161243c3a483c0f214212250b50d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -269,14 +248,14 @@ Variables</h2></td></tr>
 <tr class="separator:a84f601d5d12f5c2e3369eb95be0adaf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a184b90896887dec190467e00f2cd1bdb" id="r_a184b90896887dec190467e00f2cd1bdb"><td class="memItemLeft" align="right" valign="top">const short int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a184b90896887dec190467e00f2cd1bdb">MAJOR_VERSION</a> = 0</td></tr>
 <tr class="separator:a184b90896887dec190467e00f2cd1bdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2189fb32e969cdf09866dc9fe0ad3fee" id="r_a2189fb32e969cdf09866dc9fe0ad3fee"><td class="memItemLeft" align="right" valign="top">const short int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a2189fb32e969cdf09866dc9fe0ad3fee">MINOR_VERSION</a> = 2</td></tr>
+<tr class="memitem:a2189fb32e969cdf09866dc9fe0ad3fee" id="r_a2189fb32e969cdf09866dc9fe0ad3fee"><td class="memItemLeft" align="right" valign="top">const short int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a2189fb32e969cdf09866dc9fe0ad3fee">MINOR_VERSION</a> = 3</td></tr>
 <tr class="separator:a2189fb32e969cdf09866dc9fe0ad3fee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97b781d3fe9573a23ed6606389674f3c" id="r_a97b781d3fe9573a23ed6606389674f3c"><td class="memItemLeft" align="right" valign="top">const short int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html#a97b781d3fe9573a23ed6606389674f3c">PATCH_VERSION</a> = 0</td></tr>
 <tr class="separator:a97b781d3fe9573a23ed6606389674f3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a9cf5a424396b387e6a9fd155e8fe1f4d" name="a9cf5a424396b387e6a9fd155e8fe1f4d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9cf5a424396b387e6a9fd155e8fe1f4d">&#9670;&#160;</a></span>AbslHashValue() <span class="overload">[1/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a9cf5a424396b387e6a9fd155e8fe1f4d">&#9670;&#160;</a></span>AbslHashValue() <span class="overload">[1/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -330,7 +309,7 @@ template&lt;typename H &gt; </div>
 </div>
 </div>
 <a id="a7af90988ca06cbb9081aee471993be0b" name="a7af90988ca06cbb9081aee471993be0b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7af90988ca06cbb9081aee471993be0b">&#9670;&#160;</a></span>AbslHashValue() <span class="overload">[2/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7af90988ca06cbb9081aee471993be0b">&#9670;&#160;</a></span>AbslHashValue() <span class="overload">[2/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -365,26 +344,10 @@ template&lt;typename H &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Combines hash values for a Connector object. </p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">H</td><td>The hash state type. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">h</td><td>The initial hash state. </td></tr>
-    <tr><td class="paramname">p</td><td>The Connector object whose attributes will be hashed. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A combined hash state </dd></dl>
-
 </div>
 </div>
 <a id="a7f6d611651213b04f6be1cce6359f071" name="a7f6d611651213b04f6be1cce6359f071"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7f6d611651213b04f6be1cce6359f071">&#9670;&#160;</a></span>AbslHashValue() <span class="overload">[3/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f6d611651213b04f6be1cce6359f071">&#9670;&#160;</a></span>AbslHashValue() <span class="overload">[3/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -419,80 +382,10 @@ template&lt;typename H &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Combines hash values for a Dimension object. </p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">H</td><td>The hash state type. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">h</td><td>The initial hash state. </td></tr>
-    <tr><td class="paramname">d</td><td>The Dimension object whose attributes will be hashed. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A combined hash state </dd></dl>
-
-</div>
-</div>
-<a id="a9497290fb638adb984f9fda75041a12f" name="a9497290fb638adb984f9fda75041a12f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9497290fb638adb984f9fda75041a12f">&#9670;&#160;</a></span>AbslHashValue() <span class="overload">[4/6]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename H &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">H dcn::AbslHashValue </td>
-          <td>(</td>
-          <td class="paramtype">H&#160;</td>
-          <td class="paramname"><em>h</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const Feature &amp;&#160;</td>
-          <td class="paramname"><em>f</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Combines hash values for a Feature object. </p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">H</td><td>The hash state type. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">h</td><td>The initial hash state. </td></tr>
-    <tr><td class="paramname">f</td><td>The Feature object whose attributes will be hashed. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A combined hash state incorporating the name and dimensions of the Feature. </dd></dl>
-
 </div>
 </div>
 <a id="ad68d134a5679130fc24f619b183b124c" name="ad68d134a5679130fc24f619b183b124c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad68d134a5679130fc24f619b183b124c">&#9670;&#160;</a></span>AbslHashValue() <span class="overload">[5/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ad68d134a5679130fc24f619b183b124c">&#9670;&#160;</a></span>AbslHashValue() <span class="overload">[4/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -546,7 +439,7 @@ template&lt;typename H &gt; </div>
 </div>
 </div>
 <a id="a71f06c3021ab1304a4c7300f2a3d33ff" name="a71f06c3021ab1304a4c7300f2a3d33ff"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a71f06c3021ab1304a4c7300f2a3d33ff">&#9670;&#160;</a></span>AbslHashValue() <span class="overload">[6/6]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a71f06c3021ab1304a4c7300f2a3d33ff">&#9670;&#160;</a></span>AbslHashValue() <span class="overload">[5/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -581,22 +474,6 @@ template&lt;typename H &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Combines hash values for a TransformationDef object. </p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">H</td><td>The hash state type. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">h</td><td>The initial hash state. </td></tr>
-    <tr><td class="paramname">td</td><td>The TransformationDef object whose attributes will be hashed. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A combined hash state incorporating the feature name and all transformation names of the TransformationDef. </dd></dl>
-
 </div>
 </div>
 <a id="a2a2acf9c82baff1797c6531791e0d27b" name="a2a2acf9c82baff1797c6531791e0d27b"></a>
@@ -629,14 +506,14 @@ template&lt;typename H &gt; </div>
 
 </div>
 </div>
-<a id="abf7c08b4477babc0797344c7ad1b28af" name="abf7c08b4477babc0797344c7ad1b28af"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abf7c08b4477babc0797344c7ad1b28af">&#9670;&#160;</a></span>constructConditionSolidityCode()</h2>
+<a id="a61a0cc1a2e7cd37db231e6740ebba414" name="a61a0cc1a2e7cd37db231e6740ebba414"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a61a0cc1a2e7cd37db231e6740ebba414">&#9670;&#160;</a></span>constructConditionSolidityCode()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::string dcn::constructConditionSolidityCode </td>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">parse::Result</a>&lt; std::string &gt; dcn::constructConditionSolidityCode </td>
           <td>(</td>
           <td class="paramtype">const Condition &amp;&#160;</td>
           <td class="paramname"><em>condition</em></td><td>)</td>
@@ -647,14 +524,14 @@ template&lt;typename H &gt; </div>
 
 </div>
 </div>
-<a id="aa847ff415affd4860ba2f09176f6ba24" name="aa847ff415affd4860ba2f09176f6ba24"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa847ff415affd4860ba2f09176f6ba24">&#9670;&#160;</a></span>constructConnectorSolidityCode()</h2>
+<a id="a359036b088fe7787052e751f343b694c" name="a359036b088fe7787052e751f343b694c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a359036b088fe7787052e751f343b694c">&#9670;&#160;</a></span>constructConnectorSolidityCode()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::string dcn::constructConnectorSolidityCode </td>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">parse::Result</a>&lt; std::string &gt; dcn::constructConnectorSolidityCode </td>
           <td>(</td>
           <td class="paramtype">const Connector &amp;&#160;</td>
           <td class="paramname"><em>connector</em></td><td>)</td>
@@ -665,32 +542,14 @@ template&lt;typename H &gt; </div>
 
 </div>
 </div>
-<a id="a30e89e0e4b7a8001225150709705697c" name="a30e89e0e4b7a8001225150709705697c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a30e89e0e4b7a8001225150709705697c">&#9670;&#160;</a></span>constructFeatureSolidityCode()</h2>
+<a id="a86e161243c3a483c0f214212250b50d8" name="a86e161243c3a483c0f214212250b50d8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86e161243c3a483c0f214212250b50d8">&#9670;&#160;</a></span>constructTransformationSolidityCode()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::string dcn::constructFeatureSolidityCode </td>
-          <td>(</td>
-          <td class="paramtype">const Feature &amp;&#160;</td>
-          <td class="paramname"><em>feature</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a67a11873bbeb568aab7c419a130ce237" name="a67a11873bbeb568aab7c419a130ce237"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a67a11873bbeb568aab7c419a130ce237">&#9670;&#160;</a></span>constructTransformationSolidityCode()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::string dcn::constructTransformationSolidityCode </td>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">parse::Result</a>&lt; std::string &gt; dcn::constructTransformationSolidityCode </td>
           <td>(</td>
           <td class="paramtype">const Transformation &amp;&#160;</td>
           <td class="paramname"><em>transformation</em></td><td>)</td>
@@ -864,64 +723,6 @@ template&lt;typename H &gt; </div>
     <tr><td class="paramname">route_args</td><td>Route arguments </td></tr>
     <tr><td class="paramname">query_args</td><td>Query arguments </td></tr>
     <tr><td class="paramname">registry</td><td>Registry instance for retrieving connectors </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>An HTTP response </dd></dl>
-
-</div>
-</div>
-<a id="a6b4174c793664be8490d49148dcf5ac9" name="a6b4174c793664be8490d49148dcf5ac9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6b4174c793664be8490d49148dcf5ac9">&#9670;&#160;</a></span>GET_feature()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt; dcn::GET_feature </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;&#160;</td>
-          <td class="paramname"><em>request</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">server::RouteArg</a> &gt;&#160;</td>
-          <td class="paramname"><em>route_args</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">server::QueryArgsList</a>&#160;</td>
-          <td class="paramname"><em>query_args</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;&#160;</td>
-          <td class="paramname"><em>registry</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
-          <td class="paramname"><em>evm</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Handle a GET request to /features. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">request</td><td>The incoming HTTP request </td></tr>
-    <tr><td class="paramname">route_args</td><td>Route arguments </td></tr>
-    <tr><td class="paramname">query_args</td><td>Query arguments </td></tr>
-    <tr><td class="paramname">registry</td><td>Registry instance for retrieving features </td></tr>
   </table>
   </dd>
 </dl>
@@ -1315,58 +1116,6 @@ template&lt;typename H &gt; </div>
 
 </div>
 </div>
-<a id="a137b4c4019526ceaa6f245535501be5f" name="a137b4c4019526ceaa6f245535501be5f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a137b4c4019526ceaa6f245535501be5f">&#9670;&#160;</a></span>HEAD_feature()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt; dcn::HEAD_feature </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;&#160;</td>
-          <td class="paramname"><em>request</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">server::RouteArg</a> &gt;&#160;</td>
-          <td class="paramname"><em>route_args</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">server::QueryArgsList</a>&#160;</td>
-          <td class="paramname"><em>query_args</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;&#160;</td>
-          <td class="paramname"><em>registry</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Handles HEAD requests for the feature endpoint. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">request</td><td>The incoming HTTP request </td></tr>
-    <tr><td class="paramname">route_args</td><td>Route arguments </td></tr>
-    <tr><td class="paramname">query_args</td><td>Query arguments </td></tr>
-    <tr><td class="paramname">registry</td><td>Registry instance for retrieving features </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>An HTTP response </dd></dl>
-
-</div>
-</div>
 <a id="a218fd3681c3c254f43dd075ac0022902" name="a218fd3681c3c254f43dd075ac0022902"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a218fd3681c3c254f43dd075ac0022902">&#9670;&#160;</a></span>HEAD_serveFile()</h2>
 
@@ -1686,51 +1435,6 @@ template&lt;typename H &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>An HTTP response </dd></dl>
-
-</div>
-</div>
-<a id="ade7694d84c751667d22ba357fe0654b4" name="ade7694d84c751667d22ba357fe0654b4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ade7694d84c751667d22ba357fe0654b4">&#9670;&#160;</a></span>OPTIONS_feature()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt; dcn::OPTIONS_feature </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;&#160;</td>
-          <td class="paramname"><em>request</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">server::RouteArg</a> &gt;&#160;</td>
-          <td class="paramname"><em>route_args</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">server::QueryArgsList</a>&#160;</td>
-          <td class="paramname"><em>query_args</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Handles OPTIONS requests by returning a response with CORS headers. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">request</td><td>The incoming HTTP request </td></tr>
-    <tr><td class="paramname">route_args</td><td>Route arguments </td></tr>
-    <tr><td class="paramname">query_args</td><td>Query arguments </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>An HTTP response with CORS headers </dd></dl>
 
 </div>
 </div>
@@ -2079,76 +1783,6 @@ template&lt;typename H &gt; </div>
 
 </div>
 </div>
-<a id="a4e6094c77c3b1e4a3f677d7577143f11" name="a4e6094c77c3b1e4a3f677d7577143f11"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4e6094c77c3b1e4a3f677d7577143f11">&#9670;&#160;</a></span>POST_feature()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt; dcn::POST_feature </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="classdcn_1_1http_1_1Request.html">http::Request</a> &amp;&#160;</td>
-          <td class="paramname"><em>request</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">server::RouteArg</a> &gt;&#160;</td>
-          <td class="paramname"><em>route_args</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">server::QueryArgsList</a>&#160;</td>
-          <td class="paramname"><em>query_args</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1auth_1_1AuthManager.html">auth::AuthManager</a> &amp;&#160;</td>
-          <td class="paramname"><em>auth_manager</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;&#160;</td>
-          <td class="paramname"><em>registry</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
-          <td class="paramname"><em>evm</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="structdcn_1_1config_1_1Config.html">config::Config</a> &amp;&#160;</td>
-          <td class="paramname"><em>config</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Handle a POST request to /features. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">request</td><td>The incoming HTTP request </td></tr>
-    <tr><td class="paramname">route_args</td><td>Route arguments </td></tr>
-    <tr><td class="paramname">query_args</td><td>Query arguments </td></tr>
-    <tr><td class="paramname">registry</td><td>Registry instance for retrieving features </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>An HTTP response </dd></dl>
-
-</div>
-</div>
 <a id="a32f5be13e77a9868787c9a4a747a9b57" name="a32f5be13e77a9868787c9a4a747a9b57"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a32f5be13e77a9868787c9a4a747a9b57">&#9670;&#160;</a></span>POST_transformation()</h2>
 
@@ -2272,7 +1906,7 @@ template&lt;typename H &gt; </div>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">const short int dcn::MINOR_VERSION = 2</td>
+          <td class="memname">const short int dcn::MINOR_VERSION = 3</td>
         </tr>
       </table>
 </div><div class="memdoc">

@@ -6,8 +6,6 @@ var structdcn_1_1pt_1_1PTDeployError =
       [ "CONNECTOR_ALREADY_REGISTERED", "structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba9e9eb0db6a72122753ac483d6ef6871b", null ],
       [ "CONNECTOR_MISSING", "structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba0c4cea9ba5c4f7204c8d2c334013d093", null ],
       [ "CONNECTOR_DIMENSIONS_MISMATCH", "structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba11923c5216156a51ab48700d05b2dd0c", null ],
-      [ "FEATURE_ALREADY_REGISTERED", "structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba6000814bcd9f1acc80413f9ed7e47152", null ],
-      [ "FEATURE_MISSING", "structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba5642847ed2b5d8b6fd56dd8332a43210", null ],
       [ "TRANSFORMATION_ALREADY_REGISTERED", "structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba86450e1895931d1c1b1547c93993e5e7", null ],
       [ "TRANSFORMATION_ARGUMENTS_MISMATCH", "structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba59b243b01295e0c1e55ccabd751b3fb1", null ],
       [ "TRANSFORMATION_MISSING", "structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba4c2c0dc6f56d831a44db6e61704b1946", null ],

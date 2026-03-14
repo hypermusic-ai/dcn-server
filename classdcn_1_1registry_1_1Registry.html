@@ -104,9 +104,6 @@ $(document).ready(function(){initNavTree('classdcn_1_1registry_1_1Registry.html'
 </div><!--header-->
 <div class="contents">
 
-<p>A class that represents a registry of features, transformations, and conditions.  
- <a href="classdcn_1_1registry_1_1Registry.html#details">More...</a></p>
-
 <p><code>#include &lt;<a class="el" href="registry_8hpp_source.html">registry.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
@@ -123,8 +120,6 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a93aef24aa32941e6aa82cd2f31781935"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0baaa7c8ab3d9537eef9cc5a7df8208a" id="r_a0baaa7c8ab3d9537eef9cc5a7df8208a"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a0baaa7c8ab3d9537eef9cc5a7df8208a">add</a> (<a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> address, ConnectorRecord connector)</td></tr>
 <tr class="separator:a0baaa7c8ab3d9537eef9cc5a7df8208a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f5eee472407aecb86eceac14ac35120" id="r_a6f5eee472407aecb86eceac14ac35120"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a6f5eee472407aecb86eceac14ac35120">add</a> (<a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> address, FeatureRecord feature)</td></tr>
-<tr class="separator:a6f5eee472407aecb86eceac14ac35120"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5dd4b91092f226b4f9abb1cd06412bd9" id="r_a5dd4b91092f226b4f9abb1cd06412bd9"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a5dd4b91092f226b4f9abb1cd06412bd9">add</a> (<a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> address, TransformationRecord transformation)</td></tr>
 <tr class="separator:a5dd4b91092f226b4f9abb1cd06412bd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a13ed8b8bd400561a46caf62f82e758c0" id="r_a13ed8b8bd400561a46caf62f82e758c0"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a13ed8b8bd400561a46caf62f82e758c0">add</a> (<a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> address, ConditionRecord condition)</td></tr>
@@ -135,37 +130,20 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ae1f143fd65c245fcc3d14145b8d87dfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a991a830daaf823335611fc2d0e9a1d21" id="r_a991a830daaf823335611fc2d0e9a1d21"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Connector &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a991a830daaf823335611fc2d0e9a1d21">getConnector</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
 <tr class="separator:a991a830daaf823335611fc2d0e9a1d21"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6b899ef889f8c93347027b07b8bcfe90" id="r_a6b899ef889f8c93347027b07b8bcfe90"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a6b899ef889f8c93347027b07b8bcfe90">addFeature</a> (<a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> address, FeatureRecord feature)</td></tr>
-<tr class="memdesc:a6b899ef889f8c93347027b07b8bcfe90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a feature to the registry.  <br /></td></tr>
-<tr class="separator:a6b899ef889f8c93347027b07b8bcfe90"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeec51a913d00bc2b228555eb17310495" id="r_aeec51a913d00bc2b228555eb17310495"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Feature &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#aeec51a913d00bc2b228555eb17310495">getNewestFeature</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="memdesc:aeec51a913d00bc2b228555eb17310495"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the newest feature by name.  <br /></td></tr>
-<tr class="separator:aeec51a913d00bc2b228555eb17310495"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a21a6943a42e802f6bf5340ea8c7b098a" id="r_a21a6943a42e802f6bf5340ea8c7b098a"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Feature &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a21a6943a42e802f6bf5340ea8c7b098a">getFeature</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
-<tr class="memdesc:a21a6943a42e802f6bf5340ea8c7b098a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves a specific feature by name and address.  <br /></td></tr>
-<tr class="separator:a21a6943a42e802f6bf5340ea8c7b098a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac4169cd92c0473ce847dc0e962d602f" id="r_aac4169cd92c0473ce847dc0e962d602f"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#aac4169cd92c0473ce847dc0e962d602f">addTransformation</a> (<a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> address, TransformationRecord transformation)</td></tr>
-<tr class="memdesc:aac4169cd92c0473ce847dc0e962d602f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a transformation to the registry.  <br /></td></tr>
 <tr class="separator:aac4169cd92c0473ce847dc0e962d602f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5571e885cac805e52c7166b5205c1ba2" id="r_a5571e885cac805e52c7166b5205c1ba2"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Transformation &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a5571e885cac805e52c7166b5205c1ba2">getNewestTransformation</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="memdesc:a5571e885cac805e52c7166b5205c1ba2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the newest transformation by name.  <br /></td></tr>
 <tr class="separator:a5571e885cac805e52c7166b5205c1ba2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a808569bbcdaaa575ecca77d75b010b1f" id="r_a808569bbcdaaa575ecca77d75b010b1f"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Transformation &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a808569bbcdaaa575ecca77d75b010b1f">getTransformation</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
-<tr class="memdesc:a808569bbcdaaa575ecca77d75b010b1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves a specific transformation by name and address.  <br /></td></tr>
 <tr class="separator:a808569bbcdaaa575ecca77d75b010b1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae7c4ad6ba8b1ee409f5582c86c04aa5a" id="r_ae7c4ad6ba8b1ee409f5582c86c04aa5a"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#ae7c4ad6ba8b1ee409f5582c86c04aa5a">addCondition</a> (<a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> address, ConditionRecord condition)</td></tr>
-<tr class="memdesc:ae7c4ad6ba8b1ee409f5582c86c04aa5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a condition to the registry.  <br /></td></tr>
 <tr class="separator:ae7c4ad6ba8b1ee409f5582c86c04aa5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a51b383c551b8814aef2d870e5680f27d" id="r_a51b383c551b8814aef2d870e5680f27d"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Condition &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a51b383c551b8814aef2d870e5680f27d">getNewestCondition</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="memdesc:a51b383c551b8814aef2d870e5680f27d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the newest condition by name.  <br /></td></tr>
 <tr class="separator:a51b383c551b8814aef2d870e5680f27d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a398485a6d15630e5e2e64add84fc5b45" id="r_a398485a6d15630e5e2e64add84fc5b45"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Condition &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a398485a6d15630e5e2e64add84fc5b45">getCondition</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
-<tr class="memdesc:a398485a6d15630e5e2e64add84fc5b45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves a specific condition by name and address.  <br /></td></tr>
 <tr class="separator:a398485a6d15630e5e2e64add84fc5b45"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3835ff36b26e8185adc589412bde92c" id="r_ad3835ff36b26e8185adc589412bde92c"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#ad3835ff36b26e8185adc589412bde92c">getOwnedConnectors</a> (const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
 <tr class="separator:ad3835ff36b26e8185adc589412bde92c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2ca0ab53bf51e7d1b7cac47560037694" id="r_a2ca0ab53bf51e7d1b7cac47560037694"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a2ca0ab53bf51e7d1b7cac47560037694">getOwnedFeatures</a> (const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
-<tr class="separator:a2ca0ab53bf51e7d1b7cac47560037694"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a334338c708b785e8631e9181e921b57d" id="r_a334338c708b785e8631e9181e921b57d"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a334338c708b785e8631e9181e921b57d">getOwnedTransformations</a> (const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
 <tr class="separator:a334338c708b785e8631e9181e921b57d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1758d76a6c7330e9071c75f38745a76" id="r_ac1758d76a6c7330e9071c75f38745a76"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#ac1758d76a6c7330e9071c75f38745a76">getOwnedConditions</a> (const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
@@ -175,31 +153,18 @@ Public Member Functions</h2></td></tr>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:afc2cd5f21e6401850dcc4de5fe2393f8" id="r_afc2cd5f21e6401850dcc4de5fe2393f8"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#afc2cd5f21e6401850dcc4de5fe2393f8">containsConnectorBucket</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
 <tr class="separator:afc2cd5f21e6401850dcc4de5fe2393f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a644ddf8558722530997e1cdc5b3acf6c" id="r_a644ddf8558722530997e1cdc5b3acf6c"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a644ddf8558722530997e1cdc5b3acf6c">containsFeatureBucket</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="memdesc:a644ddf8558722530997e1cdc5b3acf6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if a feature bucket exists in the registry.  <br /></td></tr>
-<tr class="separator:a644ddf8558722530997e1cdc5b3acf6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50689be3d6c11a75507b9f1f7f5b82d2" id="r_a50689be3d6c11a75507b9f1f7f5b82d2"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a50689be3d6c11a75507b9f1f7f5b82d2">containsTransformationBucket</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="memdesc:a50689be3d6c11a75507b9f1f7f5b82d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if a transformation bucket exists in the registry.  <br /></td></tr>
 <tr class="separator:a50689be3d6c11a75507b9f1f7f5b82d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc775ff526f9cba3951a6b19a865ca52" id="r_afc775ff526f9cba3951a6b19a865ca52"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#afc775ff526f9cba3951a6b19a865ca52">containsConditionBucket</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="memdesc:afc775ff526f9cba3951a6b19a865ca52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if a condition bucket exists in the registry.  <br /></td></tr>
 <tr class="separator:afc775ff526f9cba3951a6b19a865ca52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a932a92773ae6cef9a4b13fe4b57f084a" id="r_a932a92773ae6cef9a4b13fe4b57f084a"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a932a92773ae6cef9a4b13fe4b57f084a">isConnectorBucketEmpty</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
 <tr class="separator:a932a92773ae6cef9a4b13fe4b57f084a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2bf10417ade06367c790fb82887970af" id="r_a2bf10417ade06367c790fb82887970af"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a2bf10417ade06367c790fb82887970af">isFeatureBucketEmpty</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="memdesc:a2bf10417ade06367c790fb82887970af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if a feature bucket is empty.  <br /></td></tr>
-<tr class="separator:a2bf10417ade06367c790fb82887970af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8af408cd164c32ff17497fc99b901f2c" id="r_a8af408cd164c32ff17497fc99b901f2c"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a8af408cd164c32ff17497fc99b901f2c">isTransformationBucketEmpty</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="memdesc:a8af408cd164c32ff17497fc99b901f2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if a transformation bucket is empty.  <br /></td></tr>
 <tr class="separator:a8af408cd164c32ff17497fc99b901f2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afed9f3429f9bda5075ba07fee43698ce" id="r_afed9f3429f9bda5075ba07fee43698ce"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#afed9f3429f9bda5075ba07fee43698ce">isConditionBucketEmpty</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="memdesc:afed9f3429f9bda5075ba07fee43698ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if a condition bucket is empty.  <br /></td></tr>
 <tr class="separator:afed9f3429f9bda5075ba07fee43698ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A class that represents a registry of features, transformations, and conditions. </p>
-<p>This class is used to store and manage features, transformations, and conditions. It provides methods to add, get, and remove features, transformations, and conditions. It also provides methods to check if a feature, transformation, or condition exists. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a75910a1ae1bf81674de609428e36ddfd" name="a75910a1ae1bf81674de609428e36ddfd"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a75910a1ae1bf81674de609428e36ddfd">&#9670;&#160;</a></span>Registry() <span class="overload">[1/3]</span></h2>
 
@@ -296,7 +261,7 @@ Protected Member Functions</h2></td></tr>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a13ed8b8bd400561a46caf62f82e758c0" name="a13ed8b8bd400561a46caf62f82e758c0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a13ed8b8bd400561a46caf62f82e758c0">&#9670;&#160;</a></span>add() <span class="overload">[1/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a13ed8b8bd400561a46caf62f82e758c0">&#9670;&#160;</a></span>add() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -324,7 +289,7 @@ Protected Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="a0baaa7c8ab3d9537eef9cc5a7df8208a" name="a0baaa7c8ab3d9537eef9cc5a7df8208a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0baaa7c8ab3d9537eef9cc5a7df8208a">&#9670;&#160;</a></span>add() <span class="overload">[2/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0baaa7c8ab3d9537eef9cc5a7df8208a">&#9670;&#160;</a></span>add() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -351,36 +316,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a6f5eee472407aecb86eceac14ac35120" name="a6f5eee472407aecb86eceac14ac35120"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6f5eee472407aecb86eceac14ac35120">&#9670;&#160;</a></span>add() <span class="overload">[3/4]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::add </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a>&#160;</td>
-          <td class="paramname"><em>address</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">FeatureRecord&#160;</td>
-          <td class="paramname"><em>feature</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a5dd4b91092f226b4f9abb1cd06412bd9" name="a5dd4b91092f226b4f9abb1cd06412bd9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5dd4b91092f226b4f9abb1cd06412bd9">&#9670;&#160;</a></span>add() <span class="overload">[4/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5dd4b91092f226b4f9abb1cd06412bd9">&#9670;&#160;</a></span>add() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -433,15 +370,6 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Adds a condition to the registry. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">condition</td><td>The condition to add.</td></tr>
-  </table>
-  </dd>
-</dl>
-<p>This function adds a condition to the registry. The condition is added to a bucket with its name as the key. If the condition already exists, the function returns <code>std::nullopt</code>. If the condition does not exist, it is added and the hash of the condition is returned. </p>
-
 </div>
 </div>
 <a id="abe89807fbfb59cfcba2719a7721612b9" name="abe89807fbfb59cfcba2719a7721612b9"></a>
@@ -472,43 +400,6 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a6b899ef889f8c93347027b07b8bcfe90" name="a6b899ef889f8c93347027b07b8bcfe90"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6b899ef889f8c93347027b07b8bcfe90">&#9670;&#160;</a></span>addFeature()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::addFeature </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a>&#160;</td>
-          <td class="paramname"><em>address</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">FeatureRecord&#160;</td>
-          <td class="paramname"><em>feature</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Adds a feature to the registry. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">feature</td><td>The feature to add.</td></tr>
-  </table>
-  </dd>
-</dl>
-<p>This function adds a feature to the registry. The feature is added to a bucket with its name as the key. If the feature already exists, the function returns <code>std::nullopt</code>. If the feature does not exist, it is added and the hash of the feature is returned. </p>
-
-</div>
-</div>
 <a id="aac4169cd92c0473ce847dc0e962d602f" name="aac4169cd92c0473ce847dc0e962d602f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aac4169cd92c0473ce847dc0e962d602f">&#9670;&#160;</a></span>addTransformation()</h2>
 
@@ -535,15 +426,6 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Adds a transformation to the registry. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">transformation</td><td>The transformation to add.</td></tr>
-  </table>
-  </dd>
-</dl>
-<p>This function adds a transformation to the registry. The transformation is added to a bucket with its name as the key. If the transformation already exists, the function returns <code>std::nullopt</code>. If the transformation does not exist, it is added and the hash of the transformation is returned. </p>
-
 </div>
 </div>
 <a id="afc775ff526f9cba3951a6b19a865ca52" name="afc775ff526f9cba3951a6b19a865ca52"></a>
@@ -569,15 +451,6 @@ Protected Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Checks if a condition bucket exists in the registry. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the condition bucket to check for.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>True if the condition bucket with the given name exists, false otherwise. </dd></dl>
 
 </div>
 </div>
@@ -607,41 +480,6 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a644ddf8558722530997e1cdc5b3acf6c" name="a644ddf8558722530997e1cdc5b3acf6c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a644ddf8558722530997e1cdc5b3acf6c">&#9670;&#160;</a></span>containsFeatureBucket()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::containsFeatureBucket </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Checks if a feature bucket exists in the registry. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the feature bucket to check for.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>True if the feature bucket with the given name exists, false otherwise. </dd></dl>
-
-</div>
-</div>
 <a id="a50689be3d6c11a75507b9f1f7f5b82d2" name="a50689be3d6c11a75507b9f1f7f5b82d2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a50689be3d6c11a75507b9f1f7f5b82d2">&#9670;&#160;</a></span>containsTransformationBucket()</h2>
 
@@ -665,15 +503,6 @@ Protected Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Checks if a transformation bucket exists in the registry. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the transformation bucket to check for.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>True if the transformation bucket with the given name exists, false otherwise. </dd></dl>
 
 </div>
 </div>
@@ -702,17 +531,6 @@ Protected Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Retrieves a specific condition by name and address. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the condition. </td></tr>
-    <tr><td class="paramname">address</td><td>The address of the condition.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>An <code>std::optional&lt;Condition&gt;</code> containing the condition if found, or <code>std::nullopt</code> if the condition or address does not exist.</dd></dl>
-<p>This function searches for a condition in the registry by its name and address. If the condition name or address is not found, it returns <code>std::nullopt</code>. </p>
 
 </div>
 </div>
@@ -744,45 +562,6 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a21a6943a42e802f6bf5340ea8c7b098a" name="a21a6943a42e802f6bf5340ea8c7b098a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a21a6943a42e802f6bf5340ea8c7b098a">&#9670;&#160;</a></span>getFeature()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; std::optional&lt; Feature &gt; &gt; dcn::registry::Registry::getFeature </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;&#160;</td>
-          <td class="paramname"><em>address</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Retrieves a specific feature by name and address. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the feature. </td></tr>
-    <tr><td class="paramname">address</td><td>The address of the feature.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>An <code>std::optional&lt;Feature&gt;</code> containing the feature if found, or <code>std::nullopt</code> if the feature or address does not exist.</dd></dl>
-<p>This function searches for a feature in the registry by its name and address. If the feature name or address is not found, it returns <code>std::nullopt</code>. </p>
-
-</div>
-</div>
 <a id="a51b383c551b8814aef2d870e5680f27d" name="a51b383c551b8814aef2d870e5680f27d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a51b383c551b8814aef2d870e5680f27d">&#9670;&#160;</a></span>getNewestCondition()</h2>
 
@@ -798,16 +577,6 @@ Protected Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Retrieves the newest condition by name. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the condition.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>An <code>std::optional&lt;Condition&gt;</code> containing the condition if found, or <code>std::nullopt</code> if the condition does not exist.</dd></dl>
-<p>This function searches for the newest condition by name in the registry. If the condition does not exist, it returns <code>std::nullopt</code>. </p>
 
 </div>
 </div>
@@ -829,34 +598,6 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="aeec51a913d00bc2b228555eb17310495" name="aeec51a913d00bc2b228555eb17310495"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeec51a913d00bc2b228555eb17310495">&#9670;&#160;</a></span>getNewestFeature()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; std::optional&lt; Feature &gt; &gt; dcn::registry::Registry::getNewestFeature </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Retrieves the newest feature by name. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the feature.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>An <code>std::optional&lt;Feature&gt;</code> containing the feature if found, or <code>std::nullopt</code> if the feature does not exist.</dd></dl>
-<p>This function searches for the newest feature by name in the registry. If the feature does not exist, it returns <code>std::nullopt</code>. </p>
-
-</div>
-</div>
 <a id="a5571e885cac805e52c7166b5205c1ba2" name="a5571e885cac805e52c7166b5205c1ba2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5571e885cac805e52c7166b5205c1ba2">&#9670;&#160;</a></span>getNewestTransformation()</h2>
 
@@ -872,16 +613,6 @@ Protected Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p>Retrieves the newest transformation by name. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the transformation.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>An <code>std::optional&lt;Transformation&gt;</code> containing the transformation if found, or <code>std::nullopt</code> if the transformation does not exist.</dd></dl>
-<p>This function searches for the newest transformation by name in the registry. If the transformation does not exist, it returns <code>std::nullopt</code>. </p>
 
 </div>
 </div>
@@ -911,24 +642,6 @@ Protected Member Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt; dcn::registry::Registry::getOwnedConnectors </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;&#160;</td>
-          <td class="paramname"><em>address</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a2ca0ab53bf51e7d1b7cac47560037694" name="a2ca0ab53bf51e7d1b7cac47560037694"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2ca0ab53bf51e7d1b7cac47560037694">&#9670;&#160;</a></span>getOwnedFeatures()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt; dcn::registry::Registry::getOwnedFeatures </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;&#160;</td>
           <td class="paramname"><em>address</em></td><td>)</td>
@@ -983,17 +696,6 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Retrieves a specific transformation by name and address. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the transformation. </td></tr>
-    <tr><td class="paramname">address</td><td>The address of the transformation.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>An <code>std::optional&lt;Transformation&gt;</code> containing the transformation if found, or <code>std::nullopt</code> if the transformation or address does not exist.</dd></dl>
-<p>This function searches for a transformation in the registry by its name and address. If the transformation name or address is not found, it returns <code>std::nullopt</code>. </p>
-
 </div>
 </div>
 <a id="afed9f3429f9bda5075ba07fee43698ce" name="afed9f3429f9bda5075ba07fee43698ce"></a>
@@ -1019,16 +721,6 @@ Protected Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Checks if a condition bucket is empty. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the condition bucket.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>true if the condition bucket exists and is empty, false otherwise.</dd></dl>
-<p>This function first checks if the condition bucket exists in the registry. If it does not exist, the function returns true. If the condition bucket does exist, the function returns true if the bucket is empty and false otherwise. </p>
 
 </div>
 </div>
@@ -1058,42 +750,6 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a2bf10417ade06367c790fb82887970af" name="a2bf10417ade06367c790fb82887970af"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2bf10417ade06367c790fb82887970af">&#9670;&#160;</a></span>isFeatureBucketEmpty()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::isFeatureBucketEmpty </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Checks if a feature bucket is empty. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the feature bucket.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>true if the feature bucket exists and is empty, false otherwise.</dd></dl>
-<p>This function first checks if the feature bucket exists in the registry. If it does not exist, the function returns true. If the feature bucket does exist, the function returns true if the bucket is empty and false otherwise. </p>
-
-</div>
-</div>
 <a id="a8af408cd164c32ff17497fc99b901f2c" name="a8af408cd164c32ff17497fc99b901f2c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8af408cd164c32ff17497fc99b901f2c">&#9670;&#160;</a></span>isTransformationBucketEmpty()</h2>
 
@@ -1117,16 +773,6 @@ Protected Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Checks if a transformation bucket is empty. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>The name of the transformation bucket.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>true if the transformation bucket exists and is empty, false otherwise.</dd></dl>
-<p>This function first checks if the transformation bucket exists in the registry. If it does not exist, the function returns true. If the transformation bucket does exist, the function returns true if the bucket is empty and false otherwise. </p>
 
 </div>
 </div>

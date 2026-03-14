@@ -14,7 +14,6 @@ var hierarchy =
     [ "dcn::evm::EVM", "classdcn_1_1evm_1_1EVM.html", null ],
     [ "dcn::chain::ExecuteError", "structdcn_1_1chain_1_1ExecuteError.html", null ],
     [ "dcn::chain::ExecuteReceipt", "structdcn_1_1chain_1_1ExecuteReceipt.html", null ],
-    [ "dcn::pt::FeatureAddedEvent", "structdcn_1_1pt_1_1FeatureAddedEvent.html", null ],
     [ "std::formatter", null, [
       [ "std::formatter< dcn::auth::AuthError::Kind >", "structstd_1_1formatter_3_01dcn_1_1auth_1_1AuthError_1_1Kind_01_4.html", null ],
       [ "std::formatter< dcn::chain::DeployError::Kind >", "structstd_1_1formatter_3_01dcn_1_1chain_1_1DeployError_1_1Kind_01_4.html", null ],

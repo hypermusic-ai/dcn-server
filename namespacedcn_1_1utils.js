@@ -9,5 +9,6 @@ var namespacedcn_1_1utils =
     [ "getLogo", "namespacedcn_1_1utils.html#a2270280f03070570a3ad91a37b73f50b", null ],
     [ "loadBuildTimestamp", "namespacedcn_1_1utils.html#afe5529604b645836efa07f3d4d662540", null ],
     [ "topologicalSort", "namespacedcn_1_1utils.html#a213229fb0c30f9ca92e2d1c60f550442", null ],
-    [ "watchdog", "namespacedcn_1_1utils.html#a3d90cd25bc6985e0d5d00227bf125b3e", null ]
+    [ "watchdog", "namespacedcn_1_1utils.html#a3d90cd25bc6985e0d5d00227bf125b3e", null ],
+    [ "always_false", "namespacedcn_1_1utils.html#afc4bf0995d381a01e93043a56f6f9978", null ]
 ];
