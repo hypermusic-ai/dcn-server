@@ -1248,6 +1248,24 @@ function initializeEntityActionControls() {
     syncConnectorFormAvailability();
 }
 
+function initializeSimpleFormControls() {
+    initializeEntityActionControls();
+    initializeAccountControls();
+}
+
+function scheduleSimpleFormInitialization() {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeSimpleFormControls, { once: true });
+        return;
+    }
+
+    initializeSimpleFormControls();
+}
+
 export function nextPage()
 {
     const totalPages = getAccountTotalPages();
@@ -1338,8 +1356,7 @@ export async function fetchAccountResources() {
     }
 }
 
-initializeEntityActionControls();
-initializeAccountControls();
+scheduleSimpleFormInitialization();
 
 // --------------------------------------------------------------------------
 // Login

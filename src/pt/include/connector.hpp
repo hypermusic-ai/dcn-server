@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <map>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
