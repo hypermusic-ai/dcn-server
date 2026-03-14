@@ -8,6 +8,88 @@ export function apiUrl(path = "") {
     return new URL(relativePath, deploymentBaseUrl).toString();
 }
 
+export function normalizeConnectorName(value, options = {}) {
+    const { stripPath = false, stripJsonExtension = false } = options;
+    if (typeof value !== "string") {
+        return "";
+    }
+
+    let normalized = value.trim();
+    if (!normalized) {
+        return "";
+    }
+
+    if (stripPath) {
+        const pathNormalized = normalized.replace(/\\/g, "/");
+        normalized = pathNormalized.split("/").pop() || pathNormalized;
+    }
+
+    if (stripJsonExtension && normalized.toLowerCase().endsWith(".json")) {
+        normalized = normalized.slice(0, -5);
+    }
+
+    return normalized.trim();
+}
+
+export function parseConnectorDimensions(connector) {
+    if (!connector || typeof connector !== "object" || !Array.isArray(connector.dimensions)) {
+        return [];
+    }
+
+    return connector.dimensions.map((dimension) => {
+        if (!dimension || typeof dimension !== "object") {
+            return {
+                composite: "",
+                bindings: {}
+            };
+        }
+
+        const composite = typeof dimension.composite === "string"
+            ? dimension.composite.trim()
+            : "";
+        const bindings = (dimension.bindings && typeof dimension.bindings === "object" && !Array.isArray(dimension.bindings))
+            ? dimension.bindings
+            : {};
+
+        return { composite, bindings };
+    });
+}
+
+export function getSortedBindingEntries(bindings) {
+    if (!bindings || typeof bindings !== "object" || Array.isArray(bindings)) {
+        return [];
+    }
+
+    const entries = [];
+    for (const [slotRaw, targetRaw] of Object.entries(bindings)) {
+        const slotStr = String(slotRaw).trim();
+        if (!/^\d+$/.test(slotStr)) {
+            continue;
+        }
+
+        const slotId = Number.parseInt(slotStr, 10);
+        if (!Number.isInteger(slotId) || slotId < 0) {
+            continue;
+        }
+
+        const targetName = typeof targetRaw === "string" ? targetRaw.trim() : "";
+        if (!targetName) {
+            continue;
+        }
+
+        entries.push({ slotId, targetName });
+    }
+
+    entries.sort((lhs, rhs) => {
+        if (lhs.slotId !== rhs.slotId) {
+            return lhs.slotId - rhs.slotId;
+        }
+        return lhs.targetName.localeCompare(rhs.targetName);
+    });
+
+    return entries;
+}
+
 export function configureLoginHandler(handler) {
     loginHandler = handler;
 }

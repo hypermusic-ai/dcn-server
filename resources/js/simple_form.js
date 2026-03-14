@@ -1,5 +1,13 @@
 import { setAccessToken } from "./auth";
-import { requestWithLogin, formatJSON, configureLoginHandler, apiUrl } from "./utils";
+import {
+    requestWithLogin,
+    formatJSON,
+    configureLoginHandler,
+    apiUrl,
+    normalizeConnectorName,
+    parseConnectorDimensions,
+    getSortedBindingEntries
+} from "./utils";
 
 export { copyTextFromElement } from "./utils";
 
@@ -434,73 +442,6 @@ function syncConnectorFormAvailability() {
         .forEach((transformationElement) => updateTransformationArgsAvailability(transformationElement));
 }
 
-function normalizeConnectorName(value) {
-    if (typeof value !== 'string') {
-        return '';
-    }
-
-    return value.trim();
-}
-
-function parseApiConnectorDimensions(connector) {
-    if (!connector || typeof connector !== 'object' || !Array.isArray(connector.dimensions)) {
-        return [];
-    }
-
-    return connector.dimensions.map((dimension) => {
-        if (!dimension || typeof dimension !== 'object') {
-            return {
-                composite: '',
-                bindings: {}
-            };
-        }
-
-        const composite = typeof dimension.composite === 'string'
-            ? dimension.composite.trim()
-            : '';
-        const bindings = (dimension.bindings && typeof dimension.bindings === 'object' && !Array.isArray(dimension.bindings))
-            ? dimension.bindings
-            : {};
-
-        return { composite, bindings };
-    });
-}
-
-function getSortedBindingEntries(bindings) {
-    if (!bindings || typeof bindings !== 'object' || Array.isArray(bindings)) {
-        return [];
-    }
-
-    const entries = [];
-    for (const [slotRaw, targetRaw] of Object.entries(bindings)) {
-        const slotStr = String(slotRaw).trim();
-        if (!/^\d+$/.test(slotStr)) {
-            continue;
-        }
-
-        const slotId = Number.parseInt(slotStr, 10);
-        if (!Number.isInteger(slotId) || slotId < 0) {
-            continue;
-        }
-
-        const targetName = typeof targetRaw === 'string' ? targetRaw.trim() : '';
-        if (!targetName) {
-            continue;
-        }
-
-        entries.push({ slotId, targetName });
-    }
-
-    entries.sort((lhs, rhs) => {
-        if (lhs.slotId !== rhs.slotId) {
-            return lhs.slotId - rhs.slotId;
-        }
-        return lhs.targetName.localeCompare(rhs.targetName);
-    });
-
-    return entries;
-}
-
 async function fetchConnectorDefinition(connectorName) {
     const normalizedName = normalizeConnectorName(connectorName);
     if (!normalizedName) {
@@ -546,7 +487,7 @@ async function computeOpenBindingPointLabels(connectorName, visiting = new Set()
     try {
         const connector = await fetchConnectorDefinition(normalizedName);
         const resolvedName = normalizeConnectorName(connector?.name) || normalizedName;
-        const dimensions = parseApiConnectorDimensions(connector);
+        const dimensions = parseConnectorDimensions(connector);
 
         const labels = [];
         for (let dimId = 0; dimId < dimensions.length; dimId++) {

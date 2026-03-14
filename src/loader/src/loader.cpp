@@ -261,6 +261,14 @@ namespace dcn::loader
 
         // if binary file does not exist
         const bool binary_already_exists = std::filesystem::exists(bin_dir / (name + ".bin"));
+        const auto cleanup_new_build_artifacts = [&]()
+        {
+            if(!binary_already_exists)
+            {
+                _loadCleanup(bin_dir, name);
+            }
+        };
+
         if(binary_already_exists == false)
         {
             // there is a need for compile code
@@ -309,7 +317,22 @@ namespace dcn::loader
             }
 
             out_file << solidity_code;
+            if(!out_file.good())
+            {
+                spdlog::error("Failed to write Solidity source file '{}'", code_path.string());
+                out_file.close();
+                _removeFileNoThrow(code_path);
+                cleanup_new_build_artifacts();
+                co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
+            }
             out_file.close();
+            if(out_file.fail())
+            {
+                spdlog::error("Failed to flush Solidity source file '{}'", code_path.string());
+                _removeFileNoThrow(code_path);
+                cleanup_new_build_artifacts();
+                co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
+            }
 
             // compile code
             if(!co_await evm.compile(code_path, bin_dir, evm.getPTPath() / "contracts", evm.getPTPath() / "node_modules"))
@@ -317,20 +340,13 @@ namespace dcn::loader
                 spdlog::error("Failed to compile code");
                 // remove code file
                 _removeFileNoThrow(code_path);
+                cleanup_new_build_artifacts();
                 co_return std::unexpected(pt::PTDeployError{ pt::PTDeployError::Kind::INVALID_INPUT});
             }
 
             // remove code file
             _removeFileNoThrow(code_path);
         }
-
-        const auto cleanup_new_build_artifacts = [&]()
-        {
-            if(!binary_already_exists)
-            {
-                _loadCleanup(bin_dir, name);
-            }
-        };
 
         co_await evm.addAccount(address, evm::DEFAULT_GAS_LIMIT);
         co_await evm.setGas(address, evm::DEFAULT_GAS_LIMIT);

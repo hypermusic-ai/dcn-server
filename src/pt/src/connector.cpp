@@ -357,6 +357,11 @@ namespace dcn::pt
             return std::nullopt;
         }
 
+        if(*dimensions_count == 0)
+        {
+            return std::nullopt;
+        }
+
         const auto name = chain::decodeAbiString(data, data_size, *name_offset);
         const auto composite_dim_ids = chain::decodeAbiUint32Array(data, data_size, *composite_dim_ids_offset);
         const auto composite_names = chain::decodeAbiStringArray(data, data_size, *composite_names_offset);
