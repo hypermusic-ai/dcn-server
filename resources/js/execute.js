@@ -246,10 +246,14 @@ async function fetchConnectorDepthFirst(rootName) {
         visiting.add(name);
 
         const connector = await fetchConnectorByName(name);
+        const resolvedName = typeof connector.name === 'string' && connector.name.trim()
+            ? connector.name.trim()
+            : name;
         const dimensions = getConnectorDimensions(connector);
 
         let openSlots = 0;
-        for (const dimension of dimensions) {
+        for (let dimId = 0; dimId < dimensions.length; dimId++) {
+            const dimension = dimensions[dimId];
             if (!dimension.composite) {
                 openSlots += 1;
                 continue;
@@ -258,18 +262,61 @@ async function fetchConnectorDepthFirst(rootName) {
             const childOpenSlots = await computeOpenSlots(dimension.composite, visiting);
             openSlots += childOpenSlots;
 
-            const staticBindings = new Map();
+            const boundTargetsByChildSlot = new Map();
             getSortedBindingEntries(dimension.bindings).forEach(({ slotId, targetName }) => {
-                if (slotId < childOpenSlots && !staticBindings.has(slotId)) {
-                    staticBindings.set(slotId, targetName);
+                if (slotId >= childOpenSlots) {
+                    throw new Error(
+                        `Connector '${resolvedName}' has out-of-range binding slot ${slotId} ` +
+                        `at dimension ${dimId} (child '${dimension.composite}' exports ${childOpenSlots} slots)`
+                    );
                 }
+
+                if (boundTargetsByChildSlot.has(slotId)) {
+                    throw new Error(
+                        `Connector '${resolvedName}' has duplicate canonical binding slot ${slotId} ` +
+                        `at dimension ${dimId}`
+                    );
+                }
+
+                boundTargetsByChildSlot.set(slotId, targetName);
             });
-            openSlots -= staticBindings.size;
+
+            for (const targetName of boundTargetsByChildSlot.values()) {
+                const targetOpenSlots = await computeOpenSlots(targetName, visiting);
+                openSlots += targetOpenSlots;
+            }
+
+            openSlots -= boundTargetsByChildSlot.size;
         }
 
         visiting.delete(name);
         openSlotsCache.set(name, openSlots);
         return openSlots;
+    }
+
+    function getSortedIncomingBindingEntries(bindings) {
+        const entries = [];
+        for (const [slotId, binding] of bindings.entries()) {
+            if (!Number.isInteger(slotId) || slotId < 0) {
+                continue;
+            }
+
+            if (!binding || typeof binding !== 'object') {
+                continue;
+            }
+
+            const targetName = typeof binding.targetName === 'string' ? binding.targetName.trim() : '';
+            if (!targetName) {
+                continue;
+            }
+
+            const fromSlot = Number.isInteger(binding.fromSlot) ? binding.fromSlot : slotId;
+            const kind = binding.kind === 'static' ? 'static' : 'forwarded';
+            entries.push([slotId, { targetName, fromSlot, kind }]);
+        }
+
+        entries.sort((lhs, rhs) => lhs[0] - rhs[0]);
+        return entries;
     }
 
     async function expandConnector({
@@ -339,34 +386,132 @@ async function fetchConnectorDepthFirst(rootName) {
             const childOpenSlots = await computeOpenSlots(dimension.composite);
             const staticBindingMap = new Map();
             getSortedBindingEntries(dimension.bindings).forEach(({ slotId, targetName }) => {
-                if (slotId < childOpenSlots && !staticBindingMap.has(slotId)) {
-                    staticBindingMap.set(slotId, targetName);
+                if (slotId >= childOpenSlots) {
+                    throw new Error(
+                        `Connector '${resolvedName}' has out-of-range binding slot ${slotId} ` +
+                        `at dimension ${dimId} (child '${dimension.composite}' exports ${childOpenSlots} slots)`
+                    );
                 }
+
+                if (staticBindingMap.has(slotId)) {
+                    throw new Error(
+                        `Connector '${resolvedName}' has duplicate canonical binding slot ${slotId} ` +
+                        `at dimension ${dimId}`
+                    );
+                }
+
+                staticBindingMap.set(slotId, targetName);
             });
 
-            const childBindings = new Map();
+            const unboundParentSlotIds = [];
+            const unboundChildSlotIds = [];
+            const staticChildSlotIds = [];
+            const staticParentSlotStarts = [];
+            const staticParentSlotWidths = [];
             let childOpenSlotsInParent = 0;
+
             for (let childSlotId = 0; childSlotId < childOpenSlots; childSlotId++) {
                 const staticTarget = staticBindingMap.get(childSlotId);
                 if (staticTarget) {
+                    const staticTargetOpenSlots = await computeOpenSlots(staticTarget);
+                    staticChildSlotIds.push(childSlotId);
+                    staticParentSlotStarts.push(childOpenSlotsInParent);
+                    staticParentSlotWidths.push(staticTargetOpenSlots);
+                    childOpenSlotsInParent += staticTargetOpenSlots;
+                    continue;
+                }
+
+                unboundParentSlotIds.push(childOpenSlotsInParent);
+                unboundChildSlotIds.push(childSlotId);
+                childOpenSlotsInParent += 1;
+            }
+
+            const forwardedBindings = new Array(unboundParentSlotIds.length).fill(null);
+            const staticOverrides = new Array(staticChildSlotIds.length).fill(null);
+            for (const [parentSlotId, forwardedBinding] of getSortedIncomingBindingEntries(incomingBindings)) {
+                if (parentSlotId < openSlotId) {
+                    continue;
+                }
+
+                const localSlotId = parentSlotId - openSlotId;
+                if (localSlotId >= childOpenSlotsInParent) {
+                    continue;
+                }
+
+                let assignedToUnbound = false;
+                for (let i = 0; i < unboundParentSlotIds.length; i++) {
+                    if (forwardedBindings[i]) {
+                        continue;
+                    }
+                    if (unboundParentSlotIds[i] < localSlotId) {
+                        continue;
+                    }
+
+                    forwardedBindings[i] = forwardedBinding;
+                    assignedToUnbound = true;
+                    break;
+                }
+
+                if (assignedToUnbound) {
+                    continue;
+                }
+
+                for (let i = 0; i < staticChildSlotIds.length; i++) {
+                    if (staticOverrides[i]) {
+                        continue;
+                    }
+
+                    const rangeWidth = staticParentSlotWidths[i];
+                    if (!Number.isInteger(rangeWidth) || rangeWidth <= 0) {
+                        continue;
+                    }
+
+                    const rangeEnd = staticParentSlotStarts[i] + rangeWidth - 1;
+                    if (rangeEnd < localSlotId) {
+                        continue;
+                    }
+
+                    staticOverrides[i] = forwardedBinding;
+                    break;
+                }
+            }
+
+            const childBindings = new Map();
+            for (let i = 0; i < staticChildSlotIds.length; i++) {
+                const childSlotId = staticChildSlotIds[i];
+                const staticOverride = staticOverrides[i];
+                if (staticOverride) {
                     childBindings.set(childSlotId, {
-                        targetName: staticTarget,
-                        kind: 'static',
-                        fromSlot: childSlotId
+                        targetName: staticOverride.targetName,
+                        kind: 'forwarded',
+                        fromSlot: staticOverride.fromSlot
                     });
                     continue;
                 }
 
-                const forwardedBinding = incomingBindings.get(openSlotId + childOpenSlotsInParent);
-                if (forwardedBinding) {
-                    childBindings.set(childSlotId, {
-                        targetName: forwardedBinding.targetName,
-                        kind: 'forwarded',
-                        fromSlot: openSlotId + childOpenSlotsInParent
-                    });
+                const staticTarget = staticBindingMap.get(childSlotId);
+                if (!staticTarget) {
+                    continue;
                 }
 
-                childOpenSlotsInParent += 1;
+                childBindings.set(childSlotId, {
+                    targetName: staticTarget,
+                    kind: 'static',
+                    fromSlot: childSlotId
+                });
+            }
+
+            for (let i = 0; i < unboundChildSlotIds.length; i++) {
+                const forwardedBinding = forwardedBindings[i];
+                if (!forwardedBinding) {
+                    continue;
+                }
+
+                childBindings.set(unboundChildSlotIds[i], {
+                    targetName: forwardedBinding.targetName,
+                    kind: 'forwarded',
+                    fromSlot: forwardedBinding.fromSlot
+                });
             }
 
             await expandConnector({
@@ -377,7 +522,7 @@ async function fetchConnectorDepthFirst(rootName) {
                 boundDescriptor: null
             });
 
-            openSlotId += childOpenSlots - staticBindingMap.size;
+            openSlotId += childOpenSlotsInParent;
         }
     }
 

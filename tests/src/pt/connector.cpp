@@ -280,6 +280,26 @@ TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsNonNumericBindingSlots)
     EXPECT_FALSE(solidity_result.has_value());
 }
 
+TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsConnectorWithoutDimensions)
+{
+    Connector connector;
+    connector.set_name("connector_without_dimensions");
+
+    auto solidity_result = constructConnectorSolidityCode(connector);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsTransformationWithEmptyName)
+{
+    Connector connector = makeConnectorSample();
+    connector.mutable_dimensions(0)->mutable_transformations(0)->set_name("");
+
+    auto solidity_result = constructConnectorSolidityCode(connector);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
 TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsCanonicalDuplicateBindingSlots)
 {
     Connector connector = makeConnectorSample();

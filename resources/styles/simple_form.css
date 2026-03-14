@@ -405,6 +405,25 @@ textarea:focus {
     border-color: #111111;
 }
 
+input:disabled,
+select:disabled,
+textarea:disabled,
+button.is-disabled-control {
+    background: #f2f2f2;
+    color: #8b8b8b;
+    border-color: #dadada;
+    cursor: not-allowed;
+}
+
+input:disabled::placeholder,
+textarea:disabled::placeholder {
+    color: #9a9a9a;
+}
+
+button.is-disabled-control {
+    box-shadow: inset 0 0 0 1px #d3d3d3;
+}
+
 button {
     border: 1px solid #111111;
     border-radius: 0.45rem;
@@ -432,6 +451,28 @@ button:disabled {
     opacity: 0.6;
 }
 
+.disabled-field-tooltip {
+    position: fixed;
+    z-index: 12000;
+    max-width: min(320px, calc(100vw - 24px));
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    background: #1b1b1b;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 0.5rem;
+    padding: 0.44rem 0.56rem;
+    font-size: 0.76rem;
+    line-height: 1.35;
+}
+
+.disabled-field-tooltip.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .button-row {
     display: flex;
     gap: 0.55rem;
@@ -443,6 +484,21 @@ button:disabled {
     margin: 0;
     flex: 1;
     min-width: 140px;
+}
+
+#btn_clearConnectorDimensions {
+    border-color: #b42318;
+    background: #d92d20;
+}
+
+#btn_clearConnectorDimensions:hover {
+    border-color: #b42318;
+    background: #b42318;
+}
+
+#btn_clearConnectorDimensions:active {
+    border-color: #912018;
+    background: #912018;
 }
 
 .response-row {
@@ -513,6 +569,68 @@ pre.request-body {
     margin: 0.3rem 0 0.8rem;
 }
 
+.tab-column-request-response {
+    min-height: 0;
+}
+
+.tab-column-request-response .request-pane {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.tab-column-request-response .request-row {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0.3rem 0 0;
+}
+
+.tab-column-request-response .request-row .response-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.tab-column-request-response .request-row .request-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    max-height: none;
+}
+
+.tab-column-request-response .response-pane {
+    flex: 0 0 auto;
+    margin-top: 0.7rem;
+}
+
+.tab-column-request-response .response-pane .response-row {
+    margin-bottom: 0;
+}
+
+.tab-panel[data-tab-panel="transformations"] .tab-grid,
+.tab-panel[data-tab-panel="conditions"] .tab-grid {
+    align-items: stretch;
+}
+
+.tab-column-code-editor {
+    align-self: stretch;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.tab-column-code-editor textarea {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    max-height: none;
+}
+
+#POST_transformationCode,
+#POST_conditionCode {
+    resize: none;
+}
+
 .response-wrapper {
     position: relative;
     display: inline-block;
@@ -558,9 +676,16 @@ pre.request-body {
 }
 
 #POST_transformationRequestBody,
-#POST_conditionRequestBody,
-#POST_connectorRequestBody {
-    min-height: 150px;
+#POST_conditionRequestBody {
+    min-height: 220px;
+    max-height: none;
+}
+
+#POST_connectorRequestBody,
+#connectorResponseBody {
+    min-height: 180px;
+    max-height: min(34vh, 340px);
+    overflow: auto;
 }
 
 .inline-code-fragment {
@@ -572,10 +697,37 @@ pre.request-body {
 }
 
 #connectorDimensionsContainer {
-    min-height: 512px;
-    max-height: 768px;
-    overflow: auto;
-    padding-right: 0.2rem;
+    flex: 0 0 auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+}
+
+.tab-panel[data-tab-panel="connectors"] .tab-column-request-response {
+    display: grid;
+    grid-template-rows: auto auto;
+    align-content: start;
+    gap: 0.7rem;
+}
+
+.tab-panel[data-tab-panel="connectors"] .tab-column-request-response .request-pane,
+.tab-panel[data-tab-panel="connectors"] .tab-column-request-response .response-pane {
+    min-width: 0;
+}
+
+.tab-panel[data-tab-panel="connectors"] .tab-column-request-response .request-pane {
+    flex: 0 0 auto;
+}
+
+.tab-panel[data-tab-panel="connectors"] .tab-column-request-response .response-pane {
+    flex: 0 0 auto;
+    margin-top: 0;
+}
+
+.tab-panel[data-tab-panel="connectors"] .tab-column-request-response .request-row,
+.tab-panel[data-tab-panel="connectors"] .tab-column-request-response .response-row {
+    margin: 0.3rem 0 0;
 }
 
 .muted-note {
@@ -596,6 +748,48 @@ pre.request-body {
     font-size: 0.78rem;
 }
 
+.connector-dimension-remove {
+    display: inline-flex;
+    margin: 0;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border-color: #b42318;
+    background: #d92d20;
+}
+
+.connector-dimension-remove:hover {
+    border-color: #b42318;
+    background: #b42318;
+}
+
+.connector-dimension-remove:active {
+    border-color: #912018;
+    background: #912018;
+}
+
+.connector-dimension-composite-row {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-end;
+    margin-bottom: 0.58rem;
+}
+
+.connector-dimension-composite-row .connector-dimension-composite {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.connector-dimension-composite-row .connector-dimension-remove {
+    margin-bottom: 0;
+}
+
+.connector-binding-add {
+    margin: 0 0 0.62rem;
+    white-space: nowrap;
+    align-self: flex-start;
+}
+
 .connector-transformation {
     margin-bottom: 0.9rem;
 }
@@ -605,6 +799,12 @@ pre.request-body {
     flex-direction: column;
     gap: 0.55rem;
     margin-bottom: 0.7rem;
+}
+
+.connector-transformations {
+    margin: 0.35rem 0 0.72rem;
+    padding-top: 0.62rem;
+    border-top: 1px solid var(--line-strong);
 }
 
 .connector-binding {
@@ -617,7 +817,7 @@ pre.request-body {
 .transformation-row {
     display: flex;
     gap: 0.65rem;
-    align-items: flex-start;
+    align-items: flex-end;
 }
 
 .binding-row {
@@ -636,9 +836,32 @@ pre.request-body {
     min-width: 0;
 }
 
+.connector-binding-remove,
+.connector-transformation-remove {
+    flex: 0 0 auto;
+    border-color: #b42318;
+    background: #d92d20;
+}
+
 .connector-binding-remove {
     margin: 0 0 0.72rem;
-    flex: 0 0 auto;
+}
+
+.connector-transformation-remove {
+    margin: 0 0 0.74rem;
+    align-self: flex-end;
+}
+
+.connector-binding-remove:hover,
+.connector-transformation-remove:hover {
+    border-color: #b42318;
+    background: #b42318;
+}
+
+.connector-binding-remove:active,
+.connector-transformation-remove:active {
+    border-color: #912018;
+    background: #912018;
 }
 
 .connector-binding-status {
@@ -667,7 +890,9 @@ pre.request-body {
 .page-controls {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.6rem;
+    width: 100%;
 }
 
 #accountPageLabel {
@@ -789,6 +1014,13 @@ pre.request-body {
 @media (min-width: 1101px) {
     .tab-column {
         max-height: calc(100vh - 16.2rem);
+    }
+
+    .tab-panel[data-tab-panel="transformations"] .tab-column-code-editor,
+    .tab-panel[data-tab-panel="transformations"] .tab-column-request-response,
+    .tab-panel[data-tab-panel="conditions"] .tab-column-code-editor,
+    .tab-panel[data-tab-panel="conditions"] .tab-column-request-response {
+        height: calc(100vh - 16.2rem);
     }
 }
 

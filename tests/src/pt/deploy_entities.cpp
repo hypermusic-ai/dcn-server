@@ -344,3 +344,61 @@ TEST_F(UnitTest, PT_Deploy_Connector_DeploysAndRegisters)
     EXPECT_EQ(snapshot.connector.condition_name(), "DeployCondition");
     EXPECT_EQ(snapshot.connector.condition_args_size(), 0);
 }
+
+TEST_F(UnitTest, PT_Deploy_Connector_DuplicateName_ReturnsConnectorAlreadyRegistered)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts directory at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeDeployStoragePath();
+    ASSERT_TRUE(prepareDeployStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    registry::Registry registry(io_context);
+    const chain::Address owner = makeAddressFromSuffix("pt_dup_owner");
+    runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
+    runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
+    const std::string owner_hex = evmc::hex(owner);
+
+    TransformationRecord transformation_record;
+    transformation_record.mutable_transformation()->set_name("DupDeployTransformation");
+    transformation_record.mutable_transformation()->set_sol_src("return x;");
+    transformation_record.set_owner(owner_hex);
+
+    ConditionRecord condition_record;
+    condition_record.mutable_condition()->set_name("DupDeployCondition");
+    condition_record.mutable_condition()->set_sol_src("return true;");
+    condition_record.set_owner(owner_hex);
+
+    ConnectorRecord connector_record;
+    connector_record.mutable_connector()->set_name("DupDeployConnector");
+    auto * connector_dimension = connector_record.mutable_connector()->add_dimensions();
+    auto * connector_transformation = connector_dimension->add_transformations();
+    connector_transformation->set_name("DupDeployTransformation");
+    connector_record.mutable_connector()->set_condition_name("DupDeployCondition");
+    connector_record.set_owner(owner_hex);
+
+    const auto transformation_deploy_result = runAwaitable(
+        io_context,
+        loader::deployTransformation(evm_instance, registry, transformation_record, storage_path));
+    ASSERT_TRUE(transformation_deploy_result) << std::format("deployTransformation failed: {}", transformation_deploy_result.error().kind);
+
+    const auto condition_deploy_result = runAwaitable(
+        io_context,
+        loader::deployCondition(evm_instance, registry, condition_record, storage_path));
+    ASSERT_TRUE(condition_deploy_result) << std::format("deployCondition failed: {}", condition_deploy_result.error().kind);
+
+    const auto first_connector_deploy_result = runAwaitable(
+        io_context,
+        loader::deployConnector(evm_instance, registry, connector_record, storage_path));
+    ASSERT_TRUE(first_connector_deploy_result) << std::format("first deployConnector failed: {}", first_connector_deploy_result.error().kind);
+
+    const auto second_connector_deploy_result = runAwaitable(
+        io_context,
+        loader::deployConnector(evm_instance, registry, connector_record, storage_path));
+    ASSERT_FALSE(second_connector_deploy_result);
+    EXPECT_EQ(second_connector_deploy_result.error().kind, pt::PTDeployError::Kind::CONNECTOR_ALREADY_REGISTERED);
+}

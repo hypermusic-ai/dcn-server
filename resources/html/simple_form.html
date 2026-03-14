@@ -47,6 +47,7 @@
             nextPage,
             prevPage,
 
+            updateExecuteActionAvailability,
             copyTextFromElement
         } from './js/simple_form';
 
@@ -58,7 +59,10 @@
         document.getElementById('btn_saveInstanceEdit').addEventListener('click', saveInstanceEdit);
         document.getElementById('btn_closePopup').addEventListener('click', closePopup);
         document.getElementById('btn_execute').addEventListener('click', execute);
+        document.getElementById('executeName').addEventListener('input', updateExecuteActionAvailability);
+        document.getElementById('executeN').addEventListener('input', updateExecuteActionAvailability);
         document.getElementById('btn_executeCopyResponse').addEventListener('click', () => copyTextFromElement('executeBody'));
+        updateExecuteActionAvailability();
 
         document.getElementById('in_transformationName').addEventListener('input', updateTransformationPreview);
         document.getElementById('POST_transformationCode').addEventListener('input', updateTransformationPreview);
@@ -210,7 +214,7 @@
                             </div>
 
                             <p class="tab-hint">Click any node in the dependency graph to edit running instance values.</p>
-                            <p class="tab-hint">Blue ellipses are scalar outputs. Amber boxes with dashed links are connectors introduced by bindings.</p>
+                            <p class="tab-hint">Dotted circles are scalar outputs. Amber boxes with dashed links are connectors introduced by bindings.</p>
 
                             <label>Execute response</label>
                             <div class="response-row">
@@ -248,18 +252,18 @@
                             <label>Name</label>
                             <input type="text" id="in_connectorName" placeholder="melody_connector">
 
+                            <label>Condition name</label>
+                            <input id="in_connectorConditionName" type="text" placeholder="is_active">
+
+                            <label>Condition args (comma-separated)</label>
+                            <input id="in_connectorConditionArgs" type="text" placeholder="1, 2">
+
                             <label>Dimensions</label>
                             <div class="button-row">
                                 <button id="btn_addConnectorDimension" type="button">Add dimension</button>
                                 <button id="btn_clearConnectorDimensions" type="button">Clear dimensions</button>
                             </div>
                             <div id="connectorDimensionsContainer"></div>
-
-                            <label>Condition name</label>
-                            <input id="in_connectorConditionName" type="text" placeholder="is_active">
-
-                            <label>Condition args (comma-separated)</label>
-                            <input id="in_connectorConditionArgs" type="text" placeholder="1, 2">
 
                             <label>Address (optional)</label>
                             <input id="GET_connectorAddress" type="text" placeholder="0x0...">
@@ -270,25 +274,23 @@
                             </div>
                         </div>
 
-                        <div class="tab-column">
-                            <label>Request body</label>
-                            <div class="request-row">
-                                <div class="response-wrapper">
-                                    <button id="btn_connectorCopyRequest" class="copy-button">📋</button>
-                                    <pre id="POST_connectorRequestBody" class="request-body">...</pre>
+                        <div class="tab-column tab-column-request-response">
+                            <div class="request-pane">
+                                <label>Request body</label>
+                                <div class="request-row">
+                                    <div class="response-wrapper">
+                                        <button id="btn_connectorCopyRequest" class="copy-button">📋</button>
+                                        <pre id="POST_connectorRequestBody" class="request-body">...</pre>
+                                    </div>
                                 </div>
                             </div>
 
-                            <label>Create response</label>
-                            <div class="response-row">
-                                <div id="POST_connectorResponseCode" class="response-code">-</div>
-                                <div id="POST_connectorResponseBody" class="response-body">Waiting...</div>
-                            </div>
-
-                            <label>Fetch response</label>
-                            <div class="response-row">
-                                <div id="GET_connectorResponseCode" class="response-code">-</div>
-                                <div id="GET_connectorResponseBody" class="response-body">Waiting...</div>
+                            <div class="response-pane">
+                                <label>Response</label>
+                                <div class="response-row">
+                                    <div id="connectorResponseCode" class="response-code">-</div>
+                                    <div id="connectorResponseBody" class="response-body">Waiting...</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -300,7 +302,7 @@
                       <p>Interact with existing transformations or create a new transformation</p>
                     </div>
                     <div class="tab-grid">
-                        <div class="tab-column">
+                        <div class="tab-column tab-column-code-editor">
                             <label>Name</label>
                             <input type="text" id="in_transformationName" placeholder="add">
 
@@ -318,25 +320,23 @@
                             </div>
                         </div>
 
-                        <div class="tab-column">
-                            <label>Request body</label>
-                            <div class="request-row">
-                                <div class="response-wrapper">
-                                    <button id="btn_transformationCopyRequest" class="copy-button">📋</button>
-                                    <pre id="POST_transformationRequestBody" class="request-body">...</pre>
+                        <div class="tab-column tab-column-request-response">
+                            <div class="request-pane">
+                                <label>Request body</label>
+                                <div class="request-row">
+                                    <div class="response-wrapper">
+                                        <button id="btn_transformationCopyRequest" class="copy-button">📋</button>
+                                        <pre id="POST_transformationRequestBody" class="request-body">...</pre>
+                                    </div>
                                 </div>
                             </div>
 
-                            <label>Create response</label>
-                            <div class="response-row">
-                                <div id="POST_transformationResponseCode" class="response-code">-</div>
-                                <div id="POST_transformationResponseBody" class="response-body">Waiting...</div>
-                            </div>
-
-                            <label>Fetch response</label>
-                            <div class="response-row">
-                                <div id="GET_transformationResponseCode" class="response-code">-</div>
-                                <div id="GET_transformationResponseBody" class="response-body">Waiting...</div>
+                            <div class="response-pane">
+                                <label>Response</label>
+                                <div class="response-row">
+                                    <div id="transformationResponseCode" class="response-code">-</div>
+                                    <div id="transformationResponseBody" class="response-body">Waiting...</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -348,7 +348,7 @@
                       <p>Interact with existing conditions or create a new condition</p>
                     </div>
                     <div class="tab-grid">
-                        <div class="tab-column">
+                        <div class="tab-column tab-column-code-editor">
                             <label>Name</label>
                             <input type="text" id="in_conditionName" placeholder="is_active">
 
@@ -366,25 +366,23 @@
                             </div>
                         </div>
 
-                        <div class="tab-column">
-                            <label>Request body</label>
-                            <div class="request-row">
-                                <div class="response-wrapper">
-                                    <button id="btn_conditionCopyRequest" class="copy-button">📋</button>
-                                    <pre id="POST_conditionRequestBody" class="request-body">...</pre>
+                        <div class="tab-column tab-column-request-response">
+                            <div class="request-pane">
+                                <label>Request body</label>
+                                <div class="request-row">
+                                    <div class="response-wrapper">
+                                        <button id="btn_conditionCopyRequest" class="copy-button">📋</button>
+                                        <pre id="POST_conditionRequestBody" class="request-body">...</pre>
+                                    </div>
                                 </div>
                             </div>
 
-                            <label>Create response</label>
-                            <div class="response-row">
-                                <div id="POST_conditionResponseCode" class="response-code">-</div>
-                                <div id="POST_conditionResponseBody" class="response-body">Waiting...</div>
-                            </div>
-
-                            <label>Fetch response</label>
-                            <div class="response-row">
-                                <div id="GET_conditionResponseCode" class="response-code">-</div>
-                                <div id="GET_conditionResponseBody" class="response-body">Waiting...</div>
+                            <div class="response-pane">
+                                <label>Response</label>
+                                <div class="response-row">
+                                    <div id="conditionResponseCode" class="response-code">-</div>
+                                    <div id="conditionResponseBody" class="response-body">Waiting...</div>
+                                </div>
                             </div>
                         </div>
                     </div>

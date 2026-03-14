@@ -303,17 +303,13 @@ namespace dcn::evm
         deployment_input.insert(deployment_input.end(), constructor_args.begin(), constructor_args.end());
 
         evmc_message create_msg{};
-        create_msg.kind       = EVMC_CREATE2;
+        create_msg.kind       = EVMC_CREATE;
         create_msg.sender     = sender;
         std::memcpy(create_msg.sender.bytes, sender.bytes, 20);
         
         create_msg.gas        = gas_limit;
         create_msg.input_data = deployment_input.data();
         create_msg.input_size = deployment_input.size();
-
-        // fill message salt
-        std::string salt_str = "message_salt_42";
-        crypto::Keccak256::getHash(reinterpret_cast<const uint8_t*>(salt_str.data()), salt_str.size(), create_msg.create2_salt.bytes);
 
         // fill message value
         evmc_uint256be value256{};
@@ -327,12 +323,20 @@ namespace dcn::evm
         if (result.status_code != EVMC_SUCCESS)
         {
             const chain::DeployError error{
-                .kind = chain::DeployError::Kind::UNKNOWN,
+                .kind = (result.status_code == EVMC_REVERT)
+                    ? chain::DeployError::Kind::TRANSACTION_REVERTED
+                    : chain::DeployError::Kind::UNKNOWN,
                 .message = std::format("Failed to deploy contract: {}", result.status_code),
                 .result_bytes = std::vector<std::uint8_t>(result.output_data, result.output_data + result.output_size)
             };
 
-            spdlog::error(std::format("Failed to deploy contract: {}, error: {}", result.status_code, error.kind));
+            std::string output_hex = "<empty>";
+            if(result.output_data != nullptr && result.output_size > 0)
+            {
+                output_hex = evmc::hex(evmc::bytes_view{result.output_data, result.output_size});
+            }
+
+            spdlog::error(std::format("Failed to deploy contract: {}, error: {} {}", result.status_code, error.kind, output_hex));
             co_return std::unexpected(error);
         }
 

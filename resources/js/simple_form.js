@@ -10,8 +10,8 @@ export async function getTransformation() {
     const name = document.getElementById('in_transformationName').value.trim();
     const address = document.getElementById('GET_transformationAddress').value.trim();
 
-    const responseCodeDiv = document.getElementById('GET_transformationResponseCode');
-    const responseBodyDiv = document.getElementById('GET_transformationResponseBody');
+    const responseCodeDiv = document.getElementById('transformationResponseCode');
+    const responseBodyDiv = document.getElementById('transformationResponseBody');
 
     if (!name) {
         alert("Transformation name is required.");
@@ -32,6 +32,7 @@ export async function getTransformation() {
 }
 
 export function updateTransformationPreview() {
+    syncTransformationFormAvailability();
     const name = document.getElementById('in_transformationName').value.trim();
     const sol_src = document.getElementById('POST_transformationCode').value.trim();
     const obj = { name, sol_src };
@@ -59,8 +60,8 @@ export async function sendStructuredTransformation() {
     const name = document.getElementById('in_transformationName').value.trim();
     const sol_src = document.getElementById('POST_transformationCode').value.trim();
 
-    const responseCodeDiv = document.getElementById('POST_transformationResponseCode');
-    const responseBodyDiv = document.getElementById('POST_transformationResponseBody');
+    const responseCodeDiv = document.getElementById('transformationResponseCode');
+    const responseBodyDiv = document.getElementById('transformationResponseBody');
 
     if (!name) {
         alert("Transformation name is required.");
@@ -91,8 +92,8 @@ export async function getCondition() {
     const name = document.getElementById('in_conditionName').value.trim();
     const address = document.getElementById('GET_conditionAddress').value.trim();
 
-    const responseCodeDiv = document.getElementById('GET_conditionResponseCode');
-    const responseBodyDiv = document.getElementById('GET_conditionResponseBody');
+    const responseCodeDiv = document.getElementById('conditionResponseCode');
+    const responseBodyDiv = document.getElementById('conditionResponseBody');
 
     if (!name) {
         alert("Condition name is required.");
@@ -113,6 +114,7 @@ export async function getCondition() {
 }
 
 export function updateConditionPreview() {
+    syncConditionFormAvailability();
     const name = document.getElementById('in_conditionName').value.trim();
     const sol_src = document.getElementById('POST_conditionCode').value.trim();
     const obj = { name, sol_src };
@@ -140,8 +142,8 @@ export async function sendStructuredCondition() {
     const name = document.getElementById('in_conditionName').value.trim();
     const sol_src = document.getElementById('POST_conditionCode').value.trim();
 
-    const responseCodeDiv = document.getElementById('POST_conditionResponseCode');
-    const responseBodyDiv = document.getElementById('POST_conditionResponseBody');
+    const responseCodeDiv = document.getElementById('conditionResponseCode');
+    const responseBodyDiv = document.getElementById('conditionResponseBody');
 
     if (!name) {
         alert("Condition name is required.");
@@ -181,6 +183,256 @@ const connectorDefinitionCache = new Map();
 const connectorBindingPointCache = new Map();
 const connectorBindingRefreshTimers = new WeakMap();
 const connectorBindingRefreshTokens = new WeakMap();
+let disabledFieldTooltipElement = null;
+let disabledFieldTooltipInitialized = false;
+let disabledFieldTooltipTarget = null;
+
+function clearConnectorBindingCaches() {
+    connectorDefinitionCache.clear();
+    connectorBindingPointCache.clear();
+}
+
+function hideDisabledFieldTooltip() {
+    if (!disabledFieldTooltipElement) {
+        return;
+    }
+
+    disabledFieldTooltipElement.classList.remove('is-visible');
+    disabledFieldTooltipTarget = null;
+}
+
+function positionDisabledFieldTooltip(clientX, clientY) {
+    if (!disabledFieldTooltipElement) {
+        return;
+    }
+
+    const offset = 14;
+    const maxX = window.innerWidth - disabledFieldTooltipElement.offsetWidth - 12;
+    const maxY = window.innerHeight - disabledFieldTooltipElement.offsetHeight - 12;
+    const left = Math.max(12, Math.min(clientX + offset, maxX));
+    const top = Math.max(12, Math.min(clientY + offset, maxY));
+
+    disabledFieldTooltipElement.style.left = `${left}px`;
+    disabledFieldTooltipElement.style.top = `${top}px`;
+}
+
+function showDisabledFieldTooltip(control, clientX, clientY) {
+    if (!disabledFieldTooltipElement || !control) {
+        return;
+    }
+
+    const reason = control.getAttribute('data-disabled-reason');
+    if (!reason) {
+        hideDisabledFieldTooltip();
+        return;
+    }
+
+    if (disabledFieldTooltipTarget !== control || disabledFieldTooltipElement.textContent !== reason) {
+        disabledFieldTooltipElement.textContent = reason;
+        disabledFieldTooltipTarget = control;
+    }
+
+    disabledFieldTooltipElement.classList.add('is-visible');
+    positionDisabledFieldTooltip(clientX, clientY);
+}
+
+function resolveDisabledReasonTarget(eventTarget) {
+    if (!(eventTarget instanceof Element)) {
+        return null;
+    }
+
+    const target = eventTarget.closest('[data-disabled-reason]');
+    if (!target) {
+        return null;
+    }
+
+    const disabled = (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLSelectElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLButtonElement
+    ) && target.disabled;
+
+    return disabled ? target : null;
+}
+
+function ensureDisabledFieldTooltip() {
+    if (disabledFieldTooltipInitialized || typeof document === 'undefined') {
+        return;
+    }
+
+    disabledFieldTooltipInitialized = true;
+
+    const tooltipElement = document.createElement('div');
+    tooltipElement.className = 'disabled-field-tooltip';
+    document.body.appendChild(tooltipElement);
+    disabledFieldTooltipElement = tooltipElement;
+
+    document.addEventListener('mousemove', (event) => {
+        const target = resolveDisabledReasonTarget(event.target);
+        if (!target) {
+            hideDisabledFieldTooltip();
+            return;
+        }
+
+        showDisabledFieldTooltip(target, event.clientX, event.clientY);
+    }, true);
+
+    document.addEventListener('scroll', hideDisabledFieldTooltip, true);
+    window.addEventListener('blur', hideDisabledFieldTooltip);
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            hideDisabledFieldTooltip();
+        }
+    });
+}
+
+function setControlAvailability(control, enabled, disabledReason) {
+    if (!control) {
+        return;
+    }
+
+    control.disabled = !enabled;
+    control.classList.toggle('is-disabled-control', !enabled);
+
+    if (enabled) {
+        control.removeAttribute('data-disabled-reason');
+        control.title = '';
+        if (disabledFieldTooltipTarget === control) {
+            hideDisabledFieldTooltip();
+        }
+        return;
+    }
+
+    const reason = typeof disabledReason === 'string' && disabledReason.trim().length > 0
+        ? disabledReason.trim()
+        : 'This field is disabled.';
+    control.setAttribute('data-disabled-reason', reason);
+    control.title = reason;
+}
+
+function syncTransformationFormAvailability() {
+    ensureDisabledFieldTooltip();
+
+    const nameInput = document.getElementById('in_transformationName');
+    const sendButton = document.getElementById('btn_sendStructuredTransformation');
+    const fetchButton = document.getElementById('btn_getTransformation');
+    if (!nameInput) {
+        return;
+    }
+
+    const hasName = nameInput.value.trim().length > 0;
+    setControlAvailability(sendButton, hasName, 'Fill transformation name first.');
+    setControlAvailability(fetchButton, hasName, 'Fill transformation name first.');
+}
+
+function syncConditionFormAvailability() {
+    ensureDisabledFieldTooltip();
+
+    const nameInput = document.getElementById('in_conditionName');
+    const sendButton = document.getElementById('btn_sendStructuredCondition');
+    const fetchButton = document.getElementById('btn_getCondition');
+    if (!nameInput) {
+        return;
+    }
+
+    const hasName = nameInput.value.trim().length > 0;
+    setControlAvailability(sendButton, hasName, 'Fill condition name first.');
+    setControlAvailability(fetchButton, hasName, 'Fill condition name first.');
+}
+
+export function updateExecuteActionAvailability() {
+    ensureDisabledFieldTooltip();
+
+    const nameInput = document.getElementById('executeName');
+    const particleCountInput = document.getElementById('executeN');
+    const fetchGraphButton = document.getElementById('btn_fetchBeforeExecute');
+    const executeButton = document.getElementById('btn_execute');
+    if (!nameInput || !executeButton) {
+        return;
+    }
+
+    const hasName = nameInput.value.trim().length > 0;
+    const hasParticleCount = Boolean(particleCountInput && particleCountInput.value.trim().length > 0);
+    setControlAvailability(fetchGraphButton, hasName, 'Fill connector name first.');
+    setControlAvailability(
+        executeButton,
+        hasName && hasParticleCount,
+        hasName ? 'Fill particle count first.' : 'Fill connector name first.'
+    );
+}
+
+function updateClearConnectorDimensionsAvailability() {
+    const clearButton = document.getElementById('btn_clearConnectorDimensions');
+    const dimensionsContainer = document.getElementById('connectorDimensionsContainer');
+    if (!clearButton || !dimensionsContainer) {
+        return;
+    }
+
+    const hasDimensions = dimensionsContainer.querySelector('.connector-dimension') !== null;
+    setControlAvailability(clearButton, hasDimensions, 'Add at least one dimension first.');
+}
+
+function updateConnectorConditionArgsAvailability() {
+    const conditionNameInput = document.getElementById('in_connectorConditionName');
+    const conditionArgsInput = document.getElementById('in_connectorConditionArgs');
+    if (!conditionNameInput || !conditionArgsInput) {
+        return;
+    }
+
+    const hasConditionName = conditionNameInput.value.trim().length > 0;
+    setControlAvailability(conditionArgsInput, hasConditionName, 'Fill condition name first.');
+}
+
+function updateBindingTargetAvailability(bindingElement) {
+    if (!bindingElement) {
+        return;
+    }
+
+    const slotInput = bindingElement.querySelector('.connector-binding-slot');
+    const targetInput = bindingElement.querySelector('.connector-binding-target');
+    if (!targetInput) {
+        return;
+    }
+
+    const hasSelectedSlot = Boolean(slotInput && slotInput.value.trim().length > 0);
+    setControlAvailability(targetInput, hasSelectedSlot, 'Select binding point id first.');
+}
+
+function updateTransformationArgsAvailability(transformationElement) {
+    if (!transformationElement) {
+        return;
+    }
+
+    const nameInput = transformationElement.querySelector('.connector-transformation-name');
+    const argsInput = transformationElement.querySelector('.connector-transformation-args');
+    if (!argsInput) {
+        return;
+    }
+
+    const hasName = Boolean(nameInput && nameInput.value.trim().length > 0);
+    setControlAvailability(argsInput, hasName, 'Fill transformation name first.');
+}
+
+function syncConnectorFormAvailability() {
+    ensureDisabledFieldTooltip();
+    updateClearConnectorDimensionsAvailability();
+    updateConnectorConditionArgsAvailability();
+    const connectorNameInput = document.getElementById('in_connectorName');
+    const connectorSendButton = document.getElementById('btn_sendStructuredConnector');
+    const connectorFetchButton = document.getElementById('btn_getConnector');
+    const hasConnectorName = Boolean(connectorNameInput && connectorNameInput.value.trim().length > 0);
+    setControlAvailability(connectorSendButton, hasConnectorName, 'Fill connector name first.');
+    setControlAvailability(connectorFetchButton, hasConnectorName, 'Fill connector name first.');
+
+    document
+        .querySelectorAll('.connector-bindings > .connector-binding')
+        .forEach((bindingElement) => updateBindingTargetAvailability(bindingElement));
+
+    document
+        .querySelectorAll('.connector-transformations > .connector-transformation')
+        .forEach((transformationElement) => updateTransformationArgsAvailability(transformationElement));
+}
 
 function normalizeConnectorName(value) {
     if (typeof value !== 'string') {
@@ -307,19 +559,39 @@ async function computeOpenBindingPointLabels(connectorName, visiting = new Set()
             }
 
             const childLabels = await computeOpenBindingPointLabels(dimension.composite, visiting, memo);
-            const staticBindings = new Set();
-            getSortedBindingEntries(dimension.bindings).forEach(({ slotId }) => {
-                if (slotId < childLabels.length && !staticBindings.has(slotId)) {
-                    staticBindings.add(slotId);
+            const boundTargetsByChildSlot = new Map();
+            getSortedBindingEntries(dimension.bindings).forEach(({ slotId, targetName }) => {
+                if (slotId >= childLabels.length) {
+                    throw new Error(
+                        `Connector '${resolvedName}' has out-of-range binding slot ${slotId} ` +
+                        `at dimension ${dimId} (child '${dimension.composite}' exports ${childLabels.length} slots)`
+                    );
                 }
+
+                if (boundTargetsByChildSlot.has(slotId)) {
+                    throw new Error(
+                        `Connector '${resolvedName}' has duplicate canonical binding slot ${slotId} ` +
+                        `at dimension ${dimId}`
+                    );
+                }
+
+                boundTargetsByChildSlot.set(slotId, targetName);
             });
 
+            // Export child slots in deterministic order.
+            // If a child slot is statically bound, expand it through the binding target's exported slots.
             for (let childSlotId = 0; childSlotId < childLabels.length; childSlotId++) {
-                if (staticBindings.has(childSlotId)) {
+                const childLabel = childLabels[childSlotId];
+                const boundTargetName = boundTargetsByChildSlot.get(childSlotId);
+                if (!boundTargetName) {
+                    labels.push(`${dimLabel}/${childLabel}`);
                     continue;
                 }
 
-                labels.push(`${dimLabel}/${childLabels[childSlotId]}`);
+                const boundTargetLabels = await computeOpenBindingPointLabels(boundTargetName, visiting, memo);
+                for (const targetLabel of boundTargetLabels) {
+                    labels.push(`${dimLabel}/${childLabel}/${targetLabel}`);
+                }
             }
         }
 
@@ -363,6 +635,62 @@ function setBindingPointStatus(dimensionElement, message) {
     statusElement.textContent = message;
 }
 
+function clearDimensionBindings(dimensionElement) {
+    const bindingsContainer = dimensionElement.querySelector('.connector-bindings');
+    if (!bindingsContainer) {
+        return false;
+    }
+
+    if (!bindingsContainer.querySelector('.connector-binding')) {
+        return false;
+    }
+
+    bindingsContainer.innerHTML = '';
+    return true;
+}
+
+function updateDimensionBindingAvailability(dimensionElement, { clearBindingsWhenScalar = false } = {}) {
+    const compositeInput = dimensionElement.querySelector('.connector-dimension-composite');
+    const compositeName = compositeInput ? compositeInput.value.trim() : '';
+    const hasComposite = compositeName.length > 0;
+
+    const addBindingButton = dimensionElement.querySelector('.connector-binding-add');
+    if (addBindingButton) {
+        setControlAvailability(
+            addBindingButton,
+            hasComposite,
+            'Fill composite connector name first.'
+        );
+    }
+
+    let clearedBindings = false;
+    if (!hasComposite) {
+        if (clearBindingsWhenScalar) {
+            clearedBindings = clearDimensionBindings(dimensionElement);
+        }
+
+        const slotSelects = dimensionElement.querySelectorAll('.connector-binding-slot');
+        slotSelects.forEach((slotSelect) => {
+            const preferredSlot = slotSelect.dataset.preferredSlot || slotSelect.value;
+            setBindingSlotSelectOptions(slotSelect, [], preferredSlot, 'Enter composite name first');
+            updateBindingTargetAvailability(slotSelect.closest('.connector-binding'));
+        });
+
+        setBindingPointStatus(
+            dimensionElement,
+            'Scalar dimension cannot define bindings. Set composite name to enable bindings.'
+        );
+    }
+
+    if (hasComposite) {
+        dimensionElement
+            .querySelectorAll('.connector-bindings > .connector-binding')
+            .forEach((bindingElement) => updateBindingTargetAvailability(bindingElement));
+    }
+
+    return { hasComposite, clearedBindings };
+}
+
 function setBindingSlotSelectOptions(slotSelect, options, selectedSlot = '', emptyLabel = 'Select binding point') {
     const normalizedSelectedSlot = typeof selectedSlot === 'string' ? selectedSlot.trim() : '';
 
@@ -394,7 +722,8 @@ function setBindingSlotSelectOptions(slotSelect, options, selectedSlot = '', emp
     }
 
     slotSelect.value = hasSelectedOption ? normalizedSelectedSlot : '';
-    slotSelect.disabled = options.length === 0 && !hasSelectedOption;
+    const shouldDisableSlot = options.length === 0 && !hasSelectedOption;
+    setControlAvailability(slotSelect, !shouldDisableSlot, emptyLabel);
 }
 
 function scheduleBindingPointRefresh(dimensionElement, immediate = false) {
@@ -421,7 +750,16 @@ async function refreshDimensionBindingPoints(dimensionElement) {
     const token = (connectorBindingRefreshTokens.get(dimensionElement) || 0) + 1;
     connectorBindingRefreshTokens.set(dimensionElement, token);
 
+    const { hasComposite } = updateDimensionBindingAvailability(dimensionElement, {
+        clearBindingsWhenScalar: true
+    });
+
     const slotSelects = Array.from(dimensionElement.querySelectorAll('.connector-binding-slot'));
+    if (!hasComposite) {
+        updateConnectorPreview();
+        return;
+    }
+
     if (slotSelects.length === 0) {
         setBindingPointStatus(dimensionElement, 'Binding points are loaded from selected composite.');
         return;
@@ -429,16 +767,6 @@ async function refreshDimensionBindingPoints(dimensionElement) {
 
     const compositeInput = dimensionElement.querySelector('.connector-dimension-composite');
     const compositeName = compositeInput ? compositeInput.value.trim() : '';
-
-    if (!compositeName) {
-        slotSelects.forEach((slotSelect) => {
-            const preferredSlot = slotSelect.dataset.preferredSlot || slotSelect.value;
-            setBindingSlotSelectOptions(slotSelect, [], preferredSlot, 'Enter composite name first');
-        });
-        setBindingPointStatus(dimensionElement, 'Set composite name to load binding points.');
-        updateConnectorPreview();
-        return;
-    }
 
     slotSelects.forEach((slotSelect) => {
         const preferredSlot = slotSelect.dataset.preferredSlot || slotSelect.value;
@@ -487,6 +815,7 @@ function parseConnectorDimensionsFromForm() {
     const dimensions = [];
     document.querySelectorAll('.connector-dimension').forEach((dimensionElement) => {
         const compositeInput = dimensionElement.querySelector('.connector-dimension-composite');
+        const compositeName = compositeInput ? compositeInput.value.trim() : '';
         const bindings = {};
         dimensionElement.querySelectorAll('.connector-bindings > .connector-binding').forEach((bindingElement) => {
             const slotInput = bindingElement.querySelector('.connector-binding-slot');
@@ -517,8 +846,8 @@ function parseConnectorDimensionsFromForm() {
             transformations.push({ name: transformationName, args: transformationArgs });
         });
         dimensions.push({
-            composite: compositeInput ? compositeInput.value.trim() : '',
-            bindings,
+            composite: compositeName,
+            bindings: compositeName ? bindings : {},
             transformations
         });
     });
@@ -542,9 +871,6 @@ function addConnectorTransformation(addButton, transformation = {}) {
     const transformationElement = document.createElement('div');
     transformationElement.className = 'connector-transformation';
 
-    const separator = document.createElement('hr');
-    transformationElement.appendChild(separator);
-
     const row = document.createElement('div');
     row.className = 'transformation-row';
 
@@ -557,7 +883,10 @@ function addConnectorTransformation(addButton, transformation = {}) {
     nameInput.className = 'connector-transformation-name';
     nameInput.placeholder = 'add';
     nameInput.value = typeof transformation.name === 'string' ? transformation.name : '';
-    nameInput.addEventListener('input', updateConnectorPreview);
+    nameInput.addEventListener('input', () => {
+        updateTransformationArgsAvailability(transformationElement);
+        updateConnectorPreview();
+    });
     nameColumn.appendChild(nameLabel);
     nameColumn.appendChild(nameInput);
 
@@ -576,8 +905,20 @@ function addConnectorTransformation(addButton, transformation = {}) {
 
     row.appendChild(nameColumn);
     row.appendChild(argsColumn);
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'connector-transformation-remove';
+    removeButton.textContent = 'Remove';
+    removeButton.addEventListener('click', () => {
+        transformationElement.remove();
+        updateConnectorPreview();
+    });
+    row.appendChild(removeButton);
+
     transformationElement.appendChild(row);
     container.appendChild(transformationElement);
+    updateTransformationArgsAvailability(transformationElement);
     updateConnectorPreview();
 }
 
@@ -589,6 +930,13 @@ function addConnectorBinding(addButton, binding = {}) {
     }
     const dimensionElement = addButton.closest('.connector-dimension');
     if (!dimensionElement) {
+        return;
+    }
+
+    const compositeInput = dimensionElement.querySelector('.connector-dimension-composite');
+    if (!compositeInput || !compositeInput.value.trim()) {
+        updateDimensionBindingAvailability(dimensionElement, { clearBindingsWhenScalar: true });
+        updateConnectorPreview();
         return;
     }
 
@@ -609,7 +957,10 @@ function addConnectorBinding(addButton, binding = {}) {
         slotInput.dataset.preferredSlot = initialSlot;
     }
     setBindingSlotSelectOptions(slotInput, [], initialSlot, 'Enter composite name first');
-    slotInput.addEventListener('change', updateConnectorPreview);
+    slotInput.addEventListener('change', () => {
+        updateBindingTargetAvailability(bindingElement);
+        updateConnectorPreview();
+    });
     slotColumn.appendChild(slotLabel);
     slotColumn.appendChild(slotInput);
 
@@ -641,6 +992,7 @@ function addConnectorBinding(addButton, binding = {}) {
     bindingElement.appendChild(row);
 
     container.appendChild(bindingElement);
+    updateBindingTargetAvailability(bindingElement);
     scheduleBindingPointRefresh(dimensionElement, true);
     updateConnectorPreview();
 }
@@ -659,6 +1011,23 @@ function appendConnectorDimension(dimension = {}) {
     const legend = document.createElement('legend');
     fieldset.appendChild(legend);
 
+    const removeDimensionButton = document.createElement('button');
+    removeDimensionButton.type = 'button';
+    removeDimensionButton.className = 'connector-dimension-remove';
+    removeDimensionButton.textContent = 'Remove dimension';
+    removeDimensionButton.addEventListener('click', () => {
+        const pendingRefreshTimeout = connectorBindingRefreshTimers.get(dimensionElement);
+        if (pendingRefreshTimeout) {
+            clearTimeout(pendingRefreshTimeout);
+            connectorBindingRefreshTimers.delete(dimensionElement);
+        }
+        connectorBindingRefreshTokens.delete(dimensionElement);
+
+        dimensionElement.remove();
+        renumberConnectorDimensions();
+        updateConnectorPreview();
+    });
+
     const compositeLabel = document.createElement('label');
     compositeLabel.textContent = 'Composite connector name';
     const compositeInput = document.createElement('input');
@@ -667,25 +1036,40 @@ function appendConnectorDimension(dimension = {}) {
     compositeInput.placeholder = 'leave empty for scalar';
     compositeInput.value = typeof dimension.composite === 'string' ? dimension.composite : '';
     compositeInput.addEventListener('input', () => {
+        const { clearedBindings } = updateDimensionBindingAvailability(dimensionElement, {
+            clearBindingsWhenScalar: true
+        });
         updateConnectorPreview();
+        if (clearedBindings) {
+            setBindingPointStatus(
+                dimensionElement,
+                'Scalar dimension cannot define bindings. Existing bindings were cleared.'
+            );
+        }
         scheduleBindingPointRefresh(dimensionElement);
     });
-    fieldset.appendChild(compositeLabel);
-    fieldset.appendChild(compositeInput);
+    const compositeRow = document.createElement('div');
+    compositeRow.className = 'connector-dimension-composite-row';
+    compositeRow.appendChild(compositeInput);
 
-    const bindingsContainer = document.createElement('div');
-    bindingsContainer.className = 'connector-bindings';
-    fieldset.appendChild(bindingsContainer);
+    const addBindingButton = document.createElement('button');
+    addBindingButton.type = 'button';
+    addBindingButton.className = 'connector-binding-add';
+    addBindingButton.textContent = 'Add binding';
+    addBindingButton.addEventListener('click', () => addConnectorBinding(addBindingButton));
+    compositeRow.appendChild(removeDimensionButton);
+
+    fieldset.appendChild(compositeLabel);
+    fieldset.appendChild(compositeRow);
 
     const bindingsStatus = document.createElement('div');
     bindingsStatus.className = 'connector-binding-status muted-note';
     bindingsStatus.textContent = 'Set composite name to load binding points.';
     fieldset.appendChild(bindingsStatus);
 
-    const addBindingButton = document.createElement('button');
-    addBindingButton.type = 'button';
-    addBindingButton.textContent = 'Add binding';
-    addBindingButton.addEventListener('click', () => addConnectorBinding(addBindingButton));
+    const bindingsContainer = document.createElement('div');
+    bindingsContainer.className = 'connector-bindings';
+    fieldset.appendChild(bindingsContainer);
     fieldset.appendChild(addBindingButton);
 
     const transformationsContainer = document.createElement('div');
@@ -701,7 +1085,14 @@ function appendConnectorDimension(dimension = {}) {
     dimensionElement.appendChild(fieldset);
     container.appendChild(dimensionElement);
 
-    if (dimension.bindings && typeof dimension.bindings === 'object' && !Array.isArray(dimension.bindings)) {
+    updateDimensionBindingAvailability(dimensionElement, { clearBindingsWhenScalar: true });
+
+    if (
+        compositeInput.value.trim() &&
+        dimension.bindings &&
+        typeof dimension.bindings === 'object' &&
+        !Array.isArray(dimension.bindings)
+    ) {
         Object.entries(dimension.bindings).forEach(([slot, target]) => {
             addConnectorBinding(addBindingButton, {
                 slot,
@@ -738,12 +1129,15 @@ function constructStructuredConnector() {
     const name = document.getElementById('in_connectorName').value.trim();
     const dimensions = parseConnectorDimensionsFromForm();
     const condition_name = document.getElementById('in_connectorConditionName').value.trim();
-    const condition_args = parseIntList(document.getElementById('in_connectorConditionArgs').value);
+    const condition_args = condition_name
+        ? parseIntList(document.getElementById('in_connectorConditionArgs').value)
+        : [];
 
     return JSON.stringify({ name, dimensions, condition_name, condition_args }, null, 2);
 }
 
 export function updateConnectorPreview() {
+    syncConnectorFormAvailability();
     const json = constructStructuredConnector();
     document.getElementById('POST_connectorRequestBody').textContent = json;
 }
@@ -773,8 +1167,8 @@ export function populateStructuredConnector(jsonOrObject) {
 export async function sendStructuredConnector() {
     const requestBody = constructStructuredConnector();
 
-    const responseCodeDiv = document.getElementById('POST_connectorResponseCode');
-    const responseBodyDiv = document.getElementById('POST_connectorResponseBody');
+    const responseCodeDiv = document.getElementById('connectorResponseCode');
+    const responseBodyDiv = document.getElementById('connectorResponseBody');
 
     try {
         const res = await requestWithLogin(apiUrl('/connector'), {
@@ -785,6 +1179,10 @@ export async function sendStructuredConnector() {
         const text = await res.text();
         responseCodeDiv.textContent = res.status;
         responseBodyDiv.textContent = formatJSON(text);
+        if (res.ok) {
+            // Connector versions can change under the same name, which changes exported binding points.
+            clearConnectorBindingCaches();
+        }
     } catch (error) {
         responseCodeDiv.textContent = 'Error';
         responseBodyDiv.textContent = error.message;
@@ -795,8 +1193,8 @@ export async function getConnector() {
     const name = document.getElementById('in_connectorName').value.trim();
     const address = document.getElementById('GET_connectorAddress').value.trim();
 
-    const responseCodeDiv = document.getElementById('GET_connectorResponseCode');
-    const responseBodyDiv = document.getElementById('GET_connectorResponseBody');
+    const responseCodeDiv = document.getElementById('connectorResponseCode');
+    const responseBodyDiv = document.getElementById('connectorResponseBody');
 
     if (!name) {
         alert("Connector name is required.");
@@ -840,15 +1238,80 @@ let totalAccountTransformationPages = 0;
 let totalAccountConditionPages = 0;
 let totalAccountConnectorPages = 0;
 
-export function nextPage()
-{
+function getAccountTotalPages() {
     const maxPages = Math.max(
         totalAccountTransformationPages,
         totalAccountConditionPages,
         totalAccountConnectorPages
     );
+    return Math.max(1, maxPages);
+}
 
-    if(currentAccountPage < maxPages - 1)
+function updateAccountPaginationControls(totalPages = getAccountTotalPages()) {
+    const pageLabel = document.getElementById('accountPageLabel');
+    const prevButton = document.getElementById('btn_prevAccountPage');
+    const nextButton = document.getElementById('btn_nextAccountPage');
+    if (!pageLabel || !prevButton || !nextButton) {
+        return;
+    }
+
+    const safeTotalPages = Number.isInteger(totalPages) && totalPages > 0 ? totalPages : 1;
+    if (currentAccountPage < 0) {
+        currentAccountPage = 0;
+    }
+    if (currentAccountPage > safeTotalPages - 1) {
+        currentAccountPage = safeTotalPages - 1;
+    }
+
+    pageLabel.textContent = `Page ${currentAccountPage + 1} of ${safeTotalPages}`;
+    prevButton.disabled = currentAccountPage === 0;
+    nextButton.disabled = currentAccountPage >= safeTotalPages - 1;
+}
+
+function updateAccountFetchAvailability() {
+    const addressInput = document.getElementById('accountAddressInput');
+    const fetchButton = document.getElementById('btn_fetchAccountData');
+    if (!addressInput || !fetchButton) {
+        return;
+    }
+
+    ensureDisabledFieldTooltip();
+    const hasAddress = addressInput.value.trim().length > 0;
+    setControlAvailability(fetchButton, hasAddress, 'Fill account address first.');
+}
+
+function initializeAccountControls() {
+    const addressInput = document.getElementById('accountAddressInput');
+    if (addressInput) {
+        addressInput.addEventListener('input', () => {
+            const hasAddress = addressInput.value.trim().length > 0;
+            updateAccountFetchAvailability();
+            if (!hasAddress) {
+                currentAccountPage = 0;
+                totalAccountTransformationPages = 0;
+                totalAccountConditionPages = 0;
+                totalAccountConnectorPages = 0;
+                updateAccountPaginationControls(1);
+            }
+        });
+    }
+
+    updateAccountFetchAvailability();
+    updateAccountPaginationControls(1);
+}
+
+function initializeEntityActionControls() {
+    updateExecuteActionAvailability();
+    syncTransformationFormAvailability();
+    syncConditionFormAvailability();
+    syncConnectorFormAvailability();
+}
+
+export function nextPage()
+{
+    const totalPages = getAccountTotalPages();
+
+    if(currentAccountPage < totalPages - 1)
     {
         currentAccountPage += 1;
         fetchAccountResources();
@@ -868,16 +1331,30 @@ export async function fetchAccountResources() {
     const transformationsDiv = document.getElementById('accountTransformationsList');
     const conditionsDiv = document.getElementById('accountConditionsList');
     const connectorsDiv = document.getElementById('accountConnectorsList');
+    const prevButton = document.getElementById('btn_prevAccountPage');
+    const nextButton = document.getElementById('btn_nextAccountPage');
 
     transformationsDiv.textContent = 'Loading...';
     conditionsDiv.textContent = 'Loading...';
     connectorsDiv.textContent = 'Loading...';
+    updateAccountFetchAvailability();
+    if (prevButton) {
+        prevButton.disabled = true;
+    }
+    if (nextButton) {
+        nextButton.disabled = true;
+    }
 
     if (!address) {
         alert("Address is required.");
         transformationsDiv.textContent = '';
         conditionsDiv.textContent = '';
         connectorsDiv.textContent = '';
+        currentAccountPage = 0;
+        totalAccountTransformationPages = 0;
+        totalAccountConditionPages = 0;
+        totalAccountConnectorPages = 0;
+        updateAccountPaginationControls(1);
         return;
     }
 
@@ -906,28 +1383,22 @@ export async function fetchAccountResources() {
         totalAccountConditionPages = Math.ceil((data.total_conditions ?? 0) / accountPageSize);
         totalAccountConnectorPages = Math.ceil((data.total_connectors ?? 0) / accountPageSize);
 
-        // Show page number as: Page X of Y
-        const maxPages = Math.max(
-            totalAccountTransformationPages,
-            totalAccountConditionPages,
-            totalAccountConnectorPages
-        );
-        const totalPages = Math.max(1, maxPages);
-
-        document.getElementById('accountPageLabel').textContent =
-            `Page ${Math.min(currentAccountPage + 1, totalPages)} of ${totalPages}`;
-
-        // Disable next if on last page
-        const isLastPage = currentAccountPage >= totalPages - 1;
-        document.getElementById('btn_prevAccountPage').disabled = currentAccountPage === 0;
-        document.getElementById('btn_nextAccountPage').disabled = isLastPage;
+        updateAccountPaginationControls(getAccountTotalPages());
 
     } catch (err) {
         transformationsDiv.textContent = '❌ Failed to fetch account data';
         conditionsDiv.textContent = '';
         connectorsDiv.textContent = '';
+        currentAccountPage = 0;
+        totalAccountTransformationPages = 0;
+        totalAccountConditionPages = 0;
+        totalAccountConnectorPages = 0;
+        updateAccountPaginationControls(1);
     }
 }
+
+initializeEntityActionControls();
+initializeAccountControls();
 
 // --------------------------------------------------------------------------
 // Login

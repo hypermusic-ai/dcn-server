@@ -290,10 +290,13 @@ namespace dcn::registry
                         return std::nullopt;
                     }
 
-                    if(!computeOpenSlots(binding_target))
+                    const auto target_open_slots_opt = computeOpenSlots(binding_target);
+                    if(!target_open_slots_opt)
                     {
                         return std::nullopt;
                     }
+
+                    open_slots += static_cast<std::uint64_t>(*target_open_slots_opt);
                 }
 
                 open_slots -= static_cast<std::uint64_t>(bound_slot_ids.size());

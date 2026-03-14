@@ -80,6 +80,7 @@ struct std::formatter<dcn::pt::PTDeployError::Kind> : std::formatter<std::string
             case dcn::pt::PTDeployError::Kind::CONDITION_ALREADY_REGISTERED : return formatter<string>::format("Condition already registered", ctx);
             case dcn::pt::PTDeployError::Kind::CONDITION_ARGUMENTS_MISMATCH : return formatter<string>::format("Condition arguments mismatch", ctx);
             case dcn::pt::PTDeployError::Kind::CONDITION_MISSING : return formatter<string>::format("Condition missing", ctx);
+            case dcn::pt::PTDeployError::Kind::REGISTRY_ERROR : return formatter<string>::format("Registry error", ctx);
 
             default:  return formatter<string>::format("Unknown", ctx);
         }

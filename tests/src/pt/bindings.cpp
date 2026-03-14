@@ -517,6 +517,59 @@ TEST_F(UnitTest, PT_Bindings_RegistryAcceptsDeepBindingToNestedSlot)
     EXPECT_TRUE(addConnectorRecord(io_context, registry, 0x15, std::move(song)));
 }
 
+TEST_F(UnitTest, PT_Bindings_RegistryAcceptsBindingToPropagatedStaticChildSlot)
+{
+    asio::io_context io_context;
+    registry::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
+
+    ASSERT_TRUE(addIdentityTransformation(io_context, registry, owner_hex, 0x01));
+
+    ASSERT_TRUE(addScalarConnector(io_context, registry, "BASE2", owner_hex, 0x11, 2));
+    ASSERT_TRUE(addScalarConnector(io_context, registry, "TARGET2", owner_hex, 0x12, 2));
+    ASSERT_TRUE(addScalarConnector(io_context, registry, "TIME", owner_hex, 0x13, 1));
+
+    ConnectorRecord test = makeConnectorRecord("TEST", owner_hex);
+    addDimension(test, "BASE2", {{"0", "TARGET2"}});
+    ASSERT_TRUE(addConnectorRecord(io_context, registry, 0x14, std::move(test)));
+
+    ConnectorRecord test2 = makeConnectorRecord("TEST2", owner_hex);
+    addDimension(test2, "TEST", {{"2", "TIME"}});
+    EXPECT_TRUE(addConnectorRecord(io_context, registry, 0x15, std::move(test2)));
+}
+
+TEST_F(UnitTest, PT_Bindings_RegistryComputesNestedPropagatedSlotsAcrossMixedStaticBindings)
+{
+    asio::io_context io_context;
+    registry::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
+
+    ASSERT_TRUE(addIdentityTransformation(io_context, registry, owner_hex, 0x01));
+
+    ASSERT_TRUE(addScalarConnector(io_context, registry, "BASE3", owner_hex, 0x11, 3));
+    ASSERT_TRUE(addScalarConnector(io_context, registry, "TIME", owner_hex, 0x12, 1));
+    ASSERT_TRUE(addScalarConnector(io_context, registry, "ALT", owner_hex, 0x13, 1));
+    ASSERT_TRUE(addScalarConnector(io_context, registry, "PITCH2", owner_hex, 0x14, 2));
+
+    ConnectorRecord child = makeConnectorRecord("CHILD", owner_hex);
+    addDimension(child, "BASE3", {{"0", "TIME"}, {"2", "ALT"}});
+    ASSERT_TRUE(addConnectorRecord(io_context, registry, 0x15, std::move(child)));
+
+    ConnectorRecord mid = makeConnectorRecord("MID", owner_hex);
+    addDimension(mid, "CHILD", {{"1", "PITCH2"}});
+    ASSERT_TRUE(addConnectorRecord(io_context, registry, 0x16, std::move(mid)));
+
+    ConnectorRecord root_valid = makeConnectorRecord("ROOT_VALID", owner_hex);
+    addDimension(root_valid, "MID", {{"3", "TIME"}});
+    EXPECT_TRUE(addConnectorRecord(io_context, registry, 0x17, std::move(root_valid)));
+
+    ConnectorRecord root_invalid = makeConnectorRecord("ROOT_INVALID", owner_hex);
+    addDimension(root_invalid, "MID", {{"4", "TIME"}});
+    EXPECT_FALSE(addConnectorRecord(io_context, registry, 0x18, std::move(root_invalid)));
+}
+
 TEST_F(UnitTest, PT_Bindings_RegistryRejectsBindingsOnScalarDimension)
 {
     asio::io_context io_context;
@@ -621,7 +674,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryRejectsCycleThroughBindingTarget)
     EXPECT_FALSE(addConnectorRecord(io_context, registry, 0x13, std::move(a_v2)));
 }
 
-TEST_F(UnitTest, PT_Bindings_RegistryRejectsParentOverrideOfChildStaticBinding)
+TEST_F(UnitTest, PT_Bindings_RegistryAllowsParentOverrideOfChildStaticBinding)
 {
     asio::io_context io_context;
     registry::Registry registry(io_context);
@@ -636,10 +689,10 @@ TEST_F(UnitTest, PT_Bindings_RegistryRejectsParentOverrideOfChildStaticBinding)
     addDimension(child, "LEAF", {{"0", "TIME"}});
     ASSERT_TRUE(addConnectorRecord(io_context, registry, 0x13, std::move(child)));
 
-    ConnectorRecord invalid_parent = makeConnectorRecord("PARENT", owner_hex);
-    addDimension(invalid_parent, "CHILD", {{"0", "TIME"}});
+    ConnectorRecord parent = makeConnectorRecord("PARENT", owner_hex);
+    addDimension(parent, "CHILD", {{"0", "TIME"}});
 
-    EXPECT_FALSE(addConnectorRecord(io_context, registry, 0x14, std::move(invalid_parent)));
+    EXPECT_TRUE(addConnectorRecord(io_context, registry, 0x14, std::move(parent)));
 }
 
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingRemainingUnboundChildSlots)
@@ -709,7 +762,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAllowsCompositeWithStaticBindingsReusedAcro
     EXPECT_TRUE(addConnectorRecord(io_context, registry, 0x15, std::move(parent)));
 }
 
-TEST_F(UnitTest, PT_Bindings_RegistryRejectsOutOfRangeWhenChildAlreadyHasStaticBindings)
+TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingToPropagatedSlotWhenChildHasStaticBindings)
 {
     asio::io_context io_context;
     registry::Registry registry(io_context);
@@ -724,9 +777,9 @@ TEST_F(UnitTest, PT_Bindings_RegistryRejectsOutOfRangeWhenChildAlreadyHasStaticB
     addDimension(child, "BASE", {{"0", "TIME"}});
     ASSERT_TRUE(addConnectorRecord(io_context, registry, 0x13, std::move(child)));
 
-    ConnectorRecord invalid_parent = makeConnectorRecord("PARENT", owner_hex);
-    addDimension(invalid_parent, "CHILD", {{"1", "TIME"}});
-    EXPECT_FALSE(addConnectorRecord(io_context, registry, 0x14, std::move(invalid_parent)));
+    ConnectorRecord parent = makeConnectorRecord("PARENT", owner_hex);
+    addDimension(parent, "CHILD", {{"1", "TIME"}});
+    EXPECT_TRUE(addConnectorRecord(io_context, registry, 0x14, std::move(parent)));
 }
 
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingTargetWithoutOpenSlots)
@@ -779,7 +832,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingAllRemainingSlotsAfterChildSta
     EXPECT_TRUE(addConnectorRecord(io_context, registry, 0x15, std::move(parent)));
 }
 
-TEST_F(UnitTest, PT_Bindings_RegistryRejectsCompactedSlotOutOfRangeAfterMultipleChildStaticBindings)
+TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingToMiddlePropagatedSlotAfterMultipleChildStaticBindings)
 {
     asio::io_context io_context;
     registry::Registry registry(io_context);
@@ -795,9 +848,9 @@ TEST_F(UnitTest, PT_Bindings_RegistryRejectsCompactedSlotOutOfRangeAfterMultiple
     addDimension(child, "BASE3", {{"0", "TIME"}, {"2", "ALT"}});
     ASSERT_TRUE(addConnectorRecord(io_context, registry, 0x14, std::move(child)));
 
-    ConnectorRecord invalid_parent = makeConnectorRecord("PARENT", owner_hex);
-    addDimension(invalid_parent, "CHILD", {{"1", "TIME"}});
-    EXPECT_FALSE(addConnectorRecord(io_context, registry, 0x15, std::move(invalid_parent)));
+    ConnectorRecord parent = makeConnectorRecord("PARENT", owner_hex);
+    addDimension(parent, "CHILD", {{"1", "TIME"}});
+    EXPECT_TRUE(addConnectorRecord(io_context, registry, 0x15, std::move(parent)));
 }
 
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsSameCompactedSlotIdOnDifferentDimensions)
@@ -918,6 +971,147 @@ TEST_F(UnitTest, PT_Bindings_RunnerResolvesDeepGrandchildBinding)
     expectIdentityData(particles[0], 4);
     expectIdentityData(particles[1], 4);
     expectIdentityData(particles[2], 4);
+}
+
+TEST_F(UnitTest, PT_Bindings_RunnerResolvesBindingOnPropagatedStaticChildSlot)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const BindingStorageScope storage_scope(makeBindingStoragePath());
+    const std::filesystem::path & storage_path = storage_scope.storage_path;
+    ASSERT_TRUE(prepareBindingStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    registry::Registry registry(io_context);
+    const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
+    const std::string owner_hex = evmc::hex(owner);
+
+    runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
+    runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
+
+    const auto tx_deploy = deployIdentityTransformation(io_context, evm_instance, registry, owner_hex, storage_path);
+    ASSERT_TRUE(tx_deploy.has_value()) << tx_deploy.error();
+
+    ConnectorRecord base2 = makeConnectorRecord("BASE2", owner_hex);
+    addDimension(base2, "");
+    addDimension(base2, "");
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(base2), storage_path).has_value());
+
+    ConnectorRecord target2 = makeConnectorRecord("TARGET2", owner_hex);
+    addDimension(target2, "");
+    addDimension(target2, "");
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(target2), storage_path).has_value());
+
+    ConnectorRecord pitch = makeConnectorRecord("PITCH", owner_hex);
+    addDimension(pitch, "");
+    addDimension(pitch, "");
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(pitch), storage_path).has_value());
+
+    ConnectorRecord test = makeConnectorRecord("TEST", owner_hex);
+    addDimension(test, "BASE2", {{"0", "TARGET2"}});
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(test), storage_path).has_value());
+
+    ConnectorRecord test2 = makeConnectorRecord("TEST2", owner_hex);
+    addDimension(test2, "TEST", {{"2", "PITCH"}});
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(test2), storage_path).has_value());
+
+    const auto particles_result = runGeneration(io_context, evm_instance, owner, "TEST2", 4);
+    ASSERT_TRUE(particles_result.has_value()) << particles_result.error();
+
+    const auto & particles = particles_result.value();
+    ASSERT_EQ(particles.size(), 4u);
+
+    EXPECT_EQ(particles[0].path(), "/TEST2:0/TEST:0/BASE2:0/TARGET2:0");
+    EXPECT_EQ(particles[1].path(), "/TEST2:0/TEST:0/BASE2:0/TARGET2:1");
+    EXPECT_EQ(particles[2].path(), "/TEST2:0/TEST:0/BASE2:1/PITCH:0");
+    EXPECT_EQ(particles[3].path(), "/TEST2:0/TEST:0/BASE2:1/PITCH:1");
+
+    expectIdentityData(particles[0], 4);
+    expectIdentityData(particles[1], 4);
+    expectIdentityData(particles[2], 4);
+    expectIdentityData(particles[3], 4);
+}
+
+TEST_F(UnitTest, PT_Bindings_RunnerResolvesNestedPropagatedBindingAcrossTwoLevels)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const BindingStorageScope storage_scope(makeBindingStoragePath());
+    const std::filesystem::path & storage_path = storage_scope.storage_path;
+    ASSERT_TRUE(prepareBindingStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    registry::Registry registry(io_context);
+    const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
+    const std::string owner_hex = evmc::hex(owner);
+
+    runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
+    runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
+
+    const auto tx_deploy = deployIdentityTransformation(io_context, evm_instance, registry, owner_hex, storage_path);
+    ASSERT_TRUE(tx_deploy.has_value()) << tx_deploy.error();
+
+    ConnectorRecord time = makeConnectorRecord("TIME", owner_hex);
+    addDimension(time, "");
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(time), storage_path).has_value());
+
+    ConnectorRecord alt = makeConnectorRecord("ALT", owner_hex);
+    addDimension(alt, "");
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(alt), storage_path).has_value());
+
+    ConnectorRecord pitch2 = makeConnectorRecord("PITCH2", owner_hex);
+    addDimension(pitch2, "");
+    addDimension(pitch2, "");
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(pitch2), storage_path).has_value());
+
+    ConnectorRecord extra2 = makeConnectorRecord("EXTRA2", owner_hex);
+    addDimension(extra2, "");
+    addDimension(extra2, "");
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(extra2), storage_path).has_value());
+
+    ConnectorRecord base3 = makeConnectorRecord("BASE3", owner_hex);
+    addDimension(base3, "");
+    addDimension(base3, "");
+    addDimension(base3, "");
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(base3), storage_path).has_value());
+
+    ConnectorRecord child = makeConnectorRecord("CHILD", owner_hex);
+    addDimension(child, "BASE3", {{"0", "TIME"}, {"2", "ALT"}});
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(child), storage_path).has_value());
+
+    ConnectorRecord mid = makeConnectorRecord("MID", owner_hex);
+    addDimension(mid, "CHILD", {{"1", "PITCH2"}});
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(mid), storage_path).has_value());
+
+    ConnectorRecord root = makeConnectorRecord("ROOT", owner_hex);
+    addDimension(root, "MID", {{"3", "EXTRA2"}});
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(root), storage_path).has_value());
+
+    const auto particles_result = runGeneration(io_context, evm_instance, owner, "ROOT", 4);
+    ASSERT_TRUE(particles_result.has_value()) << particles_result.error();
+
+    const auto & particles = particles_result.value();
+    ASSERT_EQ(particles.size(), 5u);
+
+    EXPECT_EQ(particles[0].path(), "/ROOT:0/MID:0/CHILD:0/BASE3:0/TIME:0");
+    EXPECT_EQ(particles[1].path(), "/ROOT:0/MID:0/CHILD:0/BASE3:1/PITCH2:0");
+    EXPECT_EQ(particles[2].path(), "/ROOT:0/MID:0/CHILD:0/BASE3:1/PITCH2:1");
+    EXPECT_EQ(particles[3].path(), "/ROOT:0/MID:0/CHILD:0/BASE3:2/EXTRA2:0");
+    EXPECT_EQ(particles[4].path(), "/ROOT:0/MID:0/CHILD:0/BASE3:2/EXTRA2:1");
+
+    expectIdentityData(particles[0], 4);
+    expectIdentityData(particles[1], 4);
+    expectIdentityData(particles[2], 4);
+    expectIdentityData(particles[3], 4);
+    expectIdentityData(particles[4], 4);
 }
 
 TEST_F(UnitTest, PT_Bindings_RunnerPreservesChildStaticBindingBeforeParentForwarding)

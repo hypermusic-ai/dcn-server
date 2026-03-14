@@ -86,6 +86,14 @@ namespace dcn
 
     parse::Result<std::string> constructConnectorSolidityCode(const Connector & connector)
     {
+        if(connector.dimensions_size() <= 0)
+        {
+            spdlog::error("Connector `{}` has no dimensions", connector.name());
+            return std::unexpected(parse::ParseError{
+                parse::ParseError::Kind::INVALID_VALUE,
+                std::format("Connector `{}` has no dimensions", connector.name())});
+        }
+
         std::string composite_dim_ids_code;
         std::string composite_names_code;
         std::string binding_dim_ids_code;
@@ -103,7 +111,28 @@ namespace dcn
         std::size_t total_bindings_count = 0;
         for(int dim_idx = 0; dim_idx < connector.dimensions_size(); ++dim_idx)
         {
-            total_bindings_count += static_cast<std::size_t>(connector.dimensions(dim_idx).bindings_size());
+            const Dimension & dimension = connector.dimensions(dim_idx);
+            total_bindings_count += static_cast<std::size_t>(dimension.bindings_size());
+
+            for(int tx_idx = 0; tx_idx < dimension.transformations_size(); ++tx_idx)
+            {
+                const TransformationDef & transformation = dimension.transformations(tx_idx);
+                if(transformation.name().empty())
+                {
+                    spdlog::error(
+                        "Connector `{}` has transformation with empty name at dimension {} index {}",
+                        connector.name(),
+                        dim_idx,
+                        tx_idx);
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        std::format(
+                            "Connector `{}` has transformation with empty name at dimension {} index {}",
+                            connector.name(),
+                            dim_idx,
+                            tx_idx)});
+                }
+            }
         }
 
         sorted_composites.reserve(static_cast<std::size_t>(connector.dimensions_size()));
