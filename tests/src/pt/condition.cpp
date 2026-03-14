@@ -110,10 +110,22 @@ TEST_F(UnitTest, ConditionRecord_ParseToJson_RoundTripAcrossParsers)
 TEST_F(UnitTest, Condition_ConstructSolidityCode_UsesConstructorPattern)
 {
     Condition condition = makeConditionSample();
-    std::string solidity = constructConditionSolidityCode(condition);
+    auto solidity_result = constructConditionSolidityCode(condition);
+    ASSERT_TRUE(solidity_result.has_value());
+    const std::string & solidity = *solidity_result;
 
     EXPECT_NE(solidity.find("constructor(address registryAddr)"), std::string::npos);
     EXPECT_NE(solidity.find("ConditionBase(registryAddr"), std::string::npos);
     EXPECT_EQ(solidity.find("function initialize(address registryAddr) external initializer"), std::string::npos);
     EXPECT_EQ(solidity.find("__ConditionBase_init"), std::string::npos);
+}
+
+TEST_F(UnitTest, Condition_ConstructSolidityCode_RejectsInvalidContractIdentifier)
+{
+    Condition condition = makeConditionSample();
+    condition.set_name("bad name");
+
+    const auto solidity_result = constructConditionSolidityCode(condition);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
 }

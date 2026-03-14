@@ -3,10 +3,11 @@
 #include "crypto.hpp"
 
 #include "transformation.hpp"
+#include "solidity_identifier.hpp"
 
 namespace dcn
 {
-    std::string constructTransformationSolidityCode(const Transformation & transformation)
+    parse::Result<std::string> constructTransformationSolidityCode(const Transformation & transformation)
     {
         /* ------------- EXAMPLE -------------
         // SPDX-License-Identifier: GPL-3.0
@@ -28,6 +29,14 @@ namespace dcn
         }
         */
 
+        if(!pt::isValidSolidityIdentifier(transformation.name()))
+        {
+            spdlog::error("Transformation `{}` has invalid Solidity identifier name", transformation.name());
+            return std::unexpected(parse::ParseError{
+                parse::ParseError::Kind::INVALID_VALUE,
+                std::format("Transformation `{}` has invalid Solidity identifier name", transformation.name())});
+        }
+
         std::regex used_args_pattern(R"(args\[(\d+)\])");
         std::uint32_t argc = 0;
 
@@ -41,14 +50,18 @@ namespace dcn
 
                 if (value > std::numeric_limits<std::uint32_t>::max()) {
                     spdlog::error("Value exceeds uint32_t range");
-                    return "";
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        "Transformation args index exceeds uint32_t range"});
                 }
                 argc = std::max(argc, static_cast<std::uint32_t>(value) + 1U);
             }
             catch(const std::exception& e)
             {
                 spdlog::error("Invalid argument index: {}", match[1].str());
-                return "";
+                return std::unexpected(parse::ParseError{
+                    parse::ParseError::Kind::INVALID_VALUE,
+                    std::format("Invalid transformation args index `{}`", match[1].str())});
             }
 
             it = match.suffix().first;

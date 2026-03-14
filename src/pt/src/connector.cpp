@@ -14,6 +14,7 @@
 #include "crypto.hpp"
 
 #include "connector.hpp"
+#include "solidity_identifier.hpp"
 
 namespace dcn
 {
@@ -82,6 +83,7 @@ namespace dcn
 
             return value;
         }
+
     }
 
     parse::Result<std::string> constructConnectorSolidityCode(const Connector & connector)
@@ -92,6 +94,14 @@ namespace dcn
             return std::unexpected(parse::ParseError{
                 parse::ParseError::Kind::INVALID_VALUE,
                 std::format("Connector `{}` has no dimensions", connector.name())});
+        }
+
+        if(!pt::isValidSolidityIdentifier(connector.name()))
+        {
+            spdlog::error("Connector `{}` has invalid Solidity identifier name", connector.name());
+            return std::unexpected(parse::ParseError{
+                parse::ParseError::Kind::INVALID_VALUE,
+                std::format("Connector `{}` has invalid Solidity identifier name", connector.name())});
         }
 
         std::string composite_dim_ids_code;
@@ -490,6 +500,49 @@ namespace dcn::parse
 
             return std::nullopt;
         }
+
+        std::optional<ParseError> _validateDimensionSemantics(const Dimension & dimension)
+        {
+            if(dimension.composite().empty() && dimension.bindings_size() != 0)
+            {
+                return ParseError{
+                    ParseError::Kind::INVALID_VALUE,
+                    "bindings are not allowed for scalar dimensions"};
+            }
+
+            for(const auto & [slot, _] : dimension.bindings())
+            {
+                const auto parsed_slot = _parseSlotId(slot);
+                if(!parsed_slot || slot != std::to_string(*parsed_slot))
+                {
+                    return ParseError{
+                        ParseError::Kind::INVALID_VALUE,
+                        std::format("invalid canonical binding slot key `{}`", slot)};
+                }
+            }
+
+            return std::nullopt;
+        }
+
+        std::optional<ParseError> _validateConnectorSemantics(const Connector & connector)
+        {
+            if(connector.dimensions_size() <= 0)
+            {
+                return ParseError{
+                    ParseError::Kind::INVALID_VALUE,
+                    "connector must define at least one dimension"};
+            }
+
+            for(const Dimension & dimension : connector.dimensions())
+            {
+                if(const auto dimension_error = _validateDimensionSemantics(dimension); dimension_error)
+                {
+                    return *dimension_error;
+                }
+            }
+
+            return std::nullopt;
+        }
     }
 
     template<>
@@ -618,6 +671,11 @@ namespace dcn::parse
             *dimension.mutable_transformations(dimension.transformations_size() - 1) = *transformation_def;
         }
 
+        if(const auto dimension_error = _validateDimensionSemantics(dimension); dimension_error)
+        {
+            return std::unexpected(*dimension_error);
+        }
+
         return dimension;
     }
 
@@ -651,6 +709,11 @@ namespace dcn::parse
         if(!status.ok())
         {
             return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid dimension"});
+        }
+
+        if(const auto dimension_error = _validateDimensionSemantics(dimension); dimension_error)
+        {
+            return std::unexpected(*dimension_error);
         }
 
         return dimension;
@@ -703,13 +766,19 @@ namespace dcn::parse
         {
             return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid dimensions"});
         }
+        if(json_obj["dimensions"].empty())
+        {
+            return std::unexpected(ParseError{
+                ParseError::Kind::INVALID_VALUE,
+                "connector must define at least one dimension"});
+        }
 
         for(const auto & dimension_json : json_obj["dimensions"])
         {
             auto dimension = parseFromJson<Dimension>(dimension_json, use_json);
             if(!dimension)
             {
-                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid dimensions"});
+                return std::unexpected(dimension.error());
             }
 
             connector.add_dimensions();
@@ -747,6 +816,11 @@ namespace dcn::parse
             connector.add_condition_args(*parsed_arg);
         }
 
+        if(const auto connector_error = _validateConnectorSemantics(connector); connector_error)
+        {
+            return std::unexpected(*connector_error);
+        }
+
         return connector;
     }
 
@@ -780,6 +854,11 @@ namespace dcn::parse
         if(!status.ok())
         {
             return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid connector"});
+        }
+
+        if(const auto connector_error = _validateConnectorSemantics(connector); connector_error)
+        {
+            return std::unexpected(*connector_error);
         }
 
         return connector;

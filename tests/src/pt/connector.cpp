@@ -198,6 +198,64 @@ TEST_F(UnitTest, Connector_ParseFromJson_RejectsOutOfRangeConditionArgs)
     ASSERT_FALSE(connector.has_value());
 }
 
+TEST_F(UnitTest, Connector_ParseFromJson_RejectsScalarDimensionBindings)
+{
+    json json_input = {
+        {"name", "connector_beta"},
+        {"dimensions", json::array({
+            json{
+                {"composite", ""},
+                {"bindings", json{{"0", "comp_slot_a"}}},
+                {"transformations", json::array()}
+            }
+        })},
+        {"condition_name", ""},
+        {"condition_args", json::array()}
+    };
+
+    auto connector = parseFromJson<Connector>(json_input, use_json);
+    ASSERT_FALSE(connector.has_value());
+    EXPECT_EQ(connector.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+TEST_F(UnitTest, Connector_ParseFromJson_RejectsNonCanonicalBindingSlotKey)
+{
+    json json_input = {
+        {"name", "connector_beta"},
+        {"dimensions", json::array({
+            json{
+                {"composite", "comp_a"},
+                {"bindings", json{{"01", "comp_slot_a"}}},
+                {"transformations", json::array()}
+            }
+        })},
+        {"condition_name", ""},
+        {"condition_args", json::array()}
+    };
+
+    auto connector = parseFromJson<Connector>(json_input, use_json);
+    ASSERT_FALSE(connector.has_value());
+    EXPECT_EQ(connector.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+TEST_F(UnitTest, Connector_ParseFromJson_RejectsConnectorWithoutDimensionsAtParseBoundary)
+{
+    json json_input = {
+        {"name", "connector_without_dimensions"},
+        {"dimensions", json::array()},
+        {"condition_name", ""},
+        {"condition_args", json::array()}
+    };
+
+    auto json_connector = parseFromJson<Connector>(json_input, use_json);
+    ASSERT_FALSE(json_connector.has_value());
+    EXPECT_EQ(json_connector.error().kind, ParseError::Kind::INVALID_VALUE);
+
+    auto protobuf_connector = parseFromJson<Connector>(json_input.dump(), use_protobuf);
+    ASSERT_FALSE(protobuf_connector.has_value());
+    EXPECT_EQ(protobuf_connector.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
 TEST_F(UnitTest, ConnectorRecord_ParseFromJson_JsonAndProtobufMatch)
 {
     json json_connector = {
@@ -284,6 +342,16 @@ TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsConnectorWithoutDimensio
 {
     Connector connector;
     connector.set_name("connector_without_dimensions");
+
+    auto solidity_result = constructConnectorSolidityCode(connector);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsInvalidContractIdentifier)
+{
+    Connector connector = makeConnectorSample();
+    connector.set_name("bad.connector");
 
     auto solidity_result = constructConnectorSolidityCode(connector);
     ASSERT_FALSE(solidity_result.has_value());

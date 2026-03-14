@@ -139,9 +139,20 @@ namespace
         return hashHex(fnv1a64(*solidity_result));
     }
 
-    std::string makeTransformationBuildCacheKey(const Transformation & transformation)
+    std::optional<std::string> makeTransformationBuildCacheKey(const Transformation & transformation)
     {
-        return hashHex(fnv1a64(constructTransformationSolidityCode(transformation)));
+        const auto solidity_result = constructTransformationSolidityCode(transformation);
+        if(!solidity_result)
+        {
+            spdlog::debug(
+                "Skipping transformation cache key for '{}': parse error kind={} ({})",
+                transformation.name(),
+                static_cast<int>(solidity_result.error().kind),
+                solidity_result.error().message);
+            return std::nullopt;
+        }
+
+        return hashHex(fnv1a64(*solidity_result));
     }
 
     std::filesystem::path makeCachedArtifactPath(
@@ -358,8 +369,11 @@ namespace
         const std::filesystem::path & storage_path)
     {
         auto record = makeIdentityTransformationRecord(owner_hex);
-        const std::string cache_key = makeTransformationBuildCacheKey(record.transformation());
-        restoreCachedBuildArtifacts(storage_path, "transformations", record.transformation().name(), cache_key);
+        const auto cache_key = makeTransformationBuildCacheKey(record.transformation());
+        if(cache_key)
+        {
+            restoreCachedBuildArtifacts(storage_path, "transformations", record.transformation().name(), *cache_key);
+        }
 
         auto deploy_result = runAwaitable(
             io_context,
@@ -374,7 +388,10 @@ namespace
             return std::unexpected(std::format("deployTransformation failed: {}", deploy_result.error().kind));
         }
 
-        storeCachedBuildArtifacts(storage_path, "transformations", kIdentityTransformationName, cache_key);
+        if(cache_key)
+        {
+            storeCachedBuildArtifacts(storage_path, "transformations", kIdentityTransformationName, *cache_key);
+        }
         return deploy_result.value();
     }
 

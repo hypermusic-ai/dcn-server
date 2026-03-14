@@ -110,10 +110,22 @@ TEST_F(UnitTest, TransformationRecord_ParseToJson_RoundTripAcrossParsers)
 TEST_F(UnitTest, Transformation_ConstructSolidityCode_UsesConstructorPattern)
 {
     Transformation transformation = makeTransformationSample();
-    std::string solidity = constructTransformationSolidityCode(transformation);
+    auto solidity_result = constructTransformationSolidityCode(transformation);
+    ASSERT_TRUE(solidity_result.has_value());
+    const std::string & solidity = *solidity_result;
 
     EXPECT_NE(solidity.find("constructor(address registryAddr)"), std::string::npos);
     EXPECT_NE(solidity.find("TransformationBase(registryAddr"), std::string::npos);
     EXPECT_EQ(solidity.find("function initialize(address registryAddr) external initializer"), std::string::npos);
     EXPECT_EQ(solidity.find("__TransformationBase_init"), std::string::npos);
+}
+
+TEST_F(UnitTest, Transformation_ConstructSolidityCode_RejectsInvalidContractIdentifier)
+{
+    Transformation transformation = makeTransformationSample();
+    transformation.set_name("bad-name");
+
+    const auto solidity_result = constructTransformationSolidityCode(transformation);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
 }
