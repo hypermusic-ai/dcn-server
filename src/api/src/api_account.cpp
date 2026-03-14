@@ -98,16 +98,10 @@ namespace dcn
         const std::size_t start = page * limit;
 
         const auto connectors = co_await registry.getOwnedConnectors(address);
-        const auto features = co_await registry.getOwnedFeatures(address);
         const auto transformations = co_await registry.getOwnedTransformations(address);
         const auto conditions = co_await registry.getOwnedConditions(address);
 
-        // Subrange features
         auto connectors_sub = connectors 
-            | std::views::drop(start)
-            | std::views::take(limit);
-        
-        auto features_sub = features 
             | std::views::drop(start)
             | std::views::take(limit);
 
@@ -127,9 +121,6 @@ namespace dcn
         json_output["owned_connectors"] = json::array();
         for (const auto& p : connectors_sub) json_output["owned_connectors"].push_back(p);
 
-        json_output["owned_features"] = json::array();
-        for (const auto& f : features_sub) json_output["owned_features"].push_back(f);
-
         json_output["owned_transformations"] = json::array();
         for (const auto& t : transformations_sub) json_output["owned_transformations"].push_back(t);
 
@@ -140,7 +131,6 @@ namespace dcn
         json_output["page"] = page;
         json_output["limit"] = limit;
         json_output["total_connectors"] = connectors.size();
-        json_output["total_features"] = features.size();
         json_output["total_transformations"] = transformations.size();
         json_output["total_conditions"] = conditions.size();
 

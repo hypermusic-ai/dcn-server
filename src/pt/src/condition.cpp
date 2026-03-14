@@ -3,10 +3,11 @@
 #include "crypto.hpp"
 
 #include "condition.hpp"
+#include "solidity_identifier.hpp"
 
 namespace dcn
 {
-    std::string constructConditionSolidityCode(const Condition & condition)
+    parse::Result<std::string> constructConditionSolidityCode(const Condition & condition)
     {
         /* ------------- EXAMPLE -------------
         // SPDX-License-Identifier: GPL-3.0
@@ -28,6 +29,14 @@ namespace dcn
         }
         */
 
+        if(!pt::isValidSolidityIdentifier(condition.name()))
+        {
+            spdlog::error("Condition `{}` has invalid Solidity identifier name", condition.name());
+            return std::unexpected(parse::ParseError{
+                parse::ParseError::Kind::INVALID_VALUE,
+                std::format("Condition `{}` has invalid Solidity identifier name", condition.name())});
+        }
+
         std::regex used_args_pattern(R"(args\[(\d+)\])");
         std::uint32_t argc = 0;
 
@@ -39,16 +48,20 @@ namespace dcn
             {
                 unsigned long value = std::stoul(match[1].str());
 
-                if (value > std::numeric_limits<std::int32_t>::max()) {
-                    spdlog::error("Value exceeds int32_t range");
-                    return "";
+                if (value >= std::numeric_limits<std::uint32_t>::max()) {
+                    spdlog::error("Condition args index overflows uint32_t argc computation");
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        "Condition args index must be less than uint32_t max"});
                 }
                 argc = std::max(argc, static_cast<std::uint32_t>(value) + 1U);
             }
             catch(const std::exception& e)
             {
                 spdlog::error("Invalid argument index: {}", match[1].str());
-                return "";
+                return std::unexpected(parse::ParseError{
+                    parse::ParseError::Kind::INVALID_VALUE,
+                    std::format("Invalid condition args index `{}`", match[1].str())});
             }
 
             it = match.suffix().first;
@@ -58,9 +71,7 @@ namespace dcn
                 "pragma solidity >=0.8.2 <0.9.0;\n"
                 "import \"condition/ConditionBase.sol\";\n"
                 "contract " + condition.name() + " is ConditionBase{\n" // open contract
-                "function initialize(address registryAddr) external initializer {\n"
-                "__ConditionBase_init(registryAddr, \"" + condition.name() + "\"," +  std::to_string(argc) +");\n"
-                "}\n"
+                "constructor(address registryAddr) ConditionBase(registryAddr, \"" + condition.name() + "\"," +  std::to_string(argc) +"){}\n"
                 "function check(int32 [] calldata args) view external returns (bool){\n" // open function
                 "require(args.length == this.getArgsCount(), \"wrong number of arguments\");\n"
                 + condition.sol_src() + "\n}" // close function

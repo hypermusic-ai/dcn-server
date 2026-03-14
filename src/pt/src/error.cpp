@@ -51,18 +51,6 @@ namespace dcn::parse
             return pt::PTDeployError{pt::PTDeployError::Kind::CONNECTOR_DIMENSIONS_MISMATCH};
         }
 
-        selector = chain::constructSelector("FeatureAlreadyRegistered(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.data()))
-        {
-            return pt::PTDeployError{pt::PTDeployError::Kind::FEATURE_ALREADY_REGISTERED};
-        }
-
-        selector = chain::constructSelector("FeatureMissing(bytes32)");
-        if (std::equal(selector.begin(), selector.end(), r.data()))
-        {
-            return pt::PTDeployError{pt::PTDeployError::Kind::FEATURE_MISSING};
-        }
-
         selector = chain::constructSelector("TransformationAlreadyRegistered(bytes32)");
         if (std::equal(selector.begin(), selector.end(), r.data()))
         {

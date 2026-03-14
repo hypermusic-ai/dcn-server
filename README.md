@@ -172,58 +172,61 @@ Verifies `refresh_token` and `access_token` and generates new `access_token`.
 
 ---
 
-### 🧩 Features
+### 🧩 Connectors
 
-#### `OPTIONS /feature`
+#### `OPTIONS /connector`
 
-Returns CORS headers for the feature endpoints.
+Returns CORS headers for the connector endpoints.
 
-#### `GET /feature/<name>/<ver?>`
+#### `GET /connector/<name>/<address?>`
 
-Fetches a feature object by name and version.
-If version is not given, returns newest feature of given name.
+Fetches a connector by name and optional address.
+If address is not provided, returns the newest connector of that name.
 
 - **Params**:
   - `name`: String identifier
-  - `ver?`: Optional String identifier
+  - `address?`: Optional connector address
 
-- **Response**: Feature data `(JSON)`
+- **Response**: Connector data `(JSON)`
 
   ```json
   {
-    "name": "...",
-    "dimensions": [...]
+    "name": "melody_connector",
+    "dimensions": [
+      {
+        "composite": "bass_connector",
+        "transformations": [
+          { "name": "add", "args": [1] }
+        ]
+      }
+    ],
+    "condition_name": "is_active",
+    "condition_args": [1]
   }
   ```
 
 - **Authentication**: ❌ Public
 
-#### `POST /feature`
+#### `POST /connector`
 
-Creates a new feature entry.
+Creates a new connector record.
 
 - **Request Headers**: `Cookie` must include `access_token`
-
-- **Request Body**: `JSON` payload describing the feature
-  
-  ```json
-  {
-    "name": "...",
-    "dimensions": [...]
-  }
-  ```
-
+- **Request Body**: `JSON` payload describing the connector with inline `dimensions`
 - **Response**: `201 Created` or `error`
-- **Response Body** :
-
-  ```json
-  {
-    "name": "...",
-    "version": "1823..."
-  }
-  ```
-
 - **Authentication**: ✅ Required
+
+#### `GET /account/<address>?limit=<n>&page=<n>`
+
+Returns paged ownership info.
+
+- **Response fields**:
+  - `owned_connectors`
+  - `owned_transformations`
+  - `owned_conditions`
+  - `total_connectors`
+  - `total_transformations`
+  - `total_conditions`
 
 ---
 

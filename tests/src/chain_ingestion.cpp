@@ -200,48 +200,63 @@ namespace
 
     std::string encodeConnectorAddedEventData(const std::string & name,
                                              const chain::Address & connector_address,
-                                             const std::string & feature_name,
+                                             const std::uint32_t dimensions_count,
                                              const std::vector<std::uint32_t> & composite_dim_ids,
                                              const std::vector<std::string> & composite_names,
+                                             const std::vector<std::uint32_t> & binding_dim_ids,
+                                             const std::vector<std::uint32_t> & binding_slot_ids,
+                                             const std::vector<std::string> & binding_names,
                                              const std::string & condition_name,
                                              const std::vector<std::int32_t> & condition_args)
     {
         const auto name_tail = encodeStringTail(name);
-        const auto feature_tail = encodeStringTail(feature_name);
+        const auto dimensions_count_word = encodeUint256Word(dimensions_count);
         const auto composite_dim_ids_tail = encodeUint32ArrayTail(composite_dim_ids);
         const auto composite_names_tail = encodeStringArrayTail(composite_names);
+        const auto binding_dim_ids_tail = encodeUint32ArrayTail(binding_dim_ids);
+        const auto binding_slot_ids_tail = encodeUint32ArrayTail(binding_slot_ids);
+        const auto binding_names_tail = encodeStringArrayTail(binding_names);
         const auto condition_tail = encodeStringTail(condition_name);
         const auto condition_args_tail = encodeInt32ArrayTail(condition_args);
 
-        const std::size_t head_size = 7 * 32;
+        const std::size_t head_size = 10 * 32;
         const std::size_t name_offset = head_size;
-        const std::size_t feature_offset = name_offset + name_tail.size();
-        const std::size_t composite_dim_ids_offset = feature_offset + feature_tail.size();
+        const std::size_t composite_dim_ids_offset = name_offset + name_tail.size();
         const std::size_t composite_names_offset = composite_dim_ids_offset + composite_dim_ids_tail.size();
-        const std::size_t condition_offset = composite_names_offset + composite_names_tail.size();
+        const std::size_t binding_dim_ids_offset = composite_names_offset + composite_names_tail.size();
+        const std::size_t binding_slot_ids_offset = binding_dim_ids_offset + binding_dim_ids_tail.size();
+        const std::size_t binding_names_offset = binding_slot_ids_offset + binding_slot_ids_tail.size();
+        const std::size_t condition_offset = binding_names_offset + binding_names_tail.size();
         const std::size_t condition_args_offset = condition_offset + condition_tail.size();
 
         std::vector<std::uint8_t> out;
         const auto name_offset_word = encodeUint256Word(name_offset);
         const auto connector_word = encodeAddressWord(connector_address);
-        const auto feature_offset_word = encodeUint256Word(feature_offset);
         const auto composite_dim_ids_offset_word = encodeUint256Word(composite_dim_ids_offset);
         const auto composite_names_offset_word = encodeUint256Word(composite_names_offset);
+        const auto binding_dim_ids_offset_word = encodeUint256Word(binding_dim_ids_offset);
+        const auto binding_slot_ids_offset_word = encodeUint256Word(binding_slot_ids_offset);
+        const auto binding_names_offset_word = encodeUint256Word(binding_names_offset);
         const auto condition_offset_word = encodeUint256Word(condition_offset);
         const auto condition_args_offset_word = encodeUint256Word(condition_args_offset);
 
         out.insert(out.end(), name_offset_word.begin(), name_offset_word.end());
         out.insert(out.end(), connector_word.begin(), connector_word.end());
-        out.insert(out.end(), feature_offset_word.begin(), feature_offset_word.end());
+        out.insert(out.end(), dimensions_count_word.begin(), dimensions_count_word.end());
         out.insert(out.end(), composite_dim_ids_offset_word.begin(), composite_dim_ids_offset_word.end());
         out.insert(out.end(), composite_names_offset_word.begin(), composite_names_offset_word.end());
+        out.insert(out.end(), binding_dim_ids_offset_word.begin(), binding_dim_ids_offset_word.end());
+        out.insert(out.end(), binding_slot_ids_offset_word.begin(), binding_slot_ids_offset_word.end());
+        out.insert(out.end(), binding_names_offset_word.begin(), binding_names_offset_word.end());
         out.insert(out.end(), condition_offset_word.begin(), condition_offset_word.end());
         out.insert(out.end(), condition_args_offset_word.begin(), condition_args_offset_word.end());
 
         out.insert(out.end(), name_tail.begin(), name_tail.end());
-        out.insert(out.end(), feature_tail.begin(), feature_tail.end());
         out.insert(out.end(), composite_dim_ids_tail.begin(), composite_dim_ids_tail.end());
         out.insert(out.end(), composite_names_tail.begin(), composite_names_tail.end());
+        out.insert(out.end(), binding_dim_ids_tail.begin(), binding_dim_ids_tail.end());
+        out.insert(out.end(), binding_slot_ids_tail.begin(), binding_slot_ids_tail.end());
+        out.insert(out.end(), binding_names_tail.begin(), binding_names_tail.end());
         out.insert(out.end(), condition_tail.begin(), condition_tail.end());
         out.insert(out.end(), condition_args_tail.begin(), condition_args_tail.end());
 
@@ -355,55 +370,42 @@ namespace
     };
 }
 
-TEST_F(UnitTest, Chain_Ingestion_RegistersFeatureAndConnectorFromFetchedEvents)
+TEST_F(UnitTest, Chain_Ingestion_RegistersConnectorFromFetchedEvents)
 {
     asio::io_context io_context{};
     registry::Registry registry(io_context);
 
-    const auto storage_path = makeStoragePath("feature_connector_events");
+    const auto storage_path = makeStoragePath("connector_events");
 
     const chain::Address registry_address = makeAddressFromSuffix("registry");
     const chain::Address caller = makeAddressFromSuffix("caller");
     const chain::Address owner = makeAddressFromSuffix("owner");
-    const chain::Address feature_address = makeAddressFromSuffix("feature");
     const chain::Address connector_address = makeAddressFromSuffix("connector");
 
     const json connector_log = {
         {"blockNumber", "0x64"},
         {"logIndex", "0x1"},
         {"topics", json::array({
-            topicForEvent("ConnectorAdded(address,address,string,address,string,uint32[],string[],string,int32[])"),
+            topicForEvent("ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[])"),
             topicForAddress(caller),
             topicForAddress(owner)
         })},
         {"data", encodeConnectorAddedEventData(
             "ConnectorAlpha",
             connector_address,
-            "FeatureAlpha",
+            2,
+            {},
+            {},
+            {},
             {},
             {},
             "",
             {7, -3})}
     };
 
-    const json feature_log = {
-        {"blockNumber", "0x64"},
-        {"logIndex", "0x2"},
-        {"topics", json::array({
-            topicForEvent("FeatureAdded(address,string,address)")
-        })},
-        {"data", encodeSimpleAddedEventDataLegacy(
-            caller,
-            "FeatureAlpha",
-            feature_address)}
-    };
-
     MockRpcNode rpc;
     rpc.block_number_hex = "0x64";
-    rpc.logs = json::array({feature_log, connector_log});
-    rpc.owner_results.emplace(
-        toLower(hexPrefixed(feature_address)),
-        encodeOwnerCallResult(owner));
+    rpc.logs = json::array({connector_log});
 
     chain::IngestionConfig config;
     config.enabled = true;
@@ -425,24 +427,17 @@ TEST_F(UnitTest, Chain_Ingestion_RegistersFeatureAndConnectorFromFetchedEvents)
 
     runAwaitable(io_context, chain::runEventIngestion(config, registry, runtime_options));
 
-    const auto feature_res = runAwaitable(io_context, registry.getFeature("FeatureAlpha", feature_address));
-    ASSERT_TRUE(feature_res.has_value());
-
     const auto connector_res = runAwaitable(io_context, registry.getConnector("ConnectorAlpha", connector_address));
     ASSERT_TRUE(connector_res.has_value());
-    EXPECT_EQ(connector_res->feature_name(), "FeatureAlpha");
+    ASSERT_EQ(connector_res->dimensions_size(), 2);
     EXPECT_EQ(connector_res->condition_name(), "");
     ASSERT_EQ(connector_res->condition_args_size(), 2);
     EXPECT_EQ(connector_res->condition_args(0), 7);
     EXPECT_EQ(connector_res->condition_args(1), -3);
 
-    const auto owned_features = runAwaitable(io_context, registry.getOwnedFeatures(owner));
-    EXPECT_TRUE(owned_features.contains("FeatureAlpha"));
-
     const auto owned_connectors = runAwaitable(io_context, registry.getOwnedConnectors(owner));
     EXPECT_TRUE(owned_connectors.contains("ConnectorAlpha"));
 
-    EXPECT_TRUE(std::filesystem::exists(storage_path / "features" / "FeatureAlpha.json"));
     EXPECT_TRUE(std::filesystem::exists(storage_path / "connectors" / "ConnectorAlpha.json"));
 
     const json cursor_state = readJsonFile(storage_path / "chain" / "cursor.json");
@@ -451,7 +446,7 @@ TEST_F(UnitTest, Chain_Ingestion_RegistersFeatureAndConnectorFromFetchedEvents)
 
     EXPECT_EQ(rpc.block_number_calls, 1);
     EXPECT_EQ(rpc.get_logs_calls, 1);
-    EXPECT_EQ(rpc.eth_call_calls, 1);
+    EXPECT_EQ(rpc.eth_call_calls, 0);
 }
 
 TEST_F(UnitTest, Chain_Ingestion_RegistersTransformationAndConditionFromFetchedEvents)

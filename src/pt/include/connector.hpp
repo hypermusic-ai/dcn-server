@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <map>
+#include <ranges>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -14,42 +16,64 @@
 
 namespace dcn
 {
-    /**
-     * @brief Combines hash values for a Connector object.
-     *
-     * @tparam H The hash state type.
-     * @param h The initial hash state.
-     * @param p The Connector object whose attributes will be hashed.
-     * @return A combined hash state
-     */
     template <typename H>
-    inline H AbslHashValue(H h, const Connector & p) {
-        h = H::combine(std::move(h), p.name(), p.feature_name());
-
-        std::vector<std::pair<std::uint32_t, std::string>> sorted_composites;
-        sorted_composites.reserve(p.composites().size());
-        for(const auto & [dim_id, composite_name] : p.composites())
+    inline H AbslHashValue(H h, const TransformationDef & td)
+    {
+        h = H::combine(std::move(h), td.name());
+        for(const int32_t & arg : td.args())
         {
-            sorted_composites.emplace_back(dim_id, composite_name);
-        }
-        std::ranges::sort(sorted_composites, [](const auto & lhs, const auto & rhs)
-        {
-            return lhs.first < rhs.first;
-        });
-
-        for(const auto & [dim_id, composite_name] : sorted_composites)
-        {
-            h = H::combine(std::move(h), dim_id, composite_name);
-        }
-
-        h = H::combine(std::move(h), p.condition_name());
-        for(const auto & arg : p.condition_args()) {
             h = H::combine(std::move(h), arg);
         }
         return h;
     }
 
-    std::string constructConnectorSolidityCode(const Connector & connector);
+    template <typename H>
+    inline H AbslHashValue(H h, const Dimension & d)
+    {
+        h = H::combine(std::move(h), d.composite());
+
+        std::vector<std::pair<std::string, std::string>> sorted_bindings;
+        sorted_bindings.reserve(static_cast<std::size_t>(d.bindings_size()));
+        for(const auto & [slot, composite] : d.bindings())
+        {
+            sorted_bindings.emplace_back(slot, composite);
+        }
+        std::ranges::sort(sorted_bindings, [](const auto & lhs, const auto & rhs)
+        {
+            return lhs.first < rhs.first;
+        });
+
+        for(const auto & [slot, composite] : sorted_bindings)
+        {
+            h = H::combine(std::move(h), slot, composite);
+        }
+
+        for(const TransformationDef & t : d.transformations())
+        {
+            h = H::combine(std::move(h), t);
+        }
+        return h;
+    }
+
+    template <typename H>
+    inline H AbslHashValue(H h, const Connector & p)
+    {
+        h = H::combine(std::move(h), p.name());
+
+        for(const Dimension & d : p.dimensions())
+        {
+            h = H::combine(std::move(h), d);
+        }
+
+        h = H::combine(std::move(h), p.condition_name());
+        for(const auto & arg : p.condition_args())
+        {
+            h = H::combine(std::move(h), arg);
+        }
+        return h;
+    }
+
+    parse::Result<std::string> constructConnectorSolidityCode(const Connector & connector);
 }
 
 namespace dcn::pt
@@ -60,8 +84,9 @@ namespace dcn::pt
         chain::Address owner{};
         std::string name;
         chain::Address connector_address{};
-        std::string feature_name;
+        std::uint32_t dimensions_count{};
         std::map<std::uint32_t, std::string> composites;
+        std::map<std::pair<std::uint32_t, std::uint32_t>, std::string> bindings;
         std::string condition_name;
         std::vector<std::int32_t> condition_args;
     };
@@ -80,60 +105,45 @@ namespace dcn::pt
 
 namespace dcn::parse
 {
-    /**
-     * @brief Parses a Connector object to a JSON object.
-     * @param connector The Connector object to parse.
-     */
+    template<>
+    Result<json> parseToJson(TransformationDef transform_def, use_json_t);
+
+    template<>
+    Result<TransformationDef> parseFromJson(json json_obj, use_json_t);
+
+    template<>
+    Result<json> parseToJson(Dimension dimension, use_json_t);
+
+    template<>
+    Result<Dimension> parseFromJson(json json_obj, use_json_t);
+
+    template<>
+    Result<std::string> parseToJson(Dimension dimension, use_protobuf_t);
+
+    template<>
+    Result<Dimension> parseFromJson(std::string json_str, use_protobuf_t);
+
     template<>
     Result<json> parseToJson(Connector connector, use_json_t);
 
-    /**
-     * @brief Parses a JSON object to a Connector object.
-     * @param json_obj The JSON object to parse.
-     */
     template<>
     Result<Connector> parseFromJson(json json_obj, use_json_t);
 
-    /**
-     * @brief Converts a Connector object to a JSON string using protobuf
-     * @param connector The Connector object to convert
-     * @return A JSON string representation of the Connector object
-     */
     template<>
     Result<std::string> parseToJson(Connector connector, use_protobuf_t);
 
-    /**
-     * @brief Parses a JSON string to a Connector object using Protobuf.
-     * @param json_str The JSON string to parse.
-     */
     template<>
     Result<Connector> parseFromJson(std::string json_str, use_protobuf_t);
 
-    /**
-     * @brief Converts a ConnectorRecord object to a JSON object using JSON.
-     * @param connector_record The ConnectorRecord object to convert.
-     */
     template<>
     Result<json> parseToJson(ConnectorRecord connector_record, use_json_t);
 
-    /**
-     * @brief Converts a ConnectorRecord to a JSON string using Protobuf.
-     * @param connector_record The ConnectorRecord object to convert.
-     */
     template<>
     Result<std::string> parseToJson(ConnectorRecord connector_record, use_protobuf_t);
 
-    /**
-     * @brief Parses a JSON object to a ConnectorRecord object using JSON.
-     * @param json_obj The JSON object to parse.
-     */
     template<>
     Result<ConnectorRecord> parseFromJson(json json_obj, use_json_t);
-    
-    /**
-     * @brief Parses a JSON string to a ConnectorRecord object using Protobuf.
-     * @param json_str The JSON string to parse.
-     */
+
     template<>
     Result<ConnectorRecord> parseFromJson(std::string json_str, use_protobuf_t);
 }

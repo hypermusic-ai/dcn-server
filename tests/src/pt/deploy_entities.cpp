@@ -83,9 +83,8 @@ namespace
             return false;
         }
 
-        static const std::array<std::filesystem::path, 4> build_dirs{
+        static const std::array<std::filesystem::path, 3> build_dirs{
             std::filesystem::path("connectors") / "build",
-            std::filesystem::path("features") / "build",
             std::filesystem::path("transformations") / "build",
             std::filesystem::path("conditions") / "build",
         };
@@ -193,17 +192,12 @@ namespace
             condition_record.mutable_condition()->set_sol_src("return true;");
             condition_record.set_owner(owner_hex);
 
-            FeatureRecord feature_record;
-            feature_record.mutable_feature()->set_name("DeployFeature");
-            auto * dimension = feature_record.mutable_feature()->add_dimensions();
-            auto * transformation_def = dimension->add_transformations();
-            transformation_def->set_name("DeployTransformation");
-            transformation_def->add_args(7);
-            feature_record.set_owner(owner_hex);
-
             ConnectorRecord connector_record;
             connector_record.mutable_connector()->set_name("DeployConnector");
-            connector_record.mutable_connector()->set_feature_name("DeployFeature");
+            auto * connector_dimension = connector_record.mutable_connector()->add_dimensions();
+            auto * connector_transformation = connector_dimension->add_transformations();
+            connector_transformation->set_name("DeployTransformation");
+            connector_transformation->add_args(7);
             connector_record.mutable_connector()->set_condition_name("DeployCondition");
             connector_record.set_owner(owner_hex);
 
@@ -226,15 +220,6 @@ namespace
                 return snapshot;
             }
             snapshot.condition_address = condition_deploy_result.value();
-
-            const auto feature_deploy_result = runAwaitable(
-                io_context,
-                loader::deployFeature(evm_instance, registry, feature_record, storage_path));
-            if(!feature_deploy_result)
-            {
-                snapshot.error_message = std::format("deployFeature failed: {}", feature_deploy_result.error().kind);
-                return snapshot;
-            }
 
             const auto connector_deploy_result = runAwaitable(
                 io_context,
@@ -350,8 +335,127 @@ TEST_F(UnitTest, PT_Deploy_Connector_DeploysAndRegisters)
     EXPECT_EQ(snapshot.connector_owner, snapshot.owner);
 
     EXPECT_EQ(snapshot.connector.name(), "DeployConnector");
-    EXPECT_EQ(snapshot.connector.feature_name(), "DeployFeature");
+    ASSERT_EQ(snapshot.connector.dimensions_size(), 1);
+    ASSERT_EQ(snapshot.connector.dimensions(0).transformations_size(), 1);
+    EXPECT_EQ(snapshot.connector.dimensions(0).transformations(0).name(), "DeployTransformation");
+    ASSERT_EQ(snapshot.connector.dimensions(0).transformations(0).args_size(), 1);
+    EXPECT_EQ(snapshot.connector.dimensions(0).transformations(0).args(0), 7);
+    EXPECT_EQ(snapshot.connector.dimensions(0).composite(), "");
     EXPECT_EQ(snapshot.connector.condition_name(), "DeployCondition");
-    EXPECT_TRUE(snapshot.connector.composites().empty());
     EXPECT_EQ(snapshot.connector.condition_args_size(), 0);
+}
+
+TEST_F(UnitTest, PT_Deploy_Connector_DuplicateName_ReturnsConnectorAlreadyRegistered)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts directory at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeDeployStoragePath();
+    ASSERT_TRUE(prepareDeployStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    registry::Registry registry(io_context);
+    const chain::Address owner = makeAddressFromSuffix("pt_dup_owner");
+    runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
+    runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
+    const std::string owner_hex = evmc::hex(owner);
+
+    TransformationRecord transformation_record;
+    transformation_record.mutable_transformation()->set_name("DupDeployTransformation");
+    transformation_record.mutable_transformation()->set_sol_src("return x;");
+    transformation_record.set_owner(owner_hex);
+
+    ConditionRecord condition_record;
+    condition_record.mutable_condition()->set_name("DupDeployCondition");
+    condition_record.mutable_condition()->set_sol_src("return true;");
+    condition_record.set_owner(owner_hex);
+
+    ConnectorRecord connector_record;
+    connector_record.mutable_connector()->set_name("DupDeployConnector");
+    auto * connector_dimension = connector_record.mutable_connector()->add_dimensions();
+    auto * connector_transformation = connector_dimension->add_transformations();
+    connector_transformation->set_name("DupDeployTransformation");
+    connector_record.mutable_connector()->set_condition_name("DupDeployCondition");
+    connector_record.set_owner(owner_hex);
+
+    const auto transformation_deploy_result = runAwaitable(
+        io_context,
+        loader::deployTransformation(evm_instance, registry, transformation_record, storage_path));
+    ASSERT_TRUE(transformation_deploy_result) << std::format("deployTransformation failed: {}", transformation_deploy_result.error().kind);
+
+    const auto condition_deploy_result = runAwaitable(
+        io_context,
+        loader::deployCondition(evm_instance, registry, condition_record, storage_path));
+    ASSERT_TRUE(condition_deploy_result) << std::format("deployCondition failed: {}", condition_deploy_result.error().kind);
+
+    const auto first_connector_deploy_result = runAwaitable(
+        io_context,
+        loader::deployConnector(evm_instance, registry, connector_record, storage_path));
+    ASSERT_TRUE(first_connector_deploy_result) << std::format("first deployConnector failed: {}", first_connector_deploy_result.error().kind);
+
+    const auto second_connector_deploy_result = runAwaitable(
+        io_context,
+        loader::deployConnector(evm_instance, registry, connector_record, storage_path));
+    ASSERT_FALSE(second_connector_deploy_result);
+    EXPECT_EQ(second_connector_deploy_result.error().kind, pt::PTDeployError::Kind::CONNECTOR_ALREADY_REGISTERED);
+}
+
+TEST_F(UnitTest, PT_Deploy_Connector_InvalidInput_CleansTemporarySoliditySourceFile)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts directory at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeDeployStoragePath();
+    ASSERT_TRUE(prepareDeployStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    registry::Registry registry(io_context);
+
+    ConnectorRecord connector_record;
+    connector_record.mutable_connector()->set_name("CleanupInvalidConnector");
+    connector_record.set_owner(evmc::hex(makeAddressFromSuffix("pt_cleanup_owner")));
+
+    const auto deploy_result = runAwaitable(
+        io_context,
+        loader::deployConnector(evm_instance, registry, connector_record, storage_path));
+    ASSERT_FALSE(deploy_result);
+    EXPECT_EQ(deploy_result.error().kind, pt::PTDeployError::Kind::INVALID_INPUT);
+
+    const auto source_path = storage_path / "connectors" / "build" / "CleanupInvalidConnector.sol";
+    EXPECT_FALSE(std::filesystem::exists(source_path)) << std::format("Temporary Solidity source still exists: {}", source_path.string());
+}
+
+TEST_F(UnitTest, PT_Deploy_Transformation_InvalidInput_CleansTemporarySoliditySourceFile)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts directory at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeDeployStoragePath();
+    ASSERT_TRUE(prepareDeployStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    registry::Registry registry(io_context);
+
+    TransformationRecord transformation_record;
+    transformation_record.mutable_transformation()->set_name("bad-name");
+    transformation_record.mutable_transformation()->set_sol_src("return x;");
+    transformation_record.set_owner(evmc::hex(makeAddressFromSuffix("pt_cleanup_owner")));
+
+    const auto deploy_result = runAwaitable(
+        io_context,
+        loader::deployTransformation(evm_instance, registry, transformation_record, storage_path));
+    ASSERT_FALSE(deploy_result);
+    EXPECT_EQ(deploy_result.error().kind, pt::PTDeployError::Kind::INVALID_INPUT);
+
+    const auto source_path = storage_path / "transformations" / "build" / "bad-name.sol";
+    EXPECT_FALSE(std::filesystem::exists(source_path)) << std::format("Temporary Solidity source still exists: {}", source_path.string());
 }

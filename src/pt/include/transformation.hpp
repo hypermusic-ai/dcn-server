@@ -26,7 +26,7 @@ namespace dcn
         return H::combine(std::move(h), t.name(), t.sol_src());
     }
     
-    std::string constructTransformationSolidityCode(const Transformation & transformation);
+    parse::Result<std::string> constructTransformationSolidityCode(const Transformation & transformation);
 }
 
 namespace dcn::pt

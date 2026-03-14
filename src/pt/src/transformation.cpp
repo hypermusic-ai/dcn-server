@@ -3,10 +3,11 @@
 #include "crypto.hpp"
 
 #include "transformation.hpp"
+#include "solidity_identifier.hpp"
 
 namespace dcn
 {
-    std::string constructTransformationSolidityCode(const Transformation & transformation)
+    parse::Result<std::string> constructTransformationSolidityCode(const Transformation & transformation)
     {
         /* ------------- EXAMPLE -------------
         // SPDX-License-Identifier: GPL-3.0
@@ -28,6 +29,14 @@ namespace dcn
         }
         */
 
+        if(!pt::isValidSolidityIdentifier(transformation.name()))
+        {
+            spdlog::error("Transformation `{}` has invalid Solidity identifier name", transformation.name());
+            return std::unexpected(parse::ParseError{
+                parse::ParseError::Kind::INVALID_VALUE,
+                std::format("Transformation `{}` has invalid Solidity identifier name", transformation.name())});
+        }
+
         std::regex used_args_pattern(R"(args\[(\d+)\])");
         std::uint32_t argc = 0;
 
@@ -39,16 +48,20 @@ namespace dcn
             {
                 unsigned long value = std::stoul(match[1].str());
 
-                if (value > std::numeric_limits<std::uint32_t>::max()) {
-                    spdlog::error("Value exceeds uint32_t range");
-                    return "";
+                if (value >= std::numeric_limits<std::uint32_t>::max()) {
+                    spdlog::error("Transformation args index overflows uint32_t argc computation");
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        "Transformation args index must be less than uint32_t max"});
                 }
                 argc = std::max(argc, static_cast<std::uint32_t>(value) + 1U);
             }
             catch(const std::exception& e)
             {
                 spdlog::error("Invalid argument index: {}", match[1].str());
-                return "";
+                return std::unexpected(parse::ParseError{
+                    parse::ParseError::Kind::INVALID_VALUE,
+                    std::format("Invalid transformation args index `{}`", match[1].str())});
             }
 
             it = match.suffix().first;
@@ -58,9 +71,7 @@ namespace dcn
                 "pragma solidity ^0.8.0;\n"
                 "import \"transformation/TransformationBase.sol\";\n"
                 "contract " + transformation.name() + " is TransformationBase{\n" // open contract
-                "function initialize(address registryAddr) external initializer {\n"
-                "__TransformationBase_init(registryAddr, \"" + transformation.name() + "\"," +  std::to_string(argc) +");\n"
-                "}\n"
+                "constructor(address registryAddr) TransformationBase(registryAddr, \"" + transformation.name() + "\"," +  std::to_string(argc) +"){}\n"
                 "function run(uint32 x, uint32 [] calldata args) view external returns (uint32){\n" // open function
                 "require(args.length == this.getArgsCount(), \"wrong number of arguments\");\n"
                 + transformation.sol_src() + "\n}" // close function

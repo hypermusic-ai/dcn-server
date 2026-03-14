@@ -2,12 +2,24 @@ syntax = "proto3";
 
 package dcn;
 
+message TransformationDef
+{
+    string name = 1;
+    repeated int32 args = 2;
+}
+
+message Dimension
+{
+    repeated TransformationDef transformations = 1;
+    string composite = 2;
+    map<string, string> bindings = 3;
+}
+
 // Public-facing minimal definition
 message Connector 
 {
     string name = 1;
-    string feature_name = 2;
-    map<uint32, string> composites = 3;
+    repeated Dimension dimensions = 2;
     string condition_name = 4;
     repeated int32 condition_args = 5;
 }

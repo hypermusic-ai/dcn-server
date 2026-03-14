@@ -26,7 +26,7 @@ namespace dcn
         return H::combine(std::move(h), c.name(), c.sol_src());
     }
 
-    std::string constructConditionSolidityCode(const Condition & condition);
+    parse::Result<std::string> constructConditionSolidityCode(const Condition & condition);
 }
 
 namespace dcn::pt

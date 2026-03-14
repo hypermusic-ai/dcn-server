@@ -245,11 +245,6 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::GET,     "/connector/<string>/<~string>"},    dcn::GET_connector, std::ref(registry), std::ref(evm));
     server.addRoute({dcn::http::Method::POST,    "/connector"},                       dcn::POST_connector, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
-    server.addRoute({dcn::http::Method::HEAD, "/feature/<string>/<~string>"},       dcn::HEAD_feature, std::ref(registry));
-    server.addRoute({dcn::http::Method::OPTIONS, "/feature/<string>/<~string>"},    dcn::OPTIONS_feature);
-    server.addRoute({dcn::http::Method::GET,     "/feature/<string>/<~string>"},    dcn::GET_feature, std::ref(registry), std::ref(evm));
-    server.addRoute({dcn::http::Method::POST,    "/feature"},                       dcn::POST_feature, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
-
     server.addRoute({dcn::http::Method::HEAD, "/transformation/<string>/<~string>"},    dcn::HEAD_transformation, std::ref(registry));
     server.addRoute({dcn::http::Method::OPTIONS, "/transformation/<string>/<~string>"}, dcn::OPTIONS_transformation);
     server.addRoute({dcn::http::Method::GET,     "/transformation/<string>/<~string>"}, dcn::GET_transformation, std::ref(registry), std::ref(evm));
@@ -267,8 +262,6 @@ int main(int argc, char* argv[])
     std::filesystem::create_directory(cfg.storage_path);
     std::filesystem::create_directory(cfg.storage_path / "connectors");
     std::filesystem::create_directory(cfg.storage_path / "connectors" / "build");
-    std::filesystem::create_directory(cfg.storage_path / "features");
-    std::filesystem::create_directory(cfg.storage_path / "features" / "build");
     std::filesystem::create_directory(cfg.storage_path / "transformations");
     std::filesystem::create_directory(cfg.storage_path / "transformations" / "build");
     std::filesystem::create_directory(cfg.storage_path / "conditions");
@@ -285,22 +278,16 @@ int main(int argc, char* argv[])
         dcn::loader::loadStoredConditions(evm, registry, cfg.storage_path)), 
         [&io_context, &registry, &evm, &server, &cfg, &chain_ingestion_cfg](std::exception_ptr, std::tuple<bool, bool>)
         {
-            // transformation and condition loaded  
-            asio::co_spawn(io_context, dcn::loader::loadStoredFeatures(evm, registry, cfg.storage_path), 
-                [&io_context, &registry, &evm, &server, &cfg, &chain_ingestion_cfg](std::exception_ptr, bool)
+            // transformation and condition loaded
+            asio::co_spawn(io_context, dcn::loader::loadStoredConnectors(evm, registry, cfg.storage_path), 
+                [&io_context, &server, &chain_ingestion_cfg](std::exception_ptr, bool)
                 {
-                    // features loaded
-                    asio::co_spawn(io_context, dcn::loader::loadStoredConnectors(evm, registry, cfg.storage_path), 
-                [&io_context, &server, &registry, &chain_ingestion_cfg](std::exception_ptr, bool)
-                        {
-                            // connectors loaded
-                            if(chain_ingestion_cfg.enabled)
-                            {
-                                //asio::co_spawn(io_context, dcn::chain::runEventIngestion(chain_ingestion_cfg, registry), asio::detached);
-                            }
-                            asio::co_spawn(io_context, server.listen(), asio::detached);
-                        }
-                    );
+                    // connectors loaded
+                    if(chain_ingestion_cfg.enabled)
+                    {
+                        //asio::co_spawn(io_context, dcn::chain::runEventIngestion(chain_ingestion_cfg, registry), asio::detached);
+                    }
+                    asio::co_spawn(io_context, server.listen(), asio::detached);
                 }
             );
         }
