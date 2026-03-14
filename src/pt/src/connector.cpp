@@ -163,6 +163,21 @@ namespace dcn
             }
             else
             {
+                if(!pt::isValidSolidityIdentifier(composite_name))
+                {
+                    spdlog::error(
+                        "Connector `{}` has invalid composite connector identifier `{}` at dim {}",
+                        connector.name(),
+                        composite_name,
+                        dim_id);
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        std::format(
+                            "Connector `{}` has invalid composite connector identifier `{}` at dim {}",
+                            connector.name(),
+                            composite_name,
+                            dim_id)});
+                }
                 sorted_composites.emplace_back(dim_id, composite_name);
             }
 
@@ -174,6 +189,23 @@ namespace dcn
                     return std::unexpected(parse::ParseError{
                         parse::ParseError::Kind::INVALID_VALUE,
                         std::format("Connector `{}` has empty binding target at dim {} slot `{}`", connector.name(), dim_id, slot)});
+                }
+                if(!pt::isValidSolidityIdentifier(binding_name))
+                {
+                    spdlog::error(
+                        "Connector `{}` has invalid binding target identifier `{}` at dim {} slot `{}`",
+                        connector.name(),
+                        binding_name,
+                        dim_id,
+                        slot);
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        std::format(
+                            "Connector `{}` has invalid binding target identifier `{}` at dim {} slot `{}`",
+                            connector.name(),
+                            binding_name,
+                            dim_id,
+                            slot)});
                 }
 
                 const auto slot_id = _parseSlotId(slot);

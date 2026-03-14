@@ -389,33 +389,34 @@ TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsCanonicalDuplicateBindin
     EXPECT_FALSE(solidity_result.has_value());
 }
 
-TEST_F(UnitTest, Connector_ConstructSolidityCode_EscapesBindingTargetNamesInStringLiterals)
+TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsInvalidCompositeConnectorIdentifier)
+{
+    Connector connector = makeConnectorSample();
+    connector.mutable_dimensions(0)->set_composite("bad-composite");
+
+    auto solidity_result = constructConnectorSolidityCode(connector);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsInvalidBindingTargetIdentifier)
 {
     Connector connector = makeConnectorSample();
     connector.mutable_dimensions(0)->clear_bindings();
     (*connector.mutable_dimensions(0)->mutable_bindings())["0"] = "bad\"target\\name\nline";
 
     auto solidity_result = constructConnectorSolidityCode(connector);
-    ASSERT_TRUE(solidity_result.has_value());
-    const std::string & solidity = *solidity_result;
-
-    EXPECT_NE(solidity.find("bindingNames[0] = \"bad\\\"target\\\\name\\nline\";"), std::string::npos);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
 }
 
-TEST_F(UnitTest, Connector_ConstructSolidityCode_EscapesNonAsciiBindingTargetBytes)
+TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsReservedKeywordBindingTargetIdentifier)
 {
     Connector connector = makeConnectorSample();
     connector.mutable_dimensions(0)->clear_bindings();
-
-    std::string non_ascii_name = "raw_";
-    non_ascii_name.push_back(static_cast<char>(0xC3));
-    non_ascii_name.push_back(static_cast<char>(0xA9));
-    non_ascii_name.push_back(static_cast<char>(0xFF));
-    (*connector.mutable_dimensions(0)->mutable_bindings())["0"] = non_ascii_name;
+    (*connector.mutable_dimensions(0)->mutable_bindings())["0"] = "mapping";
 
     auto solidity_result = constructConnectorSolidityCode(connector);
-    ASSERT_TRUE(solidity_result.has_value());
-    const std::string & solidity = *solidity_result;
-
-    EXPECT_NE(solidity.find("bindingNames[0] = \"raw_\\xC3\\xA9\\xFF\";"), std::string::npos);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
 }

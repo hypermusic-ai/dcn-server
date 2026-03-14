@@ -898,7 +898,7 @@ TEST_F(UnitTest, PT_Bindings_CodegenSortsBindingSlotIdsNumerically)
     addDimension(record, "ROOT_CHILD", {
         {"10", "ZETA"},
         {"2", "BETA"},
-        {"01", "ALPHA"}
+        {"1", "ALPHA"}
     });
 
     auto solidity_result = constructConnectorSolidityCode(record.connector());

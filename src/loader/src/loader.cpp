@@ -295,6 +295,7 @@ namespace dcn::loader
                         name,
                         static_cast<int>(solidity_code_result.error().kind),
                         solidity_code_result.error().message);
+                    out_file.close();
                     _removeFileNoThrow(code_path);
                     co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
                 }
@@ -307,6 +308,7 @@ namespace dcn::loader
                 if(solidity_code.empty())
                 {
                     spdlog::error("Failed to construct Solidity code for `{}`: empty source", name);
+                    out_file.close();
                     _removeFileNoThrow(code_path);
                     co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
                 }

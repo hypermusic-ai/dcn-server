@@ -402,3 +402,60 @@ TEST_F(UnitTest, PT_Deploy_Connector_DuplicateName_ReturnsConnectorAlreadyRegist
     ASSERT_FALSE(second_connector_deploy_result);
     EXPECT_EQ(second_connector_deploy_result.error().kind, pt::PTDeployError::Kind::CONNECTOR_ALREADY_REGISTERED);
 }
+
+TEST_F(UnitTest, PT_Deploy_Connector_InvalidInput_CleansTemporarySoliditySourceFile)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts directory at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeDeployStoragePath();
+    ASSERT_TRUE(prepareDeployStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    registry::Registry registry(io_context);
+
+    ConnectorRecord connector_record;
+    connector_record.mutable_connector()->set_name("CleanupInvalidConnector");
+    connector_record.set_owner(evmc::hex(makeAddressFromSuffix("pt_cleanup_owner")));
+
+    const auto deploy_result = runAwaitable(
+        io_context,
+        loader::deployConnector(evm_instance, registry, connector_record, storage_path));
+    ASSERT_FALSE(deploy_result);
+    EXPECT_EQ(deploy_result.error().kind, pt::PTDeployError::Kind::INVALID_INPUT);
+
+    const auto source_path = storage_path / "connectors" / "build" / "CleanupInvalidConnector.sol";
+    EXPECT_FALSE(std::filesystem::exists(source_path)) << std::format("Temporary Solidity source still exists: {}", source_path.string());
+}
+
+TEST_F(UnitTest, PT_Deploy_Transformation_InvalidInput_CleansTemporarySoliditySourceFile)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts directory at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeDeployStoragePath();
+    ASSERT_TRUE(prepareDeployStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    registry::Registry registry(io_context);
+
+    TransformationRecord transformation_record;
+    transformation_record.mutable_transformation()->set_name("bad-name");
+    transformation_record.mutable_transformation()->set_sol_src("return x;");
+    transformation_record.set_owner(evmc::hex(makeAddressFromSuffix("pt_cleanup_owner")));
+
+    const auto deploy_result = runAwaitable(
+        io_context,
+        loader::deployTransformation(evm_instance, registry, transformation_record, storage_path));
+    ASSERT_FALSE(deploy_result);
+    EXPECT_EQ(deploy_result.error().kind, pt::PTDeployError::Kind::INVALID_INPUT);
+
+    const auto source_path = storage_path / "transformations" / "build" / "bad-name.sol";
+    EXPECT_FALSE(std::filesystem::exists(source_path)) << std::format("Temporary Solidity source still exists: {}", source_path.string());
+}
