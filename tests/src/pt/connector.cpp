@@ -358,6 +358,16 @@ TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsInvalidContractIdentifie
     EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
 }
 
+TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsReservedKeywordContractIdentifier)
+{
+    Connector connector = makeConnectorSample();
+    connector.set_name("mapping");
+
+    auto solidity_result = constructConnectorSolidityCode(connector);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
 TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsTransformationWithEmptyName)
 {
     Connector connector = makeConnectorSample();

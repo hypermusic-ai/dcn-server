@@ -1,4 +1,5 @@
 #include "unit-tests.hpp"
+#include "solidity_identifier.hpp"
 
 using namespace dcn;
 using namespace dcn::parse;
@@ -128,4 +129,61 @@ TEST_F(UnitTest, Transformation_ConstructSolidityCode_RejectsInvalidContractIden
     const auto solidity_result = constructTransformationSolidityCode(transformation);
     ASSERT_FALSE(solidity_result.has_value());
     EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+TEST_F(UnitTest, Transformation_ConstructSolidityCode_RejectsReservedKeywordContractIdentifier)
+{
+    Transformation transformation = makeTransformationSample();
+    transformation.set_name("contract");
+
+    const auto solidity_result = constructTransformationSolidityCode(transformation);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+TEST_F(UnitTest, Transformation_ConstructSolidityCode_RejectsArgIndexAtUint32MaxBoundary)
+{
+    Transformation transformation = makeTransformationSample();
+    transformation.set_sol_src("return x + args[4294967295];");
+
+    const auto solidity_result = constructTransformationSolidityCode(transformation);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+TEST_F(UnitTest, Transformation_ConstructSolidityCode_AllowsArgIndexOneBelowUint32MaxBoundary)
+{
+    Transformation transformation = makeTransformationSample();
+    transformation.set_sol_src("return x + args[4294967294];");
+
+    const auto solidity_result = constructTransformationSolidityCode(transformation);
+    ASSERT_TRUE(solidity_result.has_value());
+    EXPECT_NE(solidity_result->find("TransformationBase(registryAddr, \"transform_add\",4294967295)"), std::string::npos);
+}
+
+TEST_F(UnitTest, SolidityIdentifier_RejectsSpecialFunctionKeywords)
+{
+    EXPECT_FALSE(pt::isValidSolidityIdentifier("constructor"));
+    EXPECT_FALSE(pt::isValidSolidityIdentifier("fallback"));
+    EXPECT_FALSE(pt::isValidSolidityIdentifier("receive"));
+}
+
+TEST_F(UnitTest, SolidityIdentifier_RejectsErrorHandlingKeywords)
+{
+    EXPECT_FALSE(pt::isValidSolidityIdentifier("revert"));
+    EXPECT_FALSE(pt::isValidSolidityIdentifier("require"));
+    EXPECT_FALSE(pt::isValidSolidityIdentifier("assert"));
+    EXPECT_FALSE(pt::isValidSolidityIdentifier("error"));
+}
+
+TEST_F(UnitTest, SolidityIdentifier_RejectsBuiltinGlobalIdentifiers)
+{
+    EXPECT_FALSE(pt::isValidSolidityIdentifier("block"));
+    EXPECT_FALSE(pt::isValidSolidityIdentifier("msg"));
+    EXPECT_FALSE(pt::isValidSolidityIdentifier("tx"));
+}
+
+TEST_F(UnitTest, SolidityIdentifier_RejectsAssemblyKeyword)
+{
+    EXPECT_FALSE(pt::isValidSolidityIdentifier("assembly"));
 }

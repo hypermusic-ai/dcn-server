@@ -129,3 +129,33 @@ TEST_F(UnitTest, Condition_ConstructSolidityCode_RejectsInvalidContractIdentifie
     ASSERT_FALSE(solidity_result.has_value());
     EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
 }
+
+TEST_F(UnitTest, Condition_ConstructSolidityCode_RejectsReservedKeywordContractIdentifier)
+{
+    Condition condition = makeConditionSample();
+    condition.set_name("function");
+
+    const auto solidity_result = constructConditionSolidityCode(condition);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+TEST_F(UnitTest, Condition_ConstructSolidityCode_RejectsArgIndexAtUint32MaxBoundary)
+{
+    Condition condition = makeConditionSample();
+    condition.set_sol_src("return args[4294967295] == 0;");
+
+    const auto solidity_result = constructConditionSolidityCode(condition);
+    ASSERT_FALSE(solidity_result.has_value());
+    EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+TEST_F(UnitTest, Condition_ConstructSolidityCode_AllowsArgIndexOneBelowUint32MaxBoundary)
+{
+    Condition condition = makeConditionSample();
+    condition.set_sol_src("return args[4294967294] == 0;");
+
+    const auto solidity_result = constructConditionSolidityCode(condition);
+    ASSERT_TRUE(solidity_result.has_value());
+    EXPECT_NE(solidity_result->find("ConditionBase(registryAddr, \"condition_check\",4294967295)"), std::string::npos);
+}

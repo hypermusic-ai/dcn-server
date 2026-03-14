@@ -184,6 +184,13 @@ namespace dcn
                         parse::ParseError::Kind::INVALID_VALUE,
                         std::format("Connector `{}` has non-numeric binding slot `{}` at dim {}", connector.name(), slot, dim_id)});
                 }
+                if(slot != std::to_string(*slot_id))
+                {
+                    spdlog::error("Connector `{}` has non-canonical binding slot key `{}` at dim {}", connector.name(), slot, dim_id);
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        std::format("Connector `{}` has non-canonical binding slot key `{}` at dim {}", connector.name(), slot, dim_id)});
+                }
 
                 const auto canonical_slot = std::make_pair(dim_id, *slot_id);
                 if(!canonical_binding_slots.insert(canonical_slot).second)

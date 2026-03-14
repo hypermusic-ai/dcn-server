@@ -48,11 +48,11 @@ namespace dcn
             {
                 unsigned long value = std::stoul(match[1].str());
 
-                if (value > std::numeric_limits<std::uint32_t>::max()) {
-                    spdlog::error("Value exceeds uint32_t range");
+                if (value >= std::numeric_limits<std::uint32_t>::max()) {
+                    spdlog::error("Transformation args index overflows uint32_t argc computation");
                     return std::unexpected(parse::ParseError{
                         parse::ParseError::Kind::INVALID_VALUE,
-                        "Transformation args index exceeds uint32_t range"});
+                        "Transformation args index must be less than uint32_t max"});
                 }
                 argc = std::max(argc, static_cast<std::uint32_t>(value) + 1U);
             }
