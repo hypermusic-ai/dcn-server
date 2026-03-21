@@ -138,6 +138,29 @@ namespace dcn
      */
     asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry);
 
+    /**
+     * @brief Handles a OPTIONS request to /format/<hash>?limit=<uint>&page=<uint>
+     *
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @return An HTTP response
+     */
+    asio::awaitable<http::Response> OPTIONS_format(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args);
+
+    /**
+     * @brief Handles a GET request to /format/<hash>?limit=<uint>&page=<uint>
+     *
+     * Returns a paginated list of connectors that belong to the given format hash.
+     *
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @param registry Registry instance
+     * @return An HTTP response
+     */
+    asio::awaitable<http::Response> GET_format(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry);
+
 
     /**
      * @brief Handles HEAD requests for the connector endpoint.

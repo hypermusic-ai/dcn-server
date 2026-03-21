@@ -30,7 +30,8 @@ using namespace dcn::tests;
 namespace
 {
     constexpr const char * kIdentityTransformationName = "IdentityTx";
-    constexpr const char * kBindingBuildCacheVersion = "constructors-v1";
+    // Bump cache key whenever generated constructor/registry ABI expectations change.
+    constexpr const char * kBindingBuildCacheVersion = "constructors-v2-format-hash";
 
     const std::array<std::filesystem::path, 3> kBindingBuildDirs{
         std::filesystem::path("connectors") / "build",

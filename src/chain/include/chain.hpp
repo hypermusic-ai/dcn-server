@@ -5,6 +5,7 @@
 #include "ingestion.hpp"
 #include "deploy.hpp"
 #include "execute.hpp"
+#include "format_hash.hpp"
 
 
 namespace dcn::chain

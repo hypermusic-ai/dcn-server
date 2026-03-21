@@ -112,6 +112,7 @@ namespace dcn
         const auto & connector_name = connector_name_result.value();
 
         std::optional<Connector> connector_res;
+        std::optional<chain::Address> requested_connector_address;
 
         if(args.size() == 2)
         {
@@ -139,7 +140,8 @@ namespace dcn
                 co_return response;
             }
 
-            connector_res = co_await registry.getConnector(connector_name_result.value(), connector_address_result.value());
+            requested_connector_address = connector_address_result.value();
+            connector_res = co_await registry.getConnector(connector_name_result.value(), *requested_connector_address);
         }
         else if(args.size() == 1)
         {
@@ -168,54 +170,76 @@ namespace dcn
             co_return response;
         }
 
-        std::vector<uint8_t> input_data;
-        // function selector
-        const auto selector = chain::constructSelector("getConnector(string)");
-        input_data.insert(input_data.end(), selector.begin(), selector.end());
+        chain::Address connector_address{};
+        std::optional<evmc::bytes32> format_hash;
 
-        // Step 2: Offset to string data (32 bytes with value 0x20)
-        std::vector<uint8_t> offset(32, 0);
-        offset[31] = 0x20;
-        input_data.insert(input_data.end(), offset.begin(), offset.end());
-
-        // Step 3: String length
-        std::vector<uint8_t> str_len(32, 0);
-        str_len[31] = static_cast<uint8_t>(connector_name.size());
-        input_data.insert(input_data.end(), str_len.begin(), str_len.end());
-
-        // Step 4: String bytes
-        input_data.insert(input_data.end(), connector_name.begin(), connector_name.end());
-
-        // Step 5: Padding to 32-byte boundary
-        const std::size_t padding = (32 - (connector_name.size() % 32)) % 32;
-        input_data.insert(input_data.end(), padding, 0);
-        
-        co_await evm.setGas(evm.getRegistryAddress(), evm::DEFAULT_GAS_LIMIT);
-        const auto exec_result = co_await evm.execute(evm.getRegistryAddress(), evm.getRegistryAddress(), input_data, evm::DEFAULT_GAS_LIMIT, 0);
-
-        // check execution status
-        if(!exec_result)
+        if(requested_connector_address.has_value())
         {
-            response.setCode(http::Code::InternalServerError)
-                .setBodyWithContentLength(json {
-                    {"message", std::format("Failed to fetch connector : {}", exec_result.error().kind)}
-                }.dump());
-            
-            co_return response;
+            connector_address = *requested_connector_address;
+            format_hash = co_await registry.getFormatHash(connector_name, connector_address);
+        }
+        else
+        {
+            std::vector<uint8_t> input_data;
+            // function selector
+            const auto selector = chain::constructSelector("getConnector(string)");
+            input_data.insert(input_data.end(), selector.begin(), selector.end());
+
+            // Step 2: Offset to string data (32 bytes with value 0x20)
+            std::vector<uint8_t> offset(32, 0);
+            offset[31] = 0x20;
+            input_data.insert(input_data.end(), offset.begin(), offset.end());
+
+            // Step 3: String length
+            std::vector<uint8_t> str_len(32, 0);
+            str_len[31] = static_cast<uint8_t>(connector_name.size());
+            input_data.insert(input_data.end(), str_len.begin(), str_len.end());
+
+            // Step 4: String bytes
+            input_data.insert(input_data.end(), connector_name.begin(), connector_name.end());
+
+            // Step 5: Padding to 32-byte boundary
+            const std::size_t padding = (32 - (connector_name.size() % 32)) % 32;
+            input_data.insert(input_data.end(), padding, 0);
+
+            co_await evm.setGas(evm.getRegistryAddress(), evm::DEFAULT_GAS_LIMIT);
+            const auto exec_result = co_await evm.execute(evm.getRegistryAddress(), evm.getRegistryAddress(), input_data, evm::DEFAULT_GAS_LIMIT, 0);
+
+            // check execution status
+            if(!exec_result)
+            {
+                response.setCode(http::Code::InternalServerError)
+                    .setBodyWithContentLength(json {
+                        {"message", std::format("Failed to fetch connector : {}", exec_result.error().kind)}
+                    }.dump());
+
+                co_return response;
+            }
+
+            const auto connector_address_res = chain::readAddressWord(exec_result.value());
+            if(!connector_address_res)
+            {
+                response.setCode(http::Code::InternalServerError)
+                    .setBodyWithContentLength(json {
+                        {"message", "Failed to fetch connector address"}
+                    }.dump());
+
+                co_return response;
+            }
+
+            connector_address = connector_address_res.value();
+            format_hash = co_await registry.getNewestFormatHash(connector_name);
         }
 
-        const auto connector_address_res = chain::readAddressWord(exec_result.value());
-        if(!connector_address_res)
+        if(!format_hash)
         {
             response.setCode(http::Code::InternalServerError)
-                .setBodyWithContentLength(json {
-                    {"message", "Failed to fetch connector address"}
+                .setBodyWithContentLength(json{
+                    {"message", "Failed to fetch connector format hash"}
                 }.dump());
-            
+
             co_return response;
         }
-
-        const auto & connector_address = connector_address_res.value();
 
         const auto owner_result = co_await fetchOwner(evm, connector_address);
         if(!owner_result)
@@ -245,6 +269,7 @@ namespace dcn
         (*json_res)["owner"] = evmc::hex(owner_address);
         (*json_res)["local_address"] = evmc::hex(connector_address);
         (*json_res)["address"] = "0x0";
+        (*json_res)["format_hash"] = evmc::hex(*format_hash);
 
         response.setCode(http::Code::OK)
             .setBodyWithContentLength(json_res->dump());
@@ -322,6 +347,18 @@ namespace dcn
         json_output["owner"] = connector_record.owner();
         json_output["local_address"] = evmc::hex(deploy_res.value());
         json_output["address"] = "0x0";
+        const auto format_hash_res =
+            co_await registry.getFormatHash(connector_record.connector().name(), deploy_res.value());
+        if(!format_hash_res)
+        {
+            response.setCode(http::Code::InternalServerError)
+                .setBodyWithContentLength(json {
+                    {"message", "Failed to fetch connector format hash"}
+                }.dump());
+
+            co_return response;
+        }
+        json_output["format_hash"] = evmc::hex(*format_hash_res);
 
         response.setCode(http::Code::Created)
             .setBodyWithContentLength(json_output.dump());
