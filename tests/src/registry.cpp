@@ -1,9 +1,7 @@
 #include "unit-tests.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cstdint>
-#include <cstring>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -15,10 +13,6 @@ using namespace dcn::tests;
 
 namespace
 {
-    constexpr std::uint8_t PATH_DIM_DOMAIN = 0x10;
-    constexpr std::uint8_t PATH_CONCAT_DOMAIN = 0x11;
-    constexpr std::uint8_t SCALAR_PATH_LABEL_DOMAIN = 0x12;
-
     template<class AwaitableT>
     auto runAwaitable(asio::io_context & io_context, AwaitableT awaitable)
     {
@@ -85,113 +79,6 @@ namespace
         return addConnectorRecord(io_context, registry, address_byte, std::move(record));
     }
 
-    bool equalBytes32(const evmc::bytes32 & lhs, const evmc::bytes32 & rhs)
-    {
-        return std::memcmp(lhs.bytes, rhs.bytes, sizeof(lhs.bytes)) == 0;
-    }
-
-    std::uint64_t readUint64BE(const std::uint8_t * ptr)
-    {
-        std::uint64_t out = 0;
-        for(std::size_t i = 0; i < sizeof(std::uint64_t); ++i)
-        {
-            out = (out << 8) | static_cast<std::uint64_t>(ptr[i]);
-        }
-        return out;
-    }
-
-    void writeUint64BE(std::uint8_t * ptr, std::uint64_t value)
-    {
-        for(std::size_t i = 0; i < sizeof(std::uint64_t); ++i)
-        {
-            const std::size_t shift = (sizeof(std::uint64_t) - 1 - i) * 8;
-            ptr[i] = static_cast<std::uint8_t>((value >> shift) & 0xFFu);
-        }
-    }
-
-    void writeUint32BE(std::uint8_t * ptr, std::uint32_t value)
-    {
-        for(std::size_t i = 0; i < sizeof(std::uint32_t); ++i)
-        {
-            const std::size_t shift = (sizeof(std::uint32_t) - 1 - i) * 8;
-            ptr[i] = static_cast<std::uint8_t>((value >> shift) & 0xFFu);
-        }
-    }
-
-    evmc::bytes32 keccakBytes(const std::uint8_t * data, std::size_t size)
-    {
-        evmc::bytes32 hash{};
-        crypto::Keccak256::getHash(data, size, hash.bytes);
-        return hash;
-    }
-
-    evmc::bytes32 composeFormatHash(const evmc::bytes32 & lhs, const evmc::bytes32 & rhs)
-    {
-        const std::uint64_t lhs0 = readUint64BE(lhs.bytes + 24);
-        const std::uint64_t lhs1 = readUint64BE(lhs.bytes + 16);
-        const std::uint64_t lhs2 = readUint64BE(lhs.bytes + 8);
-        const std::uint64_t lhs3 = readUint64BE(lhs.bytes + 0);
-
-        const std::uint64_t rhs0 = readUint64BE(rhs.bytes + 24);
-        const std::uint64_t rhs1 = readUint64BE(rhs.bytes + 16);
-        const std::uint64_t rhs2 = readUint64BE(rhs.bytes + 8);
-        const std::uint64_t rhs3 = readUint64BE(rhs.bytes + 0);
-
-        evmc::bytes32 out{};
-        writeUint64BE(out.bytes + 24, lhs0 + rhs0);
-        writeUint64BE(out.bytes + 16, lhs1 + rhs1);
-        writeUint64BE(out.bytes + 8, lhs2 + rhs2);
-        writeUint64BE(out.bytes + 0, lhs3 + rhs3);
-        return out;
-    }
-
-    evmc::bytes32 dimPathHash(std::uint32_t dim_id)
-    {
-        std::array<std::uint8_t, 5> input{};
-        input[0] = PATH_DIM_DOMAIN;
-        writeUint32BE(input.data() + 1, dim_id);
-        return keccakBytes(input.data(), input.size());
-    }
-
-    evmc::bytes32 concatPathHash(const evmc::bytes32 & left, const evmc::bytes32 & right)
-    {
-        std::array<std::uint8_t, 65> input{};
-        input[0] = PATH_CONCAT_DOMAIN;
-        std::memcpy(input.data() + 1, left.bytes, sizeof(left.bytes));
-        std::memcpy(input.data() + 33, right.bytes, sizeof(right.bytes));
-        return keccakBytes(input.data(), input.size());
-    }
-
-    evmc::bytes32 scalarPathLabelHash(const evmc::bytes32 & scalar_hash, const evmc::bytes32 & path_hash)
-    {
-        std::array<std::uint8_t, 65> input{};
-        input[0] = SCALAR_PATH_LABEL_DOMAIN;
-        std::memcpy(input.data() + 1, scalar_hash.bytes, sizeof(scalar_hash.bytes));
-        std::memcpy(input.data() + 33, path_hash.bytes, sizeof(path_hash.bytes));
-        return keccakBytes(input.data(), input.size());
-    }
-
-    evmc::bytes32 labelHashToFormatHash(const evmc::bytes32 & label_hash)
-    {
-        std::array<std::uint8_t, 33> input{};
-        std::memcpy(input.data() + 1, label_hash.bytes, sizeof(label_hash.bytes));
-
-        std::uint64_t lanes[4]{};
-        for(std::uint8_t domain = 0; domain < 4; ++domain)
-        {
-            input[0] = domain;
-            const evmc::bytes32 lane_hash = keccakBytes(input.data(), input.size());
-            lanes[domain] = readUint64BE(lane_hash.bytes + 24);
-        }
-
-        evmc::bytes32 out{};
-        writeUint64BE(out.bytes + 24, lanes[0]);
-        writeUint64BE(out.bytes + 16, lanes[1]);
-        writeUint64BE(out.bytes + 8, lanes[2]);
-        writeUint64BE(out.bytes + 0, lanes[3]);
-        return out;
-    }
-
     evmc::bytes32 pathHash(std::initializer_list<std::uint32_t> dim_ids)
     {
         auto it = dim_ids.begin();
@@ -201,11 +88,11 @@ namespace
             return {};
         }
 
-        evmc::bytes32 out = dimPathHash(*it);
+        evmc::bytes32 out = chain::dimPathHash(*it);
         ++it;
         for(; it != dim_ids.end(); ++it)
         {
-            out = concatPathHash(out, dimPathHash(*it));
+            out = chain::concatPathHash(out, chain::dimPathHash(*it));
         }
 
         return out;
@@ -213,17 +100,17 @@ namespace
 
     evmc::bytes32 expectedFormatHash(std::initializer_list<std::pair<std::string_view, evmc::bytes32>> labels)
     {
-        evmc::bytes32 format_hash{};
+        std::vector<chain::ScalarHashEntry> hash_entries;
+        hash_entries.reserve(labels.size());
         for(const auto & [scalar_name, path_hash] : labels)
         {
-            const evmc::bytes32 scalar_hash = keccakBytes(
-                reinterpret_cast<const std::uint8_t *>(scalar_name.data()),
-                scalar_name.size());
-            const evmc::bytes32 label_hash = scalarPathLabelHash(scalar_hash, path_hash);
-            format_hash = composeFormatHash(format_hash, labelHashToFormatHash(label_hash));
+            hash_entries.push_back(chain::ScalarHashEntry{
+                .scalar_hash = chain::keccakString(scalar_name),
+                .path_hash = path_hash
+            });
         }
 
-        return format_hash;
+        return chain::computeFormatHash(hash_entries);
     }
 
     bool containsScalarLabel(
@@ -233,7 +120,7 @@ namespace
     {
         for(const registry::ScalarLabel & label : labels)
         {
-            if(label.scalar == scalar && equalBytes32(label.path_hash, path_hash))
+            if(label.scalar == scalar && chain::equalBytes32(label.path_hash, path_hash))
             {
                 return true;
             }
@@ -283,7 +170,7 @@ TEST_F(UnitTest, Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
     ASSERT_TRUE(left_hash.has_value());
     ASSERT_TRUE(right_hash.has_value());
 
-    EXPECT_TRUE(equalBytes32(*left_hash, *right_hash));
+    EXPECT_TRUE(chain::equalBytes32(*left_hash, *right_hash));
 
     const evmc::bytes32 expected_left = expectedFormatHash({
         {"TIME", pathHash({0})},
@@ -294,8 +181,8 @@ TEST_F(UnitTest, Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
         {"TIME", pathHash({0})}
     });
 
-    EXPECT_TRUE(equalBytes32(*left_hash, expected_left));
-    EXPECT_TRUE(equalBytes32(*right_hash, expected_right));
+    EXPECT_TRUE(chain::equalBytes32(*left_hash, expected_left));
+    EXPECT_TRUE(chain::equalBytes32(*right_hash, expected_right));
 
     const auto left_connectors = runAwaitable(io_context, registry.getConnectorsByFormatHash(*left_hash));
     EXPECT_TRUE(left_connectors.contains(left_address));
@@ -327,7 +214,7 @@ TEST_F(UnitTest, Registry_FormatHash_IsPathSensitiveAcrossBindingSlots)
     ASSERT_TRUE(slot0_hash.has_value());
     ASSERT_TRUE(slot1_hash.has_value());
 
-    EXPECT_FALSE(equalBytes32(*slot0_hash, *slot1_hash));
+    EXPECT_FALSE(chain::equalBytes32(*slot0_hash, *slot1_hash));
 
     const auto slot0_labels = runAwaitable(io_context, registry.getScalarLabelsByFormatHash(*slot0_hash));
     const auto slot1_labels = runAwaitable(io_context, registry.getScalarLabelsByFormatHash(*slot1_hash));
@@ -369,7 +256,7 @@ TEST_F(UnitTest, Registry_FormatHash_MatchesForSeparateConnectorsWithSameProduce
     ASSERT_TRUE(first_hash.has_value());
     ASSERT_TRUE(second_hash.has_value());
 
-    EXPECT_TRUE(equalBytes32(*first_hash, *second_hash));
+    EXPECT_TRUE(chain::equalBytes32(*first_hash, *second_hash));
 
     const auto connectors = runAwaitable(io_context, registry.getConnectorsByFormatHash(*first_hash));
     EXPECT_EQ(connectors.size(), 2u);
@@ -405,8 +292,36 @@ TEST_F(UnitTest, Registry_GetNewestFormatHash_TracksNewestConnectorAddress)
     ASSERT_TRUE(second_hash.has_value());
     ASSERT_TRUE(newest_hash.has_value());
 
-    EXPECT_TRUE(equalBytes32(*newest_hash, *second_hash));
-    EXPECT_FALSE(equalBytes32(*newest_hash, *first_hash));
+    EXPECT_TRUE(chain::equalBytes32(*newest_hash, *second_hash));
+    EXPECT_FALSE(chain::equalBytes32(*newest_hash, *first_hash));
+}
+
+TEST_F(UnitTest, Registry_AddConnector_RejectsAddressReuseAcrossDifferentNames)
+{
+    asio::io_context io_context;
+    registry::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0xC1));
+
+    const chain::Address reused_address = makeAddressFromByte(0xC2);
+    ConnectorRecord first = makeConnectorRecord("ADDR_A", owner_hex);
+    addDimension(first, "");
+    ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(reused_address, std::move(first))));
+
+    ConnectorRecord second = makeConnectorRecord("ADDR_B", owner_hex);
+    addDimension(second, "");
+    EXPECT_FALSE(runAwaitable(io_context, registry.addConnector(reused_address, std::move(second))));
+
+    const auto first_hash = runAwaitable(io_context, registry.getFormatHash("ADDR_A", reused_address));
+    const auto second_hash = runAwaitable(io_context, registry.getFormatHash("ADDR_B", reused_address));
+    const auto second_newest_hash = runAwaitable(io_context, registry.getNewestFormatHash("ADDR_B"));
+    const auto connector_name = runAwaitable(io_context, registry.getConnectorName(reused_address));
+
+    EXPECT_TRUE(first_hash.has_value());
+    EXPECT_FALSE(second_hash.has_value());
+    EXPECT_FALSE(second_newest_hash.has_value());
+    ASSERT_TRUE(connector_name.has_value());
+    EXPECT_EQ(*connector_name, "ADDR_A");
 }
 
 TEST_F(UnitTest, Registry_FormatHash_PreservesScalarMultiplicity)
@@ -434,7 +349,7 @@ TEST_F(UnitTest, Registry_FormatHash_PreservesScalarMultiplicity)
     ASSERT_TRUE(one_hash.has_value());
     ASSERT_TRUE(two_hash.has_value());
 
-    EXPECT_FALSE(equalBytes32(*one_hash, *two_hash));
+    EXPECT_FALSE(chain::equalBytes32(*one_hash, *two_hash));
 
     const evmc::bytes32 expected_one = expectedFormatHash({
         {"PITCH", pathHash({0})}
@@ -443,8 +358,8 @@ TEST_F(UnitTest, Registry_FormatHash_PreservesScalarMultiplicity)
         {"PITCH", pathHash({0})},
         {"PITCH", pathHash({0})}
     });
-    EXPECT_TRUE(equalBytes32(*one_hash, expected_one));
-    EXPECT_TRUE(equalBytes32(*two_hash, expected_two));
+    EXPECT_TRUE(chain::equalBytes32(*one_hash, expected_one));
+    EXPECT_TRUE(chain::equalBytes32(*two_hash, expected_two));
 }
 
 TEST_F(UnitTest, Registry_FormatHash_MatchesForSameScalarNamesWhenTailLabelsMatch)
@@ -474,7 +389,7 @@ TEST_F(UnitTest, Registry_FormatHash_MatchesForSameScalarNamesWhenTailLabelsMatc
     ASSERT_TRUE(direct_hash.has_value());
     ASSERT_TRUE(bound_hash.has_value());
 
-    EXPECT_TRUE(equalBytes32(*direct_hash, *bound_hash));
+    EXPECT_TRUE(chain::equalBytes32(*direct_hash, *bound_hash));
 
     const auto direct_labels = runAwaitable(io_context, registry.getScalarLabelsByFormatHash(*direct_hash));
     const auto bound_labels = runAwaitable(io_context, registry.getScalarLabelsByFormatHash(*bound_hash));

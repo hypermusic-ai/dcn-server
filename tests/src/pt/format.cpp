@@ -222,34 +222,51 @@ namespace
 
         const std::vector<std::uint8_t> name_data = encodeStringData(name);
 
+        // Dynamic tuple fields in ConnectorRegistration, in declaration order.
+        std::array<std::vector<std::uint8_t>, 7> registration_tails{};
+        for(auto & tail : registration_tails)
+        {
+            // All seven dynamic fields are encoded as empty values in this helper.
+            tail.assign(32, 0);
+        }
+
+        constexpr std::uint64_t registration_head_words = 10;
+        constexpr std::uint64_t abi_word_size = 32;
+        std::array<std::uint64_t, 7> registration_tail_offsets{};
+        std::uint64_t next_tail_offset = registration_head_words * abi_word_size;
+        for(std::size_t i = 0; i < registration_tails.size(); ++i)
+        {
+            registration_tail_offsets[i] = next_tail_offset;
+            next_tail_offset += static_cast<std::uint64_t>(registration_tails[i].size());
+        }
+
         std::vector<std::uint8_t> registration_data;
-        registration_data.reserve(320 + 32 * 7);
+        registration_data.reserve(static_cast<std::size_t>(next_tail_offset));
 
         // ConnectorRegistration head (10 words)
         appendAddressWord(registration_data, registration_owner); // owner
         appendUintWord(registration_data, 1); // dimensionsCount
-        appendUintWord(registration_data, 320); // compositeDimIds offset
-        appendUintWord(registration_data, 352); // compositeNames offset
-        appendUintWord(registration_data, 384); // bindingDimIds offset
-        appendUintWord(registration_data, 416); // bindingSlotIds offset
-        appendUintWord(registration_data, 448); // bindingNames offset
-        appendUintWord(registration_data, 480); // conditionName offset
-        appendUintWord(registration_data, 512); // conditionArgs offset
+        appendUintWord(registration_data, registration_tail_offsets[0]); // compositeDimIds offset
+        appendUintWord(registration_data, registration_tail_offsets[1]); // compositeNames offset
+        appendUintWord(registration_data, registration_tail_offsets[2]); // bindingDimIds offset
+        appendUintWord(registration_data, registration_tail_offsets[3]); // bindingSlotIds offset
+        appendUintWord(registration_data, registration_tail_offsets[4]); // bindingNames offset
+        appendUintWord(registration_data, registration_tail_offsets[5]); // conditionName offset
+        appendUintWord(registration_data, registration_tail_offsets[6]); // conditionArgs offset
         appendBytes32Word(registration_data, registration_format_hash); // formatHash
 
-        // Dynamic tails (all empty)
-        appendZeroWord(registration_data); // compositeDimIds: uint32[] length = 0
-        appendZeroWord(registration_data); // compositeNames: string[] length = 0
-        appendZeroWord(registration_data); // bindingDimIds: uint32[] length = 0
-        appendZeroWord(registration_data); // bindingSlotIds: uint32[] length = 0
-        appendZeroWord(registration_data); // bindingNames: string[] length = 0
-        appendZeroWord(registration_data); // conditionName: empty string length = 0
-        appendZeroWord(registration_data); // conditionArgs: int32[] length = 0
+        // Dynamic tails (all empty, pre-encoded in `registration_tails`).
+        for(const auto & tail : registration_tails)
+        {
+            registration_data.insert(registration_data.end(), tail.begin(), tail.end());
+        }
 
         std::vector<std::uint8_t> call_data = selector;
-        appendUintWord(call_data, 96); // arg0: name offset
+        constexpr std::uint64_t call_head_words = 3;
+        const std::uint64_t call_head_bytes = call_head_words * abi_word_size;
+        appendUintWord(call_data, call_head_bytes); // arg0: name offset
         appendAddressWord(call_data, connector_address); // arg1: connector
-        appendUintWord(call_data, 96 + name_data.size()); // arg2: registration tuple offset
+        appendUintWord(call_data, call_head_bytes + static_cast<std::uint64_t>(name_data.size())); // arg2: registration tuple offset
         call_data.insert(call_data.end(), name_data.begin(), name_data.end());
         call_data.insert(call_data.end(), registration_data.begin(), registration_data.end());
         return call_data;
@@ -562,20 +579,40 @@ contract FakeConnectorCaller is IConnector
         const chain::Address & caller,
         const std::string & connector_name)
     {
-        const auto input = encodeSelectorAndStringArg("getFormatHash(string)", connector_name);
-        auto output = callRegistry(io_context, evm_instance, caller, input);
-        if(!output)
+        const auto connector_input = encodeSelectorAndStringArg("getConnector(string)", connector_name);
+        auto connector_output = callRegistry(io_context, evm_instance, caller, connector_input);
+        if(!connector_output)
         {
-            return std::unexpected(output.error());
+            return std::unexpected(connector_output.error());
         }
 
-        if(output->size() < sizeof(evmc::bytes32))
+        const auto connector_address = chain::readAddressWord(*connector_output);
+        if(!connector_address)
+        {
+            return std::unexpected("failed to decode getConnector output");
+        }
+
+        const auto hash_input = chain::constructSelector("getFormatHash()");
+        auto output = runAwaitable(
+            io_context,
+            evm_instance.execute(
+                caller,
+                *connector_address,
+                hash_input,
+                evm::DEFAULT_GAS_LIMIT,
+                0));
+        if(!output)
+        {
+            return std::unexpected(std::format("connector getFormatHash failed: {}", output.error().kind));
+        }
+
+        if(output.value().size() < sizeof(evmc::bytes32))
         {
             return std::unexpected("short output for getFormatHash");
         }
 
         evmc::bytes32 hash{};
-        std::memcpy(hash.bytes, output->data(), sizeof(hash.bytes));
+        std::memcpy(hash.bytes, output.value().data(), sizeof(hash.bytes));
         return hash;
     }
 

@@ -66,6 +66,7 @@ namespace dcn::registry
             absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, ConnectorRecord>> _connectors;
             absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, TransformationRecord>> _transformations;
             absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, ConditionRecord>> _conditions;
+            absl::flat_hash_map<chain::Address, std::string> _connector_name_by_address;
 
             absl::flat_hash_map<chain::Address, evmc::bytes32> _format_by_connector;
             absl::flat_hash_map<evmc::bytes32, absl::flat_hash_set<chain::Address>> _connectors_by_format;

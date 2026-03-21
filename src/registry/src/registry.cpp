@@ -35,7 +35,7 @@ namespace dcn::registry
                 return;
             }
 
-            spdlog::debug("{} bucket `{}` does not exists, creating new one ... ", bucket_type_name, bucket_name);
+            spdlog::debug("{} bucket `{}` does not exist, creating new one ... ", bucket_type_name, bucket_name);
             buckets.try_emplace(bucket_name, typename TBuckets::mapped_type{});
         }
 
@@ -663,6 +663,18 @@ namespace dcn::registry
             co_return false;
         }
 
+        // Connector-address indexed maps are global, so the same address
+        // cannot be registered under a different connector name.
+        if(const auto existing_name_it = _connector_name_by_address.find(address);
+            existing_name_it != _connector_name_by_address.end())
+        {
+            spdlog::error(
+                "Connector address is already registered as `{}`; cannot add `{}`",
+                existing_name_it->second,
+                connector_name);
+            co_return false;
+        }
+
         if(connector.dimensions_size() <= 0)
         {
             spdlog::error("Connector `{}` has zero dimensions", connector_name);
@@ -712,6 +724,7 @@ namespace dcn::registry
         _owned_connectors[owner].emplace(connector_name);
         _newest_connector[connector_name] = address;
         _connectors.at(connector_name).try_emplace(address, std::move(record));
+        _connector_name_by_address[address] = connector_name;
         _format_by_connector[address] = format_hash;
         _connectors_by_format[format_hash].emplace(address);
 
@@ -763,15 +776,13 @@ namespace dcn::registry
     {
         co_await utils::ensureOnStrand(_strand);
 
-        for(const auto & [name, bucket] : _connectors)
+        auto name_it = _connector_name_by_address.find(address);
+        if(name_it == _connector_name_by_address.end())
         {
-            if(bucket.contains(address))
-            {
-                co_return name;
-            }
+            co_return std::nullopt;
         }
 
-        co_return std::nullopt;
+        co_return name_it->second;
     }
 
     asio::awaitable<std::optional<evmc::bytes32>> Registry::getNewestFormatHash(const std::string& name) const
