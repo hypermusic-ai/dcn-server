@@ -6,6 +6,7 @@
 #include <limits>
 #include <system_error>
 #include <vector>
+#include <format>
 
 namespace dcn::registry
 {
@@ -23,6 +24,158 @@ namespace dcn::registry
             VISITING,
             DONE
         };
+
+        // Shared connector-graph references used while resolving recursive dependencies.
+        struct _ConnectorGraphContext
+        {
+            const Connector & pending_connector;
+            const absl::flat_hash_map<std::string, chain::Address> & newest_connector;
+            const _ConnectorBuckets & connectors;
+        };
+
+        // Traversal state for recursive open-slot computation.
+        struct _OpenSlotsContext
+        {
+            const std::string & root_connector_name;
+            const _ConnectorGraphContext & graph;
+            absl::flat_hash_map<std::string, _VisitState> & visit_state;
+            absl::flat_hash_map<std::string, std::uint32_t> & open_slots_cache;
+        };
+
+        // Traversal state for recursive scalar-entry computation.
+        struct _ScalarEntriesContext
+        {
+            const std::string & root_connector_name;
+            const _ConnectorGraphContext & graph;
+            absl::flat_hash_map<std::string, _VisitState> & scalar_visit_state;
+            absl::flat_hash_map<std::string, dcn::chain::ResolvedScalarEntries> & scalar_entries_cache;
+        };
+
+        // Aggregated slot impact produced by applying bindings to a child connector.
+        struct _OpenSlotBindingEffect
+        {
+            std::uint64_t added_open_slots = 0;
+            std::size_t bound_slot_count = 0;
+        };
+
+        // Compact scalar-label statistics used for warning diagnostics.
+        struct _ScalarLabelSummary
+        {
+            std::size_t labels_count = 0;
+            std::size_t unique_scalars_count = 0;
+            std::size_t unique_scalar_tail_pairs_count = 0;
+        };
+
+        // Lazily create a named bucket when first needed.
+        template <typename TBuckets>
+        static void _ensureBucket(
+            const char * bucket_type_name,
+            const std::string & bucket_name,
+            TBuckets & buckets);
+
+        // Validate that all transformations referenced by a connector are resolvable.
+        static bool _validateConnectorTransformations(
+            const Connector & connector,
+            const _TransformationBuckets & transformations);
+
+        // Validate that the optional condition referenced by a connector is resolvable.
+        static bool _validateConnectorCondition(
+            const Connector & connector,
+            const _ConditionBuckets & conditions);
+
+        // Resolve connector definition from the in-flight connector plus persisted registry state.
+        static const Connector * _resolveConnector(
+            const std::string & connector_name,
+            const _ConnectorGraphContext & graph_context);
+
+        // Lookup format hash for an existing (name, address) connector registration.
+        static std::optional<evmc::bytes32> _lookupConnectorFormatHash(
+            const std::string & name,
+            const chain::Address & address,
+            const _ConnectorBuckets & connectors,
+            const absl::flat_hash_map<chain::Address, evmc::bytes32> & format_by_connector);
+
+        // Parse a decimal slot id and reject malformed/overflowing values.
+        static std::optional<std::uint32_t> _parseSlotId(const std::string & slot_str);
+
+        // Compute open slots for a connector with memoization and cycle detection.
+        static std::optional<std::uint32_t> _computeOpenSlots(
+            const std::string & connector_name,
+            _OpenSlotsContext & context);
+
+        // Compute produced scalar entries for a connector with memoization and cycle detection.
+        static std::optional<dcn::chain::ResolvedScalarEntries> _computeScalarEntries(
+            const std::string & connector_name,
+            _ScalarEntriesContext & context);
+
+        // Compute how bindings modify the open-slot contribution of a composite dimension.
+        static std::optional<_OpenSlotBindingEffect> _computeOpenSlotBindingEffect(
+            const std::string & connector_name,
+            const std::string & composite_name,
+            const Dimension & dimension,
+            std::uint32_t dim_id,
+            std::uint32_t child_open_slots,
+            _OpenSlotsContext & context);
+
+        // Append a local scalar dimension entry for the current connector.
+        static void _appendLocalScalarEntry(
+            const std::string & connector_name,
+            std::uint32_t dim_id,
+            dcn::chain::ResolvedScalarEntries & connector_scalar_entries);
+
+        // Validate child scalar-entry cache consistency before merging.
+        static bool _validateChildScalarEntries(
+            const std::string & connector_name,
+            const std::string & composite_name,
+            const dcn::chain::ResolvedScalarEntries & child_scalar_entries);
+
+        // Validate bound-target scalar-entry cache consistency before merging.
+        static bool _validateBindingScalarEntries(
+            const std::string & connector_name,
+            const std::string & binding_target,
+            const dcn::chain::ResolvedScalarEntries & binding_scalar_entries);
+
+        // Build slot->binding map for scalar resolution and validate slot ids.
+        static std::optional<absl::flat_hash_map<std::uint32_t, std::string>>
+        _buildBindingBySlotForScalarResolution(
+            const std::string & connector_name,
+            const std::string & composite_name,
+            const Dimension & dimension,
+            std::uint32_t dim_id,
+            std::size_t child_slot_count);
+
+        // Resolve and append scalar entries produced by a binding target connector.
+        static bool _appendBindingScalarEntries(
+            const std::string & connector_name,
+            const std::string & binding_target,
+            _ScalarEntriesContext & context,
+            dcn::chain::ResolvedScalarEntries & connector_scalar_entries);
+
+        // Resolve all scalar entries for the root connector being added.
+        static std::optional<dcn::chain::ResolvedScalarEntries> _resolveRootScalarEntries(
+            const Connector & root_connector,
+            const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
+            const _ConnectorBuckets & connectors);
+
+        // Validate open-slot consistency for the root connector being added.
+        static bool _validateConnectorOpenSlots(
+            const Connector & root_connector,
+            const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
+            const _ConnectorBuckets & connectors);
+
+        // Return a deterministically ordered copy of scalar labels.
+        static std::vector<ScalarLabel> _canonicalizeScalarLabels(const std::vector<ScalarLabel> & labels);
+
+        // Compare canonical scalar-label collections for byte-accurate equality.
+        static bool _scalarLabelsEqual(
+            const std::vector<ScalarLabel> & lhs,
+            const std::vector<ScalarLabel> & rhs);
+
+        // Produce compact scalar-label metrics for warning logs.
+        static _ScalarLabelSummary _summarizeScalarLabels(const std::vector<ScalarLabel> & labels);
+
+        // Parse connector owner string into an address if valid.
+        static std::optional<chain::Address> _tryParseOwnerAddress(const std::string & owner);
 
         // Create bucket lazily so add paths can assume .at(name) is valid.
         template <typename TBuckets>
@@ -94,12 +247,6 @@ namespace dcn::registry
             return false;
         }
 
-        // Stable byte-order comparator used for deterministic connector paging.
-        static bool _addressLess(const chain::Address & lhs, const chain::Address & rhs)
-        {
-            return std::memcmp(lhs.bytes, rhs.bytes, sizeof(lhs.bytes)) < 0;
-        }
-
         // Lookup format hash for a concrete (name, address) connector registration.
         // Caller must ensure synchronization (strand) before invoking.
         static std::optional<evmc::bytes32> _lookupConnectorFormatHash(
@@ -142,23 +289,21 @@ namespace dcn::registry
         // so recursion can still resolve references to the in-flight definition.
         static const Connector * _resolveConnector(
             const std::string & connector_name,
-            const Connector & pending_connector,
-            const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
-            const _ConnectorBuckets & connectors)
+            const _ConnectorGraphContext & graph_context)
         {
-            if(connector_name == pending_connector.name())
+            if(connector_name == graph_context.pending_connector.name())
             {
-                return &pending_connector;
+                return &graph_context.pending_connector;
             }
 
-            auto newest_it = newest_connector.find(connector_name);
-            if(newest_it == newest_connector.end())
+            auto newest_it = graph_context.newest_connector.find(connector_name);
+            if(newest_it == graph_context.newest_connector.end())
             {
                 return nullptr;
             }
 
-            auto bucket_it = connectors.find(connector_name);
-            if(bucket_it == connectors.end())
+            auto bucket_it = graph_context.connectors.find(connector_name);
+            if(bucket_it == graph_context.connectors.end())
             {
                 return nullptr;
             }
@@ -172,41 +317,270 @@ namespace dcn::registry
             return &connector_it->second.connector();
         }
 
+        static std::optional<_OpenSlotBindingEffect> _computeOpenSlotBindingEffect(
+            const std::string & connector_name,
+            const std::string & composite_name,
+            const Dimension & dimension,
+            std::uint32_t dim_id,
+            std::uint32_t child_open_slots,
+            _OpenSlotsContext & context)
+        {
+            absl::flat_hash_set<std::uint32_t> bound_slot_ids;
+            _OpenSlotBindingEffect effect{};
+            for(const auto & [slot_str, binding_target] : dimension.bindings())
+            {
+                if(binding_target.empty())
+                {
+                    spdlog::error(
+                        "Connector `{}` has empty binding target at dim {} slot `{}`",
+                        connector_name,
+                        dim_id,
+                        slot_str);
+                    return std::nullopt;
+                }
+
+                const auto slot_id_opt = _parseSlotId(slot_str);
+                if(!slot_id_opt)
+                {
+                    spdlog::error(
+                        "Connector `{}` has invalid binding slot id `{}` at dim {}",
+                        connector_name,
+                        slot_str,
+                        dim_id);
+                    return std::nullopt;
+                }
+                const std::uint32_t slot_id = *slot_id_opt;
+
+                if(!bound_slot_ids.insert(slot_id).second)
+                {
+                    spdlog::error(
+                        "Connector `{}` has duplicate binding slot id {} at dim {}",
+                        connector_name,
+                        slot_id,
+                        dim_id);
+                    return std::nullopt;
+                }
+
+                if(slot_id >= child_open_slots)
+                {
+                    spdlog::error(
+                        "Connector `{}` binding slot {} is out of range for child `{}` (open slots: {})",
+                        connector_name,
+                        slot_id,
+                        composite_name,
+                        child_open_slots);
+                    return std::nullopt;
+                }
+
+                if(_resolveConnector(binding_target, context.graph) == nullptr)
+                {
+                    spdlog::error(
+                        "Cannot resolve binding target `{}` in connector `{}` dim {} slot {}",
+                        binding_target,
+                        connector_name,
+                        dim_id,
+                        slot_id);
+                    return std::nullopt;
+                }
+
+                const auto target_open_slots_opt = _computeOpenSlots(
+                    binding_target,
+                    context);
+                if(!target_open_slots_opt)
+                {
+                    return std::nullopt;
+                }
+
+                effect.added_open_slots += static_cast<std::uint64_t>(*target_open_slots_opt);
+            }
+
+            effect.bound_slot_count = bound_slot_ids.size();
+            return effect;
+        }
+
+        static void _appendLocalScalarEntry(
+            const std::string & connector_name,
+            std::uint32_t dim_id,
+            dcn::chain::ResolvedScalarEntries & connector_scalar_entries)
+        {
+            const evmc::bytes32 dim_path_hash = dcn::chain::dimPathHash(dim_id);
+            const evmc::bytes32 scalar_hash = dcn::chain::keccakString(connector_name);
+            connector_scalar_entries.hash_entries.push_back(dcn::chain::ScalarHashEntry{
+                .scalar_hash = scalar_hash,
+                .path_hash = dim_path_hash
+            });
+            connector_scalar_entries.display_entries.push_back(ScalarLabel{
+                .scalar = connector_name,
+                // Tail-only path rule: local scalar tail is this dimension id.
+                .path_hash = dim_path_hash,
+                .tail_id = dim_id
+            });
+        }
+
+        static bool _validateChildScalarEntries(
+            const std::string & connector_name,
+            const std::string & composite_name,
+            const dcn::chain::ResolvedScalarEntries & child_scalar_entries)
+        {
+            if(child_scalar_entries.hash_entries.size() != child_scalar_entries.display_entries.size())
+            {
+                spdlog::error(
+                    "Connector `{}` child `{}` has inconsistent scalar-entry cache",
+                    connector_name,
+                    composite_name);
+                return false;
+            }
+
+            if(
+                child_scalar_entries.display_entries.size() >
+                static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max()))
+            {
+                spdlog::error(
+                    "Connector `{}` child `{}` scalar labels exceed uint32 range",
+                    connector_name,
+                    composite_name);
+                return false;
+            }
+
+            return true;
+        }
+
+        static bool _validateBindingScalarEntries(
+            const std::string & connector_name,
+            const std::string & binding_target,
+            const dcn::chain::ResolvedScalarEntries & binding_scalar_entries)
+        {
+            if(binding_scalar_entries.hash_entries.size() != binding_scalar_entries.display_entries.size())
+            {
+                spdlog::error(
+                    "Connector `{}` binding `{}` has inconsistent scalar-entry cache",
+                    connector_name,
+                    binding_target);
+                return false;
+            }
+
+            return true;
+        }
+
+        static std::optional<absl::flat_hash_map<std::uint32_t, std::string>>
+        _buildBindingBySlotForScalarResolution(
+            const std::string & connector_name,
+            const std::string & composite_name,
+            const Dimension & dimension,
+            std::uint32_t dim_id,
+            std::size_t child_slot_count)
+        {
+            absl::flat_hash_map<std::uint32_t, std::string> binding_by_slot;
+            for(const auto & [slot_str, binding_target] : dimension.bindings())
+            {
+                if(binding_target.empty())
+                {
+                    spdlog::error(
+                        "Connector `{}` has empty binding target at dim {} slot `{}` while resolving scalar slots",
+                        connector_name,
+                        dim_id,
+                        slot_str);
+                    return std::nullopt;
+                }
+
+                const auto slot_id_opt = _parseSlotId(slot_str);
+                if(!slot_id_opt)
+                {
+                    spdlog::error(
+                        "Connector `{}` has invalid binding slot id `{}` at dim {} while resolving scalar slots",
+                        connector_name,
+                        slot_str,
+                        dim_id);
+                    return std::nullopt;
+                }
+                const std::uint32_t slot_id = *slot_id_opt;
+
+                if(slot_id >= child_slot_count)
+                {
+                    spdlog::error(
+                        "Connector `{}` binding slot {} is out of range for child `{}` while resolving scalar labels",
+                        connector_name,
+                        slot_id,
+                        composite_name);
+                    return std::nullopt;
+                }
+
+                if(!binding_by_slot.try_emplace(slot_id, binding_target).second)
+                {
+                    spdlog::error(
+                        "Connector `{}` has duplicate binding slot id {} at dim {} while resolving scalar slots",
+                        connector_name,
+                        slot_id,
+                        dim_id);
+                    return std::nullopt;
+                }
+            }
+
+            return binding_by_slot;
+        }
+
+        static bool _appendBindingScalarEntries(
+            const std::string & connector_name,
+            const std::string & binding_target,
+            _ScalarEntriesContext & context,
+            dcn::chain::ResolvedScalarEntries & connector_scalar_entries)
+        {
+            auto binding_scalar_entries_opt = _computeScalarEntries(
+                binding_target,
+                context);
+            if(!binding_scalar_entries_opt)
+            {
+                return false;
+            }
+            const dcn::chain::ResolvedScalarEntries & binding_scalar_entries =
+                *binding_scalar_entries_opt;
+
+            if(!_validateBindingScalarEntries(connector_name, binding_target, binding_scalar_entries))
+            {
+                return false;
+            }
+
+            for(std::size_t i = 0; i < binding_scalar_entries.display_entries.size(); ++i)
+            {
+                // Tail-only path rule: bound scalar keeps its own tail path.
+                connector_scalar_entries.hash_entries.push_back(binding_scalar_entries.hash_entries[i]);
+                connector_scalar_entries.display_entries.push_back(
+                    binding_scalar_entries.display_entries[i]);
+            }
+
+            return true;
+        }
+
         // Compute connector open-slot count with cycle detection and memoization.
         // `root_connector_name` is threaded through recursion only for top-level error context.
         static std::optional<std::uint32_t> _computeOpenSlots(
             const std::string & connector_name,
-            const std::string & root_connector_name,
-            const Connector & pending_connector,
-            const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
-            const _ConnectorBuckets & connectors,
-            absl::flat_hash_map<std::string, _VisitState> & visit_state,
-            absl::flat_hash_map<std::string, std::uint32_t> & open_slots_cache)
+            _OpenSlotsContext & context)
         {
-            if(const auto cache_it = open_slots_cache.find(connector_name); cache_it != open_slots_cache.end())
+            if(const auto cache_it = context.open_slots_cache.find(connector_name); cache_it != context.open_slots_cache.end())
             {
                 return cache_it->second;
             }
 
-            if(const auto state_it = visit_state.find(connector_name);
-                state_it != visit_state.end() && state_it->second == _VisitState::VISITING)
+            if(const auto state_it = context.visit_state.find(connector_name);
+                state_it != context.visit_state.end() && state_it->second == _VisitState::VISITING)
             {
                 spdlog::error("Connector dependency cycle detected at `{}`", connector_name);
                 return std::nullopt;
             }
 
             const Connector * connector =
-                _resolveConnector(connector_name, pending_connector, newest_connector, connectors);
+                _resolveConnector(connector_name, context.graph);
             if(connector == nullptr)
             {
                 spdlog::error(
                     "Cannot resolve connector definition `{}` while validating `{}`",
                     connector_name,
-                    root_connector_name);
+                    context.root_connector_name);
                 return std::nullopt;
             }
 
-            visit_state[connector_name] = _VisitState::VISITING;
+            context.visit_state[connector_name] = _VisitState::VISITING;
 
             std::uint64_t open_slots = 0;
             for(std::uint32_t dim_id = 0; dim_id < static_cast<std::uint32_t>(connector->dimensions_size()); ++dim_id)
@@ -228,7 +602,7 @@ namespace dcn::registry
                     continue;
                 }
 
-                if(_resolveConnector(composite_name, pending_connector, newest_connector, connectors) == nullptr)
+                if(_resolveConnector(composite_name, context.graph) == nullptr)
                 {
                     spdlog::error(
                         "Cannot resolve composite connector `{}` in connector `{}` dim {}",
@@ -240,12 +614,7 @@ namespace dcn::registry
 
                 const auto child_open_slots_opt = _computeOpenSlots(
                     composite_name,
-                    root_connector_name,
-                    pending_connector,
-                    newest_connector,
-                    connectors,
-                    visit_state,
-                    open_slots_cache);
+                    context);
                 if(!child_open_slots_opt)
                 {
                     return std::nullopt;
@@ -253,80 +622,20 @@ namespace dcn::registry
                 const std::uint32_t child_open_slots = *child_open_slots_opt;
                 open_slots += child_open_slots;
 
-                absl::flat_hash_set<std::uint32_t> bound_slot_ids;
-                for(const auto & [slot_str, binding_target] : dimension.bindings())
+                const auto binding_effect_opt = _computeOpenSlotBindingEffect(
+                    connector_name,
+                    composite_name,
+                    dimension,
+                    dim_id,
+                    child_open_slots,
+                    context);
+                if(!binding_effect_opt)
                 {
-                    if(binding_target.empty())
-                    {
-                        spdlog::error(
-                            "Connector `{}` has empty binding target at dim {} slot `{}`",
-                            connector_name,
-                            dim_id,
-                            slot_str);
-                        return std::nullopt;
-                    }
-
-                    const auto slot_id_opt = _parseSlotId(slot_str);
-                    if(!slot_id_opt)
-                    {
-                        spdlog::error(
-                            "Connector `{}` has invalid binding slot id `{}` at dim {}",
-                            connector_name,
-                            slot_str,
-                            dim_id);
-                        return std::nullopt;
-                    }
-                    const std::uint32_t slot_id = *slot_id_opt;
-
-                    if(!bound_slot_ids.insert(slot_id).second)
-                    {
-                        spdlog::error(
-                            "Connector `{}` has duplicate binding slot id {} at dim {}",
-                            connector_name,
-                            slot_id,
-                            dim_id);
-                        return std::nullopt;
-                    }
-
-                    if(slot_id >= child_open_slots)
-                    {
-                        spdlog::error(
-                            "Connector `{}` binding slot {} is out of range for child `{}` (open slots: {})",
-                            connector_name,
-                            slot_id,
-                            composite_name,
-                            child_open_slots);
-                        return std::nullopt;
-                    }
-
-                    if(_resolveConnector(binding_target, pending_connector, newest_connector, connectors) == nullptr)
-                    {
-                        spdlog::error(
-                            "Cannot resolve binding target `{}` in connector `{}` dim {} slot {}",
-                            binding_target,
-                            connector_name,
-                            dim_id,
-                            slot_id);
-                        return std::nullopt;
-                    }
-
-                    const auto target_open_slots_opt = _computeOpenSlots(
-                        binding_target,
-                        root_connector_name,
-                        pending_connector,
-                        newest_connector,
-                        connectors,
-                        visit_state,
-                        open_slots_cache);
-                    if(!target_open_slots_opt)
-                    {
-                        return std::nullopt;
-                    }
-
-                    open_slots += static_cast<std::uint64_t>(*target_open_slots_opt);
+                    return std::nullopt;
                 }
 
-                open_slots -= static_cast<std::uint64_t>(bound_slot_ids.size());
+                open_slots += binding_effect_opt->added_open_slots;
+                open_slots -= static_cast<std::uint64_t>(binding_effect_opt->bound_slot_count);
             }
 
             if(open_slots > std::numeric_limits<std::uint32_t>::max())
@@ -335,8 +644,8 @@ namespace dcn::registry
                 return std::nullopt;
             }
 
-            visit_state[connector_name] = _VisitState::DONE;
-            open_slots_cache.emplace(connector_name, static_cast<std::uint32_t>(open_slots));
+            context.visit_state[connector_name] = _VisitState::DONE;
+            context.open_slots_cache.emplace(connector_name, static_cast<std::uint32_t>(open_slots));
             return static_cast<std::uint32_t>(open_slots);
         }
 
@@ -344,20 +653,16 @@ namespace dcn::registry
         // `root_connector_name` is threaded through recursion only for top-level error context.
         static std::optional<dcn::chain::ResolvedScalarEntries> _computeScalarEntries(
             const std::string & connector_name,
-            const std::string & root_connector_name,
-            const Connector & pending_connector,
-            const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
-            const _ConnectorBuckets & connectors,
-            absl::flat_hash_map<std::string, _VisitState> & scalar_visit_state,
-            absl::flat_hash_map<std::string, dcn::chain::ResolvedScalarEntries> & scalar_entries_cache)
+            _ScalarEntriesContext & context)
         {
-            if(const auto cache_it = scalar_entries_cache.find(connector_name); cache_it != scalar_entries_cache.end())
+            if(const auto cache_it = context.scalar_entries_cache.find(connector_name);
+                cache_it != context.scalar_entries_cache.end())
             {
                 return cache_it->second;
             }
 
-            if(const auto state_it = scalar_visit_state.find(connector_name);
-                state_it != scalar_visit_state.end() &&
+            if(const auto state_it = context.scalar_visit_state.find(connector_name);
+                state_it != context.scalar_visit_state.end() &&
                 state_it->second == _VisitState::VISITING)
             {
                 spdlog::error(
@@ -367,24 +672,23 @@ namespace dcn::registry
             }
 
             const Connector * connector =
-                _resolveConnector(connector_name, pending_connector, newest_connector, connectors);
+                _resolveConnector(connector_name, context.graph);
             if(connector == nullptr)
             {
                 spdlog::error(
                     "Cannot resolve connector definition `{}` while resolving scalars for `{}`",
                     connector_name,
-                    root_connector_name);
+                    context.root_connector_name);
                 return std::nullopt;
             }
 
-            scalar_visit_state[connector_name] = _VisitState::VISITING;
+            context.scalar_visit_state[connector_name] = _VisitState::VISITING;
 
             dcn::chain::ResolvedScalarEntries connector_scalar_entries;
             for(std::uint32_t dim_id = 0; dim_id < static_cast<std::uint32_t>(connector->dimensions_size()); ++dim_id)
             {
                 const Dimension & dimension = connector->dimensions(static_cast<int>(dim_id));
                 const std::string & composite_name = dimension.composite();
-                const evmc::bytes32 dim_path_hash = dcn::chain::dimPathHash(dim_id);
                 if(composite_name.empty())
                 {
                     if(dimension.bindings_size() != 0)
@@ -396,99 +700,35 @@ namespace dcn::registry
                         return std::nullopt;
                     }
 
-                    const evmc::bytes32 scalar_hash = dcn::chain::keccakString(connector_name);
-                    connector_scalar_entries.hash_entries.push_back(dcn::chain::ScalarHashEntry{
-                        .scalar_hash = scalar_hash,
-                        .path_hash = dim_path_hash
-                    });
-                    connector_scalar_entries.display_entries.push_back(ScalarLabel{
-                        .scalar = connector_name,
-                        // Tail-only path rule: local scalar tail is this dimension id.
-                        .path_hash = dim_path_hash,
-                        .tail_id = dim_id
-                    });
+                    _appendLocalScalarEntry(connector_name, dim_id, connector_scalar_entries);
                     continue;
                 }
 
                 auto child_scalar_entries_opt = _computeScalarEntries(
                     composite_name,
-                    root_connector_name,
-                    pending_connector,
-                    newest_connector,
-                    connectors,
-                    scalar_visit_state,
-                    scalar_entries_cache);
+                    context);
                 if(!child_scalar_entries_opt)
                 {
                     return std::nullopt;
                 }
                 const dcn::chain::ResolvedScalarEntries & child_scalar_entries = *child_scalar_entries_opt;
 
-                if(child_scalar_entries.hash_entries.size() != child_scalar_entries.display_entries.size())
+                if(!_validateChildScalarEntries(connector_name, composite_name, child_scalar_entries))
                 {
-                    spdlog::error(
-                        "Connector `{}` child `{}` has inconsistent scalar-entry cache",
-                        connector_name,
-                        composite_name);
                     return std::nullopt;
                 }
 
-                if(
-                    child_scalar_entries.display_entries.size() >
-                    static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max()))
+                auto binding_by_slot_opt = _buildBindingBySlotForScalarResolution(
+                    connector_name,
+                    composite_name,
+                    dimension,
+                    dim_id,
+                    child_scalar_entries.display_entries.size());
+                if(!binding_by_slot_opt)
                 {
-                    spdlog::error(
-                        "Connector `{}` child `{}` scalar labels exceed uint32 range",
-                        connector_name,
-                        composite_name);
                     return std::nullopt;
                 }
-
-                absl::flat_hash_map<std::uint32_t, std::string> binding_by_slot;
-                for(const auto & [slot_str, binding_target] : dimension.bindings())
-                {
-                    if(binding_target.empty())
-                    {
-                        spdlog::error(
-                            "Connector `{}` has empty binding target at dim {} slot `{}` while resolving scalar slots",
-                            connector_name,
-                            dim_id,
-                            slot_str);
-                        return std::nullopt;
-                    }
-
-                    const auto slot_id_opt = _parseSlotId(slot_str);
-                    if(!slot_id_opt)
-                    {
-                        spdlog::error(
-                            "Connector `{}` has invalid binding slot id `{}` at dim {} while resolving scalar slots",
-                            connector_name,
-                            slot_str,
-                            dim_id);
-                        return std::nullopt;
-                    }
-                    const std::uint32_t slot_id = *slot_id_opt;
-
-                    if(slot_id >= child_scalar_entries.display_entries.size())
-                    {
-                        spdlog::error(
-                            "Connector `{}` binding slot {} is out of range for child `{}` while resolving scalar labels",
-                            connector_name,
-                            slot_id,
-                            composite_name);
-                        return std::nullopt;
-                    }
-
-                    if(!binding_by_slot.try_emplace(slot_id, binding_target).second)
-                    {
-                        spdlog::error(
-                            "Connector `{}` has duplicate binding slot id {} at dim {} while resolving scalar slots",
-                            connector_name,
-                            slot_id,
-                            dim_id);
-                        return std::nullopt;
-                    }
-                }
+                const absl::flat_hash_map<std::uint32_t, std::string> & binding_by_slot = *binding_by_slot_opt;
 
                 for(std::size_t slot_index = 0; slot_index < child_scalar_entries.display_entries.size(); ++slot_index)
                 {
@@ -504,43 +744,20 @@ namespace dcn::registry
                         continue;
                     }
 
-                    auto binding_scalar_entries_opt = _computeScalarEntries(
-                        binding_it->second,
-                        root_connector_name,
-                        pending_connector,
-                        newest_connector,
-                        connectors,
-                        scalar_visit_state,
-                        scalar_entries_cache);
-                    if(!binding_scalar_entries_opt)
+                    if(!_appendBindingScalarEntries(
+                           connector_name,
+                           binding_it->second,
+                           context,
+                           connector_scalar_entries))
                     {
                         return std::nullopt;
-                    }
-                    const dcn::chain::ResolvedScalarEntries & binding_scalar_entries =
-                        *binding_scalar_entries_opt;
-
-                    if(binding_scalar_entries.hash_entries.size() != binding_scalar_entries.display_entries.size())
-                    {
-                        spdlog::error(
-                            "Connector `{}` binding `{}` has inconsistent scalar-entry cache",
-                            connector_name,
-                            binding_it->second);
-                        return std::nullopt;
-                    }
-
-                    for(std::size_t i = 0; i < binding_scalar_entries.display_entries.size(); ++i)
-                    {
-                        // Tail-only path rule: bound scalar keeps its own tail path.
-                        connector_scalar_entries.hash_entries.push_back(binding_scalar_entries.hash_entries[i]);
-                        connector_scalar_entries.display_entries.push_back(
-                            binding_scalar_entries.display_entries[i]);
                     }
                 }
             }
 
-            scalar_visit_state[connector_name] = _VisitState::DONE;
+            context.scalar_visit_state[connector_name] = _VisitState::DONE;
             auto [cache_it, inserted] =
-                scalar_entries_cache.try_emplace(connector_name, std::move(connector_scalar_entries));
+                context.scalar_entries_cache.try_emplace(connector_name, std::move(connector_scalar_entries));
             (void)inserted;
             return cache_it->second;
         }
@@ -551,16 +768,22 @@ namespace dcn::registry
             const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
             const _ConnectorBuckets & connectors)
         {
+            const _ConnectorGraphContext graph_context{
+                .pending_connector = root_connector,
+                .newest_connector = newest_connector,
+                .connectors = connectors,
+            };
             absl::flat_hash_map<std::string, _VisitState> scalar_visit_state;
             absl::flat_hash_map<std::string, dcn::chain::ResolvedScalarEntries> scalar_entries_cache;
+            _ScalarEntriesContext scalar_entries_context{
+                .root_connector_name = root_connector.name(),
+                .graph = graph_context,
+                .scalar_visit_state = scalar_visit_state,
+                .scalar_entries_cache = scalar_entries_cache,
+            };
             auto root_scalar_entries_opt = _computeScalarEntries(
                 root_connector.name(),
-                root_connector.name(),
-                root_connector,
-                newest_connector,
-                connectors,
-                scalar_visit_state,
-                scalar_entries_cache);
+                scalar_entries_context);
 
             if(
                 !root_scalar_entries_opt ||
@@ -580,17 +803,23 @@ namespace dcn::registry
             const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
             const _ConnectorBuckets & connectors)
         {
+            const _ConnectorGraphContext graph_context{
+                .pending_connector = root_connector,
+                .newest_connector = newest_connector,
+                .connectors = connectors,
+            };
             absl::flat_hash_map<std::string, _VisitState> visit_state;
             absl::flat_hash_map<std::string, std::uint32_t> open_slots_cache;
+            _OpenSlotsContext open_slots_context{
+                .root_connector_name = root_connector.name(),
+                .graph = graph_context,
+                .visit_state = visit_state,
+                .open_slots_cache = open_slots_cache,
+            };
 
             return _computeOpenSlots(
                        root_connector.name(),
-                       root_connector.name(),
-                       root_connector,
-                       newest_connector,
-                       connectors,
-                       visit_state,
-                       open_slots_cache)
+                       open_slots_context)
                 .has_value();
         }
 
@@ -654,13 +883,6 @@ namespace dcn::registry
 
             return true;
         }
-
-        struct _ScalarLabelSummary
-        {
-            std::size_t labels_count = 0;
-            std::size_t unique_scalars_count = 0;
-            std::size_t unique_scalar_tail_pairs_count = 0;
-        };
 
         // Provide a compact summary for scalar-label sets in diagnostics.
         static _ScalarLabelSummary _summarizeScalarLabels(const std::vector<ScalarLabel> & labels)
@@ -796,8 +1018,7 @@ namespace dcn::registry
             const auto insert_it = std::lower_bound(
                 sorted_format_connectors.begin(),
                 sorted_format_connectors.end(),
-                address,
-                _addressLess);
+                address);
             sorted_format_connectors.insert(insert_it, address);
         }
 
