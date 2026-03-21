@@ -4,5 +4,6 @@ var searchData=
   ['verifynonce_1',['verifyNonce',['../classdcn_1_1auth_1_1AuthManager.html#afcf5674dc54c52abf501d42a6fa1f37c',1,'dcn::auth::AuthManager']]],
   ['verifysignature_2',['verifySignature',['../classdcn_1_1auth_1_1AuthManager.html#acb2711a541ff54d73604f71278db17bb',1,'dcn::auth::AuthManager']]],
   ['version_2ecpp_3',['version.cpp',['../version_8cpp.html',1,'']]],
-  ['version_2ehpp_4',['version.hpp',['../version_8hpp.html',1,'']]]
+  ['version_2ehpp_4',['version.hpp',['../version_8hpp.html',1,'']]],
+  ['visit_5fstate_5',['visit_state',['../registry_8cpp.html#a30db7aa05baabdf00d069fcd922b8ad1',1,'registry.cpp']]]
 ];

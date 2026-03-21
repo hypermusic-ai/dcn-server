@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['watchdog_0',['watchdog',['../namespacedcn_1_1utils.html#a3d90cd25bc6985e0d5d00227bf125b3e',1,'dcn::utils']]],
-  ['writedata_1',['writeData',['../classdcn_1_1server_1_1Server.html#a5dcfb6303d33d953d6d8d8f73b1aa4e9',1,'dcn::server::Server']]]
+  ['verifyaccesstoken_0',['verifyAccessToken',['../classdcn_1_1auth_1_1AuthManager.html#a2655d1d7feb469075e1466b4d1f4a319',1,'dcn::auth::AuthManager']]],
+  ['verifynonce_1',['verifyNonce',['../classdcn_1_1auth_1_1AuthManager.html#afcf5674dc54c52abf501d42a6fa1f37c',1,'dcn::auth::AuthManager']]],
+  ['verifysignature_2',['verifySignature',['../classdcn_1_1auth_1_1AuthManager.html#acb2711a541ff54d73604f71278db17bb',1,'dcn::auth::AuthManager']]]
 ];

@@ -102,10 +102,14 @@ $(document).ready(function(){initNavTree('registry_8cpp.html',''); initResizable
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &quot;<a class="el" href="registry_8hpp_source.html">registry.hpp</a>&quot;</code><br />
+<code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;charconv&gt;</code><br />
-<code>#include &lt;functional&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;cstring&gt;</code><br />
 <code>#include &lt;limits&gt;</code><br />
 <code>#include &lt;system_error&gt;</code><br />
+<code>#include &lt;vector&gt;</code><br />
+<code>#include &lt;format&gt;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
@@ -114,6 +118,203 @@ Namespaces</h2></td></tr>
 <tr class="memitem:namespacedcn_1_1registry" id="r_namespacedcn_1_1registry"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1registry.html">dcn::registry</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Variable Documentation</h2>
+<a id="a3b060f82f872dc91a9fbc7432718218d" name="a3b060f82f872dc91a9fbc7432718218d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b060f82f872dc91a9fbc7432718218d">&#9670;&#160;</a></span>added_open_slots</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t added_open_slots = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6ee81ebf062a5e71ae7d961d72b810e4" name="a6ee81ebf062a5e71ae7d961d72b810e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6ee81ebf062a5e71ae7d961d72b810e4">&#9670;&#160;</a></span>bound_slot_count</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t bound_slot_count = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9792a6b3247b4c114333c9c216a1f413" name="a9792a6b3247b4c114333c9c216a1f413"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9792a6b3247b4c114333c9c216a1f413">&#9670;&#160;</a></span>connectors</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const ConnectorBuckets&amp; connectors</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a81d98ff975fa33f90f8f2f3648810da7" name="a81d98ff975fa33f90f8f2f3648810da7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a81d98ff975fa33f90f8f2f3648810da7">&#9670;&#160;</a></span>graph</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const ConnectorGraphContext&amp; graph</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4a555f6b555d908d8ab0c69df69ce1a0" name="a4a555f6b555d908d8ab0c69df69ce1a0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4a555f6b555d908d8ab0c69df69ce1a0">&#9670;&#160;</a></span>labels_count</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t labels_count = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5d86172927997869f6da8994d425bf22" name="a5d86172927997869f6da8994d425bf22"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d86172927997869f6da8994d425bf22">&#9670;&#160;</a></span>newest_connector</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const absl::flat_hash_map&lt;std::string, chain::Address&gt;&amp; newest_connector</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a596bc1d02922b90a08eb519f3440b035" name="a596bc1d02922b90a08eb519f3440b035"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a596bc1d02922b90a08eb519f3440b035">&#9670;&#160;</a></span>open_slots_cache</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">absl::flat_hash_map&lt;std::string, std::uint32_t&gt;&amp; open_slots_cache</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af6c1a0a6c4c45fd959e325eb353da4d0" name="af6c1a0a6c4c45fd959e325eb353da4d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af6c1a0a6c4c45fd959e325eb353da4d0">&#9670;&#160;</a></span>pending_connector</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const Connector&amp; pending_connector</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a68a1cb14ca5c2db2cb66b75b20874c38" name="a68a1cb14ca5c2db2cb66b75b20874c38"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a68a1cb14ca5c2db2cb66b75b20874c38">&#9670;&#160;</a></span>root_connector_name</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::string&amp; root_connector_name</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7b5e63e1f4b151eb4bc278578cec380c" name="a7b5e63e1f4b151eb4bc278578cec380c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7b5e63e1f4b151eb4bc278578cec380c">&#9670;&#160;</a></span>scalar_entries_cache</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">absl::flat_hash_map&lt;std::string, <a class="el" href="structdcn_1_1chain_1_1ResolvedScalarEntries.html">dcn::chain::ResolvedScalarEntries</a>&gt;&amp; scalar_entries_cache</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a36b5326decf4f29272bfb8f121f18787" name="a36b5326decf4f29272bfb8f121f18787"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a36b5326decf4f29272bfb8f121f18787">&#9670;&#160;</a></span>scalar_visit_state</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">absl::flat_hash_map&lt;std::string, VisitState&gt;&amp; scalar_visit_state</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a20cf6c9c71820310d8530e1dcdb44e9d" name="a20cf6c9c71820310d8530e1dcdb44e9d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a20cf6c9c71820310d8530e1dcdb44e9d">&#9670;&#160;</a></span>unique_scalar_tail_pairs_count</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t unique_scalar_tail_pairs_count = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a053e79b401f67e000476f7057eaec2c1" name="a053e79b401f67e000476f7057eaec2c1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a053e79b401f67e000476f7057eaec2c1">&#9670;&#160;</a></span>unique_scalars_count</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t unique_scalars_count = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a30db7aa05baabdf00d069fcd922b8ad1" name="a30db7aa05baabdf00d069fcd922b8ad1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30db7aa05baabdf00d069fcd922b8ad1">&#9670;&#160;</a></span>visit_state</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">absl::flat_hash_map&lt;std::string, VisitState&gt;&amp; visit_state</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

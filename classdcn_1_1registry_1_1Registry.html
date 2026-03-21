@@ -98,7 +98,6 @@ $(document).ready(function(){initNavTree('classdcn_1_1registry_1_1Registry.html'
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classdcn_1_1registry_1_1Registry-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">dcn::registry::Registry Class Reference</div></div>
 </div><!--header-->
@@ -130,6 +129,20 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ae1f143fd65c245fcc3d14145b8d87dfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a991a830daaf823335611fc2d0e9a1d21" id="r_a991a830daaf823335611fc2d0e9a1d21"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Connector &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a991a830daaf823335611fc2d0e9a1d21">getConnector</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
 <tr class="separator:a991a830daaf823335611fc2d0e9a1d21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a985c9ace2adb2ca9da795b3816834b5a" id="r_a985c9ace2adb2ca9da795b3816834b5a"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a985c9ace2adb2ca9da795b3816834b5a">getConnectorName</a> (const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
+<tr class="separator:a985c9ace2adb2ca9da795b3816834b5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f1bd1ced3ae8454ec72c305868be520" id="r_a5f1bd1ced3ae8454ec72c305868be520"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::vector&lt; std::optional&lt; std::string &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a5f1bd1ced3ae8454ec72c305868be520">getConnectorNames</a> (const std::vector&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &gt; &amp;addresses) const</td></tr>
+<tr class="separator:a5f1bd1ced3ae8454ec72c305868be520"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf200b96dfd07b5e5a8a1f1f928f23da" id="r_adf200b96dfd07b5e5a8a1f1f928f23da"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; evmc::bytes32 &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#adf200b96dfd07b5e5a8a1f1f928f23da">getNewestFormatHash</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
+<tr class="separator:adf200b96dfd07b5e5a8a1f1f928f23da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87c0a7581f798e6259a87e635bcbf9e4" id="r_a87c0a7581f798e6259a87e635bcbf9e4"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; evmc::bytes32 &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a87c0a7581f798e6259a87e635bcbf9e4">getFormatHash</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
+<tr class="separator:a87c0a7581f798e6259a87e635bcbf9e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b8dbdbca86b2c5bb84e087328d7aa08" id="r_a2b8dbdbca86b2c5bb84e087328d7aa08"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::size_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a2b8dbdbca86b2c5bb84e087328d7aa08">getFormatConnectorsCount</a> (const evmc::bytes32 &amp;format_hash) const</td></tr>
+<tr class="separator:a2b8dbdbca86b2c5bb84e087328d7aa08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3849ef48593430169103bdbaab10b96a" id="r_a3849ef48593430169103bdbaab10b96a"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::vector&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a3849ef48593430169103bdbaab10b96a">getFormatConnectorsPage</a> (const evmc::bytes32 &amp;format_hash, std::size_t offset, std::size_t limit)</td></tr>
+<tr class="separator:a3849ef48593430169103bdbaab10b96a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d5081719f449ff2449f0d9603385a1e" id="r_a5d5081719f449ff2449f0d9603385a1e"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; std::vector&lt; <a class="el" href="namespacedcn_1_1registry.html#a9a429b2fbdc2d9013be0945a867215c3">ScalarLabel</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a5d5081719f449ff2449f0d9603385a1e">getScalarLabelsByFormatHash</a> (const evmc::bytes32 &amp;format_hash) const</td></tr>
+<tr class="separator:a5d5081719f449ff2449f0d9603385a1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac4169cd92c0473ce847dc0e962d602f" id="r_aac4169cd92c0473ce847dc0e962d602f"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#aac4169cd92c0473ce847dc0e962d602f">addTransformation</a> (<a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> address, TransformationRecord transformation)</td></tr>
 <tr class="separator:aac4169cd92c0473ce847dc0e962d602f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5571e885cac805e52c7166b5205c1ba2" id="r_a5571e885cac805e52c7166b5205c1ba2"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::optional&lt; Transformation &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a5571e885cac805e52c7166b5205c1ba2">getNewestTransformation</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
@@ -148,21 +161,6 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a334338c708b785e8631e9181e921b57d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1758d76a6c7330e9071c75f38745a76" id="r_ac1758d76a6c7330e9071c75f38745a76"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; absl::flat_hash_set&lt; std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#ac1758d76a6c7330e9071c75f38745a76">getOwnedConditions</a> (const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;address) const</td></tr>
 <tr class="separator:ac1758d76a6c7330e9071c75f38745a76"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:afc2cd5f21e6401850dcc4de5fe2393f8" id="r_afc2cd5f21e6401850dcc4de5fe2393f8"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#afc2cd5f21e6401850dcc4de5fe2393f8">containsConnectorBucket</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="separator:afc2cd5f21e6401850dcc4de5fe2393f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a50689be3d6c11a75507b9f1f7f5b82d2" id="r_a50689be3d6c11a75507b9f1f7f5b82d2"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a50689be3d6c11a75507b9f1f7f5b82d2">containsTransformationBucket</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="separator:a50689be3d6c11a75507b9f1f7f5b82d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc775ff526f9cba3951a6b19a865ca52" id="r_afc775ff526f9cba3951a6b19a865ca52"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#afc775ff526f9cba3951a6b19a865ca52">containsConditionBucket</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="separator:afc775ff526f9cba3951a6b19a865ca52"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a932a92773ae6cef9a4b13fe4b57f084a" id="r_a932a92773ae6cef9a4b13fe4b57f084a"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a932a92773ae6cef9a4b13fe4b57f084a">isConnectorBucketEmpty</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="separator:a932a92773ae6cef9a4b13fe4b57f084a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8af408cd164c32ff17497fc99b901f2c" id="r_a8af408cd164c32ff17497fc99b901f2c"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#a8af408cd164c32ff17497fc99b901f2c">isTransformationBucketEmpty</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="separator:a8af408cd164c32ff17497fc99b901f2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afed9f3429f9bda5075ba07fee43698ce" id="r_afed9f3429f9bda5075ba07fee43698ce"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html#afed9f3429f9bda5075ba07fee43698ce">isConditionBucketEmpty</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const</td></tr>
-<tr class="separator:afed9f3429f9bda5075ba07fee43698ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a75910a1ae1bf81674de609428e36ddfd" name="a75910a1ae1bf81674de609428e36ddfd"></a>
@@ -428,84 +426,6 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="afc775ff526f9cba3951a6b19a865ca52" name="afc775ff526f9cba3951a6b19a865ca52"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afc775ff526f9cba3951a6b19a865ca52">&#9670;&#160;</a></span>containsConditionBucket()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::containsConditionBucket </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="afc2cd5f21e6401850dcc4de5fe2393f8" name="afc2cd5f21e6401850dcc4de5fe2393f8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afc2cd5f21e6401850dcc4de5fe2393f8">&#9670;&#160;</a></span>containsConnectorBucket()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::containsConnectorBucket </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a50689be3d6c11a75507b9f1f7f5b82d2" name="a50689be3d6c11a75507b9f1f7f5b82d2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a50689be3d6c11a75507b9f1f7f5b82d2">&#9670;&#160;</a></span>containsTransformationBucket()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::containsTransformationBucket </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a398485a6d15630e5e2e64add84fc5b45" name="a398485a6d15630e5e2e64add84fc5b45"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a398485a6d15630e5e2e64add84fc5b45">&#9670;&#160;</a></span>getCondition()</h2>
 
@@ -562,6 +482,122 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a985c9ace2adb2ca9da795b3816834b5a" name="a985c9ace2adb2ca9da795b3816834b5a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a985c9ace2adb2ca9da795b3816834b5a">&#9670;&#160;</a></span>getConnectorName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; std::optional&lt; std::string &gt; &gt; dcn::registry::Registry::getConnectorName </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;&#160;</td>
+          <td class="paramname"><em>address</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5f1bd1ced3ae8454ec72c305868be520" name="a5f1bd1ced3ae8454ec72c305868be520"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f1bd1ced3ae8454ec72c305868be520">&#9670;&#160;</a></span>getConnectorNames()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; std::vector&lt; std::optional&lt; std::string &gt; &gt; &gt; dcn::registry::Registry::getConnectorNames </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>addresses</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2b8dbdbca86b2c5bb84e087328d7aa08" name="a2b8dbdbca86b2c5bb84e087328d7aa08"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2b8dbdbca86b2c5bb84e087328d7aa08">&#9670;&#160;</a></span>getFormatConnectorsCount()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; std::size_t &gt; dcn::registry::Registry::getFormatConnectorsCount </td>
+          <td>(</td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>format_hash</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3849ef48593430169103bdbaab10b96a" name="a3849ef48593430169103bdbaab10b96a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3849ef48593430169103bdbaab10b96a">&#9670;&#160;</a></span>getFormatConnectorsPage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; std::vector&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &gt; &gt; dcn::registry::Registry::getFormatConnectorsPage </td>
+          <td>(</td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>format_hash</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>offset</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>limit</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a87c0a7581f798e6259a87e635bcbf9e4" name="a87c0a7581f798e6259a87e635bcbf9e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a87c0a7581f798e6259a87e635bcbf9e4">&#9670;&#160;</a></span>getFormatHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; std::optional&lt; evmc::bytes32 &gt; &gt; dcn::registry::Registry::getFormatHash </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;&#160;</td>
+          <td class="paramname"><em>address</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a51b383c551b8814aef2d870e5680f27d" name="a51b383c551b8814aef2d870e5680f27d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a51b383c551b8814aef2d870e5680f27d">&#9670;&#160;</a></span>getNewestCondition()</h2>
 
@@ -588,6 +624,24 @@ Protected Member Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">asio::awaitable&lt; std::optional&lt; Connector &gt; &gt; dcn::registry::Registry::getNewestConnector </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="adf200b96dfd07b5e5a8a1f1f928f23da" name="adf200b96dfd07b5e5a8a1f1f928f23da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adf200b96dfd07b5e5a8a1f1f928f23da">&#9670;&#160;</a></span>getNewestFormatHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; std::optional&lt; evmc::bytes32 &gt; &gt; dcn::registry::Registry::getNewestFormatHash </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>name</em></td><td>)</td>
@@ -670,6 +724,24 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a5d5081719f449ff2449f0d9603385a1e" name="a5d5081719f449ff2449f0d9603385a1e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d5081719f449ff2449f0d9603385a1e">&#9670;&#160;</a></span>getScalarLabelsByFormatHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; std::optional&lt; std::vector&lt; <a class="el" href="namespacedcn_1_1registry.html#a9a429b2fbdc2d9013be0945a867215c3">ScalarLabel</a> &gt; &gt; &gt; dcn::registry::Registry::getScalarLabelsByFormatHash </td>
+          <td>(</td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>format_hash</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a808569bbcdaaa575ecca77d75b010b1f" name="a808569bbcdaaa575ecca77d75b010b1f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a808569bbcdaaa575ecca77d75b010b1f">&#9670;&#160;</a></span>getTransformation()</h2>
 
@@ -694,84 +766,6 @@ Protected Member Functions</h2></td></tr>
           <td></td><td> const</td>
         </tr>
       </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="afed9f3429f9bda5075ba07fee43698ce" name="afed9f3429f9bda5075ba07fee43698ce"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afed9f3429f9bda5075ba07fee43698ce">&#9670;&#160;</a></span>isConditionBucketEmpty()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::isConditionBucketEmpty </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a932a92773ae6cef9a4b13fe4b57f084a" name="a932a92773ae6cef9a4b13fe4b57f084a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a932a92773ae6cef9a4b13fe4b57f084a">&#9670;&#160;</a></span>isConnectorBucketEmpty()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::isConnectorBucketEmpty </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a8af408cd164c32ff17497fc99b901f2c" name="a8af408cd164c32ff17497fc99b901f2c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8af408cd164c32ff17497fc99b901f2c">&#9670;&#160;</a></span>isTransformationBucketEmpty()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; bool &gt; dcn::registry::Registry::isTransformationBucketEmpty </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>

@@ -9,9 +9,10 @@ var searchData=
   ['encodeasarg_3c_20std_3a_3avector_3c_20std_3a_3auint32_5ft_20_3e_20_3e_6',['encodeasarg&lt; std::vector&lt; std::uint32_t &gt; &gt;',['../namespacedcn_1_1evm.html#ac211def2599ca121235b25eb193749af',1,'dcn::evm::encodeAsArg&lt; std::vector&lt; std::uint32_t &gt; &gt;(const std::vector&lt; std::uint32_t &gt; &amp;vec)'],['../namespacedcn_1_1evm.html#ac211def2599ca121235b25eb193749af',1,'dcn::evm::encodeAsArg&lt; std::vector&lt; std::uint32_t &gt; &gt;(const std::vector&lt; std::uint32_t &gt; &amp;vec)']]],
   ['ensureonstrand_7',['ensureOnStrand',['../namespacedcn_1_1utils.html#aae9b2c4db93b9f4d05974a60179eb86a',1,'dcn::utils']]],
   ['ensureptbuildversion_8',['ensurePTBuildVersion',['../namespacedcn_1_1loader.html#a4aa5e028062655a056723923e9bbd76c',1,'dcn::loader']]],
-  ['equalsignorecase_9',['equalsIgnoreCase',['../namespacedcn_1_1utils.html#ac5be949d9e1bfe957e75587b3ef85c4e',1,'dcn::utils']]],
-  ['ethaddressfrompublickey_10',['ethAddressFromPublicKey',['../namespacedcn_1_1chain.html#ad51ebf49627ccd48bf2a67ee915dd806',1,'dcn::chain']]],
-  ['evm_11',['evm',['../classdcn_1_1evm_1_1EVM.html#a989874595effa3e7c1593e3a9862874e',1,'dcn::evm::EVM::EVM(EVM &amp;&amp;)=delete'],['../classdcn_1_1evm_1_1EVM.html#ae6e14e66ea643ae3771d55ccfc63cfc0',1,'dcn::evm::EVM::EVM(const EVM &amp;)=delete'],['../classdcn_1_1evm_1_1EVM.html#a86f57fce8af76a0f9023b03c73de12d0',1,'dcn::evm::EVM::EVM(asio::io_context &amp;io_context, evmc_revision rev, std::filesystem::path solc_path, std::filesystem::path pt_path)']]],
-  ['evmstorage_12',['EVMStorage',['../classdcn_1_1evm_1_1EVMStorage.html#a08b1c36e82deb5eb191d95cb56ba1471',1,'dcn::evm::EVMStorage']]],
-  ['execute_13',['execute',['../classdcn_1_1evm_1_1EVM.html#aebfd4736a6c727054d4d0b6e66a77c59',1,'dcn::evm::EVM']]]
+  ['equalbytes32_9',['equalBytes32',['../namespacedcn_1_1chain.html#a1da0d8c2561e2e29ea6c9b84ee664aa6',1,'dcn::chain']]],
+  ['equalsignorecase_10',['equalsIgnoreCase',['../namespacedcn_1_1utils.html#ac5be949d9e1bfe957e75587b3ef85c4e',1,'dcn::utils']]],
+  ['ethaddressfrompublickey_11',['ethAddressFromPublicKey',['../namespacedcn_1_1chain.html#ad51ebf49627ccd48bf2a67ee915dd806',1,'dcn::chain']]],
+  ['evm_12',['evm',['../classdcn_1_1evm_1_1EVM.html#a989874595effa3e7c1593e3a9862874e',1,'dcn::evm::EVM::EVM(EVM &amp;&amp;)=delete'],['../classdcn_1_1evm_1_1EVM.html#ae6e14e66ea643ae3771d55ccfc63cfc0',1,'dcn::evm::EVM::EVM(const EVM &amp;)=delete'],['../classdcn_1_1evm_1_1EVM.html#a86f57fce8af76a0f9023b03c73de12d0',1,'dcn::evm::EVM::EVM(asio::io_context &amp;io_context, evmc_revision rev, std::filesystem::path solc_path, std::filesystem::path pt_path)']]],
+  ['evmstorage_13',['EVMStorage',['../classdcn_1_1evm_1_1EVMStorage.html#a08b1c36e82deb5eb191d95cb56ba1471',1,'dcn::evm::EVMStorage']]],
+  ['execute_14',['execute',['../classdcn_1_1evm_1_1EVM.html#aebfd4736a6c727054d4d0b6e66a77c59',1,'dcn::evm::EVM']]]
 ];

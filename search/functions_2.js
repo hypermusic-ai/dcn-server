@@ -17,5 +17,6 @@ var searchData=
   ['deploytransformation_14',['deployTransformation',['../namespacedcn_1_1loader.html#a426cdf6a4bafc32bea8495a5ed7e7318',1,'dcn::loader']]],
   ['derive_5fcreate2_5faddress_15',['derive_create2_address',['../classdcn_1_1evm_1_1EVMStorage.html#a6378e01098f73f1d7fe1b54e104ba8dc',1,'dcn::evm::EVMStorage']]],
   ['derive_5fcreate_5faddress_16',['derive_create_address',['../classdcn_1_1evm_1_1EVMStorage.html#ac49779428554c8eaeef25898c18bb891',1,'dcn::evm::EVMStorage']]],
-  ['doesroutematch_17',['doesRouteMatch',['../classdcn_1_1server_1_1Router.html#a0a185d28218e434b84b0af512e3a299b',1,'dcn::server::Router']]]
+  ['dimpathhash_17',['dimPathHash',['../namespacedcn_1_1chain.html#a95a95118c19bd063406c93492511a6d4',1,'dcn::chain']]],
+  ['doesroutematch_18',['doesRouteMatch',['../classdcn_1_1server_1_1Router.html#a0a185d28218e434b84b0af512e3a299b',1,'dcn::server::Router']]]
 ];

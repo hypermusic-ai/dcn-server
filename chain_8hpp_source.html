@@ -106,42 +106,44 @@ $(document).ready(function(){initNavTree('chain_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;<a class="code" href="ingestion_8hpp.html">ingestion.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;<a class="code" href="deploy_8hpp.html">deploy.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &quot;<a class="code" href="pt_2include_2execute_8hpp.html">execute.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;<a class="code" href="format__hash_8hpp.html">format_hash.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedcn_1_1chain.html">dcn::chain</a></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span>{</div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>    std::vector&lt;std::uint8_t&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a296fc9dbecea7187fb7d325189f28f1c">constructSelector</a>(std::string signature);</div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>    evmc::bytes32 <a class="code hl_function" href="namespacedcn_1_1chain.html#a8907f39a637d3be9b3c3f69d89d9eefe">constructEventTopic</a>(std::string signature);</div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    std::optional&lt;std::vector&lt;evmc::bytes32&gt;&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a98c4c43bca2bbcfc3c125788ca445001">decodeTopicWords</a>(<span class="keyword">const</span> std::vector&lt;std::string&gt; &amp; topics_hex);</div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedcn_1_1chain.html">dcn::chain</a></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>{</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>    std::vector&lt;std::uint8_t&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a296fc9dbecea7187fb7d325189f28f1c">constructSelector</a>(std::string signature);</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>    evmc::bytes32 <a class="code hl_function" href="namespacedcn_1_1chain.html#a8907f39a637d3be9b3c3f69d89d9eefe">constructEventTopic</a>(std::string signature);</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    std::optional&lt;std::vector&lt;evmc::bytes32&gt;&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a98c4c43bca2bbcfc3c125788ca445001">decodeTopicWords</a>(<span class="keyword">const</span> std::vector&lt;std::string&gt; &amp; topics_hex);</div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    std::uint64_t <a class="code hl_function" href="namespacedcn_1_1chain.html#a881fe757b19c805d913d0cffc14aad42">readUint256</a>(<span class="keyword">const</span> std::vector&lt;std::uint8_t&gt; &amp; bytes, std::size_t offset);</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    std::uint32_t <a class="code hl_function" href="namespacedcn_1_1chain.html#abdd48f3e9d0f1c91b09a93ebe5655a53">readUint32Padded</a>(<span class="keyword">const</span> std::vector&lt;uint8_t&gt;&amp; bytes, std::size_t offset);</div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    std::uint64_t <a class="code hl_function" href="namespacedcn_1_1chain.html#a881fe757b19c805d913d0cffc14aad42">readUint256</a>(<span class="keyword">const</span> std::vector&lt;std::uint8_t&gt; &amp; bytes, std::size_t offset);</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    std::uint32_t <a class="code hl_function" href="namespacedcn_1_1chain.html#abdd48f3e9d0f1c91b09a93ebe5655a53">readUint32Padded</a>(<span class="keyword">const</span> std::vector&lt;uint8_t&gt;&amp; bytes, std::size_t offset);</div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    std::uint32_t <a class="code hl_function" href="namespacedcn_1_1chain.html#a5e58ca55b9f341987697d5397957eef8">readUint32</a>(<span class="keyword">const</span> std::vector&lt;std::uint8_t&gt; &amp; bytes, std::size_t offset);</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    std::uint64_t <a class="code hl_function" href="namespacedcn_1_1chain.html#ac1585ff4c679422096348cad4c601c94">readOffset</a>(<span class="keyword">const</span> std::vector&lt;std::uint8_t&gt; &amp; bytes, std::size_t offset);</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    std::optional&lt;std::size_t&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a09748629091c6f97b2166b04ae9a1c29">readWordAsSizeT</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t offset);</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    std::optional&lt;std::uint32_t&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a508038791cac99f71c7e03d905d002a2">readUint32Word</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t offset);</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    std::uint32_t <a class="code hl_function" href="namespacedcn_1_1chain.html#a5e58ca55b9f341987697d5397957eef8">readUint32</a>(<span class="keyword">const</span> std::vector&lt;std::uint8_t&gt; &amp; bytes, std::size_t offset);</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    std::uint64_t <a class="code hl_function" href="namespacedcn_1_1chain.html#ac1585ff4c679422096348cad4c601c94">readOffset</a>(<span class="keyword">const</span> std::vector&lt;std::uint8_t&gt; &amp; bytes, std::size_t offset);</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    std::optional&lt;std::size_t&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a09748629091c6f97b2166b04ae9a1c29">readWordAsSizeT</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t offset);</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    std::optional&lt;std::uint32_t&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a508038791cac99f71c7e03d905d002a2">readUint32Word</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t offset);</div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    std::optional&lt;std::string&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#ab113edea31e6a3fe0cb09d0c0a9edbfd">decodeAbiString</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t string_offset);</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    std::optional&lt;std::vector&lt;std::string&gt;&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#aa09b25be38082c7a48786ce07c5fe8a0">decodeAbiStringArray</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t array_offset);</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    std::optional&lt;std::vector&lt;std::uint32_t&gt;&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a8a96d34c107952fb667576ff6a6f3821">decodeAbiUint32Array</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t array_offset);</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    std::optional&lt;std::vector&lt;std::int32_t&gt;&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#af384d46174017cc37fdcdc8da561d9a8">decodeAbiInt32Array</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t array_offset);</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>}</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    std::optional&lt;std::string&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#ab113edea31e6a3fe0cb09d0c0a9edbfd">decodeAbiString</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t string_offset);</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    std::optional&lt;std::vector&lt;std::string&gt;&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#aa09b25be38082c7a48786ce07c5fe8a0">decodeAbiStringArray</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t array_offset);</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    std::optional&lt;std::vector&lt;std::uint32_t&gt;&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a8a96d34c107952fb667576ff6a6f3821">decodeAbiUint32Array</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t array_offset);</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    std::optional&lt;std::vector&lt;std::int32_t&gt;&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#af384d46174017cc37fdcdc8da561d9a8">decodeAbiInt32Array</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t array_offset);</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>}</div>
 <div class="ttc" id="aaddress_8hpp_html"><div class="ttname"><a href="address_8hpp.html">address.hpp</a></div></div>
 <div class="ttc" id="achain__interface_8hpp_html"><div class="ttname"><a href="chain__interface_8hpp.html">chain_interface.hpp</a></div></div>
 <div class="ttc" id="adeploy_8hpp_html"><div class="ttname"><a href="deploy_8hpp.html">deploy.hpp</a></div></div>
+<div class="ttc" id="aformat__hash_8hpp_html"><div class="ttname"><a href="format__hash_8hpp.html">format_hash.hpp</a></div></div>
 <div class="ttc" id="aingestion_8hpp_html"><div class="ttname"><a href="ingestion_8hpp.html">ingestion.hpp</a></div></div>
 <div class="ttc" id="anamespacedcn_1_1chain_html"><div class="ttname"><a href="namespacedcn_1_1chain.html">dcn::chain</a></div><div class="ttdef"><b>Definition</b> address.hpp:16</div></div>
 <div class="ttc" id="anamespacedcn_1_1chain_html_a09748629091c6f97b2166b04ae9a1c29"><div class="ttname"><a href="namespacedcn_1_1chain.html#a09748629091c6f97b2166b04ae9a1c29">dcn::chain::readWordAsSizeT</a></div><div class="ttdeci">std::optional&lt; std::size_t &gt; readWordAsSizeT(const std::uint8_t *data, std::size_t data_size, std::size_t offset)</div><div class="ttdef"><b>Definition</b> chain.cpp:79</div></div>

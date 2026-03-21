@@ -120,6 +120,12 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1chain_1_1IngestionRuntimeOptions.html">IngestionRuntimeOptions</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1chain_1_1ResolvedScalarEntries.html">ResolvedScalarEntries</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1chain_1_1ScalarHashEntry.html">ScalarHashEntry</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1chain_1_1ScalarLabel.html">ScalarLabel</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -166,6 +172,28 @@ Functions</h2></td></tr>
 <tr class="separator:a8a96d34c107952fb667576ff6a6f3821"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af384d46174017cc37fdcdc8da561d9a8" id="r_af384d46174017cc37fdcdc8da561d9a8"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::vector&lt; std::int32_t &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#af384d46174017cc37fdcdc8da561d9a8">decodeAbiInt32Array</a> (const std::uint8_t *data, std::size_t data_size, std::size_t array_offset)</td></tr>
 <tr class="separator:af384d46174017cc37fdcdc8da561d9a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1da0d8c2561e2e29ea6c9b84ee664aa6" id="r_a1da0d8c2561e2e29ea6c9b84ee664aa6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#a1da0d8c2561e2e29ea6c9b84ee664aa6">equalBytes32</a> (const evmc::bytes32 &amp;lhs, const evmc::bytes32 &amp;rhs)</td></tr>
+<tr class="separator:a1da0d8c2561e2e29ea6c9b84ee664aa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01aa0bdc8cabaf84a06184b41ec2a858" id="r_a01aa0bdc8cabaf84a06184b41ec2a858"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#a01aa0bdc8cabaf84a06184b41ec2a858">lessBytes32</a> (const evmc::bytes32 &amp;lhs, const evmc::bytes32 &amp;rhs)</td></tr>
+<tr class="separator:a01aa0bdc8cabaf84a06184b41ec2a858"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0090b08b9553eb0dddc572828c856234" id="r_a0090b08b9553eb0dddc572828c856234"><td class="memItemLeft" align="right" valign="top">evmc::bytes32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#a0090b08b9553eb0dddc572828c856234">keccakBytes</a> (const std::uint8_t *data, std::size_t size)</td></tr>
+<tr class="separator:a0090b08b9553eb0dddc572828c856234"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52dd5b59b28a67d1cce1300b80557863" id="r_a52dd5b59b28a67d1cce1300b80557863"><td class="memItemLeft" align="right" valign="top">evmc::bytes32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#a52dd5b59b28a67d1cce1300b80557863">keccakString</a> (std::string_view value)</td></tr>
+<tr class="separator:a52dd5b59b28a67d1cce1300b80557863"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afff80c379072be67d2ba0e68b0e690e8" id="r_afff80c379072be67d2ba0e68b0e690e8"><td class="memItemLeft" align="right" valign="top">evmc::bytes32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#afff80c379072be67d2ba0e68b0e690e8">composeFormatHash</a> (const evmc::bytes32 &amp;lhs, const evmc::bytes32 &amp;rhs)</td></tr>
+<tr class="separator:afff80c379072be67d2ba0e68b0e690e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95a95118c19bd063406c93492511a6d4" id="r_a95a95118c19bd063406c93492511a6d4"><td class="memItemLeft" align="right" valign="top">evmc::bytes32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#a95a95118c19bd063406c93492511a6d4">dimPathHash</a> (std::uint32_t dim_id)</td></tr>
+<tr class="separator:a95a95118c19bd063406c93492511a6d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a103e9f959557c7c9e27fa5c268631232" id="r_a103e9f959557c7c9e27fa5c268631232"><td class="memItemLeft" align="right" valign="top">evmc::bytes32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#a103e9f959557c7c9e27fa5c268631232">concatPathHash</a> (const evmc::bytes32 &amp;left, const evmc::bytes32 &amp;right)</td></tr>
+<tr class="separator:a103e9f959557c7c9e27fa5c268631232"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2202bba30e77e1dc828656cf9568b16c" id="r_a2202bba30e77e1dc828656cf9568b16c"><td class="memItemLeft" align="right" valign="top">evmc::bytes32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#a2202bba30e77e1dc828656cf9568b16c">scalarPathLabelHash</a> (const evmc::bytes32 &amp;scalar_hash, const evmc::bytes32 &amp;path_hash)</td></tr>
+<tr class="separator:a2202bba30e77e1dc828656cf9568b16c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa342fe66ed2e087f258c6d91f9a595bc" id="r_aa342fe66ed2e087f258c6d91f9a595bc"><td class="memItemLeft" align="right" valign="top">evmc::bytes32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#aa342fe66ed2e087f258c6d91f9a595bc">labelHashToFormatHash</a> (const evmc::bytes32 &amp;label_hash)</td></tr>
+<tr class="separator:aa342fe66ed2e087f258c6d91f9a595bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7472a1cb70ebce4b06c79914005aedcb" id="r_a7472a1cb70ebce4b06c79914005aedcb"><td class="memItemLeft" align="right" valign="top">evmc::bytes32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#a7472a1cb70ebce4b06c79914005aedcb">computeFormatHashFromLabelHashes</a> (const std::vector&lt; evmc::bytes32 &gt; &amp;label_hashes)</td></tr>
+<tr class="separator:a7472a1cb70ebce4b06c79914005aedcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a352c10f5ccef138738524ef1df32c34b" id="r_a352c10f5ccef138738524ef1df32c34b"><td class="memItemLeft" align="right" valign="top">evmc::bytes32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1chain.html#a352c10f5ccef138738524ef1df32c34b">computeFormatHash</a> (const std::vector&lt; <a class="el" href="structdcn_1_1chain_1_1ScalarHashEntry.html">ScalarHashEntry</a> &gt; &amp;hash_entries)</td></tr>
+<tr class="separator:a352c10f5ccef138738524ef1df32c34b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Typedef Documentation</h2>
 <a id="ae8d0a9327d8b662620d649428105a5cb" name="ae8d0a9327d8b662620d649428105a5cb"></a>
@@ -211,6 +239,98 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="afff80c379072be67d2ba0e68b0e690e8" name="afff80c379072be67d2ba0e68b0e690e8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afff80c379072be67d2ba0e68b0e690e8">&#9670;&#160;</a></span>composeFormatHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">evmc::bytes32 dcn::chain::composeFormatHash </td>
+          <td>(</td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a352c10f5ccef138738524ef1df32c34b" name="a352c10f5ccef138738524ef1df32c34b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a352c10f5ccef138738524ef1df32c34b">&#9670;&#160;</a></span>computeFormatHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">evmc::bytes32 dcn::chain::computeFormatHash </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="structdcn_1_1chain_1_1ScalarHashEntry.html">ScalarHashEntry</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>hash_entries</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7472a1cb70ebce4b06c79914005aedcb" name="a7472a1cb70ebce4b06c79914005aedcb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7472a1cb70ebce4b06c79914005aedcb">&#9670;&#160;</a></span>computeFormatHashFromLabelHashes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">evmc::bytes32 dcn::chain::computeFormatHashFromLabelHashes </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; evmc::bytes32 &gt; &amp;&#160;</td>
+          <td class="paramname"><em>label_hashes</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a103e9f959557c7c9e27fa5c268631232" name="a103e9f959557c7c9e27fa5c268631232"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a103e9f959557c7c9e27fa5c268631232">&#9670;&#160;</a></span>concatPathHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">evmc::bytes32 dcn::chain::concatPathHash </td>
+          <td>(</td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>left</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>right</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a8907f39a637d3be9b3c3f69d89d9eefe" name="a8907f39a637d3be9b3c3f69d89d9eefe"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8907f39a637d3be9b3c3f69d89d9eefe">&#9670;&#160;</a></span>constructEventTopic()</h2>
 
@@ -401,6 +521,52 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a95a95118c19bd063406c93492511a6d4" name="a95a95118c19bd063406c93492511a6d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a95a95118c19bd063406c93492511a6d4">&#9670;&#160;</a></span>dimPathHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">evmc::bytes32 dcn::chain::dimPathHash </td>
+          <td>(</td>
+          <td class="paramtype">std::uint32_t&#160;</td>
+          <td class="paramname"><em>dim_id</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1da0d8c2561e2e29ea6c9b84ee664aa6" name="a1da0d8c2561e2e29ea6c9b84ee664aa6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1da0d8c2561e2e29ea6c9b84ee664aa6">&#9670;&#160;</a></span>equalBytes32()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool dcn::chain::equalBytes32 </td>
+          <td>(</td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ad51ebf49627ccd48bf2a67ee915dd806" name="ad51ebf49627ccd48bf2a67ee915dd806"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad51ebf49627ccd48bf2a67ee915dd806">&#9670;&#160;</a></span>ethAddressFromPublicKey()</h2>
 
@@ -418,6 +584,98 @@ Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">std::size_t&#160;</td>
           <td class="paramname"><em>len</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0090b08b9553eb0dddc572828c856234" name="a0090b08b9553eb0dddc572828c856234"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0090b08b9553eb0dddc572828c856234">&#9670;&#160;</a></span>keccakBytes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">evmc::bytes32 dcn::chain::keccakBytes </td>
+          <td>(</td>
+          <td class="paramtype">const std::uint8_t *&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a52dd5b59b28a67d1cce1300b80557863" name="a52dd5b59b28a67d1cce1300b80557863"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52dd5b59b28a67d1cce1300b80557863">&#9670;&#160;</a></span>keccakString()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">evmc::bytes32 dcn::chain::keccakString </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa342fe66ed2e087f258c6d91f9a595bc" name="aa342fe66ed2e087f258c6d91f9a595bc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa342fe66ed2e087f258c6d91f9a595bc">&#9670;&#160;</a></span>labelHashToFormatHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">evmc::bytes32 dcn::chain::labelHashToFormatHash </td>
+          <td>(</td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>label_hash</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a01aa0bdc8cabaf84a06184b41ec2a858" name="a01aa0bdc8cabaf84a06184b41ec2a858"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a01aa0bdc8cabaf84a06184b41ec2a858">&#9670;&#160;</a></span>lessBytes32()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool dcn::chain::lessBytes32 </td>
+          <td>(</td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>rhs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -660,6 +918,34 @@ Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">std::size_t&#160;</td>
           <td class="paramname"><em>offset</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2202bba30e77e1dc828656cf9568b16c" name="a2202bba30e77e1dc828656cf9568b16c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2202bba30e77e1dc828656cf9568b16c">&#9670;&#160;</a></span>scalarPathLabelHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">evmc::bytes32 dcn::chain::scalarPathLabelHash </td>
+          <td>(</td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>scalar_hash</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const evmc::bytes32 &amp;&#160;</td>
+          <td class="paramname"><em>path_hash</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
