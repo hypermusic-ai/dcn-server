@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "native.h"
 #include <asio.hpp>
@@ -12,9 +14,12 @@
 #include "utils.hpp"
 #include "pt.hpp"
 #include "address.hpp"
+#include "format_hash.hpp"
 
 namespace dcn::registry
 {
+    using ScalarLabel = dcn::chain::ScalarLabel;
+
     class Registry
     {
         public:
@@ -33,6 +38,17 @@ namespace dcn::registry
             asio::awaitable<bool> addConnector(chain::Address address, ConnectorRecord connector);
             asio::awaitable<std::optional<Connector>> getNewestConnector(const std::string& name) const;
             asio::awaitable<std::optional<Connector>> getConnector(const std::string& name, const chain::Address & address) const;
+            asio::awaitable<std::optional<std::string>> getConnectorName(const chain::Address & address) const;
+            asio::awaitable<std::vector<std::optional<std::string>>> getConnectorNames(
+                const std::vector<chain::Address> & addresses) const;
+            asio::awaitable<std::optional<evmc::bytes32>> getNewestFormatHash(const std::string& name) const;
+            asio::awaitable<std::optional<evmc::bytes32>> getFormatHash(const std::string& name, const chain::Address & address) const;
+            asio::awaitable<std::size_t> getFormatConnectorsCount(const evmc::bytes32 & format_hash) const;
+            asio::awaitable<std::vector<chain::Address>> getFormatConnectorsPage(
+                const evmc::bytes32 & format_hash,
+                std::size_t offset,
+                std::size_t limit);
+            asio::awaitable<std::optional<std::vector<ScalarLabel>>> getScalarLabelsByFormatHash(const evmc::bytes32 & format_hash) const;
 
             asio::awaitable<bool> addTransformation(chain::Address address, TransformationRecord transformation);
             asio::awaitable<std::optional<Transformation>> getNewestTransformation(const std::string& name) const;
@@ -46,15 +62,6 @@ namespace dcn::registry
             asio::awaitable<absl::flat_hash_set<std::string>> getOwnedTransformations(const chain::Address & address) const;
             asio::awaitable<absl::flat_hash_set<std::string>> getOwnedConditions(const chain::Address & address) const;
 
-        protected:
-            asio::awaitable<bool> containsConnectorBucket(const std::string& name) const;
-            asio::awaitable<bool> containsTransformationBucket(const std::string& name) const;
-            asio::awaitable<bool> containsConditionBucket(const std::string& name) const;
-
-            asio::awaitable<bool> isConnectorBucketEmpty(const std::string& name) const;
-            asio::awaitable<bool> isTransformationBucketEmpty(const std::string& name) const;
-            asio::awaitable<bool> isConditionBucketEmpty(const std::string& name) const;
-
         private:
             asio::strand<asio::io_context::executor_type> _strand;
 
@@ -65,6 +72,13 @@ namespace dcn::registry
             absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, ConnectorRecord>> _connectors;
             absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, TransformationRecord>> _transformations;
             absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, ConditionRecord>> _conditions;
+            absl::flat_hash_map<chain::Address, std::string> _connector_name_by_address;
+
+            absl::flat_hash_map<chain::Address, evmc::bytes32> _format_by_connector;
+            absl::flat_hash_map<evmc::bytes32, absl::flat_hash_set<chain::Address>> _connectors_by_format;
+            absl::flat_hash_map<evmc::bytes32, std::vector<chain::Address>> _sorted_connectors_by_format;
+            absl::flat_hash_set<evmc::bytes32> _dirty_sorted_connectors_by_format;
+            absl::flat_hash_map<evmc::bytes32, std::vector<ScalarLabel>> _scalar_labels_by_format;
 
             absl::flat_hash_map<chain::Address, absl::flat_hash_set<std::string>> _owned_connectors;
             absl::flat_hash_map<chain::Address, absl::flat_hash_set<std::string>> _owned_transformations;

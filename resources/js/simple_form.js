@@ -1171,13 +1171,26 @@ export async function fetchVersionInfo() {
 }
 
 // --------------------------------------------------------------------------
-// Account
+// Explore
 // --------------------------------------------------------------------------
 let currentAccountPage = 0;
 const accountPageSize = 10;
 let totalAccountTransformationPages = 0;
 let totalAccountConditionPages = 0;
 let totalAccountConnectorPages = 0;
+
+let currentFormatPage = 0;
+const formatPageSize = 10;
+let totalFormatConnectorPages = 0;
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 function getAccountTotalPages() {
     const maxPages = Math.max(
@@ -1186,6 +1199,10 @@ function getAccountTotalPages() {
         totalAccountConnectorPages
     );
     return Math.max(1, maxPages);
+}
+
+function getFormatTotalPages() {
+    return Math.max(1, totalFormatConnectorPages);
 }
 
 function updateAccountPaginationControls(totalPages = getAccountTotalPages()) {
@@ -1209,6 +1226,27 @@ function updateAccountPaginationControls(totalPages = getAccountTotalPages()) {
     nextButton.disabled = currentAccountPage >= safeTotalPages - 1;
 }
 
+function updateFormatPaginationControls(totalPages = getFormatTotalPages()) {
+    const pageLabel = document.getElementById('formatPageLabel');
+    const prevButton = document.getElementById('btn_prevFormatPage');
+    const nextButton = document.getElementById('btn_nextFormatPage');
+    if (!pageLabel || !prevButton || !nextButton) {
+        return;
+    }
+
+    const safeTotalPages = Number.isInteger(totalPages) && totalPages > 0 ? totalPages : 1;
+    if (currentFormatPage < 0) {
+        currentFormatPage = 0;
+    }
+    if (currentFormatPage > safeTotalPages - 1) {
+        currentFormatPage = safeTotalPages - 1;
+    }
+
+    pageLabel.textContent = `Page ${currentFormatPage + 1} of ${safeTotalPages}`;
+    prevButton.disabled = currentFormatPage === 0;
+    nextButton.disabled = currentFormatPage >= safeTotalPages - 1;
+}
+
 function updateAccountFetchAvailability() {
     const addressInput = document.getElementById('accountAddressInput');
     const fetchButton = document.getElementById('btn_fetchAccountData');
@@ -1219,6 +1257,18 @@ function updateAccountFetchAvailability() {
     ensureDisabledFieldTooltip();
     const hasAddress = addressInput.value.trim().length > 0;
     setControlAvailability(fetchButton, hasAddress, 'Fill account address first.');
+}
+
+function updateFormatFetchAvailability() {
+    const hashInput = document.getElementById('formatHashInput');
+    const fetchButton = document.getElementById('btn_fetchFormatData');
+    if (!hashInput || !fetchButton) {
+        return;
+    }
+
+    ensureDisabledFieldTooltip();
+    const hasHash = hashInput.value.trim().length > 0;
+    setControlAvailability(fetchButton, hasHash, 'Fill format hash first.');
 }
 
 function initializeAccountControls() {
@@ -1237,8 +1287,23 @@ function initializeAccountControls() {
         });
     }
 
+    const hashInput = document.getElementById('formatHashInput');
+    if (hashInput) {
+        hashInput.addEventListener('input', () => {
+            const hasHash = hashInput.value.trim().length > 0;
+            updateFormatFetchAvailability();
+            if (!hasHash) {
+                currentFormatPage = 0;
+                totalFormatConnectorPages = 0;
+                updateFormatPaginationControls(1);
+            }
+        });
+    }
+
     updateAccountFetchAvailability();
     updateAccountPaginationControls(1);
+    updateFormatFetchAvailability();
+    updateFormatPaginationControls(1);
 }
 
 function initializeEntityActionControls() {
@@ -1285,6 +1350,25 @@ export function prevPage()
     }
 }
 
+export function nextFormatPage()
+{
+    const totalPages = getFormatTotalPages();
+
+    if(currentFormatPage < totalPages - 1)
+    {
+        currentFormatPage += 1;
+        fetchFormatResources();
+    }
+}
+
+export function prevFormatPage()
+{
+    if (currentFormatPage > 0) {
+        currentFormatPage--;
+        fetchFormatResources();
+    }
+}
+
 export async function fetchAccountResources() {
     const address = document.getElementById('accountAddressInput').value.trim();
     const transformationsDiv = document.getElementById('accountTransformationsList');
@@ -1324,17 +1408,20 @@ export async function fetchAccountResources() {
         });
 
         const data = await res.json();
+        if (!res.ok) {
+            throw new Error(typeof data?.message === 'string' ? data.message : `HTTP ${res.status}`);
+        }
 
         transformationsDiv.innerHTML = data.owned_transformations?.length
-            ? data.owned_transformations.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
+            ? data.owned_transformations.map((name) => `<div class="account-item"><code>${escapeHtml(name)}</code></div>`).join('')
             : '(none)';
 
         conditionsDiv.innerHTML = data.owned_conditions?.length
-            ? data.owned_conditions.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
+            ? data.owned_conditions.map((name) => `<div class="account-item"><code>${escapeHtml(name)}</code></div>`).join('')
             : '(none)';
 
         connectorsDiv.innerHTML = data.owned_connectors?.length
-            ? data.owned_connectors.map((name) => `<div class="account-item"><code>${name}</code></div>`).join('')
+            ? data.owned_connectors.map((name) => `<div class="account-item"><code>${escapeHtml(name)}</code></div>`).join('')
             : '(none)';
 
         // Compute total pages based on backend totals
@@ -1353,6 +1440,95 @@ export async function fetchAccountResources() {
         totalAccountConditionPages = 0;
         totalAccountConnectorPages = 0;
         updateAccountPaginationControls(1);
+    }
+}
+
+export async function fetchFormatResources() {
+    const hashInput = document.getElementById('formatHashInput');
+    const formatHash = hashInput ? hashInput.value.trim() : '';
+    const scalarsDiv = document.getElementById('formatScalarsList');
+    const connectorsDiv = document.getElementById('formatConnectorsList');
+    const prevButton = document.getElementById('btn_prevFormatPage');
+    const nextButton = document.getElementById('btn_nextFormatPage');
+
+    if (!scalarsDiv || !connectorsDiv) {
+        return;
+    }
+
+    scalarsDiv.textContent = 'Loading...';
+    connectorsDiv.textContent = 'Loading...';
+    updateFormatFetchAvailability();
+    if (prevButton) {
+        prevButton.disabled = true;
+    }
+    if (nextButton) {
+        nextButton.disabled = true;
+    }
+
+    if (!formatHash) {
+        alert("Format hash is required.");
+        scalarsDiv.textContent = '';
+        connectorsDiv.textContent = '';
+        currentFormatPage = 0;
+        totalFormatConnectorPages = 0;
+        updateFormatPaginationControls(1);
+        return;
+    }
+
+    try {
+        const res = await requestWithLogin(apiUrl(`/format/${encodeURIComponent(formatHash)}?limit=${formatPageSize}&page=${currentFormatPage}`), {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(typeof data?.message === 'string' ? data.message : `HTTP ${res.status}`);
+        }
+
+        const totalConnectorsRaw = Number(data.total_connectors);
+        const totalConnectors = Number.isFinite(totalConnectorsRaw) && totalConnectorsRaw >= 0
+            ? totalConnectorsRaw
+            : 0;
+        const responseLimitRaw = Number(data.limit);
+        const responseLimit = Number.isFinite(responseLimitRaw) && responseLimitRaw > 0
+            ? responseLimitRaw
+            : formatPageSize;
+        const responsePageRaw = Number(data.page);
+        const responsePage = Number.isFinite(responsePageRaw) && responsePageRaw >= 0
+            ? responsePageRaw
+            : currentFormatPage;
+
+        scalarsDiv.innerHTML = Array.isArray(data.scalars) && data.scalars.length
+            ? data.scalars.map((scalar) => `<div class="account-item"><code>${escapeHtml(scalar)}</code></div>`).join('')
+            : '(none)';
+
+        connectorsDiv.innerHTML = Array.isArray(data.connectors) && data.connectors.length
+            ? data.connectors.map((connector) => {
+                const name = typeof connector?.name === 'string' && connector.name.trim().length > 0
+                    ? connector.name
+                    : '(unnamed)';
+                return [
+                    '<div class="account-item">',
+                    `<div><strong><code>${escapeHtml(name)}</code></strong></div>`,
+                    '</div>'
+                ].join('');
+            }).join('')
+            : '(none)';
+
+        currentFormatPage = responsePage;
+        totalFormatConnectorPages = Math.ceil(totalConnectors / responseLimit);
+        updateFormatPaginationControls(getFormatTotalPages());
+
+    } catch (err) {
+        const message = err instanceof Error && err.message
+            ? err.message
+            : 'Failed to fetch format data';
+        scalarsDiv.textContent = `❌ ${message}`;
+        connectorsDiv.textContent = '';
+        currentFormatPage = 0;
+        totalFormatConnectorPages = 0;
+        updateFormatPaginationControls(1);
     }
 }
 

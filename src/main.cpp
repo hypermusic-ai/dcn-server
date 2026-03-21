@@ -240,6 +240,9 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::OPTIONS, "/account/<string>?limit=<uint>&page=<uint>"}, dcn::OPTIONS_accountInfo);
     server.addRoute({dcn::http::Method::GET,    "/account/<string>?limit=<uint>&page=<uint>"},  dcn::GET_accountInfo, std::ref(registry));
 
+    server.addRoute({dcn::http::Method::OPTIONS, "/format/<string>?limit=<uint>&page=<uint>"}, dcn::OPTIONS_format);
+    server.addRoute({dcn::http::Method::GET,     "/format/<string>?limit=<uint>&page=<uint>"}, dcn::GET_format, std::ref(registry));
+
     server.addRoute({dcn::http::Method::HEAD, "/connector/<string>/<~string>"},       dcn::HEAD_connector, std::ref(registry));
     server.addRoute({dcn::http::Method::OPTIONS, "/connector/<string>/<~string>"},    dcn::OPTIONS_connector);
     server.addRoute({dcn::http::Method::GET,     "/connector/<string>/<~string>"},    dcn::GET_connector, std::ref(registry), std::ref(evm));

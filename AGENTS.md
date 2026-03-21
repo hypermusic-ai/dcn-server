@@ -38,6 +38,8 @@ When building tests, always configure CMake with these options:
 - `-DDECENTRALISED_ART_BUILD_TESTS=ON`
 - `-DDECENTRALISED_ART_USE_SUBMODULE_PT=ON`
 
+Use build configuration Debug or RelWithDebInfo.
+
 The unit test build target is:
 
 - `DecentralisedArtServerTests`

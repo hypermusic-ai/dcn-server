@@ -46,6 +46,9 @@
             fetchAccountResources,
             nextPage,
             prevPage,
+            fetchFormatResources,
+            nextFormatPage,
+            prevFormatPage,
 
             updateExecuteActionAvailability,
             copyTextFromElement
@@ -89,6 +92,9 @@
         document.getElementById('btn_fetchAccountData').addEventListener('click', fetchAccountResources);
         document.getElementById('btn_prevAccountPage').addEventListener('click', prevPage);
         document.getElementById('btn_nextAccountPage').addEventListener('click', nextPage);
+        document.getElementById('btn_fetchFormatData').addEventListener('click', fetchFormatResources);
+        document.getElementById('btn_prevFormatPage').addEventListener('click', prevFormatPage);
+        document.getElementById('btn_nextFormatPage').addEventListener('click', nextFormatPage);
 
         const nav = document.getElementById('siteNav');
         const navToggle = document.getElementById('siteNavToggle');
@@ -186,7 +192,7 @@
                 <button type="button" id="tab-btn-connectors" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="connectors">Connectors</button>
                 <button type="button" id="tab-btn-transformations" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="transformations">Transformations</button>
                 <button type="button" id="tab-btn-conditions" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="conditions">Conditions</button>
-                <button type="button" id="tab-btn-account" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="account">Account Overview</button>
+                <button type="button" id="tab-btn-account" class="group-tab" role="tab" aria-selected="false" tabindex="-1" data-tab-target="account">Explore</button>
             </div>
 
             <div class="tab-panels">
@@ -390,39 +396,81 @@
 
                 <section class="tab-panel" data-tab-panel="account" role="tabpanel" aria-labelledby="tab-btn-account">
                     <div class="group-head">
-                      <h2>Account Overview</h2>
-                      <p>Gather information about an account</p>
+                      <h2>Explore</h2>
+                      <p>Browse account resources and format hash results</p>
                     </div>
-                    <div class="tab-grid">
-                        <div class="tab-column">
-                            <label>Address</label>
-                            <input type="text" id="accountAddressInput" placeholder="0x...">
-
-                            <button id="btn_fetchAccountData" class="action-button">Fetch account data</button>
-
-                            <div class="page-controls">
-                                <button id="btn_prevAccountPage">⬅ Prev</button>
-                                <span id="accountPageLabel">Page 1</span>
-                                <button id="btn_nextAccountPage">Next ➡</button>
+                    <div class="explore-sections">
+                        <section class="explore-section">
+                            <div class="group-head">
+                                <h2>Account Overview</h2>
+                                <p>Gather information about an account</p>
                             </div>
-                        </div>
+                            <div class="tab-grid">
+                                <div class="tab-column">
+                                    <label>Address</label>
+                                    <input type="text" id="accountAddressInput" placeholder="0x...">
 
-                        <div class="tab-column">
-                            <div class="account-grid">
-                                <div>
-                                    <h3>Owned Connectors</h3>
-                                    <div id="accountConnectorsList" class="response-body">Waiting...</div>
+                                    <button id="btn_fetchAccountData" class="action-button">Fetch account data</button>
+
+                                    <div class="page-controls">
+                                        <button id="btn_prevAccountPage">⬅ Prev</button>
+                                        <span id="accountPageLabel">Page 1</span>
+                                        <button id="btn_nextAccountPage">Next ➡</button>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3>Owned Transformations</h3>
-                                    <div id="accountTransformationsList" class="response-body">Waiting...</div>
-                                </div>
-                                <div>
-                                    <h3>Owned Conditions</h3>
-                                    <div id="accountConditionsList" class="response-body">Waiting...</div>
+
+                                <div class="tab-column">
+                                    <div class="account-grid">
+                                        <div>
+                                            <h3>Owned Connectors</h3>
+                                            <div id="accountConnectorsList" class="response-body">Waiting...</div>
+                                        </div>
+                                        <div>
+                                            <h3>Owned Transformations</h3>
+                                            <div id="accountTransformationsList" class="response-body">Waiting...</div>
+                                        </div>
+                                        <div>
+                                            <h3>Owned Conditions</h3>
+                                            <div id="accountConditionsList" class="response-body">Waiting...</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </section>
+
+                        <section class="explore-section">
+                            <div class="group-head">
+                                <h2>Formats</h2>
+                                <p>Fetch data for a format hash</p>
+                            </div>
+                            <div class="tab-grid">
+                                <div class="tab-column">
+                                    <label>Format hash</label>
+                                    <input type="text" id="formatHashInput" placeholder="17aebb0abec53c6d719a0aea78182f16acd4ffb4fb9fdce652ef61a5e486c04f">
+
+                                    <button id="btn_fetchFormatData" class="action-button">Fetch format data</button>
+
+                                    <div class="page-controls">
+                                        <button id="btn_prevFormatPage">⬅ Prev</button>
+                                        <span id="formatPageLabel">Page 1</span>
+                                        <button id="btn_nextFormatPage">Next ➡</button>
+                                    </div>
+                                </div>
+
+                                <div class="tab-column">
+                                    <div class="account-grid">
+                                        <div>
+                                            <h3>Format Scalars</h3>
+                                            <div id="formatScalarsList" class="response-body">Waiting...</div>
+                                        </div>
+                                        <div>
+                                            <h3>Format Connectors</h3>
+                                            <div id="formatConnectorsList" class="response-body">Waiting...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </section>
             </div>
