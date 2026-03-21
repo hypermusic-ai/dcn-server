@@ -73,6 +73,10 @@ int main(int argc, char* argv[])
     arg_parser.addArg("--chain-poll-ms", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Chain poll interval in milliseconds");
     arg_parser.addArg("--chain-confirmations", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Finality confirmation depth");
     arg_parser.addArg("--chain-batch-size", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Max number of blocks fetched per eth_getLogs request");
+    arg_parser.addArg("--registry-db", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::String, "SQLite path for registry storage");
+    arg_parser.addArg("--loader-batch-connectors", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Batch size used while adding loaded connectors to registry");
+    arg_parser.addArg("--loader-batch-transformations", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Batch size used while adding loaded transformations to registry");
+    arg_parser.addArg("--loader-batch-conditions", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Batch size used while adding loaded conditions to registry");
 
     arg_parser.parse(argc, argv);
 
@@ -149,6 +153,44 @@ int main(int argc, char* argv[])
             chain_ingestion_cfg.block_batch_size);
     }
 
+    const int loader_batch_connectors_arg =
+        arg_parser.getArg<std::vector<int>>("--loader-batch-connectors").value_or(std::vector<int>{1000}).at(0);
+    const int loader_batch_transformations_arg =
+        arg_parser.getArg<std::vector<int>>("--loader-batch-transformations").value_or(std::vector<int>{5000}).at(0);
+    const int loader_batch_conditions_arg =
+        arg_parser.getArg<std::vector<int>>("--loader-batch-conditions").value_or(std::vector<int>{5000}).at(0);
+
+    if(loader_batch_connectors_arg <= 0 || loader_batch_transformations_arg <= 0 || loader_batch_conditions_arg <= 0)
+    {
+        spdlog::error("Invalid loader batch sizes. Expected positive values.");
+        return 1;
+    }
+
+    const std::size_t loader_batch_connectors = static_cast<std::size_t>(loader_batch_connectors_arg);
+    const std::size_t loader_batch_transformations = static_cast<std::size_t>(loader_batch_transformations_arg);
+    const std::size_t loader_batch_conditions = static_cast<std::size_t>(loader_batch_conditions_arg);
+
+    std::filesystem::path registry_db_path =
+        cfg.storage_path / "registry.sqlite";
+    if(const auto registry_db_arg = arg_parser.getArg<std::vector<std::string>>("--registry-db"))
+    {
+        registry_db_path = registry_db_arg->at(0);
+    }
+
+    std::error_code registry_dir_ec;
+    if(!registry_db_path.parent_path().empty())
+    {
+        std::filesystem::create_directories(registry_db_path.parent_path(), registry_dir_ec);
+        if(registry_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create registry DB directory '{}': {}",
+                registry_db_path.parent_path().string(),
+                registry_dir_ec.message());
+            return 1;
+        }
+    }
+
     spdlog::info("Current working path: {}", std::filesystem::current_path().string());
 
     // solidity check
@@ -164,7 +206,7 @@ int main(int argc, char* argv[])
 
     asio::io_context io_context;
 
-    dcn::registry::Registry registry(io_context);
+    dcn::registry::Registry registry(io_context, registry_db_path.string());
 
     dcn::auth::AuthManager auth_manager(io_context);
 
@@ -237,29 +279,34 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::OPTIONS, "/auth"},  dcn::OPTIONS_auth);
     server.addRoute({dcn::http::Method::POST, "/auth"},     dcn::POST_auth, std::ref(auth_manager));
 
-    server.addRoute({dcn::http::Method::OPTIONS, "/account/<string>?limit=<uint>&page=<uint>"}, dcn::OPTIONS_accountInfo);
-    server.addRoute({dcn::http::Method::GET,    "/account/<string>?limit=<uint>&page=<uint>"},  dcn::GET_accountInfo, std::ref(registry));
+    server.addRoute(
+        {dcn::http::Method::OPTIONS, "/account/<string>?limit=<uint>&after_connectors=<~string>&after_transformations=<~string>&after_conditions=<~string>"},
+        dcn::OPTIONS_accountInfo);
+    server.addRoute(
+        {dcn::http::Method::GET, "/account/<string>?limit=<uint>&after_connectors=<~string>&after_transformations=<~string>&after_conditions=<~string>"},
+        dcn::GET_accountInfo,
+        std::ref(registry));
 
-    server.addRoute({dcn::http::Method::OPTIONS, "/format/<string>?limit=<uint>&page=<uint>"}, dcn::OPTIONS_format);
-    server.addRoute({dcn::http::Method::GET,     "/format/<string>?limit=<uint>&page=<uint>"}, dcn::GET_format, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/format/<string>?limit=<uint>&after=<~string>"}, dcn::OPTIONS_format);
+    server.addRoute({dcn::http::Method::GET, "/format/<string>?limit=<uint>&after=<~string>"}, dcn::GET_format, std::ref(registry));
 
-    server.addRoute({dcn::http::Method::HEAD, "/connector/<string>/<~string>"},       dcn::HEAD_connector, std::ref(registry));
-    server.addRoute({dcn::http::Method::OPTIONS, "/connector/<string>/<~string>"},    dcn::OPTIONS_connector);
-    server.addRoute({dcn::http::Method::GET,     "/connector/<string>/<~string>"},    dcn::GET_connector, std::ref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::HEAD, "/connector/<string>"},       dcn::HEAD_connector, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/connector/<string>"},    dcn::OPTIONS_connector);
+    server.addRoute({dcn::http::Method::GET,     "/connector/<string>"},    dcn::GET_connector, std::ref(registry));
     server.addRoute({dcn::http::Method::POST,    "/connector"},                       dcn::POST_connector, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
-    server.addRoute({dcn::http::Method::HEAD, "/transformation/<string>/<~string>"},    dcn::HEAD_transformation, std::ref(registry));
-    server.addRoute({dcn::http::Method::OPTIONS, "/transformation/<string>/<~string>"}, dcn::OPTIONS_transformation);
-    server.addRoute({dcn::http::Method::GET,     "/transformation/<string>/<~string>"}, dcn::GET_transformation, std::ref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::HEAD, "/transformation/<string>"},    dcn::HEAD_transformation, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/transformation/<string>"}, dcn::OPTIONS_transformation);
+    server.addRoute({dcn::http::Method::GET,     "/transformation/<string>"}, dcn::GET_transformation, std::ref(registry));
     server.addRoute({dcn::http::Method::POST,    "/transformation"},                    dcn::POST_transformation, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
-    server.addRoute({dcn::http::Method::HEAD, "/condition/<string>/<~string>"},    dcn::HEAD_condition, std::ref(registry));
-    server.addRoute({dcn::http::Method::OPTIONS, "/condition/<string>/<~string>"}, dcn::OPTIONS_condition);
-    server.addRoute({dcn::http::Method::GET,     "/condition/<string>/<~string>"}, dcn::GET_condition, std::ref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::HEAD, "/condition/<string>"},    dcn::HEAD_condition, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/condition/<string>"}, dcn::OPTIONS_condition);
+    server.addRoute({dcn::http::Method::GET,     "/condition/<string>"}, dcn::GET_condition, std::ref(registry));
     server.addRoute({dcn::http::Method::POST,    "/condition"},                    dcn::POST_condition, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
     server.addRoute({dcn::http::Method::OPTIONS, "/execute"},   dcn::OPTIONS_execute);
-    server.addRoute({dcn::http::Method::POST, "/execute"},      dcn::POST_execute, std::cref(auth_manager), std::ref(evm));
+    server.addRoute({dcn::http::Method::POST, "/execute"},      dcn::POST_execute, std::cref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
     // create directories
     std::filesystem::create_directory(cfg.storage_path);
@@ -276,25 +323,38 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    asio::co_spawn(io_context, 
-        (dcn::loader::loadStoredTransformations(evm, registry, cfg.storage_path)  &&
-        dcn::loader::loadStoredConditions(evm, registry, cfg.storage_path)), 
-        [&io_context, &registry, &evm, &server, &cfg, &chain_ingestion_cfg](std::exception_ptr, std::tuple<bool, bool>)
+    asio::co_spawn(
+        io_context,
+        [&io_context,
+         &registry,
+         &evm,
+         &server,
+         &cfg,
+         &chain_ingestion_cfg,
+         loader_batch_connectors,
+         loader_batch_transformations,
+         loader_batch_conditions]() -> asio::awaitable<void>
         {
-            // transformation and condition loaded
-            asio::co_spawn(io_context, dcn::loader::loadStoredConnectors(evm, registry, cfg.storage_path), 
-                [&io_context, &server, &chain_ingestion_cfg](std::exception_ptr, bool)
-                {
-                    // connectors loaded
-                    if(chain_ingestion_cfg.enabled)
-                    {
-                        //asio::co_spawn(io_context, dcn::chain::runEventIngestion(chain_ingestion_cfg, registry), asio::detached);
-                    }
-                    asio::co_spawn(io_context, server.listen(), asio::detached);
-                }
-            );
-        }
-    );
+            const dcn::loader::LoaderBatchConfig loader_batch_config{
+                .connectors = loader_batch_connectors,
+                .transformations = loader_batch_transformations,
+                .conditions = loader_batch_conditions
+            };
+
+            (void)co_await dcn::loader::importJsonStorageToDatabase(
+                evm,
+                registry,
+                cfg.storage_path,
+                loader_batch_config);
+
+            if(chain_ingestion_cfg.enabled)
+            {
+                //asio::co_spawn(io_context, dcn::chain::runEventIngestion(chain_ingestion_cfg, registry), asio::detached);
+            }
+            asio::co_spawn(io_context, server.listen(), asio::detached);
+            co_return;
+        }(),
+        asio::detached);
 
     try
     {

@@ -16,7 +16,6 @@ export { copyTextFromElement } from "./utils";
 // --------------------------------------------------------------------------
 export async function getTransformation() {
     const name = document.getElementById('in_transformationName').value.trim();
-    const address = document.getElementById('GET_transformationAddress').value.trim();
 
     const responseCodeDiv = document.getElementById('transformationResponseCode');
     const responseBodyDiv = document.getElementById('transformationResponseBody');
@@ -26,7 +25,7 @@ export async function getTransformation() {
         return;
     }
 
-    const url = apiUrl(`/transformation/${name}${address ? `/${address}` : ''}`);
+    const url = apiUrl(`/transformation/${name}`);
     try {
         const res = await fetch(url);
         const text = await res.text();
@@ -98,7 +97,6 @@ export async function sendStructuredTransformation() {
 // --------------------------------------------------------------------------
 export async function getCondition() {
     const name = document.getElementById('in_conditionName').value.trim();
-    const address = document.getElementById('GET_conditionAddress').value.trim();
 
     const responseCodeDiv = document.getElementById('conditionResponseCode');
     const responseBodyDiv = document.getElementById('conditionResponseBody');
@@ -108,7 +106,7 @@ export async function getCondition() {
         return;
     }
 
-    const url = apiUrl(`/condition/${name}${address ? `/${address}` : ''}`);
+    const url = apiUrl(`/condition/${name}`);
     try {
         const res = await fetch(url);
         const text = await res.text();
@@ -1121,7 +1119,7 @@ export async function sendStructuredConnector() {
         responseCodeDiv.textContent = res.status;
         responseBodyDiv.textContent = formatJSON(text);
         if (res.ok) {
-            // Connector versions can change under the same name, which changes exported binding points.
+            // Connector definitions can change, which may affect binding points.
             clearConnectorBindingCaches();
         }
     } catch (error) {
@@ -1132,7 +1130,6 @@ export async function sendStructuredConnector() {
 
 export async function getConnector() {
     const name = document.getElementById('in_connectorName').value.trim();
-    const address = document.getElementById('GET_connectorAddress').value.trim();
 
     const responseCodeDiv = document.getElementById('connectorResponseCode');
     const responseBodyDiv = document.getElementById('connectorResponseBody');
@@ -1142,7 +1139,7 @@ export async function getConnector() {
         return;
     }
 
-    const url = apiUrl(`/connector/${name}${address ? `/${address}` : ''}`);
+    const url = apiUrl(`/connector/${name}`);
     try {
         const res = await fetch(url);
         const text = await res.text();
@@ -1175,13 +1172,25 @@ export async function fetchVersionInfo() {
 // --------------------------------------------------------------------------
 let currentAccountPage = 0;
 const accountPageSize = 10;
-let totalAccountTransformationPages = 0;
-let totalAccountConditionPages = 0;
-let totalAccountConnectorPages = 0;
+let accountCursorState = {
+    connectors: null,
+    transformations: null,
+    conditions: null
+};
+let accountNextCursorState = {
+    connectors: null,
+    transformations: null,
+    conditions: null
+};
+let accountHasMore = false;
+const accountCursorHistory = [];
 
 let currentFormatPage = 0;
 const formatPageSize = 10;
-let totalFormatConnectorPages = 0;
+let formatAfterCursor = null;
+let formatNextAfterCursor = null;
+let formatHasMore = false;
+const formatCursorHistory = [];
 
 function escapeHtml(value) {
     return String(value ?? '')
@@ -1192,20 +1201,50 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
-function getAccountTotalPages() {
-    const maxPages = Math.max(
-        totalAccountTransformationPages,
-        totalAccountConditionPages,
-        totalAccountConnectorPages
-    );
-    return Math.max(1, maxPages);
+function cloneAccountCursorState(state) {
+    return {
+        connectors: state.connectors,
+        transformations: state.transformations,
+        conditions: state.conditions
+    };
 }
 
-function getFormatTotalPages() {
-    return Math.max(1, totalFormatConnectorPages);
+function resetAccountPaginationState() {
+    currentAccountPage = 0;
+    accountCursorState = {
+        connectors: null,
+        transformations: null,
+        conditions: null
+    };
+    accountNextCursorState = cloneAccountCursorState(accountCursorState);
+    accountHasMore = false;
+    accountCursorHistory.length = 0;
 }
 
-function updateAccountPaginationControls(totalPages = getAccountTotalPages()) {
+function resetFormatPaginationState() {
+    currentFormatPage = 0;
+    formatAfterCursor = null;
+    formatNextAfterCursor = null;
+    formatHasMore = false;
+    formatCursorHistory.length = 0;
+}
+
+function renderOwnedResourceEntries(entries) {
+    if (!Array.isArray(entries) || entries.length === 0) {
+        return '(none)';
+    }
+
+    return entries
+        .map((entry) => {
+            if (typeof entry !== 'string') {
+                return '';
+            }
+            return `<div class="account-item"><code>${escapeHtml(entry)}</code></div>`;
+        })
+        .join('');
+}
+
+function updateAccountPaginationControls() {
     const pageLabel = document.getElementById('accountPageLabel');
     const prevButton = document.getElementById('btn_prevAccountPage');
     const nextButton = document.getElementById('btn_nextAccountPage');
@@ -1213,20 +1252,18 @@ function updateAccountPaginationControls(totalPages = getAccountTotalPages()) {
         return;
     }
 
-    const safeTotalPages = Number.isInteger(totalPages) && totalPages > 0 ? totalPages : 1;
     if (currentAccountPage < 0) {
         currentAccountPage = 0;
     }
-    if (currentAccountPage > safeTotalPages - 1) {
-        currentAccountPage = safeTotalPages - 1;
-    }
 
-    pageLabel.textContent = `Page ${currentAccountPage + 1} of ${safeTotalPages}`;
-    prevButton.disabled = currentAccountPage === 0;
-    nextButton.disabled = currentAccountPage >= safeTotalPages - 1;
+    pageLabel.textContent = accountHasMore
+        ? `Cursor page ${currentAccountPage + 1} (more)`
+        : `Cursor page ${currentAccountPage + 1}`;
+    prevButton.disabled = accountCursorHistory.length === 0;
+    nextButton.disabled = accountHasMore === false;
 }
 
-function updateFormatPaginationControls(totalPages = getFormatTotalPages()) {
+function updateFormatPaginationControls() {
     const pageLabel = document.getElementById('formatPageLabel');
     const prevButton = document.getElementById('btn_prevFormatPage');
     const nextButton = document.getElementById('btn_nextFormatPage');
@@ -1234,17 +1271,15 @@ function updateFormatPaginationControls(totalPages = getFormatTotalPages()) {
         return;
     }
 
-    const safeTotalPages = Number.isInteger(totalPages) && totalPages > 0 ? totalPages : 1;
     if (currentFormatPage < 0) {
         currentFormatPage = 0;
     }
-    if (currentFormatPage > safeTotalPages - 1) {
-        currentFormatPage = safeTotalPages - 1;
-    }
 
-    pageLabel.textContent = `Page ${currentFormatPage + 1} of ${safeTotalPages}`;
-    prevButton.disabled = currentFormatPage === 0;
-    nextButton.disabled = currentFormatPage >= safeTotalPages - 1;
+    pageLabel.textContent = formatHasMore
+        ? `Cursor page ${currentFormatPage + 1} (more)`
+        : `Cursor page ${currentFormatPage + 1}`;
+    prevButton.disabled = formatCursorHistory.length === 0;
+    nextButton.disabled = formatHasMore === false;
 }
 
 function updateAccountFetchAvailability() {
@@ -1278,11 +1313,8 @@ function initializeAccountControls() {
             const hasAddress = addressInput.value.trim().length > 0;
             updateAccountFetchAvailability();
             if (!hasAddress) {
-                currentAccountPage = 0;
-                totalAccountTransformationPages = 0;
-                totalAccountConditionPages = 0;
-                totalAccountConnectorPages = 0;
-                updateAccountPaginationControls(1);
+                resetAccountPaginationState();
+                updateAccountPaginationControls();
             }
         });
     }
@@ -1293,17 +1325,16 @@ function initializeAccountControls() {
             const hasHash = hashInput.value.trim().length > 0;
             updateFormatFetchAvailability();
             if (!hasHash) {
-                currentFormatPage = 0;
-                totalFormatConnectorPages = 0;
-                updateFormatPaginationControls(1);
+                resetFormatPaginationState();
+                updateFormatPaginationControls();
             }
         });
     }
 
     updateAccountFetchAvailability();
-    updateAccountPaginationControls(1);
+    updateAccountPaginationControls();
     updateFormatFetchAvailability();
-    updateFormatPaginationControls(1);
+    updateFormatPaginationControls();
 }
 
 function initializeEntityActionControls() {
@@ -1333,43 +1364,55 @@ function scheduleSimpleFormInitialization() {
 
 export function nextPage()
 {
-    const totalPages = getAccountTotalPages();
-
-    if(currentAccountPage < totalPages - 1)
-    {
-        currentAccountPage += 1;
-        fetchAccountResources();
+    if (!accountHasMore) {
+        return;
     }
+
+    accountCursorHistory.push(cloneAccountCursorState(accountCursorState));
+    accountCursorState = cloneAccountCursorState(accountNextCursorState);
+    currentAccountPage += 1;
+    fetchAccountResourcesPage(false);
 }
 
 export function prevPage()
 {
-    if (currentAccountPage > 0) {
-        currentAccountPage--;
-        fetchAccountResources();
+    if (accountCursorHistory.length === 0) {
+        return;
     }
+
+    accountCursorState = accountCursorHistory.pop();
+    if (currentAccountPage > 0) {
+        currentAccountPage -= 1;
+    }
+    fetchAccountResourcesPage(false);
 }
 
 export function nextFormatPage()
 {
-    const totalPages = getFormatTotalPages();
-
-    if(currentFormatPage < totalPages - 1)
-    {
-        currentFormatPage += 1;
-        fetchFormatResources();
+    if (!formatHasMore || !formatNextAfterCursor) {
+        return;
     }
+
+    formatCursorHistory.push(formatAfterCursor);
+    formatAfterCursor = formatNextAfterCursor;
+    currentFormatPage += 1;
+    fetchFormatResourcesPage(false);
 }
 
 export function prevFormatPage()
 {
-    if (currentFormatPage > 0) {
-        currentFormatPage--;
-        fetchFormatResources();
+    if (formatCursorHistory.length === 0) {
+        return;
     }
+
+    formatAfterCursor = formatCursorHistory.pop();
+    if (currentFormatPage > 0) {
+        currentFormatPage -= 1;
+    }
+    fetchFormatResourcesPage(false);
 }
 
-export async function fetchAccountResources() {
+async function fetchAccountResourcesPage(resetPagination) {
     const address = document.getElementById('accountAddressInput').value.trim();
     const transformationsDiv = document.getElementById('accountTransformationsList');
     const conditionsDiv = document.getElementById('accountConditionsList');
@@ -1388,21 +1431,35 @@ export async function fetchAccountResources() {
         nextButton.disabled = true;
     }
 
+    if (resetPagination) {
+        resetAccountPaginationState();
+    }
+
     if (!address) {
         alert("Address is required.");
         transformationsDiv.textContent = '';
         conditionsDiv.textContent = '';
         connectorsDiv.textContent = '';
-        currentAccountPage = 0;
-        totalAccountTransformationPages = 0;
-        totalAccountConditionPages = 0;
-        totalAccountConnectorPages = 0;
-        updateAccountPaginationControls(1);
+        resetAccountPaginationState();
+        updateAccountPaginationControls();
         return;
     }
 
     try {
-        const res = await requestWithLogin(apiUrl(`/account/${address}?limit=${accountPageSize}&page=${currentAccountPage}`), {
+        const queryParams = new URLSearchParams({
+            limit: String(accountPageSize)
+        });
+        if (accountCursorState.connectors) {
+            queryParams.set('after_connectors', accountCursorState.connectors);
+        }
+        if (accountCursorState.transformations) {
+            queryParams.set('after_transformations', accountCursorState.transformations);
+        }
+        if (accountCursorState.conditions) {
+            queryParams.set('after_conditions', accountCursorState.conditions);
+        }
+
+        const res = await requestWithLogin(apiUrl(`/account/${encodeURIComponent(address)}?${queryParams.toString()}`), {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -1412,38 +1469,47 @@ export async function fetchAccountResources() {
             throw new Error(typeof data?.message === 'string' ? data.message : `HTTP ${res.status}`);
         }
 
-        transformationsDiv.innerHTML = data.owned_transformations?.length
-            ? data.owned_transformations.map((name) => `<div class="account-item"><code>${escapeHtml(name)}</code></div>`).join('')
-            : '(none)';
+        transformationsDiv.innerHTML = renderOwnedResourceEntries(data.owned_transformations);
+        conditionsDiv.innerHTML = renderOwnedResourceEntries(data.owned_conditions);
+        connectorsDiv.innerHTML = renderOwnedResourceEntries(data.owned_connectors);
 
-        conditionsDiv.innerHTML = data.owned_conditions?.length
-            ? data.owned_conditions.map((name) => `<div class="account-item"><code>${escapeHtml(name)}</code></div>`).join('')
-            : '(none)';
+        const connectorsHasMore = Boolean(data.connectors_has_more);
+        const transformationsHasMore = Boolean(data.transformations_has_more);
+        const conditionsHasMore = Boolean(data.conditions_has_more);
 
-        connectorsDiv.innerHTML = data.owned_connectors?.length
-            ? data.owned_connectors.map((name) => `<div class="account-item"><code>${escapeHtml(name)}</code></div>`).join('')
-            : '(none)';
+        accountNextCursorState = {
+            connectors: typeof data.next_after_connectors === 'string' && data.next_after_connectors.trim().length > 0
+                ? data.next_after_connectors.trim()
+                : null,
+            transformations: typeof data.next_after_transformations === 'string' && data.next_after_transformations.trim().length > 0
+                ? data.next_after_transformations.trim()
+                : null,
+            conditions: typeof data.next_after_conditions === 'string' && data.next_after_conditions.trim().length > 0
+                ? data.next_after_conditions.trim()
+                : null
+        };
+        accountHasMore = connectorsHasMore || transformationsHasMore || conditionsHasMore;
 
-        // Compute total pages based on backend totals
-        totalAccountTransformationPages = Math.ceil((data.total_transformations ?? 0) / accountPageSize);
-        totalAccountConditionPages = Math.ceil((data.total_conditions ?? 0) / accountPageSize);
-        totalAccountConnectorPages = Math.ceil((data.total_connectors ?? 0) / accountPageSize);
-
-        updateAccountPaginationControls(getAccountTotalPages());
+        updateAccountPaginationControls();
 
     } catch (err) {
-        transformationsDiv.textContent = '❌ Failed to fetch account data';
+        const message = err instanceof Error && err.message
+            ? err.message
+            : 'Failed to fetch account data';
+        transformationsDiv.textContent = `❌ ${message}`;
         conditionsDiv.textContent = '';
         connectorsDiv.textContent = '';
-        currentAccountPage = 0;
-        totalAccountTransformationPages = 0;
-        totalAccountConditionPages = 0;
-        totalAccountConnectorPages = 0;
-        updateAccountPaginationControls(1);
+        accountHasMore = false;
+        accountNextCursorState = cloneAccountCursorState(accountCursorState);
+        updateAccountPaginationControls();
     }
 }
 
-export async function fetchFormatResources() {
+export async function fetchAccountResources() {
+    return fetchAccountResourcesPage(true);
+}
+
+async function fetchFormatResourcesPage(resetPagination) {
     const hashInput = document.getElementById('formatHashInput');
     const formatHash = hashInput ? hashInput.value.trim() : '';
     const scalarsDiv = document.getElementById('formatScalarsList');
@@ -1465,18 +1531,28 @@ export async function fetchFormatResources() {
         nextButton.disabled = true;
     }
 
+    if (resetPagination) {
+        resetFormatPaginationState();
+    }
+
     if (!formatHash) {
         alert("Format hash is required.");
         scalarsDiv.textContent = '';
         connectorsDiv.textContent = '';
-        currentFormatPage = 0;
-        totalFormatConnectorPages = 0;
-        updateFormatPaginationControls(1);
+        resetFormatPaginationState();
+        updateFormatPaginationControls();
         return;
     }
 
     try {
-        const res = await requestWithLogin(apiUrl(`/format/${encodeURIComponent(formatHash)}?limit=${formatPageSize}&page=${currentFormatPage}`), {
+        const queryParams = new URLSearchParams({
+            limit: String(formatPageSize)
+        });
+        if (formatAfterCursor) {
+            queryParams.set('after', formatAfterCursor);
+        }
+
+        const res = await requestWithLogin(apiUrl(`/format/${encodeURIComponent(formatHash)}?${queryParams.toString()}`), {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -1486,39 +1562,28 @@ export async function fetchFormatResources() {
             throw new Error(typeof data?.message === 'string' ? data.message : `HTTP ${res.status}`);
         }
 
-        const totalConnectorsRaw = Number(data.total_connectors);
-        const totalConnectors = Number.isFinite(totalConnectorsRaw) && totalConnectorsRaw >= 0
-            ? totalConnectorsRaw
-            : 0;
-        const responseLimitRaw = Number(data.limit);
-        const responseLimit = Number.isFinite(responseLimitRaw) && responseLimitRaw > 0
-            ? responseLimitRaw
-            : formatPageSize;
-        const responsePageRaw = Number(data.page);
-        const responsePage = Number.isFinite(responsePageRaw) && responsePageRaw >= 0
-            ? responsePageRaw
-            : currentFormatPage;
-
         scalarsDiv.innerHTML = Array.isArray(data.scalars) && data.scalars.length
             ? data.scalars.map((scalar) => `<div class="account-item"><code>${escapeHtml(scalar)}</code></div>`).join('')
             : '(none)';
 
         connectorsDiv.innerHTML = Array.isArray(data.connectors) && data.connectors.length
-            ? data.connectors.map((connector) => {
-                const name = typeof connector?.name === 'string' && connector.name.trim().length > 0
-                    ? connector.name
+            ? data.connectors.map((connectorName) => {
+                const name = typeof connectorName === 'string' && connectorName.trim().length > 0
+                    ? connectorName
                     : '(unnamed)';
-                return [
-                    '<div class="account-item">',
-                    `<div><strong><code>${escapeHtml(name)}</code></strong></div>`,
-                    '</div>'
-                ].join('');
+                return `<div class="account-item"><strong><code>${escapeHtml(name)}</code></strong></div>`;
             }).join('')
             : '(none)';
 
-        currentFormatPage = responsePage;
-        totalFormatConnectorPages = Math.ceil(totalConnectors / responseLimit);
-        updateFormatPaginationControls(getFormatTotalPages());
+        const hasMore = Boolean(data.has_more);
+        const responseNextAfter = typeof data.next_after === 'string' && data.next_after.trim().length > 0
+            ? data.next_after.trim()
+            : null;
+
+        formatHasMore = hasMore;
+        formatNextAfterCursor = responseNextAfter;
+
+        updateFormatPaginationControls();
 
     } catch (err) {
         const message = err instanceof Error && err.message
@@ -1526,10 +1591,14 @@ export async function fetchFormatResources() {
             : 'Failed to fetch format data';
         scalarsDiv.textContent = `❌ ${message}`;
         connectorsDiv.textContent = '';
-        currentFormatPage = 0;
-        totalFormatConnectorPages = 0;
-        updateFormatPaginationControls(1);
+        formatHasMore = false;
+        formatNextAfterCursor = formatAfterCursor;
+        updateFormatPaginationControls();
     }
+}
+
+export async function fetchFormatResources() {
+    return fetchFormatResourcesPage(true);
 }
 
 scheduleSimpleFormInitialization();

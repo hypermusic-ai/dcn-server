@@ -231,29 +231,35 @@ namespace
             }
             snapshot.connector_address = connector_deploy_result.value();
 
-            const auto transformation_res = runAwaitable(io_context, registry.getNewestTransformation("DeployTransformation"));
-            if(!transformation_res)
+            const auto transformation_res = runAwaitable(
+                io_context,
+                registry.getTransformationRecordHandle("DeployTransformation"));
+            if(!transformation_res.has_value())
             {
-                snapshot.error_message = "getNewestTransformation returned no value";
+                snapshot.error_message = "getTransformation returned no value";
                 return snapshot;
             }
-            snapshot.transformation = *transformation_res;
+            snapshot.transformation = (*transformation_res)->transformation();
 
-            const auto condition_res = runAwaitable(io_context, registry.getNewestCondition("DeployCondition"));
-            if(!condition_res)
+            const auto condition_res = runAwaitable(
+                io_context,
+                registry.getConditionRecordHandle("DeployCondition"));
+            if(!condition_res.has_value())
             {
-                snapshot.error_message = "getNewestCondition returned no value";
+                snapshot.error_message = "getCondition returned no value";
                 return snapshot;
             }
-            snapshot.condition = *condition_res;
+            snapshot.condition = (*condition_res)->condition();
 
-            const auto connector_res = runAwaitable(io_context, registry.getNewestConnector("DeployConnector"));
-            if(!connector_res)
+            const auto connector_res = runAwaitable(
+                io_context,
+                registry.getConnectorRecordHandle("DeployConnector"));
+            if(!connector_res.has_value())
             {
-                snapshot.error_message = "getNewestConnector returned no value";
+                snapshot.error_message = "getConnector returned no value";
                 return snapshot;
             }
-            snapshot.connector = *connector_res;
+            snapshot.connector = (*connector_res)->connector();
 
             const auto transformation_owner_res = fetchOwnerAddress(io_context, evm_instance, snapshot.transformation_address);
             if(!transformation_owner_res)
@@ -459,3 +465,5 @@ TEST_F(UnitTest, PT_Deploy_Transformation_InvalidInput_CleansTemporarySoliditySo
     const auto source_path = storage_path / "transformations" / "build" / "bad-name.sol";
     EXPECT_FALSE(std::filesystem::exists(source_path)) << std::format("Temporary Solidity source still exists: {}", source_path.string());
 }
+
+

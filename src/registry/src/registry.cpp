@@ -1,64 +1,40 @@
 #include "registry.hpp"
+
 #include <algorithm>
 #include <charconv>
 #include <cstdint>
-#include <cstring>
-#include <limits>
-#include <system_error>
-#include <vector>
 #include <format>
+#include <limits>
+#include <memory>
+#include <system_error>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+#include <evmc/hex.hpp>
+
+#include "sqlite_registry_store.hpp"
 
 namespace dcn::registry
 {
     namespace
     {
-        using ConnectorBuckets =
-            absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, ConnectorRecord>>;
-        using TransformationBuckets =
-            absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, TransformationRecord>>;
-        using ConditionBuckets =
-            absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, ConditionRecord>>;
-
         enum class VisitState : std::uint8_t
         {
             VISITING,
             DONE
         };
 
-        // Shared connector-graph references used while resolving recursive dependencies.
+        // Shared connector graph lookups used while resolving recursive dependencies.
         struct ConnectorGraphContext
         {
             const Connector & pending_connector;
-            const absl::flat_hash_map<std::string, chain::Address> & newest_connector;
-            const ConnectorBuckets & connectors;
+            const IRegistryStore & store;
+            const absl::flat_hash_map<std::string, Connector> * staged_connectors = nullptr;
+            absl::flat_hash_map<std::string, Connector> connector_cache;
         };
 
-        // Traversal state for recursive open-slot computation.
-        struct OpenSlotsContext
-        {
-            const std::string & root_connector_name;
-            const ConnectorGraphContext & graph;
-            absl::flat_hash_map<std::string, VisitState> & visit_state;
-            absl::flat_hash_map<std::string, std::uint32_t> & open_slots_cache;
-        };
-
-        // Traversal state for recursive scalar-entry computation.
-        struct ScalarEntriesContext
-        {
-            const std::string & root_connector_name;
-            const ConnectorGraphContext & graph;
-            absl::flat_hash_map<std::string, VisitState> & scalar_visit_state;
-            absl::flat_hash_map<std::string, dcn::chain::ResolvedScalarEntries> & scalar_entries_cache;
-        };
-
-        // Aggregated slot impact produced by applying bindings to a child connector.
-        struct OpenSlotBindingEffect
-        {
-            std::uint64_t added_open_slots = 0;
-            std::size_t bound_slot_count = 0;
-        };
-
-        // Compact scalar-label statistics used for warning diagnostics.
+        // Compact scalar-label statistics used in diagnostics when collisions are detected.
         struct ScalarLabelSummary
         {
             std::size_t labels_count = 0;
@@ -66,144 +42,94 @@ namespace dcn::registry
             std::size_t unique_scalar_tail_pairs_count = 0;
         };
 
-        // Lazily create a named bucket when first needed.
-        template <typename TBuckets>
-        static void _ensureBucket(
-            const char * bucket_type_name,
-            const std::string & bucket_name,
-            TBuckets & buckets);
+        // Parse decimal slot id and reject malformed values.
+        static std::optional<std::uint32_t> parseSlotId(const std::string & slot_str);
 
-        // Validate that all transformations referenced by a connector are resolvable.
-        static bool _validateConnectorTransformations(
-            const Connector & connector,
-            const TransformationBuckets & transformations);
+        // Resolve connector by name from pending connector + persisted connector records.
+        static const Connector * resolveConnector(const std::string & connector_name, ConnectorGraphContext & graph_context);
 
-        // Validate that the optional condition referenced by a connector is resolvable.
-        static bool _validateConnectorCondition(
-            const Connector & connector,
-            const ConditionBuckets & conditions);
+        // Validate all referenced transformations are present.
+        static bool validateConnectorTransformations(const Connector & connector, const IRegistryStore & store);
 
-        // Resolve connector definition from the in-flight connector plus persisted registry state.
-        static const Connector * _resolveConnector(
-            const std::string & connector_name,
-            const ConnectorGraphContext & graph_context);
+        // Validate optional condition reference is present.
+        static bool validateConnectorCondition(const Connector & connector, const IRegistryStore & store);
 
-        // Lookup format hash for an existing (name, address) connector registration.
-        static std::optional<evmc::bytes32> _lookupConnectorFormatHash(
-            const std::string & name,
-            const chain::Address & address,
-            const ConnectorBuckets & connectors,
-            const absl::flat_hash_map<chain::Address, evmc::bytes32> & format_by_connector);
+        // Iteratively compute open-slot count with cycle detection and memoization.
+        static std::optional<std::uint32_t> computeOpenSlotsIterative(
+            const std::string & root_connector_name,
+            ConnectorGraphContext & context);
 
-        // Return sorted connector addresses for a format hash, rebuilding cache when dirty.
-        static const std::vector<chain::Address> & _getSortedFormatConnectors(
-            const evmc::bytes32 & format_hash,
-            const absl::flat_hash_map<evmc::bytes32, absl::flat_hash_set<chain::Address>> & connectors_by_format,
-            absl::flat_hash_map<evmc::bytes32, std::vector<chain::Address>> & sorted_connectors_by_format,
-            absl::flat_hash_set<evmc::bytes32> & dirty_sorted_connectors_by_format);
+        // Iteratively resolve produced scalar entries with cycle detection and memoization.
+        static std::optional<std::shared_ptr<const dcn::chain::ResolvedScalarEntries>> computeScalarEntriesIterative(
+            const std::string & root_connector_name,
+            ConnectorGraphContext & context);
 
-        // Parse a decimal slot id and reject malformed/overflowing values.
-        static std::optional<std::uint32_t> _parseSlotId(const std::string & slot_str);
-
-        // Compute open slots for a connector with memoization and cycle detection.
-        static std::optional<std::uint32_t> _computeOpenSlots(
-            const std::string & connector_name,
-            OpenSlotsContext & context);
-
-        // Compute produced scalar entries for a connector with memoization and cycle detection.
-        static std::optional<dcn::chain::ResolvedScalarEntries> _computeScalarEntries(
-            const std::string & connector_name,
-            ScalarEntriesContext & context);
-
-        // Compute how bindings modify the open-slot contribution of a composite dimension.
-        static std::optional<OpenSlotBindingEffect> _computeOpenSlotBindingEffect(
-            const std::string & connector_name,
-            const std::string & composite_name,
-            const Dimension & dimension,
-            std::uint32_t dim_id,
-            std::uint32_t child_open_slots,
-            OpenSlotsContext & context);
-
-        // Append a local scalar dimension entry for the current connector.
-        static void _appendLocalScalarEntry(
+        // Append local scalar entry for connector scalar dimension.
+        static void appendLocalScalarEntry(
             const std::string & connector_name,
             std::uint32_t dim_id,
             dcn::chain::ResolvedScalarEntries & connector_scalar_entries);
 
-        // Validate child scalar-entry cache consistency before merging.
-        static bool _validateChildScalarEntries(
-            const std::string & connector_name,
-            const std::string & composite_name,
-            const dcn::chain::ResolvedScalarEntries & child_scalar_entries);
+        // Compute format hash without building an intermediate label-hash vector.
+        static evmc::bytes32 computeFormatHashStreaming(const std::vector<dcn::chain::ScalarHashEntry> & hash_entries);
 
-        // Validate bound-target scalar-entry cache consistency before merging.
-        static bool _validateBindingScalarEntries(
-            const std::string & connector_name,
-            const std::string & binding_target,
-            const dcn::chain::ResolvedScalarEntries & binding_scalar_entries);
+        // Canonicalize scalar labels into deterministic order.
+        static std::vector<ScalarLabel> canonicalizeScalarLabels(const std::vector<ScalarLabel> & labels);
 
-        // Build slot->binding map for scalar resolution and validate slot ids.
-        static std::optional<absl::flat_hash_map<std::uint32_t, std::string>>
-        _buildBindingBySlotForScalarResolution(
-            const std::string & connector_name,
-            const std::string & composite_name,
-            const Dimension & dimension,
-            std::uint32_t dim_id,
-            std::size_t child_slot_count);
+        // Byte-accurate equality check for canonical scalar labels.
+        static bool scalarLabelsEqual(const std::vector<ScalarLabel> & lhs, const std::vector<ScalarLabel> & rhs);
 
-        // Resolve and append scalar entries produced by a binding target connector.
-        static bool _appendBindingScalarEntries(
-            const std::string & connector_name,
-            const std::string & binding_target,
-            ScalarEntriesContext & context,
-            dcn::chain::ResolvedScalarEntries & connector_scalar_entries);
+        // Produce compact scalar-label summary for diagnostics.
+        static ScalarLabelSummary summarizeScalarLabels(const std::vector<ScalarLabel> & labels);
 
-        // Resolve all scalar entries for the root connector being added.
-        static std::optional<dcn::chain::ResolvedScalarEntries> _resolveRootScalarEntries(
-            const Connector & root_connector,
-            const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
-            const ConnectorBuckets & connectors);
+        // Parse owner hex string into address.
+        static std::optional<chain::Address> tryParseOwnerAddress(const std::string & owner);
 
-        // Validate open-slot consistency for the root connector being added.
-        static bool _validateConnectorOpenSlots(
-            const Connector & root_connector,
-            const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
-            const ConnectorBuckets & connectors);
-
-        // Return a deterministically ordered copy of scalar labels.
-        static std::vector<ScalarLabel> _canonicalizeScalarLabels(const std::vector<ScalarLabel> & labels);
-
-        // Compare canonical scalar-label collections for byte-accurate equality.
-        static bool _scalarLabelsEqual(
-            const std::vector<ScalarLabel> & lhs,
-            const std::vector<ScalarLabel> & rhs);
-
-        // Produce compact scalar-label metrics for warning logs.
-        static ScalarLabelSummary _summarizeScalarLabels(const std::vector<ScalarLabel> & labels);
-
-        // Parse connector owner string into an address if valid.
-        static std::optional<chain::Address> _tryParseOwnerAddress(const std::string & owner);
-
-        // Create bucket lazily so add paths can assume .at(name) is valid.
-        template <typename TBuckets>
-        static void _ensureBucket(
-            const char * bucket_type_name,
-            const std::string & bucket_name,
-            TBuckets & buckets)
+        static std::optional<std::uint32_t> parseSlotId(const std::string & slot_str)
         {
-            if(buckets.contains(bucket_name))
+            std::uint32_t slot_id = 0;
+            const auto [ptr, ec] = std::from_chars(slot_str.data(), slot_str.data() + slot_str.size(), slot_id, 10);
+            if(ec != std::errc{} || ptr != (slot_str.data() + slot_str.size()))
             {
-                return;
+                return std::nullopt;
             }
 
-            spdlog::debug("{} bucket `{}` does not exist, creating new one ... ", bucket_type_name, bucket_name);
-            buckets.try_emplace(bucket_name, typename TBuckets::mapped_type{});
+            return slot_id;
         }
 
-        // Validate that all referenced transformations exist and have at least one version.
-        static bool _validateConnectorTransformations(
-            const Connector & connector,
-            const TransformationBuckets & transformations)
+        static const Connector * resolveConnector(const std::string & connector_name, ConnectorGraphContext & graph_context)
+        {
+            if(connector_name == graph_context.pending_connector.name())
+            {
+                return &graph_context.pending_connector;
+            }
+
+            if(graph_context.staged_connectors != nullptr)
+            {
+                const auto staged_it = graph_context.staged_connectors->find(connector_name);
+                if(staged_it != graph_context.staged_connectors->end())
+                {
+                    return &staged_it->second;
+                }
+            }
+
+            const auto cache_it = graph_context.connector_cache.find(connector_name);
+            if(cache_it != graph_context.connector_cache.end())
+            {
+                return &cache_it->second;
+            }
+
+            const auto record_handle_opt = graph_context.store.getConnectorRecordHandle(connector_name);
+            if(!record_handle_opt.has_value() || !(*record_handle_opt))
+            {
+                return nullptr;
+            }
+
+            auto [it, _] = graph_context.connector_cache.try_emplace(connector_name, (*record_handle_opt)->connector());
+            return &it->second;
+        }
+
+        static bool validateConnectorTransformations(const Connector & connector, const IRegistryStore & store)
         {
             for(const Dimension & dimension : connector.dimensions())
             {
@@ -215,8 +141,7 @@ namespace dcn::registry
                         return false;
                     }
 
-                    const auto transformation_it = transformations.find(transformation.name());
-                    if(transformation_it == transformations.end() || transformation_it->second.empty())
+                    if(!store.hasTransformation(transformation.name()))
                     {
                         spdlog::error(
                             "Cannot find transformation `{}` used in connector `{}`",
@@ -230,219 +155,247 @@ namespace dcn::registry
             return true;
         }
 
-        // Validate that optional connector condition exists and has at least one version.
-        static bool _validateConnectorCondition(
-            const Connector & connector,
-            const ConditionBuckets & conditions)
+        static bool validateConnectorCondition(const Connector & connector, const IRegistryStore & store)
         {
             if(connector.condition_name().empty())
             {
                 return true;
             }
 
-            const std::string & condition_name = connector.condition_name();
-            const auto condition_it = conditions.find(condition_name);
-            if(condition_it != conditions.end() && !condition_it->second.empty())
+            if(store.hasCondition(connector.condition_name()))
             {
                 return true;
             }
 
             spdlog::error(
                 "Cannot find condition `{}` used in connector `{}`",
-                condition_name,
+                connector.condition_name(),
                 connector.name());
             return false;
         }
 
-        // Lookup format hash for a concrete (name, address) connector registration.
-        // Caller must ensure synchronization (strand) before invoking.
-        static std::optional<evmc::bytes32> _lookupConnectorFormatHash(
-            const std::string & name,
-            const chain::Address & address,
-            const ConnectorBuckets & connectors,
-            const absl::flat_hash_map<chain::Address, evmc::bytes32> & format_by_connector)
+        static std::optional<std::uint32_t> computeOpenSlotsIterative(
+            const std::string & root_connector_name,
+            ConnectorGraphContext & context)
         {
-            auto bucket_it = connectors.find(name);
-            if(bucket_it == connectors.end() || bucket_it->second.contains(address) == false)
+            struct StackFrame
+            {
+                std::string connector_name;
+                bool post_visit = false;
+            };
+
+            absl::flat_hash_map<std::string, VisitState> visit_state;
+            absl::flat_hash_map<std::string, std::uint32_t> open_slots_cache;
+            std::vector<StackFrame> stack;
+            stack.push_back(StackFrame{.connector_name = root_connector_name, .post_visit = false});
+
+            while(!stack.empty())
+            {
+                StackFrame frame = std::move(stack.back());
+                stack.pop_back();
+
+                if(frame.post_visit)
+                {
+                    const Connector * connector = resolveConnector(frame.connector_name, context);
+                    if(connector == nullptr)
+                    {
+                        spdlog::error(
+                            "Cannot resolve connector definition `{}` while validating `{}`",
+                            frame.connector_name,
+                            root_connector_name);
+                        return std::nullopt;
+                    }
+
+                    std::uint64_t open_slots = 0;
+                    for(std::uint32_t dim_id = 0; dim_id < static_cast<std::uint32_t>(connector->dimensions_size()); ++dim_id)
+                    {
+                        const Dimension & dimension = connector->dimensions(static_cast<int>(dim_id));
+                        const std::string & composite_name = dimension.composite();
+
+                        if(composite_name.empty())
+                        {
+                            if(dimension.bindings_size() != 0)
+                            {
+                                spdlog::error(
+                                    "Connector `{}` has bindings on scalar dimension {}",
+                                    frame.connector_name,
+                                    dim_id);
+                                return std::nullopt;
+                            }
+
+                            open_slots += 1;
+                            continue;
+                        }
+
+                        const auto child_it = open_slots_cache.find(composite_name);
+                        if(child_it == open_slots_cache.end())
+                        {
+                            spdlog::error(
+                                "Failed to resolve open slots for composite connector `{}` in `{}`",
+                                composite_name,
+                                frame.connector_name);
+                            return std::nullopt;
+                        }
+
+                        const std::uint32_t child_open_slots = child_it->second;
+                        open_slots += child_open_slots;
+
+                        absl::flat_hash_set<std::uint32_t> bound_slot_ids;
+                        std::uint64_t bound_open_slots = 0;
+                        for(const auto & [slot_str, binding_target] : dimension.bindings())
+                        {
+                            if(binding_target.empty())
+                            {
+                                spdlog::error(
+                                    "Connector `{}` has empty binding target at dim {} slot `{}`",
+                                    frame.connector_name,
+                                    dim_id,
+                                    slot_str);
+                                return std::nullopt;
+                            }
+
+                            const auto slot_id_opt = parseSlotId(slot_str);
+                            if(!slot_id_opt)
+                            {
+                                spdlog::error(
+                                    "Connector `{}` has invalid binding slot id `{}` at dim {}",
+                                    frame.connector_name,
+                                    slot_str,
+                                    dim_id);
+                                return std::nullopt;
+                            }
+
+                            const std::uint32_t slot_id = *slot_id_opt;
+                            if(!bound_slot_ids.insert(slot_id).second)
+                            {
+                                spdlog::error(
+                                    "Connector `{}` has duplicate binding slot id {} at dim {}",
+                                    frame.connector_name,
+                                    slot_id,
+                                    dim_id);
+                                return std::nullopt;
+                            }
+
+                            if(slot_id >= child_open_slots)
+                            {
+                                spdlog::error(
+                                    "Connector `{}` binding slot {} is out of range for child `{}` (open slots: {})",
+                                    frame.connector_name,
+                                    slot_id,
+                                    composite_name,
+                                    child_open_slots);
+                                return std::nullopt;
+                            }
+
+                            const auto target_it = open_slots_cache.find(binding_target);
+                            if(target_it == open_slots_cache.end())
+                            {
+                                spdlog::error(
+                                    "Cannot resolve binding target `{}` in connector `{}` dim {} slot {}",
+                                    binding_target,
+                                    frame.connector_name,
+                                    dim_id,
+                                    slot_id);
+                                return std::nullopt;
+                            }
+
+                            bound_open_slots += static_cast<std::uint64_t>(target_it->second);
+                        }
+
+                        open_slots += bound_open_slots;
+                        open_slots -= static_cast<std::uint64_t>(bound_slot_ids.size());
+                    }
+
+                    if(open_slots > std::numeric_limits<std::uint32_t>::max())
+                    {
+                        spdlog::error("Connector `{}` exceeds supported open slots range", frame.connector_name);
+                        return std::nullopt;
+                    }
+
+                    visit_state[frame.connector_name] = VisitState::DONE;
+                    open_slots_cache[frame.connector_name] = static_cast<std::uint32_t>(open_slots);
+                    continue;
+                }
+
+                if(open_slots_cache.contains(frame.connector_name))
+                {
+                    continue;
+                }
+
+                const auto state_it = visit_state.find(frame.connector_name);
+                if(state_it != visit_state.end())
+                {
+                    if(state_it->second == VisitState::VISITING)
+                    {
+                        spdlog::error("Connector dependency cycle detected at `{}`", frame.connector_name);
+                        return std::nullopt;
+                    }
+
+                    if(state_it->second == VisitState::DONE)
+                    {
+                        continue;
+                    }
+                }
+
+                const Connector * connector = resolveConnector(frame.connector_name, context);
+                if(connector == nullptr)
+                {
+                    spdlog::error(
+                        "Cannot resolve connector definition `{}` while validating `{}`",
+                        frame.connector_name,
+                        root_connector_name);
+                    return std::nullopt;
+                }
+
+                visit_state[frame.connector_name] = VisitState::VISITING;
+                stack.push_back(StackFrame{.connector_name = frame.connector_name, .post_visit = true});
+
+                for(const Dimension & dimension : connector->dimensions())
+                {
+                    const std::string & composite_name = dimension.composite();
+                    if(composite_name.empty())
+                    {
+                        continue;
+                    }
+
+                    stack.push_back(StackFrame{.connector_name = composite_name, .post_visit = false});
+
+                    for(const auto & [slot_str, binding_target] : dimension.bindings())
+                    {
+                        if(binding_target.empty())
+                        {
+                            spdlog::error(
+                                "Connector `{}` has empty binding target at slot `{}`",
+                                frame.connector_name,
+                                slot_str);
+                            return std::nullopt;
+                        }
+
+                        const auto slot_id_opt = parseSlotId(slot_str);
+                        if(!slot_id_opt)
+                        {
+                            spdlog::error(
+                                "Connector `{}` has invalid binding slot id `{}`",
+                                frame.connector_name,
+                                slot_str);
+                            return std::nullopt;
+                        }
+
+                        stack.push_back(StackFrame{.connector_name = binding_target, .post_visit = false});
+                    }
+                }
+            }
+
+            const auto root_it = open_slots_cache.find(root_connector_name);
+            if(root_it == open_slots_cache.end())
             {
                 return std::nullopt;
             }
 
-            auto format_it = format_by_connector.find(address);
-            if(format_it == format_by_connector.end())
-            {
-                return std::nullopt;
-            }
-
-            return format_it->second;
+            return root_it->second;
         }
 
-        // Keep paging deterministic while avoiding O(n) insertion into a sorted vector on every add.
-        // Source of truth is `_connectors_by_format`; this function lazily rebuilds sorted cache.
-        static const std::vector<chain::Address> & _getSortedFormatConnectors(
-            const evmc::bytes32 & format_hash,
-            const absl::flat_hash_map<evmc::bytes32, absl::flat_hash_set<chain::Address>> & connectors_by_format,
-            absl::flat_hash_map<evmc::bytes32, std::vector<chain::Address>> & sorted_connectors_by_format,
-            absl::flat_hash_set<evmc::bytes32> & dirty_sorted_connectors_by_format)
-        {
-            const auto connectors_it = connectors_by_format.find(format_hash);
-            if(connectors_it == connectors_by_format.end())
-            {
-                static const std::vector<chain::Address> empty_addresses;
-                return empty_addresses;
-            }
-
-            auto [sorted_it, inserted] = sorted_connectors_by_format.try_emplace(format_hash);
-            std::vector<chain::Address> & sorted_connectors = sorted_it->second;
-            const bool rebuild_cache =
-                inserted ||
-                dirty_sorted_connectors_by_format.contains(format_hash) ||
-                sorted_connectors.size() != connectors_it->second.size();
-            if(rebuild_cache)
-            {
-                sorted_connectors.clear();
-                sorted_connectors.reserve(connectors_it->second.size());
-                for(const chain::Address & connector_address : connectors_it->second)
-                {
-                    sorted_connectors.push_back(connector_address);
-                }
-
-                std::sort(sorted_connectors.begin(), sorted_connectors.end());
-                dirty_sorted_connectors_by_format.erase(format_hash);
-            }
-
-            return sorted_connectors;
-        }
-
-        // Parse canonical decimal slot id used in binding maps.
-        static std::optional<std::uint32_t> _parseSlotId(const std::string & slot_str)
-        {
-            std::uint32_t slot_id = 0;
-            const auto [ptr, ec] =
-                std::from_chars(slot_str.data(), slot_str.data() + slot_str.size(), slot_id, 10);
-            if(ec != std::errc{} || ptr != (slot_str.data() + slot_str.size()))
-            {
-                return std::nullopt;
-            }
-
-            return slot_id;
-        }
-
-        // Resolve connector definition by name.
-        // `pending_connector` is the connector currently being added and not yet persisted,
-        // so recursion can still resolve references to the in-flight definition.
-        static const Connector * _resolveConnector(
-            const std::string & connector_name,
-            const ConnectorGraphContext & graph_context)
-        {
-            if(connector_name == graph_context.pending_connector.name())
-            {
-                return &graph_context.pending_connector;
-            }
-
-            auto newest_it = graph_context.newest_connector.find(connector_name);
-            if(newest_it == graph_context.newest_connector.end())
-            {
-                return nullptr;
-            }
-
-            auto bucket_it = graph_context.connectors.find(connector_name);
-            if(bucket_it == graph_context.connectors.end())
-            {
-                return nullptr;
-            }
-
-            auto connector_it = bucket_it->second.find(newest_it->second);
-            if(connector_it == bucket_it->second.end())
-            {
-                return nullptr;
-            }
-
-            return &connector_it->second.connector();
-        }
-
-        static std::optional<OpenSlotBindingEffect> _computeOpenSlotBindingEffect(
-            const std::string & connector_name,
-            const std::string & composite_name,
-            const Dimension & dimension,
-            std::uint32_t dim_id,
-            std::uint32_t child_open_slots,
-            OpenSlotsContext & context)
-        {
-            absl::flat_hash_set<std::uint32_t> bound_slot_ids;
-            OpenSlotBindingEffect effect{};
-            for(const auto & [slot_str, binding_target] : dimension.bindings())
-            {
-                if(binding_target.empty())
-                {
-                    spdlog::error(
-                        "Connector `{}` has empty binding target at dim {} slot `{}`",
-                        connector_name,
-                        dim_id,
-                        slot_str);
-                    return std::nullopt;
-                }
-
-                const auto slot_id_opt = _parseSlotId(slot_str);
-                if(!slot_id_opt)
-                {
-                    spdlog::error(
-                        "Connector `{}` has invalid binding slot id `{}` at dim {}",
-                        connector_name,
-                        slot_str,
-                        dim_id);
-                    return std::nullopt;
-                }
-                const std::uint32_t slot_id = *slot_id_opt;
-
-                if(!bound_slot_ids.insert(slot_id).second)
-                {
-                    spdlog::error(
-                        "Connector `{}` has duplicate binding slot id {} at dim {}",
-                        connector_name,
-                        slot_id,
-                        dim_id);
-                    return std::nullopt;
-                }
-
-                if(slot_id >= child_open_slots)
-                {
-                    spdlog::error(
-                        "Connector `{}` binding slot {} is out of range for child `{}` (open slots: {})",
-                        connector_name,
-                        slot_id,
-                        composite_name,
-                        child_open_slots);
-                    return std::nullopt;
-                }
-
-                if(_resolveConnector(binding_target, context.graph) == nullptr)
-                {
-                    spdlog::error(
-                        "Cannot resolve binding target `{}` in connector `{}` dim {} slot {}",
-                        binding_target,
-                        connector_name,
-                        dim_id,
-                        slot_id);
-                    return std::nullopt;
-                }
-
-                const auto target_open_slots_opt = _computeOpenSlots(
-                    binding_target,
-                    context);
-                if(!target_open_slots_opt)
-                {
-                    return std::nullopt;
-                }
-
-                effect.added_open_slots += static_cast<std::uint64_t>(*target_open_slots_opt);
-            }
-
-            effect.bound_slot_count = bound_slot_ids.size();
-            return effect;
-        }
-
-        static void _appendLocalScalarEntry(
+        static void appendLocalScalarEntry(
             const std::string & connector_name,
             std::uint32_t dim_id,
             dcn::chain::ResolvedScalarEntries & connector_scalar_entries)
@@ -455,420 +408,280 @@ namespace dcn::registry
             });
             connector_scalar_entries.display_entries.push_back(ScalarLabel{
                 .scalar = connector_name,
-                // Tail-only path rule: local scalar tail is this dimension id.
                 .path_hash = dim_path_hash,
                 .tail_id = dim_id
             });
         }
 
-        static bool _validateChildScalarEntries(
-            const std::string & connector_name,
-            const std::string & composite_name,
-            const dcn::chain::ResolvedScalarEntries & child_scalar_entries)
+        static std::optional<std::shared_ptr<const dcn::chain::ResolvedScalarEntries>> computeScalarEntriesIterative(
+            const std::string & root_connector_name,
+            ConnectorGraphContext & context)
         {
-            if(child_scalar_entries.hash_entries.size() != child_scalar_entries.display_entries.size())
+            struct StackFrame
             {
-                spdlog::error(
-                    "Connector `{}` child `{}` has inconsistent scalar-entry cache",
-                    connector_name,
-                    composite_name);
-                return false;
-            }
+                std::string connector_name;
+                bool post_visit = false;
+            };
 
-            if(
-                child_scalar_entries.display_entries.size() >
-                static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max()))
+            using ScalarEntriesPtr = std::shared_ptr<const dcn::chain::ResolvedScalarEntries>;
+
+            absl::flat_hash_map<std::string, VisitState> visit_state;
+            absl::flat_hash_map<std::string, ScalarEntriesPtr> scalar_entries_cache;
+            std::vector<StackFrame> stack;
+            stack.push_back(StackFrame{.connector_name = root_connector_name, .post_visit = false});
+
+            while(!stack.empty())
             {
-                spdlog::error(
-                    "Connector `{}` child `{}` scalar labels exceed uint32 range",
-                    connector_name,
-                    composite_name);
-                return false;
-            }
+                StackFrame frame = std::move(stack.back());
+                stack.pop_back();
 
-            return true;
-        }
-
-        static bool _validateBindingScalarEntries(
-            const std::string & connector_name,
-            const std::string & binding_target,
-            const dcn::chain::ResolvedScalarEntries & binding_scalar_entries)
-        {
-            if(binding_scalar_entries.hash_entries.size() != binding_scalar_entries.display_entries.size())
-            {
-                spdlog::error(
-                    "Connector `{}` binding `{}` has inconsistent scalar-entry cache",
-                    connector_name,
-                    binding_target);
-                return false;
-            }
-
-            return true;
-        }
-
-        static std::optional<absl::flat_hash_map<std::uint32_t, std::string>>
-        _buildBindingBySlotForScalarResolution(
-            const std::string & connector_name,
-            const std::string & composite_name,
-            const Dimension & dimension,
-            std::uint32_t dim_id,
-            std::size_t child_slot_count)
-        {
-            absl::flat_hash_map<std::uint32_t, std::string> binding_by_slot;
-            for(const auto & [slot_str, binding_target] : dimension.bindings())
-            {
-                if(binding_target.empty())
+                if(frame.post_visit)
                 {
-                    spdlog::error(
-                        "Connector `{}` has empty binding target at dim {} slot `{}` while resolving scalar slots",
-                        connector_name,
-                        dim_id,
-                        slot_str);
-                    return std::nullopt;
-                }
-
-                const auto slot_id_opt = _parseSlotId(slot_str);
-                if(!slot_id_opt)
-                {
-                    spdlog::error(
-                        "Connector `{}` has invalid binding slot id `{}` at dim {} while resolving scalar slots",
-                        connector_name,
-                        slot_str,
-                        dim_id);
-                    return std::nullopt;
-                }
-                const std::uint32_t slot_id = *slot_id_opt;
-
-                if(slot_id >= child_slot_count)
-                {
-                    spdlog::error(
-                        "Connector `{}` binding slot {} is out of range for child `{}` while resolving scalar labels",
-                        connector_name,
-                        slot_id,
-                        composite_name);
-                    return std::nullopt;
-                }
-
-                if(!binding_by_slot.try_emplace(slot_id, binding_target).second)
-                {
-                    spdlog::error(
-                        "Connector `{}` has duplicate binding slot id {} at dim {} while resolving scalar slots",
-                        connector_name,
-                        slot_id,
-                        dim_id);
-                    return std::nullopt;
-                }
-            }
-
-            return binding_by_slot;
-        }
-
-        static bool _appendBindingScalarEntries(
-            const std::string & connector_name,
-            const std::string & binding_target,
-            ScalarEntriesContext & context,
-            dcn::chain::ResolvedScalarEntries & connector_scalar_entries)
-        {
-            auto binding_scalar_entries_opt = _computeScalarEntries(
-                binding_target,
-                context);
-            if(!binding_scalar_entries_opt)
-            {
-                return false;
-            }
-            const dcn::chain::ResolvedScalarEntries & binding_scalar_entries =
-                *binding_scalar_entries_opt;
-
-            if(!_validateBindingScalarEntries(connector_name, binding_target, binding_scalar_entries))
-            {
-                return false;
-            }
-
-            for(std::size_t i = 0; i < binding_scalar_entries.display_entries.size(); ++i)
-            {
-                // Tail-only path rule: bound scalar keeps its own tail path.
-                connector_scalar_entries.hash_entries.push_back(binding_scalar_entries.hash_entries[i]);
-                connector_scalar_entries.display_entries.push_back(
-                    binding_scalar_entries.display_entries[i]);
-            }
-
-            return true;
-        }
-
-        // Compute connector open-slot count with cycle detection and memoization.
-        // `root_connector_name` is threaded through recursion only for top-level error context.
-        static std::optional<std::uint32_t> _computeOpenSlots(
-            const std::string & connector_name,
-            OpenSlotsContext & context)
-        {
-            if(const auto cache_it = context.open_slots_cache.find(connector_name); cache_it != context.open_slots_cache.end())
-            {
-                return cache_it->second;
-            }
-
-            if(const auto state_it = context.visit_state.find(connector_name);
-                state_it != context.visit_state.end() && state_it->second == VisitState::VISITING)
-            {
-                spdlog::error("Connector dependency cycle detected at `{}`", connector_name);
-                return std::nullopt;
-            }
-
-            const Connector * connector =
-                _resolveConnector(connector_name, context.graph);
-            if(connector == nullptr)
-            {
-                spdlog::error(
-                    "Cannot resolve connector definition `{}` while validating `{}`",
-                    connector_name,
-                    context.root_connector_name);
-                return std::nullopt;
-            }
-
-            context.visit_state[connector_name] = VisitState::VISITING;
-
-            std::uint64_t open_slots = 0;
-            for(std::uint32_t dim_id = 0; dim_id < static_cast<std::uint32_t>(connector->dimensions_size()); ++dim_id)
-            {
-                const Dimension & dimension = connector->dimensions(static_cast<int>(dim_id));
-                const std::string & composite_name = dimension.composite();
-                if(composite_name.empty())
-                {
-                    if(dimension.bindings_size() != 0)
+                    const Connector * connector = resolveConnector(frame.connector_name, context);
+                    if(connector == nullptr)
                     {
                         spdlog::error(
-                            "Connector `{}` has bindings on scalar dimension {}",
-                            connector_name,
-                            dim_id);
+                            "Cannot resolve connector definition `{}` while resolving scalars for `{}`",
+                            frame.connector_name,
+                            root_connector_name);
                         return std::nullopt;
                     }
 
-                    open_slots += 1;
+                    auto connector_scalar_entries = std::make_shared<dcn::chain::ResolvedScalarEntries>();
+
+                    for(std::uint32_t dim_id = 0; dim_id < static_cast<std::uint32_t>(connector->dimensions_size()); ++dim_id)
+                    {
+                        const Dimension & dimension = connector->dimensions(static_cast<int>(dim_id));
+                        const std::string & composite_name = dimension.composite();
+                        if(composite_name.empty())
+                        {
+                            if(dimension.bindings_size() != 0)
+                            {
+                                spdlog::error(
+                                    "Connector `{}` has bindings on scalar dimension {} while resolving scalar slots",
+                                    frame.connector_name,
+                                    dim_id);
+                                return std::nullopt;
+                            }
+
+                            appendLocalScalarEntry(frame.connector_name, dim_id, *connector_scalar_entries);
+                            continue;
+                        }
+
+                        const auto child_it = scalar_entries_cache.find(composite_name);
+                        if(child_it == scalar_entries_cache.end() || !child_it->second)
+                        {
+                            spdlog::error(
+                                "Cannot resolve scalar entries for child `{}` in connector `{}`",
+                                composite_name,
+                                frame.connector_name);
+                            return std::nullopt;
+                        }
+
+                        const dcn::chain::ResolvedScalarEntries & child_scalar_entries = *child_it->second;
+                        if(child_scalar_entries.hash_entries.size() != child_scalar_entries.display_entries.size())
+                        {
+                            spdlog::error(
+                                "Connector `{}` child `{}` has inconsistent scalar-entry cache",
+                                frame.connector_name,
+                                composite_name);
+                            return std::nullopt;
+                        }
+
+                        if(
+                            child_scalar_entries.display_entries.size() >
+                            static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max()))
+                        {
+                            spdlog::error(
+                                "Connector `{}` child `{}` scalar labels exceed uint32 range",
+                                frame.connector_name,
+                                composite_name);
+                            return std::nullopt;
+                        }
+
+                        absl::flat_hash_map<std::uint32_t, std::string> binding_by_slot;
+                        for(const auto & [slot_str, binding_target] : dimension.bindings())
+                        {
+                            if(binding_target.empty())
+                            {
+                                spdlog::error(
+                                    "Connector `{}` has empty binding target at dim {} slot `{}` while resolving scalar slots",
+                                    frame.connector_name,
+                                    dim_id,
+                                    slot_str);
+                                return std::nullopt;
+                            }
+
+                            const auto slot_id_opt = parseSlotId(slot_str);
+                            if(!slot_id_opt)
+                            {
+                                spdlog::error(
+                                    "Connector `{}` has invalid binding slot id `{}` at dim {} while resolving scalar slots",
+                                    frame.connector_name,
+                                    slot_str,
+                                    dim_id);
+                                return std::nullopt;
+                            }
+
+                            const std::uint32_t slot_id = *slot_id_opt;
+                            if(slot_id >= child_scalar_entries.display_entries.size())
+                            {
+                                spdlog::error(
+                                    "Connector `{}` binding slot {} is out of range for child `{}` while resolving scalar labels",
+                                    frame.connector_name,
+                                    slot_id,
+                                    composite_name);
+                                return std::nullopt;
+                            }
+
+                            if(!binding_by_slot.try_emplace(slot_id, binding_target).second)
+                            {
+                                spdlog::error(
+                                    "Connector `{}` has duplicate binding slot id {} at dim {} while resolving scalar slots",
+                                    frame.connector_name,
+                                    slot_id,
+                                    dim_id);
+                                return std::nullopt;
+                            }
+                        }
+
+                        for(std::size_t slot_index = 0; slot_index < child_scalar_entries.display_entries.size(); ++slot_index)
+                        {
+                            const std::uint32_t slot_id = static_cast<std::uint32_t>(slot_index);
+                            const auto binding_it = binding_by_slot.find(slot_id);
+                            if(binding_it == binding_by_slot.end())
+                            {
+                                connector_scalar_entries->hash_entries.push_back(child_scalar_entries.hash_entries[slot_index]);
+                                connector_scalar_entries->display_entries.push_back(child_scalar_entries.display_entries[slot_index]);
+                                continue;
+                            }
+
+                            const auto resolved_binding_it = scalar_entries_cache.find(binding_it->second);
+                            if(resolved_binding_it == scalar_entries_cache.end() || !resolved_binding_it->second)
+                            {
+                                spdlog::error(
+                                    "Cannot resolve binding scalar entries for `{}` in connector `{}`",
+                                    binding_it->second,
+                                    frame.connector_name);
+                                return std::nullopt;
+                            }
+
+                            const dcn::chain::ResolvedScalarEntries & binding_scalar_entries = *resolved_binding_it->second;
+                            if(binding_scalar_entries.hash_entries.size() != binding_scalar_entries.display_entries.size())
+                            {
+                                spdlog::error(
+                                    "Connector `{}` binding `{}` has inconsistent scalar-entry cache",
+                                    frame.connector_name,
+                                    binding_it->second);
+                                return std::nullopt;
+                            }
+
+                            for(std::size_t i = 0; i < binding_scalar_entries.display_entries.size(); ++i)
+                            {
+                                connector_scalar_entries->hash_entries.push_back(binding_scalar_entries.hash_entries[i]);
+                                connector_scalar_entries->display_entries.push_back(binding_scalar_entries.display_entries[i]);
+                            }
+                        }
+                    }
+
+                    visit_state[frame.connector_name] = VisitState::DONE;
+                    scalar_entries_cache[frame.connector_name] = connector_scalar_entries;
                     continue;
                 }
 
-                if(_resolveConnector(composite_name, context.graph) == nullptr)
+                if(scalar_entries_cache.contains(frame.connector_name))
                 {
-                    spdlog::error(
-                        "Cannot resolve composite connector `{}` in connector `{}` dim {}",
-                        composite_name,
-                        connector_name,
-                        dim_id);
-                    return std::nullopt;
+                    continue;
                 }
 
-                const auto child_open_slots_opt = _computeOpenSlots(
-                    composite_name,
-                    context);
-                if(!child_open_slots_opt)
+                const auto state_it = visit_state.find(frame.connector_name);
+                if(state_it != visit_state.end())
                 {
-                    return std::nullopt;
-                }
-                const std::uint32_t child_open_slots = *child_open_slots_opt;
-                open_slots += child_open_slots;
-
-                const auto binding_effect_opt = _computeOpenSlotBindingEffect(
-                    connector_name,
-                    composite_name,
-                    dimension,
-                    dim_id,
-                    child_open_slots,
-                    context);
-                if(!binding_effect_opt)
-                {
-                    return std::nullopt;
-                }
-
-                open_slots += binding_effect_opt->added_open_slots;
-                open_slots -= static_cast<std::uint64_t>(binding_effect_opt->bound_slot_count);
-            }
-
-            if(open_slots > std::numeric_limits<std::uint32_t>::max())
-            {
-                spdlog::error("Connector `{}` exceeds supported open slots range", connector_name);
-                return std::nullopt;
-            }
-
-            context.visit_state[connector_name] = VisitState::DONE;
-            context.open_slots_cache.emplace(connector_name, static_cast<std::uint32_t>(open_slots));
-            return static_cast<std::uint32_t>(open_slots);
-        }
-
-        // Resolve produced scalar entries with cycle detection and memoization.
-        // `root_connector_name` is threaded through recursion only for top-level error context.
-        static std::optional<dcn::chain::ResolvedScalarEntries> _computeScalarEntries(
-            const std::string & connector_name,
-            ScalarEntriesContext & context)
-        {
-            if(const auto cache_it = context.scalar_entries_cache.find(connector_name);
-                cache_it != context.scalar_entries_cache.end())
-            {
-                return cache_it->second;
-            }
-
-            if(const auto state_it = context.scalar_visit_state.find(connector_name);
-                state_it != context.scalar_visit_state.end() &&
-                state_it->second == VisitState::VISITING)
-            {
-                spdlog::error(
-                    "Connector dependency cycle detected while resolving scalars at `{}`",
-                    connector_name);
-                return std::nullopt;
-            }
-
-            const Connector * connector =
-                _resolveConnector(connector_name, context.graph);
-            if(connector == nullptr)
-            {
-                spdlog::error(
-                    "Cannot resolve connector definition `{}` while resolving scalars for `{}`",
-                    connector_name,
-                    context.root_connector_name);
-                return std::nullopt;
-            }
-
-            context.scalar_visit_state[connector_name] = VisitState::VISITING;
-
-            dcn::chain::ResolvedScalarEntries connector_scalar_entries;
-            for(std::uint32_t dim_id = 0; dim_id < static_cast<std::uint32_t>(connector->dimensions_size()); ++dim_id)
-            {
-                const Dimension & dimension = connector->dimensions(static_cast<int>(dim_id));
-                const std::string & composite_name = dimension.composite();
-                if(composite_name.empty())
-                {
-                    if(dimension.bindings_size() != 0)
+                    if(state_it->second == VisitState::VISITING)
                     {
                         spdlog::error(
-                            "Connector `{}` has bindings on scalar dimension {} while resolving scalar slots",
-                            connector_name,
-                            dim_id);
+                            "Connector dependency cycle detected while resolving scalars at `{}`",
+                            frame.connector_name);
                         return std::nullopt;
                     }
 
-                    _appendLocalScalarEntry(connector_name, dim_id, connector_scalar_entries);
-                    continue;
-                }
-
-                auto child_scalar_entries_opt = _computeScalarEntries(
-                    composite_name,
-                    context);
-                if(!child_scalar_entries_opt)
-                {
-                    return std::nullopt;
-                }
-                const dcn::chain::ResolvedScalarEntries & child_scalar_entries = *child_scalar_entries_opt;
-
-                if(!_validateChildScalarEntries(connector_name, composite_name, child_scalar_entries))
-                {
-                    return std::nullopt;
-                }
-
-                auto binding_by_slot_opt = _buildBindingBySlotForScalarResolution(
-                    connector_name,
-                    composite_name,
-                    dimension,
-                    dim_id,
-                    child_scalar_entries.display_entries.size());
-                if(!binding_by_slot_opt)
-                {
-                    return std::nullopt;
-                }
-                const absl::flat_hash_map<std::uint32_t, std::string> & binding_by_slot = *binding_by_slot_opt;
-
-                for(std::size_t slot_index = 0; slot_index < child_scalar_entries.display_entries.size(); ++slot_index)
-                {
-                    const std::uint32_t slot_id = static_cast<std::uint32_t>(slot_index);
-
-                    const auto binding_it = binding_by_slot.find(slot_id);
-                    if(binding_it == binding_by_slot.end())
+                    if(state_it->second == VisitState::DONE)
                     {
-                        // Tail-only path rule: do not prefix child tail by parent path.
-                        connector_scalar_entries.hash_entries.push_back(child_scalar_entries.hash_entries[slot_index]);
-                        connector_scalar_entries.display_entries.push_back(
-                            child_scalar_entries.display_entries[slot_index]);
+                        continue;
+                    }
+                }
+
+                const Connector * connector = resolveConnector(frame.connector_name, context);
+                if(connector == nullptr)
+                {
+                    spdlog::error(
+                        "Cannot resolve connector definition `{}` while resolving scalars for `{}`",
+                        frame.connector_name,
+                        root_connector_name);
+                    return std::nullopt;
+                }
+
+                visit_state[frame.connector_name] = VisitState::VISITING;
+                stack.push_back(StackFrame{.connector_name = frame.connector_name, .post_visit = true});
+
+                for(const Dimension & dimension : connector->dimensions())
+                {
+                    const std::string & composite_name = dimension.composite();
+                    if(composite_name.empty())
+                    {
                         continue;
                     }
 
-                    if(!_appendBindingScalarEntries(
-                           connector_name,
-                           binding_it->second,
-                           context,
-                           connector_scalar_entries))
+                    stack.push_back(StackFrame{.connector_name = composite_name, .post_visit = false});
+
+                    for(const auto & [slot_str, binding_target] : dimension.bindings())
                     {
-                        return std::nullopt;
+                        if(binding_target.empty())
+                        {
+                            spdlog::error(
+                                "Connector `{}` has empty binding target at slot `{}` while traversing scalar dependencies",
+                                frame.connector_name,
+                                slot_str);
+                            return std::nullopt;
+                        }
+
+                        const auto slot_id_opt = parseSlotId(slot_str);
+                        if(!slot_id_opt)
+                        {
+                            spdlog::error(
+                                "Connector `{}` has invalid binding slot id `{}` while traversing scalar dependencies",
+                                frame.connector_name,
+                                slot_str);
+                            return std::nullopt;
+                        }
+
+                        stack.push_back(StackFrame{.connector_name = binding_target, .post_visit = false});
                     }
                 }
             }
 
-            context.scalar_visit_state[connector_name] = VisitState::DONE;
-            auto [cache_it, inserted] =
-                context.scalar_entries_cache.try_emplace(connector_name, std::move(connector_scalar_entries));
-            (void)inserted;
-            return cache_it->second;
-        }
-
-        // Resolve scalar entries for the connector currently being added.
-        static std::optional<dcn::chain::ResolvedScalarEntries> _resolveRootScalarEntries(
-            const Connector & root_connector,
-            const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
-            const ConnectorBuckets & connectors)
-        {
-            const ConnectorGraphContext graph_context{
-                .pending_connector = root_connector,
-                .newest_connector = newest_connector,
-                .connectors = connectors,
-            };
-            absl::flat_hash_map<std::string, VisitState> scalar_visit_state;
-            absl::flat_hash_map<std::string, dcn::chain::ResolvedScalarEntries> scalar_entries_cache;
-            ScalarEntriesContext scalar_entries_context{
-                .root_connector_name = root_connector.name(),
-                .graph = graph_context,
-                .scalar_visit_state = scalar_visit_state,
-                .scalar_entries_cache = scalar_entries_cache,
-            };
-            auto root_scalar_entries_opt = _computeScalarEntries(
-                root_connector.name(),
-                scalar_entries_context);
-
-            if(
-                !root_scalar_entries_opt ||
-                root_scalar_entries_opt->hash_entries.empty() ||
-                root_scalar_entries_opt->hash_entries.size() !=
-                    root_scalar_entries_opt->display_entries.size())
+            const auto root_it = scalar_entries_cache.find(root_connector_name);
+            if(root_it == scalar_entries_cache.end() || !root_it->second)
             {
                 return std::nullopt;
             }
 
-            return root_scalar_entries_opt;
+            return root_it->second;
         }
 
-        // Validate slot/binding graph for the connector currently being added.
-        static bool _validateConnectorOpenSlots(
-            const Connector & root_connector,
-            const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
-            const ConnectorBuckets & connectors)
+        static evmc::bytes32 computeFormatHashStreaming(const std::vector<dcn::chain::ScalarHashEntry> & hash_entries)
         {
-            const ConnectorGraphContext graph_context{
-                .pending_connector = root_connector,
-                .newest_connector = newest_connector,
-                .connectors = connectors,
-            };
-            absl::flat_hash_map<std::string, VisitState> visit_state;
-            absl::flat_hash_map<std::string, std::uint32_t> open_slots_cache;
-            OpenSlotsContext open_slots_context{
-                .root_connector_name = root_connector.name(),
-                .graph = graph_context,
-                .visit_state = visit_state,
-                .open_slots_cache = open_slots_cache,
-            };
+            evmc::bytes32 format_hash{};
+            for(const dcn::chain::ScalarHashEntry & hash_entry : hash_entries)
+            {
+                const evmc::bytes32 label_hash = dcn::chain::scalarPathLabelHash(hash_entry.scalar_hash, hash_entry.path_hash);
+                format_hash = dcn::chain::composeFormatHash(format_hash, dcn::chain::labelHashToFormatHash(label_hash));
+            }
 
-            return _computeOpenSlots(
-                       root_connector.name(),
-                       open_slots_context)
-                .has_value();
+            return format_hash;
         }
 
-        // Sort labels into a stable canonical order before storing/ comparing by format hash.
-        static std::vector<ScalarLabel> _canonicalizeScalarLabels(const std::vector<ScalarLabel> & labels)
+        static std::vector<ScalarLabel> canonicalizeScalarLabels(const std::vector<ScalarLabel> & labels)
         {
             std::vector<ScalarLabel> canonical_scalar_labels;
             canonical_scalar_labels.reserve(labels.size());
@@ -904,10 +717,7 @@ namespace dcn::registry
             return canonical_scalar_labels;
         }
 
-        // Byte-accurate equality check for canonical scalar label sets.
-        static bool _scalarLabelsEqual(
-            const std::vector<ScalarLabel> & lhs,
-            const std::vector<ScalarLabel> & rhs)
+        static bool scalarLabelsEqual(const std::vector<ScalarLabel> & lhs, const std::vector<ScalarLabel> & rhs)
         {
             if(lhs.size() != rhs.size())
             {
@@ -928,8 +738,7 @@ namespace dcn::registry
             return true;
         }
 
-        // Provide a compact summary for scalar-label sets in diagnostics.
-        static ScalarLabelSummary _summarizeScalarLabels(const std::vector<ScalarLabel> & labels)
+        static ScalarLabelSummary summarizeScalarLabels(const std::vector<ScalarLabel> & labels)
         {
             absl::flat_hash_set<std::string> scalars;
             absl::flat_hash_set<std::string> scalar_tail_pairs;
@@ -953,8 +762,7 @@ namespace dcn::registry
             };
         }
 
-        // Parse owner hex string once and centralize parse error logging.
-        static std::optional<chain::Address> _tryParseOwnerAddress(const std::string & owner)
+        static std::optional<chain::Address> tryParseOwnerAddress(const std::string & owner)
         {
             const std::optional<chain::Address> owner_res = evmc::from_hex<chain::Address>(owner);
             if(!owner_res)
@@ -965,11 +773,123 @@ namespace dcn::registry
 
             return *owner_res;
         }
+
+        template<typename RecordT>
+        static bool recordsEqual(const RecordT & lhs, const RecordT & rhs)
+        {
+            std::string lhs_bytes;
+            std::string rhs_bytes;
+            if(!lhs.SerializeToString(&lhs_bytes) || !rhs.SerializeToString(&rhs_bytes))
+            {
+                return false;
+            }
+
+            return lhs_bytes == rhs_bytes;
+        }
+
+        template<typename KeyT>
+        static std::string cacheKeyToString(const KeyT & key)
+        {
+            if constexpr(std::is_same_v<KeyT, std::string>)
+            {
+                return key;
+            }
+            else if constexpr(std::is_same_v<KeyT, chain::Address>)
+            {
+                return evmc::hex(key);
+            }
+            else
+            {
+                return "<unknown-key-type>";
+            }
+        }
+
+        template<typename KeyT, typename ValueT, typename ValueArgT>
+        static void putHotCacheEntry(
+            LruCache<KeyT, ValueT> & cache,
+            const KeyT & key,
+            ValueArgT && value)
+        {
+            if(cache.capacity == 0)
+            {
+                return;
+            }
+
+            const auto it = cache.entries.find(key);
+            if(it != cache.entries.end())
+            {
+                it->second.value = std::forward<ValueArgT>(value);
+                cache.order.splice(cache.order.begin(), cache.order, it->second.order_it);
+                it->second.order_it = cache.order.begin();
+                spdlog::debug("Cache update [{}] key={}", cache.name, cacheKeyToString(key));
+                return;
+            }
+
+            if(cache.entries.size() >= cache.capacity)
+            {
+                const KeyT & lru_key = cache.order.back();
+                spdlog::debug("Cache remove [{}] key={} (evicted LRU)", cache.name, cacheKeyToString(lru_key));
+                cache.entries.erase(lru_key);
+                cache.order.pop_back();
+            }
+
+            cache.order.push_front(key);
+            const auto order_it = cache.order.begin();
+            cache.entries.insert_or_assign(
+                *order_it,
+                typename LruCache<KeyT, ValueT>::Entry{
+                    .value = std::forward<ValueArgT>(value),
+                    .order_it = order_it});
+            spdlog::debug("Cache add [{}] key={}", cache.name, cacheKeyToString(key));
+        }
+
+        template<typename KeyT, typename ValueT>
+        static const ValueT * getHotCacheEntry(LruCache<KeyT, ValueT> & cache, const KeyT & key)
+        {
+            const auto it = cache.entries.find(key);
+            if(it == cache.entries.end())
+            {
+                return nullptr;
+            }
+
+            cache.order.splice(cache.order.begin(), cache.order, it->second.order_it);
+            it->second.order_it = cache.order.begin();
+            return &it->second.value;
+        }
+
+        template<typename KeyT, typename ValueT>
+        static void clearHotCache(LruCache<KeyT, ValueT> & cache, const char * reason)
+        {
+            if(cache.entries.empty())
+            {
+                return;
+            }
+
+            for(const auto & [key, entry] : cache.entries)
+            {
+                (void)entry;
+                spdlog::debug("Cache remove [{}] key={} ({})", cache.name, cacheKeyToString(key), reason);
+            }
+
+            cache.entries.clear();
+            cache.order.clear();
+        }
     }
 
-    Registry::Registry(asio::io_context & io_context)
+
+    Registry::Registry(asio::io_context & io_context, std::string sqlite_path)
         : _strand(asio::make_strand(io_context))
+        , _store(std::make_unique<SQLiteRegistryStore>(std::move(sqlite_path)))
     {
+        _connector_record_cache.name = "connector-record";
+        _format_hash_cache.name = "format-hash";
+        _transformation_record_cache.name = "transformation-record";
+        _condition_record_cache.name = "condition-record";
+
+        _connector_record_cache.capacity = kHotCacheCapacity;
+        _format_hash_cache.capacity = kHotCacheCapacity;
+        _transformation_record_cache.capacity = kHotCacheCapacity;
+        _condition_record_cache.capacity = kHotCacheCapacity;
     }
 
     asio::awaitable<bool> Registry::addConnector(chain::Address address, ConnectorRecord record)
@@ -983,25 +903,6 @@ namespace dcn::registry
         }
 
         co_await utils::ensureOnStrand(_strand);
-        _ensureBucket("Connector", connector_name, _connectors);
-
-        if(_connectors.at(connector_name).contains(address))
-        {
-            spdlog::error("Connector `{}` of this signature already exists", connector_name);
-            co_return false;
-        }
-
-        // Connector-address indexed maps are global, so the same address
-        // cannot be registered under a different connector name.
-        if(const auto existing_name_it = _connector_name_by_address.find(address);
-            existing_name_it != _connector_name_by_address.end())
-        {
-            spdlog::error(
-                "Connector address is already registered as `{}`; cannot add `{}`",
-                existing_name_it->second,
-                connector_name);
-            co_return false;
-        }
 
         if(connector.dimensions_size() <= 0)
         {
@@ -1009,25 +910,34 @@ namespace dcn::registry
             co_return false;
         }
 
-        if(!_validateConnectorTransformations(connector, _transformations))
+        if(!validateConnectorTransformations(connector, *_store))
         {
             co_return false;
         }
 
-        if(!_validateConnectorCondition(connector, _conditions))
+        if(!validateConnectorCondition(connector, *_store))
         {
             co_return false;
         }
 
-        if(!_validateConnectorOpenSlots(connector, _newest_connector, _connectors))
+        ConnectorGraphContext graph_context{
+            .pending_connector = connector,
+            .store = *_store,
+            .connector_cache = {},
+        };
+
+        if(!computeOpenSlotsIterative(connector_name, graph_context).has_value())
         {
             spdlog::error("Connector `{}` failed slot/binding validation", connector_name);
             co_return false;
         }
 
-        const auto root_scalar_entries_opt =
-            _resolveRootScalarEntries(connector, _newest_connector, _connectors);
-        if(!root_scalar_entries_opt)
+        const auto root_scalar_entries_opt = computeScalarEntriesIterative(connector_name, graph_context);
+        if(
+            !root_scalar_entries_opt.has_value() ||
+            !(*root_scalar_entries_opt) ||
+            (*root_scalar_entries_opt)->hash_entries.empty() ||
+            (*root_scalar_entries_opt)->hash_entries.size() != (*root_scalar_entries_opt)->display_entries.size())
         {
             spdlog::error(
                 "Connector `{}` produced invalid scalar entries while computing format hash",
@@ -1035,43 +945,23 @@ namespace dcn::registry
             co_return false;
         }
 
-        // Format hash is a multiset hash over produced scalar-tail-path labels.
-        // Do not deduplicate: multiplicity must affect the final hash.
-        const evmc::bytes32 format_hash =
-            dcn::chain::computeFormatHash(root_scalar_entries_opt->hash_entries);
+        const evmc::bytes32 format_hash = computeFormatHashStreaming((*root_scalar_entries_opt)->hash_entries);
         const std::vector<ScalarLabel> canonical_scalar_labels =
-            _canonicalizeScalarLabels(root_scalar_entries_opt->display_entries);
+            canonicalizeScalarLabels((*root_scalar_entries_opt)->display_entries);
 
-        const auto owner_opt = _tryParseOwnerAddress(record.owner());
+        const auto owner_opt = tryParseOwnerAddress(record.owner());
         if(!owner_opt)
         {
             co_return false;
         }
-        const chain::Address owner = *owner_opt;
 
-        _owned_connectors[owner].emplace(connector_name);
-        _newest_connector[connector_name] = address;
-        _connectors.at(connector_name).try_emplace(address, std::move(record));
-        _connector_name_by_address[address] = connector_name;
-        _format_by_connector[address] = format_hash;
-        auto & format_connectors = _connectors_by_format[format_hash];
-        const auto [_, inserted] = format_connectors.emplace(address);
-        if(inserted)
+        const auto existing_scalar_labels = _store->getScalarLabelsByFormatHash(format_hash);
+        if(existing_scalar_labels.has_value() && !scalarLabelsEqual(*existing_scalar_labels, canonical_scalar_labels))
         {
-            _dirty_sorted_connectors_by_format.emplace(format_hash);
-        }
-
-        const auto scalar_labels_it = _scalar_labels_by_format.find(format_hash);
-        if(scalar_labels_it == _scalar_labels_by_format.end())
-        {
-            _scalar_labels_by_format.emplace(format_hash, canonical_scalar_labels);
-        }
-        else if(!_scalarLabelsEqual(scalar_labels_it->second, canonical_scalar_labels))
-        {
-            const ScalarLabelSummary stored_summary = _summarizeScalarLabels(scalar_labels_it->second);
-            const ScalarLabelSummary new_summary = _summarizeScalarLabels(canonical_scalar_labels);
+            const ScalarLabelSummary stored_summary = summarizeScalarLabels(*existing_scalar_labels);
+            const ScalarLabelSummary new_summary = summarizeScalarLabels(canonical_scalar_labels);
             spdlog::warn(
-                "Different scalar-label multisets for format hash {} while registering connector '{}' at {} "
+                "Different scalar-label multisets for format hash {} while registering connector '{}' at runtime address {} "
                 "(stored: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}; "
                 "new: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}); "
                 "keeping first inserted representation",
@@ -1086,157 +976,329 @@ namespace dcn::registry
                 new_summary.unique_scalar_tail_pairs_count);
         }
 
+        const auto existing_record_handle_opt = _store->getConnectorRecordHandle(connector_name);
+        if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
+        {
+            if(!recordsEqual(*(*existing_record_handle_opt), record))
+            {
+                spdlog::error(
+                    "Connector `{}` already exists with different payload",
+                    connector_name);
+                co_return false;
+            }
+
+            const auto existing_format_hash = _store->getConnectorFormatHash(connector_name);
+            if(!existing_format_hash.has_value() || !chain::equalBytes32(*existing_format_hash, format_hash))
+            {
+                spdlog::error(
+                    "Connector `{}` already exists with different format hash",
+                    connector_name);
+                co_return false;
+            }
+
+            putHotCacheEntry(
+                _connector_record_cache,
+                connector_name,
+                existing_record_handle_opt);
+            putHotCacheEntry(
+                _format_hash_cache,
+                connector_name,
+                std::optional<evmc::bytes32>(format_hash));
+            co_return true;
+        }
+
+        if(!_store->addConnector(address, record, format_hash, canonical_scalar_labels))
+        {
+            co_return false;
+        }
+
+        putHotCacheEntry(
+            _connector_record_cache,
+            connector_name,
+            std::optional<ConnectorRecordHandle>(std::make_shared<ConnectorRecord>(record)));
+        putHotCacheEntry(
+            _format_hash_cache,
+            connector_name,
+            std::optional<evmc::bytes32>(format_hash));
+
         co_return true;
     }
 
-    asio::awaitable<std::optional<Connector>> Registry::getNewestConnector(const std::string& name) const
+    asio::awaitable<bool> Registry::addConnectorsBatch(
+        std::vector<std::pair<chain::Address, ConnectorRecord>> connectors,
+        bool all_or_nothing)
     {
         co_await utils::ensureOnStrand(_strand);
 
-        if(_newest_connector.contains(name) == false)
+        std::vector<ConnectorBatchItem> batch_items;
+        batch_items.reserve(connectors.size());
+        absl::flat_hash_map<std::string, Connector> staged_connectors;
+        staged_connectors.reserve(connectors.size());
+        absl::flat_hash_set<std::string> seen_names;
+        seen_names.reserve(connectors.size());
+        bool all_valid = true;
+
+        for(auto & [address, record] : connectors)
         {
-            co_return std::nullopt;
-        }
-        co_return (co_await getConnector(name, _newest_connector.at(name)));
-    }
-
-    asio::awaitable<std::optional<Connector>> Registry::getConnector(const std::string& name, const chain::Address & address) const
-    {
-        co_await utils::ensureOnStrand(_strand);
-
-        auto bucket_it = _connectors.find(name);
-        if(bucket_it == _connectors.end())
-        {
-            co_return std::nullopt;
-        }
-
-        auto it = bucket_it->second.find(address);
-        if(it == bucket_it->second.end())
-        {
-            co_return std::nullopt;
-        }
-
-        co_return it->second.connector();
-    }
-
-    asio::awaitable<std::optional<std::string>> Registry::getConnectorName(const chain::Address & address) const
-    {
-        co_await utils::ensureOnStrand(_strand);
-
-        auto name_it = _connector_name_by_address.find(address);
-        if(name_it == _connector_name_by_address.end())
-        {
-            co_return std::nullopt;
-        }
-
-        co_return name_it->second;
-    }
-
-    asio::awaitable<std::vector<std::optional<std::string>>> Registry::getConnectorNames(
-        const std::vector<chain::Address> & addresses) const
-    {
-        co_await utils::ensureOnStrand(_strand);
-
-        std::vector<std::optional<std::string>> names;
-        names.reserve(addresses.size());
-        for(const chain::Address & address : addresses)
-        {
-            const auto name_it = _connector_name_by_address.find(address);
-            if(name_it == _connector_name_by_address.end())
+            const Connector & connector = record.connector();
+            const std::string connector_name = connector.name();
+            if(connector_name.empty())
             {
-                names.emplace_back(std::nullopt);
+                spdlog::error("Connector name is empty");
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
                 continue;
             }
 
-            names.emplace_back(name_it->second);
+            if(!seen_names.insert(connector_name).second)
+            {
+                spdlog::error("Duplicate connector name in batch for `{}`", connector_name);
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
+                continue;
+            }
+
+            if(connector.dimensions_size() <= 0)
+            {
+                spdlog::error("Connector `{}` has zero dimensions", connector_name);
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
+                continue;
+            }
+
+            if(!validateConnectorTransformations(connector, *_store))
+            {
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
+                continue;
+            }
+
+            if(!validateConnectorCondition(connector, *_store))
+            {
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
+                continue;
+            }
+
+            ConnectorGraphContext graph_context{
+                .pending_connector = connector,
+                .store = *_store,
+                .staged_connectors = &staged_connectors,
+                .connector_cache = {},
+            };
+
+            if(!computeOpenSlotsIterative(connector_name, graph_context).has_value())
+            {
+                spdlog::error("Connector `{}` failed slot/binding validation", connector_name);
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
+                continue;
+            }
+
+            const auto root_scalar_entries_opt = computeScalarEntriesIterative(connector_name, graph_context);
+            if(
+                !root_scalar_entries_opt.has_value() ||
+                !(*root_scalar_entries_opt) ||
+                (*root_scalar_entries_opt)->hash_entries.empty() ||
+                (*root_scalar_entries_opt)->hash_entries.size() != (*root_scalar_entries_opt)->display_entries.size())
+            {
+                spdlog::error(
+                    "Connector `{}` produced invalid scalar entries while computing format hash",
+                    connector_name);
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
+                continue;
+            }
+
+            const evmc::bytes32 format_hash = computeFormatHashStreaming((*root_scalar_entries_opt)->hash_entries);
+            std::vector<ScalarLabel> canonical_scalar_labels =
+                canonicalizeScalarLabels((*root_scalar_entries_opt)->display_entries);
+
+            const auto owner_opt = tryParseOwnerAddress(record.owner());
+            if(!owner_opt)
+            {
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
+                continue;
+            }
+
+            const auto existing_scalar_labels = _store->getScalarLabelsByFormatHash(format_hash);
+            if(existing_scalar_labels.has_value() && !scalarLabelsEqual(*existing_scalar_labels, canonical_scalar_labels))
+            {
+                const ScalarLabelSummary stored_summary = summarizeScalarLabels(*existing_scalar_labels);
+                const ScalarLabelSummary new_summary = summarizeScalarLabels(canonical_scalar_labels);
+                spdlog::warn(
+                    "Different scalar-label multisets for format hash {} while registering connector '{}' at runtime address {} "
+                    "(stored: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}; "
+                    "new: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}); "
+                    "keeping first inserted representation",
+                    evmc::hex(format_hash),
+                    connector_name,
+                    evmc::hex(address),
+                    stored_summary.labels_count,
+                    stored_summary.unique_scalars_count,
+                    stored_summary.unique_scalar_tail_pairs_count,
+                    new_summary.labels_count,
+                    new_summary.unique_scalars_count,
+                    new_summary.unique_scalar_tail_pairs_count);
+            }
+
+            const auto existing_record_handle_opt = _store->getConnectorRecordHandle(connector_name);
+            if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
+            {
+                if(!recordsEqual(*(*existing_record_handle_opt), record))
+                {
+                    spdlog::error(
+                        "Connector `{}` already exists with different payload",
+                        connector_name);
+                    all_valid = false;
+                    if(all_or_nothing)
+                    {
+                        co_return false;
+                    }
+                    continue;
+                }
+
+                const auto existing_format_hash = _store->getConnectorFormatHash(connector_name);
+                if(!existing_format_hash.has_value() || !chain::equalBytes32(*existing_format_hash, format_hash))
+                {
+                    spdlog::error(
+                        "Connector `{}` already exists with different format hash",
+                        connector_name);
+                    all_valid = false;
+                    if(all_or_nothing)
+                    {
+                        co_return false;
+                    }
+                    continue;
+                }
+
+                putHotCacheEntry(
+                    _connector_record_cache,
+                    connector_name,
+                    existing_record_handle_opt);
+                putHotCacheEntry(
+                    _format_hash_cache,
+                    connector_name,
+                    std::optional<evmc::bytes32>(format_hash));
+                staged_connectors.insert_or_assign(connector_name, connector);
+                continue;
+            }
+
+            staged_connectors.insert_or_assign(connector_name, connector);
+            batch_items.push_back(ConnectorBatchItem{
+                .address = address,
+                .record = std::move(record),
+                .format_hash = format_hash,
+                .canonical_scalar_labels = std::move(canonical_scalar_labels)
+            });
         }
 
-        co_return names;
-    }
-
-    asio::awaitable<std::optional<evmc::bytes32>> Registry::getNewestFormatHash(const std::string& name) const
-    {
-        co_await utils::ensureOnStrand(_strand);
-
-        const auto newest_it = _newest_connector.find(name);
-        if(newest_it == _newest_connector.end())
+        if(batch_items.empty())
         {
-            co_return std::nullopt;
+            co_return all_valid;
         }
 
-        co_return _lookupConnectorFormatHash(
-            name,
-            newest_it->second,
-            _connectors,
-            _format_by_connector);
-    }
-
-    asio::awaitable<std::optional<evmc::bytes32>> Registry::getFormatHash(const std::string& name, const chain::Address & address) const
-    {
-        co_await utils::ensureOnStrand(_strand);
-
-        co_return _lookupConnectorFormatHash(name, address, _connectors, _format_by_connector);
-    }
-
-    asio::awaitable<std::size_t> Registry::getFormatConnectorsCount(const evmc::bytes32 & format_hash) const
-    {
-        co_await utils::ensureOnStrand(_strand);
-
-        const auto connectors_it = _connectors_by_format.find(format_hash);
-        if(connectors_it == _connectors_by_format.end())
+        const bool inserted = _store->addConnectorsBatch(batch_items, all_or_nothing);
+        if(!inserted && all_or_nothing)
         {
-            co_return 0;
+            co_return false;
         }
 
-        co_return connectors_it->second.size();
+        for(const ConnectorBatchItem & item : batch_items)
+        {
+            const std::string & connector_name = item.record.connector().name();
+            if(!_store->hasConnector(connector_name))
+            {
+                continue;
+            }
+
+            putHotCacheEntry(
+                _connector_record_cache,
+                connector_name,
+                std::optional<ConnectorRecordHandle>(std::make_shared<ConnectorRecord>(item.record)));
+            putHotCacheEntry(
+                _format_hash_cache,
+                connector_name,
+                std::optional<evmc::bytes32>(item.format_hash));
+        }
+
+        co_return inserted && all_valid;
     }
 
-    asio::awaitable<std::vector<chain::Address>> Registry::getFormatConnectorsPage(
+    asio::awaitable<std::optional<ConnectorRecordHandle>> Registry::getConnectorRecordHandle(
+        const std::string & name) const
+    {
+        co_await utils::ensureOnStrand(_strand);
+
+        if(const auto * cached = getHotCacheEntry(_connector_record_cache, name))
+        {
+            co_return *cached;
+        }
+
+        const auto record_handle_opt = _store->getConnectorRecordHandle(name);
+        putHotCacheEntry(_connector_record_cache, name, record_handle_opt);
+        co_return record_handle_opt;
+    }
+
+    asio::awaitable<std::optional<evmc::bytes32>> Registry::getFormatHash(const std::string & name) const
+    {
+        co_await utils::ensureOnStrand(_strand);
+
+        if(const auto * cached = getHotCacheEntry(_format_hash_cache, name))
+        {
+            co_return *cached;
+        }
+
+        const auto format_hash_opt = _store->getConnectorFormatHash(name);
+        putHotCacheEntry(_format_hash_cache, name, format_hash_opt);
+        co_return format_hash_opt;
+    }
+
+    asio::awaitable<std::size_t> Registry::getFormatConnectorNamesCount(const evmc::bytes32 & format_hash) const
+    {
+        co_await utils::ensureOnStrand(_strand);
+        co_return _store->getFormatConnectorNamesCount(format_hash);
+    }
+
+    asio::awaitable<NameCursorPage> Registry::getFormatConnectorNamesCursor(
         const evmc::bytes32 & format_hash,
-        std::size_t offset,
-        std::size_t limit)
+        const std::optional<NameCursor> & after,
+        std::size_t limit) const
     {
         co_await utils::ensureOnStrand(_strand);
-
-        if(limit == 0)
-        {
-            co_return std::vector<chain::Address>{};
-        }
-
-        if(_connectors_by_format.contains(format_hash) == false)
-        {
-            co_return std::vector<chain::Address>{};
-        }
-
-        const std::vector<chain::Address> & sorted_connectors = _getSortedFormatConnectors(
-            format_hash,
-            _connectors_by_format,
-            _sorted_connectors_by_format,
-            _dirty_sorted_connectors_by_format);
-        const std::size_t total = sorted_connectors.size();
-        const std::size_t start = std::min(offset, total);
-        const std::size_t end = (limit > (total - start)) ? total : (start + limit);
-
-        std::vector<chain::Address> page_addresses;
-        page_addresses.reserve(end - start);
-        page_addresses.insert(
-            page_addresses.end(),
-            sorted_connectors.begin() + static_cast<std::ptrdiff_t>(start),
-            sorted_connectors.begin() + static_cast<std::ptrdiff_t>(end));
-        co_return page_addresses;
+        co_return _store->getFormatConnectorNamesCursor(format_hash, after, limit);
     }
 
-    asio::awaitable<std::optional<std::vector<ScalarLabel>>> Registry::getScalarLabelsByFormatHash(const evmc::bytes32 & format_hash) const
+    asio::awaitable<std::optional<std::vector<ScalarLabel>>> Registry::getScalarLabelsByFormatHash(
+        const evmc::bytes32 & format_hash) const
     {
         co_await utils::ensureOnStrand(_strand);
-
-        const auto it = _scalar_labels_by_format.find(format_hash);
-        if(it == _scalar_labels_by_format.end())
-        {
-            co_return std::nullopt;
-        }
-
-        co_return it->second;
+        co_return _store->getScalarLabelsByFormatHash(format_hash);
     }
 
     asio::awaitable<bool> Registry::addTransformation(chain::Address address, TransformationRecord record)
@@ -1249,56 +1311,141 @@ namespace dcn::registry
         }
 
         co_await utils::ensureOnStrand(_strand);
-        _ensureBucket("Transformation", transformation_name, _transformations);
 
-        if(_transformations.at(transformation_name).contains(address))
+        const auto existing_record_handle_opt = _store->getTransformationRecordHandle(transformation_name);
+        if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
         {
-            spdlog::error("Transformation `{}` of this signature already exists", transformation_name);
-            co_return false;
+            if(!recordsEqual(*(*existing_record_handle_opt), record))
+            {
+                spdlog::error(
+                    "Transformation `{}` already exists with different payload",
+                    transformation_name);
+                co_return false;
+            }
+
+            putHotCacheEntry(
+                _transformation_record_cache,
+                transformation_name,
+                existing_record_handle_opt);
+            co_return true;
         }
 
-        const auto owner_opt = _tryParseOwnerAddress(record.owner());
-        if(!owner_opt)
+        const bool inserted = _store->addTransformation(address, record);
+        if(inserted)
         {
-            co_return false;
+            putHotCacheEntry(
+                _transformation_record_cache,
+                transformation_name,
+                std::optional<TransformationRecordHandle>(
+                    std::make_shared<TransformationRecord>(record)));
         }
-        const chain::Address owner = *owner_opt;
 
-        _owned_transformations[owner].emplace(transformation_name);
-        _newest_transformation[transformation_name] = address;
-        _transformations.at(transformation_name).try_emplace(std::move(address), std::move(record));
-
-        co_return true;
+        co_return inserted;
     }
 
-    asio::awaitable<std::optional<Transformation>> Registry::getNewestTransformation(const std::string& name) const
+    asio::awaitable<bool> Registry::addTransformationsBatch(
+        std::vector<std::pair<chain::Address, TransformationRecord>> transformations,
+        bool all_or_nothing)
     {
         co_await utils::ensureOnStrand(_strand);
 
-        if(_newest_transformation.contains(name) == false)
+        std::vector<TransformationBatchItem> batch_items;
+        batch_items.reserve(transformations.size());
+        absl::flat_hash_set<std::string> seen_names;
+        seen_names.reserve(transformations.size());
+        bool all_valid = true;
+        for(auto & [address, record] : transformations)
         {
-            co_return std::nullopt;
+            const std::string transformation_name = record.transformation().name();
+            if(transformation_name.empty())
+            {
+                spdlog::error("Transformation name is empty");
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
+                continue;
+            }
+
+            if(!seen_names.insert(transformation_name).second)
+            {
+                spdlog::error("Duplicate transformation name in batch for `{}`", transformation_name);
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
+                continue;
+            }
+
+            const auto existing_record_handle_opt = _store->getTransformationRecordHandle(transformation_name);
+            if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
+            {
+                if(!recordsEqual(*(*existing_record_handle_opt), record))
+                {
+                    spdlog::error(
+                        "Transformation `{}` already exists with different payload",
+                        transformation_name);
+                    all_valid = false;
+                    if(all_or_nothing)
+                    {
+                        co_return false;
+                    }
+                    continue;
+                }
+
+                putHotCacheEntry(
+                    _transformation_record_cache,
+                    transformation_name,
+                    existing_record_handle_opt);
+                continue;
+            }
+
+            batch_items.push_back(TransformationBatchItem{
+                .address = address,
+                .record = std::move(record)
+            });
         }
-        co_return (co_await getTransformation(name, _newest_transformation.at(name)));
+
+        if(batch_items.empty())
+        {
+            co_return all_valid;
+        }
+
+        const bool inserted = _store->addTransformationsBatch(batch_items, all_or_nothing);
+        if(inserted || !all_or_nothing)
+        {
+            for(const auto & item : batch_items)
+            {
+                if(!_store->hasTransformation(item.record.transformation().name()))
+                {
+                    continue;
+                }
+                putHotCacheEntry(
+                    _transformation_record_cache,
+                    item.record.transformation().name(),
+                    std::optional<TransformationRecordHandle>(
+                        std::make_shared<TransformationRecord>(item.record)));
+            }
+        }
+
+        co_return inserted && all_valid;
     }
 
-    asio::awaitable<std::optional<Transformation>> Registry::getTransformation(const std::string& name, const chain::Address & address) const
+    asio::awaitable<std::optional<TransformationRecordHandle>> Registry::getTransformationRecordHandle(
+        const std::string & name) const
     {
         co_await utils::ensureOnStrand(_strand);
 
-        auto bucket_it = _transformations.find(name);
-        if(bucket_it == _transformations.end())
+        if(const auto * cached = getHotCacheEntry(_transformation_record_cache, name))
         {
-            co_return std::nullopt;
+            co_return *cached;
         }
 
-        auto it = bucket_it->second.find(address);
-        if(it == bucket_it->second.end())
-        {
-            co_return std::nullopt;
-        }
-
-        co_return it->second.transformation();
+        const auto record_handle_opt = _store->getTransformationRecordHandle(name);
+        putHotCacheEntry(_transformation_record_cache, name, record_handle_opt);
+        co_return record_handle_opt;
     }
 
     asio::awaitable<bool> Registry::addCondition(chain::Address address, ConditionRecord record)
@@ -1311,89 +1458,168 @@ namespace dcn::registry
         }
 
         co_await utils::ensureOnStrand(_strand);
-        _ensureBucket("Condition", condition_name, _conditions);
 
-        if(_conditions.at(condition_name).contains(address))
+        const auto existing_record_handle_opt = _store->getConditionRecordHandle(condition_name);
+        if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
         {
-            spdlog::error("Condition `{}` of this signature already exists", condition_name);
-            co_return false;
+            if(!recordsEqual(*(*existing_record_handle_opt), record))
+            {
+                spdlog::error(
+                    "Condition `{}` already exists with different payload",
+                    condition_name);
+                co_return false;
+            }
+
+            putHotCacheEntry(
+                _condition_record_cache,
+                condition_name,
+                existing_record_handle_opt);
+            co_return true;
         }
 
-        const auto owner_opt = _tryParseOwnerAddress(record.owner());
-        if(!owner_opt)
+        const bool inserted = _store->addCondition(address, record);
+        if(inserted)
         {
-            co_return false;
+            putHotCacheEntry(
+                _condition_record_cache,
+                condition_name,
+                std::optional<ConditionRecordHandle>(
+                    std::make_shared<ConditionRecord>(record)));
         }
-        const chain::Address owner = *owner_opt;
 
-        _owned_conditions[owner].emplace(condition_name);
-        _newest_condition[condition_name] = address;
-        _conditions.at(condition_name).try_emplace(std::move(address), std::move(record));
-
-        co_return true;
+        co_return inserted;
     }
 
-    asio::awaitable<std::optional<Condition>> Registry::getNewestCondition(const std::string& name) const
+    asio::awaitable<bool> Registry::addConditionsBatch(
+        std::vector<std::pair<chain::Address, ConditionRecord>> conditions,
+        bool all_or_nothing)
     {
         co_await utils::ensureOnStrand(_strand);
 
-        if(_newest_condition.contains(name) == false)
+        std::vector<ConditionBatchItem> batch_items;
+        batch_items.reserve(conditions.size());
+        absl::flat_hash_set<std::string> seen_names;
+        seen_names.reserve(conditions.size());
+        bool all_valid = true;
+        for(auto & [address, record] : conditions)
         {
-            co_return std::nullopt;
+            const std::string condition_name = record.condition().name();
+            if(condition_name.empty())
+            {
+                spdlog::error("Condition name is empty");
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
+                continue;
+            }
+
+            if(!seen_names.insert(condition_name).second)
+            {
+                spdlog::error("Duplicate condition name in batch for `{}`", condition_name);
+                all_valid = false;
+                if(all_or_nothing)
+                {
+                    co_return false;
+                }
+                continue;
+            }
+
+            const auto existing_record_handle_opt = _store->getConditionRecordHandle(condition_name);
+            if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
+            {
+                if(!recordsEqual(*(*existing_record_handle_opt), record))
+                {
+                    spdlog::error(
+                        "Condition `{}` already exists with different payload",
+                        condition_name);
+                    all_valid = false;
+                    if(all_or_nothing)
+                    {
+                        co_return false;
+                    }
+                    continue;
+                }
+
+                putHotCacheEntry(
+                    _condition_record_cache,
+                    condition_name,
+                    existing_record_handle_opt);
+                continue;
+            }
+
+            batch_items.push_back(ConditionBatchItem{
+                .address = address,
+                .record = std::move(record)
+            });
         }
-        co_return (co_await getCondition(name, _newest_condition.at(name)));
+
+        if(batch_items.empty())
+        {
+            co_return all_valid;
+        }
+
+        const bool inserted = _store->addConditionsBatch(batch_items, all_or_nothing);
+        if(inserted || !all_or_nothing)
+        {
+            for(const auto & item : batch_items)
+            {
+                if(!_store->hasCondition(item.record.condition().name()))
+                {
+                    continue;
+                }
+                putHotCacheEntry(
+                    _condition_record_cache,
+                    item.record.condition().name(),
+                    std::optional<ConditionRecordHandle>(
+                        std::make_shared<ConditionRecord>(item.record)));
+            }
+        }
+
+        co_return inserted && all_valid;
     }
 
-    asio::awaitable<std::optional<Condition>> Registry::getCondition(const std::string& name, const chain::Address & address) const
+    asio::awaitable<std::optional<ConditionRecordHandle>> Registry::getConditionRecordHandle(
+        const std::string & name) const
     {
         co_await utils::ensureOnStrand(_strand);
 
-        auto bucket_it = _conditions.find(name);
-        if(bucket_it == _conditions.end())
+        if(const auto * cached = getHotCacheEntry(_condition_record_cache, name))
         {
-            co_return std::nullopt;
+            co_return *cached;
         }
 
-        auto it = bucket_it->second.find(address);
-        if(it == bucket_it->second.end())
-        {
-            co_return std::nullopt;
-        }
-
-        co_return it->second.condition();
+        const auto record_handle_opt = _store->getConditionRecordHandle(name);
+        putHotCacheEntry(_condition_record_cache, name, record_handle_opt);
+        co_return record_handle_opt;
     }
 
-    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedConnectors(const chain::Address & address) const
+    asio::awaitable<NameCursorPage> Registry::getOwnedConnectorsCursor(
+        const chain::Address & owner,
+        const std::optional<NameCursor> & after,
+        std::size_t limit) const
     {
         co_await utils::ensureOnStrand(_strand);
-
-        if(_owned_connectors.contains(address) == false)
-        {
-            co_return absl::flat_hash_set<std::string>{};
-        }
-        co_return _owned_connectors.at(address);
+        co_return _store->getOwnedConnectorsCursor(owner, after, limit);
     }
 
-    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedTransformations(const chain::Address & address) const
+    asio::awaitable<NameCursorPage> Registry::getOwnedTransformationsCursor(
+        const chain::Address & owner,
+        const std::optional<NameCursor> & after,
+        std::size_t limit) const
     {
         co_await utils::ensureOnStrand(_strand);
-
-        if(_owned_transformations.contains(address) == false)
-        {
-            co_return absl::flat_hash_set<std::string>{};
-        }
-        co_return _owned_transformations.at(address);
+        co_return _store->getOwnedTransformationsCursor(owner, after, limit);
     }
 
-    asio::awaitable<absl::flat_hash_set<std::string>> Registry::getOwnedConditions(const chain::Address & address) const
+    asio::awaitable<NameCursorPage> Registry::getOwnedConditionsCursor(
+        const chain::Address & owner,
+        const std::optional<NameCursor> & after,
+        std::size_t limit) const
     {
         co_await utils::ensureOnStrand(_strand);
-
-        if(_owned_conditions.contains(address) == false)
-        {
-            co_return absl::flat_hash_set<std::string>{};
-        }
-        co_return _owned_conditions.at(address);
+        co_return _store->getOwnedConditionsCursor(owner, after, limit);
     }
 
     asio::awaitable<bool> Registry::add(chain::Address address, ConnectorRecord connector)

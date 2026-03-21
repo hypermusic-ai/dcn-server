@@ -175,6 +175,29 @@ FetchContent_MakeAvailable(json)
 silence_warnings(TARGETS nlohmann_json)
 
 # ---------------------------------------------------------
+# sqlite3
+# ---------------------------------------------------------
+message(STATUS "Fetching dependency `sqlite3` ...")
+FetchContent_Declare(
+    sqlite3
+    URL "https://www.sqlite.org/2026/sqlite-amalgamation-3510300.zip"
+    SYSTEM
+    OVERRIDE_FIND_PACKAGE
+)
+FetchContent_MakeAvailable(sqlite3)
+add_library(sqlite3 STATIC "${sqlite3_SOURCE_DIR}/sqlite3.c")
+target_include_directories(sqlite3 PUBLIC "${sqlite3_SOURCE_DIR}")
+if(WIN32)
+    target_compile_definitions(sqlite3 PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_compile_options(sqlite3 PRIVATE /wd4996)
+endif()
+silence_warnings(TARGETS sqlite3)
+install(FILES
+    "${sqlite3_SOURCE_DIR}/sqlite3.h"
+    "${sqlite3_SOURCE_DIR}/sqlite3ext.h"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+# ---------------------------------------------------------
 # jwt-cpp
 # ---------------------------------------------------------
 message(STATUS "Fetching dependency `jwt-cpp` ...")

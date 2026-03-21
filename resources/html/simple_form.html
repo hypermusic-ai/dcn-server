@@ -271,9 +271,6 @@
                             </div>
                             <div id="connectorDimensionsContainer"></div>
 
-                            <label>Address (optional)</label>
-                            <input id="GET_connectorAddress" type="text" placeholder="0x0...">
-
                             <div class="button-row">
                                 <button id="btn_sendStructuredConnector" class="action-button">🔒 Send</button>
                                 <button id="btn_getConnector" class="action-button">Fetch</button>
@@ -317,9 +314,6 @@
                             <textarea id="POST_transformationCode" placeholder="return x + args[0];"></textarea>
                             <div class="request-body inline-code-fragment">}</div>
 
-                            <label>Address (optional)</label>
-                            <input id="GET_transformationAddress" type="text" placeholder="0x0...">
-
                             <div class="button-row">
                                 <button id="btn_sendStructuredTransformation" class="action-button">🔒 Send</button>
                                 <button id="btn_getTransformation" class="action-button">Fetch</button>
@@ -362,9 +356,6 @@
                             <div class="request-body inline-code-fragment">function check(int32 [] calldata args) view external returns (bool){</div>
                             <textarea id="POST_conditionCode" placeholder="return args[0] == 1;"></textarea>
                             <div class="request-body inline-code-fragment">}</div>
-
-                            <label>Address (optional)</label>
-                            <input id="GET_conditionAddress" type="text" placeholder="0x0...">
 
                             <div class="button-row">
                                 <button id="btn_sendStructuredCondition" class="action-button">🔒 Send</button>
@@ -414,7 +405,7 @@
 
                                     <div class="page-controls">
                                         <button id="btn_prevAccountPage">⬅ Prev</button>
-                                        <span id="accountPageLabel">Page 1</span>
+                                        <span id="accountPageLabel">Cursor page 1</span>
                                         <button id="btn_nextAccountPage">Next ➡</button>
                                     </div>
                                 </div>
@@ -452,7 +443,7 @@
 
                                     <div class="page-controls">
                                         <button id="btn_prevFormatPage">⬅ Prev</button>
-                                        <span id="formatPageLabel">Page 1</span>
+                                        <span id="formatPageLabel">Cursor page 1</span>
                                         <button id="btn_nextFormatPage">Next ➡</button>
                                     </div>
                                 </div>

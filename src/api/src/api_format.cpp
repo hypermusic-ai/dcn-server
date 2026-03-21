@@ -1,12 +1,16 @@
 #include "api.hpp"
 
 #include <algorithm>
-#include <limits>
 #include <vector>
 #include <format>
 
 namespace dcn
 {
+    namespace
+    {
+        constexpr std::size_t MAX_LIMIT = 256;
+    }
+
     asio::awaitable<http::Response> OPTIONS_format(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
@@ -34,7 +38,7 @@ namespace dcn
                 .setHeader(http::Header::Connection, "close")
                 .setHeader(http::Header::ContentType, "application/json");
 
-        if(args.size() != 1 || query_args.size() != 2)
+        if(args.size() != 1)
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json{
@@ -55,11 +59,11 @@ namespace dcn
             co_return response;
         }
 
-        if(query_args.contains("limit") == false || query_args.contains("page") == false)
+        if(query_args.contains("limit") == false)
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json{
-                    {"message", "Missing arguments limit or page"}
+                    {"message", "Missing argument limit"}
                 }.dump());
 
             co_return response;
@@ -76,21 +80,42 @@ namespace dcn
             co_return response;
         }
 
-        static constexpr std::size_t MAX_LIMIT = 256;
-
         auto limit_res = parse::parseRouteArgAs<std::size_t>(query_args.at("limit"));
         if(limit_res && limit_res.value() > MAX_LIMIT)
         {
             limit_res = std::unexpected(parse::ParseError{parse::ParseError::Kind::OUT_OF_RANGE});
         }
 
-        const auto page_res = parse::parseRouteArgAs<std::size_t>(query_args.at("page"));
-
-        if(!limit_res || !page_res)
+        std::optional<registry::NameCursor> after_name;
+        if(query_args.contains("after"))
         {
-            std::string msg_str = "Invalid arguments limit or page.";
+            const auto after_res = parse::parseRouteArgAs<std::string>(query_args.at("after"));
+            if(!after_res)
+            {
+                response.setCode(http::Code::BadRequest)
+                    .setBodyWithContentLength(json{
+                        {"message", "Invalid after argument"}
+                    }.dump());
+
+                co_return response;
+            }
+
+            if(after_res->empty())
+            {
+                response.setCode(http::Code::BadRequest)
+                    .setBodyWithContentLength(json{
+                        {"message", "Invalid after cursor"}
+                    }.dump());
+
+                co_return response;
+            }
+
+            after_name = after_res.value();
+        }
+        if(!limit_res)
+        {
+            std::string msg_str = "Invalid argument limit.";
             if(!limit_res) msg_str += std::format(" limit error: {}.", limit_res.error().kind);
-            if(!page_res) msg_str += std::format(" page error: {}.", page_res.error().kind);
 
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json{
@@ -101,28 +126,23 @@ namespace dcn
         }
 
         const std::size_t limit = limit_res.value();
-        const std::size_t page = page_res.value();
-
-        const std::size_t total_connectors = co_await registry.getFormatConnectorsCount(*format_hash_res);
-        const std::size_t start =
-            (limit == 0 || page > std::numeric_limits<std::size_t>::max() / limit)
-                ? total_connectors
-                : std::min(page * limit, total_connectors);
-        const std::size_t end =
-            (limit > (total_connectors - start))
-                ? total_connectors
-                : (start + limit);
-        const std::vector<chain::Address> connector_addresses = co_await registry.getFormatConnectorsPage(
-            *format_hash_res,
-            start,
-            end - start);
-        const auto connector_names = co_await registry.getConnectorNames(connector_addresses);
+        const std::size_t total_connectors = co_await registry.getFormatConnectorNamesCount(*format_hash_res);
+        const auto page = co_await registry.getFormatConnectorNamesCursor(*format_hash_res, after_name, limit);
+        const std::vector<std::string> & connector_names = page.entries;
 
         json json_output;
         json_output["format_hash"] = evmc::hex(*format_hash_res);
-        json_output["page"] = page;
         json_output["limit"] = limit;
         json_output["total_connectors"] = total_connectors;
+        json_output["has_more"] = page.has_more;
+        if(page.next_after.has_value())
+        {
+            json_output["next_after"] = *page.next_after;
+        }
+        else
+        {
+            json_output["next_after"] = nullptr;
+        }
         json_output["scalars"] = json::array();
         const auto scalar_labels_res = co_await registry.getScalarLabelsByFormatHash(*format_hash_res);
         if(scalar_labels_res.has_value())
@@ -142,20 +162,9 @@ namespace dcn
         }
         json_output["connectors"] = json::array();
 
-        for(std::size_t i = 0; i < connector_addresses.size(); ++i)
+        for(const std::string & connector_name : connector_names)
         {
-            json connector_json;
-            const chain::Address & connector_address = connector_addresses[i];
-            connector_json["local_address"] = evmc::hex(connector_address);
-            connector_json["address"] = "0x0";
-
-            const auto & name_res = connector_names[i];
-            if(name_res.has_value())
-            {
-                connector_json["name"] = *name_res;
-            }
-
-            json_output["connectors"].emplace_back(std::move(connector_json));
+            json_output["connectors"].emplace_back(connector_name);
         }
 
         response.setCode(http::Code::OK)

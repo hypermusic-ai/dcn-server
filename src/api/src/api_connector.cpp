@@ -17,8 +17,8 @@ namespace dcn
                 .setHeader(http::Header::ContentLength, "0")
                 .setHeader(http::Header::Connection, "close");
 
-        // Validate path: /connector/<name> or /connector/<name>/<address>
-        if (args.size() > 2 || args.size() == 0) {
+        // Validate path: /connector/<name>
+        if(args.size() != 1) {
             response.setCode(http::Code::BadRequest);
             co_return response;
         }
@@ -30,30 +30,10 @@ namespace dcn
         }
         const auto & connector_name = connector_name_result.value();
 
-        std::optional<Connector> connector_res;
+        std::optional<registry::ConnectorRecordHandle> connector_record_res =
+            co_await registry.getConnectorRecordHandle(connector_name);
 
-        if (args.size() == 2) {
-            // /connector/<name>/<address>
-            const auto connector_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
-            if (!connector_address_arg) {
-                response.setCode(http::Code::BadRequest);
-                co_return response;
-            }
-
-            const auto connector_address_result = evmc::from_hex<chain::Address>(connector_address_arg.value());
-
-            if (!connector_address_result) {
-                response.setCode(http::Code::BadRequest);
-                co_return response;
-            }
-
-            connector_res = co_await registry.getConnector(connector_name, connector_address_result.value());
-        } else {
-            // /connector/<name>
-            connector_res = co_await registry.getNewestConnector(connector_name);
-        }
-
-        if (!connector_res) {
+        if (!connector_record_res) {
             // connector not found
             response.setCode(http::Code::NotFound);
             co_return response;
@@ -78,7 +58,11 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_connector(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry, evm::EVM & evm)
+    asio::awaitable<http::Response> GET_connector(
+        const http::Request & request,
+        std::vector<server::RouteArg> args,
+        server::QueryArgsList,
+        registry::Registry & registry)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -88,11 +72,11 @@ namespace dcn
                 .setHeader(http::Header::CacheControl, "no-store")
                 .setHeader(http::Header::Connection, "close");
 
-        if(args.size() > 2 || args.size() == 0)
+        if(args.size() != 1)
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json{
-                    {"message", "Invalid number of arguments. Expected 1 or 2 arguments."}
+                    {"message", "Invalid number of arguments. Expected 1 argument."}
                 }.dump());
 
             co_return response;
@@ -109,46 +93,10 @@ namespace dcn
 
             co_return response;
         }
-        const auto & connector_name = connector_name_result.value();
+        std::optional<registry::ConnectorRecordHandle> connector_record_res =
+            co_await registry.getConnectorRecordHandle(connector_name_result.value());
 
-        std::optional<Connector> connector_res;
-        std::optional<chain::Address> requested_connector_address;
-
-        if(args.size() == 2)
-        {
-            const auto connector_address_arg = parse::parseRouteArgAs<std::string>(args.at(1));
-
-            if(!connector_address_arg)
-            {
-                response.setCode(http::Code::BadRequest)
-                    .setBodyWithContentLength(json {
-                        {"message", "Invalid connector address argument"}
-                    }.dump());
-
-                co_return response;
-            }
-
-            const auto connector_address_result = evmc::from_hex<chain::Address>(connector_address_arg.value());
-
-            if(!connector_address_result)
-            {
-                response.setCode(http::Code::BadRequest)
-                    .setBodyWithContentLength(json{
-                        {"message", "Invalid connector address argument value"}
-                    }.dump());
-
-                co_return response;
-            }
-
-            requested_connector_address = connector_address_result.value();
-            connector_res = co_await registry.getConnector(connector_name_result.value(), *requested_connector_address);
-        }
-        else if(args.size() == 1)
-        {
-            connector_res = co_await registry.getNewestConnector(connector_name_result.value());
-        }
-
-        if(!connector_res) 
+        if(!connector_record_res)
         {
             response.setCode(http::Code::NotFound)
                 .setBodyWithContentLength(json {
@@ -158,7 +106,7 @@ namespace dcn
             co_return response;
         }
         
-        auto json_res = parse::parseToJson(*connector_res, parse::use_json);
+        auto json_res = parse::parseToJson((*connector_record_res)->connector(), parse::use_json);
 
         if(!json_res)
         {
@@ -170,58 +118,8 @@ namespace dcn
             co_return response;
         }
 
-        chain::Address connector_address{};
-        std::optional<evmc::bytes32> format_hash;
-
-        if(requested_connector_address.has_value())
-        {
-            connector_address = *requested_connector_address;
-            format_hash = co_await registry.getFormatHash(connector_name, connector_address);
-        }
-        else
-        {
-            std::vector<uint8_t> input_data;
-            // function selector
-            const auto selector = chain::constructSelector("getConnector(string)");
-            input_data.insert(input_data.end(), selector.begin(), selector.end());
-
-            // Step 2: Offset to string data (32 bytes with value 0x20)
-            std::vector<uint8_t> offset(32, 0);
-            offset[31] = 0x20;
-            input_data.insert(input_data.end(), offset.begin(), offset.end());
-
-            // Step 3: String tail payload (length + bytes + padding)
-            const auto encoded_name = evm::encodeAsArg(connector_name);
-            input_data.insert(input_data.end(), encoded_name.begin(), encoded_name.end());
-
-            co_await evm.setGas(evm.getRegistryAddress(), evm::DEFAULT_GAS_LIMIT);
-            const auto exec_result = co_await evm.execute(evm.getRegistryAddress(), evm.getRegistryAddress(), input_data, evm::DEFAULT_GAS_LIMIT, 0);
-
-            // check execution status
-            if(!exec_result)
-            {
-                response.setCode(http::Code::InternalServerError)
-                    .setBodyWithContentLength(json {
-                        {"message", std::format("Failed to fetch connector : {}", exec_result.error().kind)}
-                    }.dump());
-
-                co_return response;
-            }
-
-            const auto connector_address_res = chain::readAddressWord(exec_result.value());
-            if(!connector_address_res)
-            {
-                response.setCode(http::Code::InternalServerError)
-                    .setBodyWithContentLength(json {
-                        {"message", "Failed to fetch connector address"}
-                    }.dump());
-
-                co_return response;
-            }
-
-            connector_address = connector_address_res.value();
-            format_hash = co_await registry.getFormatHash(connector_name, connector_address);
-        }
+        std::optional<evmc::bytes32> format_hash =
+            co_await registry.getFormatHash(connector_name_result.value());
 
         if(!format_hash)
         {
@@ -233,33 +131,7 @@ namespace dcn
             co_return response;
         }
 
-        const auto owner_result = co_await fetchOwner(evm, connector_address);
-        if(!owner_result)
-        {
-            response.setCode(http::Code::InternalServerError)
-                .setBodyWithContentLength(json {
-                    {"message", std::format("Failed to fetch owner : {}", owner_result.error().kind)}
-                }.dump());
-            
-            co_return response;
-        }
-
-        const auto owner_address_res = chain::readAddressWord(owner_result.value());
-
-        if(!owner_address_res)
-        {
-            response.setCode(http::Code::InternalServerError)
-                .setBodyWithContentLength(json {
-                    {"message", "Failed to fetch owner address"}
-                }.dump());
-            
-            co_return response;
-        }
-
-        const auto & owner_address = owner_address_res.value();
-
-        (*json_res)["owner"] = evmc::hex(owner_address);
-        (*json_res)["local_address"] = evmc::hex(connector_address);
+        (*json_res)["owner"] = (*connector_record_res)->owner();
         (*json_res)["address"] = "0x0";
         (*json_res)["format_hash"] = evmc::hex(*format_hash);
 
@@ -337,10 +209,8 @@ namespace dcn
         json json_output;
         json_output["name"] = connector_record.connector().name();
         json_output["owner"] = connector_record.owner();
-        json_output["local_address"] = evmc::hex(deploy_res.value());
         json_output["address"] = "0x0";
-        const auto format_hash_res =
-            co_await registry.getFormatHash(connector_record.connector().name(), deploy_res.value());
+        const auto format_hash_res = co_await registry.getFormatHash(connector_record.connector().name());
         if(!format_hash_res)
         {
             response.setCode(http::Code::InternalServerError)
@@ -358,3 +228,4 @@ namespace dcn
         co_return response;
     }
 }
+

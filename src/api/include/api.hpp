@@ -192,7 +192,11 @@ namespace dcn
      * @param registry Registry instance for retrieving connectors
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> GET_connector(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> GET_connector(
+        const http::Request & request,
+        std::vector<server::RouteArg> route_args,
+        server::QueryArgsList query_args,
+        registry::Registry & registry);
 
     /**
      * @brief Handle a POST request to /connectors
@@ -239,7 +243,11 @@ namespace dcn
      * @param evm EVM instance
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> GET_transformation(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> GET_transformation(
+        const http::Request & request,
+        std::vector<server::RouteArg> route_args,
+        server::QueryArgsList query_args,
+        registry::Registry & registry);
 
     /**
      * @brief Handles POST requests for the transformation endpoint.
@@ -291,7 +299,11 @@ namespace dcn
      * @param evm EVM instance
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> GET_condition(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> GET_condition(
+        const http::Request & request,
+        std::vector<server::RouteArg> route_args,
+        server::QueryArgsList query_args,
+        registry::Registry & registry);
 
     /**
      * @brief Handles POST requests for the condition endpoint.
@@ -331,5 +343,12 @@ namespace dcn
      * @param evm EVM instance
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> POST_execute(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, const auth::AuthManager & auth_manager, evm::EVM & evm);
+    asio::awaitable<http::Response> POST_execute(
+        const http::Request & request,
+        std::vector<server::RouteArg> route_args,
+        server::QueryArgsList query_args,
+        const auth::AuthManager & auth_manager,
+        registry::Registry & registry,
+        evm::EVM & evm,
+        const config::Config & config);
 }

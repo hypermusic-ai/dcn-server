@@ -21,7 +21,14 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> POST_execute(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, const auth::AuthManager & auth_manager, evm::EVM & evm)
+    asio::awaitable<http::Response> POST_execute(
+        const http::Request & request,
+        std::vector<server::RouteArg> args,
+        server::QueryArgsList,
+        const auth::AuthManager & auth_manager,
+        registry::Registry & registry,
+        evm::EVM & evm,
+        const config::Config & config)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -67,6 +74,30 @@ namespace dcn
             co_return response;
         }
         const ExecuteRequest & execute_request = *execute_request_res;
+
+        const auto connector_record_handle = co_await registry.getConnectorRecordHandle(
+            execute_request.connector_name());
+        if(!connector_record_handle.has_value() || !(*connector_record_handle))
+        {
+            response.setCode(http::Code::NotFound)
+                .setBodyWithContentLength(json {
+                    {"message", "Connector not found"}
+                }.dump());
+            co_return response;
+        }
+
+        if(!co_await loader::ensureConnectorDeployed(
+            evm,
+            registry,
+            execute_request.connector_name(),
+            config.storage_path))
+        {
+            response.setCode(http::Code::InternalServerError)
+                .setBodyWithContentLength(json{
+                    {"message", "Connector deployment invariant failed"}
+                }.dump());
+            co_return response;
+        }
 
         static constexpr uint32_t MAX_PARTICLES_COUNT = 65536;
 

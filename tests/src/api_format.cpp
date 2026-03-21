@@ -69,29 +69,29 @@ TEST_F(UnitTest, API_Format_Get_ReturnsPaginatedConnectorsForGivenHash)
     addDimension(other, "TIME");
     ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(other_address, std::move(other))));
 
-    const auto fmt_a_hash = runAwaitable(io_context, registry.getFormatHash("FMT_A", fmt_a_address));
+    const auto fmt_a_hash = runAwaitable(io_context, registry.getFormatHash("FMT_A"));
     ASSERT_TRUE(fmt_a_hash.has_value());
     const std::string format_hash_hex = evmc::hex(*fmt_a_hash);
 
     {
         http::Request request;
         request.setMethod(http::Method::GET)
-               .setPath(http::URL("/format/" + format_hash_hex + "?limit=2&page=0"))
+               .setPath(http::URL("/format/" + format_hash_hex + "?limit=2"))
                .setVersion("HTTP/1.1");
 
         std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
         server::QueryArgsList query_args;
         query_args.emplace("limit", makeUintRouteArg(2));
-        query_args.emplace("page", makeUintRouteArg(0));
 
         const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
         ASSERT_EQ(response.getCode(), http::Code::OK);
 
         const auto body = nlohmann::json::parse(response.getBody());
         EXPECT_EQ(body["format_hash"], format_hash_hex);
-        EXPECT_EQ(body["page"], 0);
         EXPECT_EQ(body["limit"], 2);
         EXPECT_EQ(body["total_connectors"], 3);
+        EXPECT_EQ(body["has_more"], true);
+        EXPECT_EQ(body["next_after"], "FMT_B");
         ASSERT_TRUE(body["scalars"].is_array());
         ASSERT_EQ(body["scalars"].size(), 2);
         EXPECT_EQ(body["scalars"][0], "PITCH:0");
@@ -100,31 +100,30 @@ TEST_F(UnitTest, API_Format_Get_ReturnsPaginatedConnectorsForGivenHash)
 
         ASSERT_TRUE(body["connectors"].is_array());
         ASSERT_EQ(body["connectors"].size(), 2);
-        EXPECT_EQ(body["connectors"][0]["name"], "FMT_A");
-        EXPECT_EQ(body["connectors"][0]["local_address"], evmc::hex(fmt_a_address));
-        EXPECT_EQ(body["connectors"][1]["name"], "FMT_B");
-        EXPECT_EQ(body["connectors"][1]["local_address"], evmc::hex(fmt_b_address));
+        EXPECT_EQ(body["connectors"][0], "FMT_A");
+        EXPECT_EQ(body["connectors"][1], "FMT_B");
     }
 
     {
         http::Request request;
         request.setMethod(http::Method::GET)
-               .setPath(http::URL("/format/" + format_hash_hex + "?limit=2&page=1"))
+               .setPath(http::URL("/format/" + format_hash_hex + "?limit=2&after=FMT_B"))
                .setVersion("HTTP/1.1");
 
         std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
         server::QueryArgsList query_args;
         query_args.emplace("limit", makeUintRouteArg(2));
-        query_args.emplace("page", makeUintRouteArg(1));
+        query_args.emplace("after", makeStringRouteArg("FMT_B"));
 
         const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
         ASSERT_EQ(response.getCode(), http::Code::OK);
 
         const auto body = nlohmann::json::parse(response.getBody());
         EXPECT_EQ(body["total_connectors"], 3);
+        EXPECT_EQ(body["has_more"], false);
+        EXPECT_EQ(body["next_after"], nullptr);
         ASSERT_EQ(body["connectors"].size(), 1);
-        EXPECT_EQ(body["connectors"][0]["name"], "FMT_C");
-        EXPECT_EQ(body["connectors"][0]["local_address"], evmc::hex(fmt_c_address));
+        EXPECT_EQ(body["connectors"][0], "FMT_C");
     }
 }
 
@@ -138,22 +137,22 @@ TEST_F(UnitTest, API_Format_Get_UnknownHashReturnsEmptyConnectorsList)
 
     http::Request request;
     request.setMethod(http::Method::GET)
-           .setPath(http::URL("/format/" + format_hash_hex + "?limit=10&page=0"))
+           .setPath(http::URL("/format/" + format_hash_hex + "?limit=10"))
            .setVersion("HTTP/1.1");
 
     std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
     server::QueryArgsList query_args;
     query_args.emplace("limit", makeUintRouteArg(10));
-    query_args.emplace("page", makeUintRouteArg(0));
 
     const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
     ASSERT_EQ(response.getCode(), http::Code::OK);
 
     const auto body = nlohmann::json::parse(response.getBody());
     EXPECT_EQ(body["format_hash"], format_hash_hex);
-    EXPECT_EQ(body["page"], 0);
     EXPECT_EQ(body["limit"], 10);
     EXPECT_EQ(body["total_connectors"], 0);
+    EXPECT_EQ(body["has_more"], false);
+    EXPECT_EQ(body["next_after"], nullptr);
     ASSERT_TRUE(body["scalars"].is_array());
     EXPECT_TRUE(body["scalars"].empty());
     EXPECT_FALSE(body.contains("scalar_labels"));
@@ -168,13 +167,12 @@ TEST_F(UnitTest, API_Format_Get_InvalidFormatHashArgumentReturnsBadRequest)
 
     http::Request request;
     request.setMethod(http::Method::GET)
-           .setPath(http::URL("/format/123?limit=10&page=0"))
+           .setPath(http::URL("/format/123?limit=10"))
            .setVersion("HTTP/1.1");
 
     std::vector<server::RouteArg> args{makeUintRouteArg(123)};
     server::QueryArgsList query_args;
     query_args.emplace("limit", makeUintRouteArg(10));
-    query_args.emplace("page", makeUintRouteArg(0));
 
     const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
     ASSERT_EQ(response.getCode(), http::Code::BadRequest);
@@ -192,13 +190,12 @@ TEST_F(UnitTest, API_Format_Get_InvalidFormatHashReturnsBadRequest)
 
     http::Request request;
     request.setMethod(http::Method::GET)
-           .setPath(http::URL("/format/" + invalid_format_hash + "?limit=10&page=0"))
+           .setPath(http::URL("/format/" + invalid_format_hash + "?limit=10"))
            .setVersion("HTTP/1.1");
 
     std::vector<server::RouteArg> args{makeStringRouteArg(invalid_format_hash)};
     server::QueryArgsList query_args;
     query_args.emplace("limit", makeUintRouteArg(10));
-    query_args.emplace("page", makeUintRouteArg(0));
 
     const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
     ASSERT_EQ(response.getCode(), http::Code::BadRequest);
@@ -207,7 +204,7 @@ TEST_F(UnitTest, API_Format_Get_InvalidFormatHashReturnsBadRequest)
     EXPECT_EQ(body["message"], "Invalid format hash");
 }
 
-TEST_F(UnitTest, API_Format_Get_MissingLimitOrPageReturnsBadRequest)
+TEST_F(UnitTest, API_Format_Get_MissingLimitReturnsBadRequest)
 {
     asio::io_context io_context;
     registry::Registry registry(io_context);
@@ -217,19 +214,17 @@ TEST_F(UnitTest, API_Format_Get_MissingLimitOrPageReturnsBadRequest)
 
     http::Request request;
     request.setMethod(http::Method::GET)
-           .setPath(http::URL("/format/" + format_hash_hex + "?limit=10&offset=0"))
+           .setPath(http::URL("/format/" + format_hash_hex))
            .setVersion("HTTP/1.1");
 
     std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
     server::QueryArgsList query_args;
-    query_args.emplace("limit", makeUintRouteArg(10));
-    query_args.emplace("offset", makeUintRouteArg(0));
 
     const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
     ASSERT_EQ(response.getCode(), http::Code::BadRequest);
 
     const auto body = nlohmann::json::parse(response.getBody());
-    EXPECT_EQ(body["message"], "Missing arguments limit or page");
+    EXPECT_EQ(body["message"], "Missing argument limit");
 }
 
 TEST_F(UnitTest, API_Format_Get_LimitAboveMaxReturnsBadRequest)
@@ -242,19 +237,18 @@ TEST_F(UnitTest, API_Format_Get_LimitAboveMaxReturnsBadRequest)
 
     http::Request request;
     request.setMethod(http::Method::GET)
-           .setPath(http::URL("/format/" + format_hash_hex + "?limit=257&page=0"))
+           .setPath(http::URL("/format/" + format_hash_hex + "?limit=257"))
            .setVersion("HTTP/1.1");
 
     std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
     server::QueryArgsList query_args;
     query_args.emplace("limit", makeUintRouteArg(257));
-    query_args.emplace("page", makeUintRouteArg(0));
 
     const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
     ASSERT_EQ(response.getCode(), http::Code::BadRequest);
 
     const auto body = nlohmann::json::parse(response.getBody());
-    EXPECT_EQ(body["message"], "Invalid arguments limit or page. limit error: Out of range.");
+    EXPECT_EQ(body["message"], "Invalid argument limit. limit error: Out of range.");
 }
 
 TEST_F(UnitTest, API_Format_Get_ZeroLimitReturnsEmptyPage)
@@ -267,22 +261,48 @@ TEST_F(UnitTest, API_Format_Get_ZeroLimitReturnsEmptyPage)
 
     http::Request request;
     request.setMethod(http::Method::GET)
-           .setPath(http::URL("/format/" + format_hash_hex + "?limit=0&page=0"))
+           .setPath(http::URL("/format/" + format_hash_hex + "?limit=0"))
            .setVersion("HTTP/1.1");
 
     std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
     server::QueryArgsList query_args;
     query_args.emplace("limit", makeUintRouteArg(0));
-    query_args.emplace("page", makeUintRouteArg(0));
 
     const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
     ASSERT_EQ(response.getCode(), http::Code::OK);
 
     const auto body = nlohmann::json::parse(response.getBody());
     EXPECT_EQ(body["format_hash"], format_hash_hex);
-    EXPECT_EQ(body["page"], 0);
     EXPECT_EQ(body["limit"], 0);
     EXPECT_EQ(body["total_connectors"], 0);
+    EXPECT_EQ(body["has_more"], false);
+    EXPECT_EQ(body["next_after"], nullptr);
     ASSERT_TRUE(body["connectors"].is_array());
     EXPECT_TRUE(body["connectors"].empty());
 }
+
+TEST_F(UnitTest, API_Format_Get_InvalidAfterCursorReturnsBadRequest)
+{
+    asio::io_context io_context;
+    registry::Registry registry(io_context);
+
+    evmc::bytes32 unknown_hash{};
+    const std::string format_hash_hex = evmc::hex(unknown_hash);
+
+    http::Request request;
+    request.setMethod(http::Method::GET)
+           .setPath(http::URL("/format/" + format_hash_hex + "?limit=10&after="))
+           .setVersion("HTTP/1.1");
+
+    std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
+    server::QueryArgsList query_args;
+    query_args.emplace("limit", makeUintRouteArg(10));
+    query_args.emplace("after", makeStringRouteArg(""));
+
+    const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
+    ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+
+    const auto body = nlohmann::json::parse(response.getBody());
+    EXPECT_EQ(body["message"], "Invalid after cursor");
+}
+

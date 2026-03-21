@@ -28,4 +28,10 @@ namespace dcn::tests
         public:
             UnitTest() = default;
     };
+
+    class StressTest : public BaseUnitTest
+    {
+        public:
+            StressTest() = default;
+    };
 }

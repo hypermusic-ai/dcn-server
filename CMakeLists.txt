@@ -15,6 +15,7 @@ project("${PROJECT_NAME}"
 # --------------------------------------------------------------------------
 option(DECENTRALISED_ART_ENABLE_INSTALL "Enable install rule" OFF)
 option(DECENTRALISED_ART_BUILD_TESTS "Build tests" OFF)
+option(DECENTRALISED_ART_BUILD_STRESS_TESTS "Build stress test module" OFF)
 option(DECENTRALISED_ART_USE_SUBMODULE_PT "Use submodule PT" OFF)
 
 # --------------------------------------------------------------------------

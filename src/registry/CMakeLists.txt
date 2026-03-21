@@ -15,5 +15,6 @@ add_module(NAME "Registry"
         absl::hash
         absl::flat_hash_map
         evmc
+        sqlite3
         nlohmann_json
 )
