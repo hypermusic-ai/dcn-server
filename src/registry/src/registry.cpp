@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <charconv>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 #include <system_error>
 #include <vector>
@@ -91,6 +92,35 @@ namespace dcn::registry
                 condition_name,
                 connector.name());
             return false;
+        }
+
+        // Stable byte-order comparator used for deterministic connector paging.
+        static bool _addressLess(const chain::Address & lhs, const chain::Address & rhs)
+        {
+            return std::memcmp(lhs.bytes, rhs.bytes, sizeof(lhs.bytes)) < 0;
+        }
+
+        // Lookup format hash for a concrete (name, address) connector registration.
+        // Caller must ensure synchronization (strand) before invoking.
+        static std::optional<evmc::bytes32> _lookupConnectorFormatHash(
+            const std::string & name,
+            const chain::Address & address,
+            const _ConnectorBuckets & connectors,
+            const absl::flat_hash_map<chain::Address, evmc::bytes32> & format_by_connector)
+        {
+            auto bucket_it = connectors.find(name);
+            if(bucket_it == connectors.end() || bucket_it->second.contains(address) == false)
+            {
+                return std::nullopt;
+            }
+
+            auto format_it = format_by_connector.find(address);
+            if(format_it == format_by_connector.end())
+            {
+                return std::nullopt;
+            }
+
+            return format_it->second;
         }
 
         // Parse canonical decimal slot id used in binding maps.
@@ -625,13 +655,45 @@ namespace dcn::registry
             return true;
         }
 
+        struct _ScalarLabelSummary
+        {
+            std::size_t labels_count = 0;
+            std::size_t unique_scalars_count = 0;
+            std::size_t unique_scalar_tail_pairs_count = 0;
+        };
+
+        // Provide a compact summary for scalar-label sets in diagnostics.
+        static _ScalarLabelSummary _summarizeScalarLabels(const std::vector<ScalarLabel> & labels)
+        {
+            absl::flat_hash_set<std::string> scalars;
+            absl::flat_hash_set<std::string> scalar_tail_pairs;
+            scalars.reserve(labels.size());
+            scalar_tail_pairs.reserve(labels.size());
+
+            for(const ScalarLabel & label : labels)
+            {
+                scalars.emplace(label.scalar);
+
+                std::string scalar_tail_key = label.scalar;
+                scalar_tail_key.push_back(':');
+                scalar_tail_key += std::to_string(label.tail_id);
+                scalar_tail_pairs.emplace(std::move(scalar_tail_key));
+            }
+
+            return _ScalarLabelSummary{
+                .labels_count = labels.size(),
+                .unique_scalars_count = scalars.size(),
+                .unique_scalar_tail_pairs_count = scalar_tail_pairs.size(),
+            };
+        }
+
         // Parse owner hex string once and centralize parse error logging.
         static std::optional<chain::Address> _tryParseOwnerAddress(const std::string & owner)
         {
             const std::optional<chain::Address> owner_res = evmc::from_hex<chain::Address>(owner);
             if(!owner_res)
             {
-                spdlog::error("Failed to parse owner address");
+                spdlog::error(std::format("Failed to parse owner address from hex string '{}'", owner));
                 return std::nullopt;
             }
 
@@ -726,7 +788,18 @@ namespace dcn::registry
         _connectors.at(connector_name).try_emplace(address, std::move(record));
         _connector_name_by_address[address] = connector_name;
         _format_by_connector[address] = format_hash;
-        _connectors_by_format[format_hash].emplace(address);
+        auto & format_connectors = _connectors_by_format[format_hash];
+        const auto [_, inserted] = format_connectors.emplace(address);
+        if(inserted)
+        {
+            auto & sorted_format_connectors = _sorted_connectors_by_format[format_hash];
+            const auto insert_it = std::lower_bound(
+                sorted_format_connectors.begin(),
+                sorted_format_connectors.end(),
+                address,
+                _addressLess);
+            sorted_format_connectors.insert(insert_it, address);
+        }
 
         const auto scalar_labels_it = _scalar_labels_by_format.find(format_hash);
         if(scalar_labels_it == _scalar_labels_by_format.end())
@@ -735,8 +808,22 @@ namespace dcn::registry
         }
         else if(!_scalarLabelsEqual(scalar_labels_it->second, canonical_scalar_labels))
         {
+            const _ScalarLabelSummary stored_summary = _summarizeScalarLabels(scalar_labels_it->second);
+            const _ScalarLabelSummary new_summary = _summarizeScalarLabels(canonical_scalar_labels);
             spdlog::warn(
-                "Different scalar-label multisets encountered for the same format hash; keeping first inserted representation");
+                "Different scalar-label multisets for format hash {} while registering connector '{}' at {} "
+                "(stored: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}; "
+                "new: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}); "
+                "keeping first inserted representation",
+                evmc::hex(format_hash),
+                connector_name,
+                evmc::hex(address),
+                stored_summary.labels_count,
+                stored_summary.unique_scalars_count,
+                stored_summary.unique_scalar_tail_pairs_count,
+                new_summary.labels_count,
+                new_summary.unique_scalars_count,
+                new_summary.unique_scalar_tail_pairs_count);
         }
 
         co_return true;
@@ -789,31 +876,24 @@ namespace dcn::registry
     {
         co_await utils::ensureOnStrand(_strand);
 
-        if(_newest_connector.contains(name) == false)
+        const auto newest_it = _newest_connector.find(name);
+        if(newest_it == _newest_connector.end())
         {
             co_return std::nullopt;
         }
 
-        co_return co_await getFormatHash(name, _newest_connector.at(name));
+        co_return _lookupConnectorFormatHash(
+            name,
+            newest_it->second,
+            _connectors,
+            _format_by_connector);
     }
 
     asio::awaitable<std::optional<evmc::bytes32>> Registry::getFormatHash(const std::string& name, const chain::Address & address) const
     {
         co_await utils::ensureOnStrand(_strand);
 
-        auto bucket_it = _connectors.find(name);
-        if(bucket_it == _connectors.end() || bucket_it->second.contains(address) == false)
-        {
-            co_return std::nullopt;
-        }
-
-        auto format_it = _format_by_connector.find(address);
-        if(format_it == _format_by_connector.end())
-        {
-            co_return std::nullopt;
-        }
-
-        co_return format_it->second;
+        co_return _lookupConnectorFormatHash(name, address, _connectors, _format_by_connector);
     }
 
     asio::awaitable<absl::flat_hash_set<chain::Address>> Registry::getConnectorsByFormatHash(const evmc::bytes32 & format_hash) const
@@ -826,6 +906,19 @@ namespace dcn::registry
         }
 
         co_return _connectors_by_format.at(format_hash);
+    }
+
+    asio::awaitable<std::vector<chain::Address>> Registry::getSortedConnectorsByFormatHash(const evmc::bytes32 & format_hash) const
+    {
+        co_await utils::ensureOnStrand(_strand);
+
+        const auto sorted_it = _sorted_connectors_by_format.find(format_hash);
+        if(sorted_it == _sorted_connectors_by_format.end())
+        {
+            co_return std::vector<chain::Address>{};
+        }
+
+        co_return sorted_it->second;
     }
 
     asio::awaitable<std::optional<std::vector<ScalarLabel>>> Registry::getScalarLabelsByFormatHash(const evmc::bytes32 & format_hash) const

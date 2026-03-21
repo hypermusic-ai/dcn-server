@@ -1,7 +1,6 @@
 #include "api.hpp"
 
 #include <algorithm>
-#include <cstring>
 #include <limits>
 #include <vector>
 
@@ -104,21 +103,8 @@ namespace dcn
         const std::size_t limit = limit_res.value();
         const std::size_t page = page_res.value();
 
-        absl::flat_hash_set<chain::Address> connectors_set = co_await registry.getConnectorsByFormatHash(*format_hash_res);
-        std::vector<chain::Address> connector_addresses;
-        connector_addresses.reserve(connectors_set.size());
-        for(const auto & address : connectors_set)
-        {
-            connector_addresses.push_back(address);
-        }
-
-        std::sort(
-            connector_addresses.begin(),
-            connector_addresses.end(),
-            [](const chain::Address & lhs, const chain::Address & rhs)
-            {
-                return std::memcmp(lhs.bytes, rhs.bytes, sizeof(lhs.bytes)) < 0;
-            });
+        const std::vector<chain::Address> connector_addresses =
+            co_await registry.getSortedConnectorsByFormatHash(*format_hash_res);
 
         const std::size_t total_connectors = connector_addresses.size();
         const std::size_t start =
