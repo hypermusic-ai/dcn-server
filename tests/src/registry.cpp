@@ -82,6 +82,25 @@ namespace
         std::sort(names.begin(), names.end());
         return names;
     }
+
+    std::vector<chain::Address> getAllFormatConnectors(
+        asio::io_context & io_context,
+        registry::Registry & registry,
+        const evmc::bytes32 & format_hash)
+    {
+        const std::size_t connectors_count =
+            runAwaitable(io_context, registry.getFormatConnectorsCount(format_hash));
+        return runAwaitable(
+            io_context,
+            registry.getFormatConnectorsPage(format_hash, 0, connectors_count));
+    }
+
+    bool containsAddress(
+        const std::vector<chain::Address> & addresses,
+        const chain::Address & address)
+    {
+        return std::find(addresses.begin(), addresses.end(), address) != addresses.end();
+    }
 }
 
 TEST_F(UnitTest, Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
@@ -125,9 +144,9 @@ TEST_F(UnitTest, Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
     EXPECT_TRUE(chain::equalBytes32(*left_hash, expected_left));
     EXPECT_TRUE(chain::equalBytes32(*right_hash, expected_right));
 
-    const auto left_connectors = runAwaitable(io_context, registry.getConnectorsByFormatHash(*left_hash));
-    EXPECT_TRUE(left_connectors.contains(left_address));
-    EXPECT_TRUE(left_connectors.contains(right_address));
+    const auto left_connectors = getAllFormatConnectors(io_context, registry, *left_hash);
+    EXPECT_TRUE(containsAddress(left_connectors, left_address));
+    EXPECT_TRUE(containsAddress(left_connectors, right_address));
 }
 
 TEST_F(UnitTest, Registry_FormatHash_IsPathSensitiveAcrossBindingSlots)
@@ -199,10 +218,10 @@ TEST_F(UnitTest, Registry_FormatHash_MatchesForSeparateConnectorsWithSameProduce
 
     EXPECT_TRUE(chain::equalBytes32(*first_hash, *second_hash));
 
-    const auto connectors = runAwaitable(io_context, registry.getConnectorsByFormatHash(*first_hash));
+    const auto connectors = getAllFormatConnectors(io_context, registry, *first_hash);
     EXPECT_EQ(connectors.size(), 2u);
-    EXPECT_TRUE(connectors.contains(first_address));
-    EXPECT_TRUE(connectors.contains(second_address));
+    EXPECT_TRUE(containsAddress(connectors, first_address));
+    EXPECT_TRUE(containsAddress(connectors, second_address));
 }
 
 TEST_F(UnitTest, Registry_GetNewestFormatHash_TracksNewestConnectorAddress)
@@ -338,7 +357,7 @@ TEST_F(UnitTest, Registry_FormatHash_MatchesForSameScalarNamesWhenTailLabelsMatc
     ASSERT_TRUE(bound_labels.has_value());
     EXPECT_EQ(scalarNamesFromLabels(*direct_labels), scalarNamesFromLabels(*bound_labels));
 
-    const auto format_connectors = runAwaitable(io_context, registry.getConnectorsByFormatHash(*direct_hash));
-    EXPECT_TRUE(format_connectors.contains(direct_address));
-    EXPECT_TRUE(format_connectors.contains(bound_address));
+    const auto format_connectors = getAllFormatConnectors(io_context, registry, *direct_hash);
+    EXPECT_TRUE(containsAddress(format_connectors, direct_address));
+    EXPECT_TRUE(containsAddress(format_connectors, bound_address));
 }

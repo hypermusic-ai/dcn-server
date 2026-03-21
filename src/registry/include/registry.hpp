@@ -39,9 +39,10 @@ namespace dcn::registry
             asio::awaitable<std::optional<Connector>> getNewestConnector(const std::string& name) const;
             asio::awaitable<std::optional<Connector>> getConnector(const std::string& name, const chain::Address & address) const;
             asio::awaitable<std::optional<std::string>> getConnectorName(const chain::Address & address) const;
+            asio::awaitable<std::vector<std::optional<std::string>>> getConnectorNames(
+                const std::vector<chain::Address> & addresses) const;
             asio::awaitable<std::optional<evmc::bytes32>> getNewestFormatHash(const std::string& name) const;
             asio::awaitable<std::optional<evmc::bytes32>> getFormatHash(const std::string& name, const chain::Address & address) const;
-            asio::awaitable<absl::flat_hash_set<chain::Address>> getConnectorsByFormatHash(const evmc::bytes32 & format_hash) const;
             asio::awaitable<std::size_t> getFormatConnectorsCount(const evmc::bytes32 & format_hash) const;
             asio::awaitable<std::vector<chain::Address>> getFormatConnectorsPage(
                 const evmc::bytes32 & format_hash,

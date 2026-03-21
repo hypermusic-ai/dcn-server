@@ -12,54 +12,54 @@ namespace dcn::registry
 {
     namespace
     {
-        using _ConnectorBuckets =
+        using ConnectorBuckets =
             absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, ConnectorRecord>>;
-        using _TransformationBuckets =
+        using TransformationBuckets =
             absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, TransformationRecord>>;
-        using _ConditionBuckets =
+        using ConditionBuckets =
             absl::flat_hash_map<std::string, absl::flat_hash_map<chain::Address, ConditionRecord>>;
 
-        enum class _VisitState : std::uint8_t
+        enum class VisitState : std::uint8_t
         {
             VISITING,
             DONE
         };
 
         // Shared connector-graph references used while resolving recursive dependencies.
-        struct _ConnectorGraphContext
+        struct ConnectorGraphContext
         {
             const Connector & pending_connector;
             const absl::flat_hash_map<std::string, chain::Address> & newest_connector;
-            const _ConnectorBuckets & connectors;
+            const ConnectorBuckets & connectors;
         };
 
         // Traversal state for recursive open-slot computation.
-        struct _OpenSlotsContext
+        struct OpenSlotsContext
         {
             const std::string & root_connector_name;
-            const _ConnectorGraphContext & graph;
-            absl::flat_hash_map<std::string, _VisitState> & visit_state;
+            const ConnectorGraphContext & graph;
+            absl::flat_hash_map<std::string, VisitState> & visit_state;
             absl::flat_hash_map<std::string, std::uint32_t> & open_slots_cache;
         };
 
         // Traversal state for recursive scalar-entry computation.
-        struct _ScalarEntriesContext
+        struct ScalarEntriesContext
         {
             const std::string & root_connector_name;
-            const _ConnectorGraphContext & graph;
-            absl::flat_hash_map<std::string, _VisitState> & scalar_visit_state;
+            const ConnectorGraphContext & graph;
+            absl::flat_hash_map<std::string, VisitState> & scalar_visit_state;
             absl::flat_hash_map<std::string, dcn::chain::ResolvedScalarEntries> & scalar_entries_cache;
         };
 
         // Aggregated slot impact produced by applying bindings to a child connector.
-        struct _OpenSlotBindingEffect
+        struct OpenSlotBindingEffect
         {
             std::uint64_t added_open_slots = 0;
             std::size_t bound_slot_count = 0;
         };
 
         // Compact scalar-label statistics used for warning diagnostics.
-        struct _ScalarLabelSummary
+        struct ScalarLabelSummary
         {
             std::size_t labels_count = 0;
             std::size_t unique_scalars_count = 0;
@@ -76,23 +76,23 @@ namespace dcn::registry
         // Validate that all transformations referenced by a connector are resolvable.
         static bool _validateConnectorTransformations(
             const Connector & connector,
-            const _TransformationBuckets & transformations);
+            const TransformationBuckets & transformations);
 
         // Validate that the optional condition referenced by a connector is resolvable.
         static bool _validateConnectorCondition(
             const Connector & connector,
-            const _ConditionBuckets & conditions);
+            const ConditionBuckets & conditions);
 
         // Resolve connector definition from the in-flight connector plus persisted registry state.
         static const Connector * _resolveConnector(
             const std::string & connector_name,
-            const _ConnectorGraphContext & graph_context);
+            const ConnectorGraphContext & graph_context);
 
         // Lookup format hash for an existing (name, address) connector registration.
         static std::optional<evmc::bytes32> _lookupConnectorFormatHash(
             const std::string & name,
             const chain::Address & address,
-            const _ConnectorBuckets & connectors,
+            const ConnectorBuckets & connectors,
             const absl::flat_hash_map<chain::Address, evmc::bytes32> & format_by_connector);
 
         // Return sorted connector addresses for a format hash, rebuilding cache when dirty.
@@ -108,21 +108,21 @@ namespace dcn::registry
         // Compute open slots for a connector with memoization and cycle detection.
         static std::optional<std::uint32_t> _computeOpenSlots(
             const std::string & connector_name,
-            _OpenSlotsContext & context);
+            OpenSlotsContext & context);
 
         // Compute produced scalar entries for a connector with memoization and cycle detection.
         static std::optional<dcn::chain::ResolvedScalarEntries> _computeScalarEntries(
             const std::string & connector_name,
-            _ScalarEntriesContext & context);
+            ScalarEntriesContext & context);
 
         // Compute how bindings modify the open-slot contribution of a composite dimension.
-        static std::optional<_OpenSlotBindingEffect> _computeOpenSlotBindingEffect(
+        static std::optional<OpenSlotBindingEffect> _computeOpenSlotBindingEffect(
             const std::string & connector_name,
             const std::string & composite_name,
             const Dimension & dimension,
             std::uint32_t dim_id,
             std::uint32_t child_open_slots,
-            _OpenSlotsContext & context);
+            OpenSlotsContext & context);
 
         // Append a local scalar dimension entry for the current connector.
         static void _appendLocalScalarEntry(
@@ -155,20 +155,20 @@ namespace dcn::registry
         static bool _appendBindingScalarEntries(
             const std::string & connector_name,
             const std::string & binding_target,
-            _ScalarEntriesContext & context,
+            ScalarEntriesContext & context,
             dcn::chain::ResolvedScalarEntries & connector_scalar_entries);
 
         // Resolve all scalar entries for the root connector being added.
         static std::optional<dcn::chain::ResolvedScalarEntries> _resolveRootScalarEntries(
             const Connector & root_connector,
             const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
-            const _ConnectorBuckets & connectors);
+            const ConnectorBuckets & connectors);
 
         // Validate open-slot consistency for the root connector being added.
         static bool _validateConnectorOpenSlots(
             const Connector & root_connector,
             const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
-            const _ConnectorBuckets & connectors);
+            const ConnectorBuckets & connectors);
 
         // Return a deterministically ordered copy of scalar labels.
         static std::vector<ScalarLabel> _canonicalizeScalarLabels(const std::vector<ScalarLabel> & labels);
@@ -179,7 +179,7 @@ namespace dcn::registry
             const std::vector<ScalarLabel> & rhs);
 
         // Produce compact scalar-label metrics for warning logs.
-        static _ScalarLabelSummary _summarizeScalarLabels(const std::vector<ScalarLabel> & labels);
+        static ScalarLabelSummary _summarizeScalarLabels(const std::vector<ScalarLabel> & labels);
 
         // Parse connector owner string into an address if valid.
         static std::optional<chain::Address> _tryParseOwnerAddress(const std::string & owner);
@@ -203,7 +203,7 @@ namespace dcn::registry
         // Validate that all referenced transformations exist and have at least one version.
         static bool _validateConnectorTransformations(
             const Connector & connector,
-            const _TransformationBuckets & transformations)
+            const TransformationBuckets & transformations)
         {
             for(const Dimension & dimension : connector.dimensions())
             {
@@ -233,7 +233,7 @@ namespace dcn::registry
         // Validate that optional connector condition exists and has at least one version.
         static bool _validateConnectorCondition(
             const Connector & connector,
-            const _ConditionBuckets & conditions)
+            const ConditionBuckets & conditions)
         {
             if(connector.condition_name().empty())
             {
@@ -259,7 +259,7 @@ namespace dcn::registry
         static std::optional<evmc::bytes32> _lookupConnectorFormatHash(
             const std::string & name,
             const chain::Address & address,
-            const _ConnectorBuckets & connectors,
+            const ConnectorBuckets & connectors,
             const absl::flat_hash_map<chain::Address, evmc::bytes32> & format_by_connector)
         {
             auto bucket_it = connectors.find(name);
@@ -333,7 +333,7 @@ namespace dcn::registry
         // so recursion can still resolve references to the in-flight definition.
         static const Connector * _resolveConnector(
             const std::string & connector_name,
-            const _ConnectorGraphContext & graph_context)
+            const ConnectorGraphContext & graph_context)
         {
             if(connector_name == graph_context.pending_connector.name())
             {
@@ -361,16 +361,16 @@ namespace dcn::registry
             return &connector_it->second.connector();
         }
 
-        static std::optional<_OpenSlotBindingEffect> _computeOpenSlotBindingEffect(
+        static std::optional<OpenSlotBindingEffect> _computeOpenSlotBindingEffect(
             const std::string & connector_name,
             const std::string & composite_name,
             const Dimension & dimension,
             std::uint32_t dim_id,
             std::uint32_t child_open_slots,
-            _OpenSlotsContext & context)
+            OpenSlotsContext & context)
         {
             absl::flat_hash_set<std::uint32_t> bound_slot_ids;
-            _OpenSlotBindingEffect effect{};
+            OpenSlotBindingEffect effect{};
             for(const auto & [slot_str, binding_target] : dimension.bindings())
             {
                 if(binding_target.empty())
@@ -566,7 +566,7 @@ namespace dcn::registry
         static bool _appendBindingScalarEntries(
             const std::string & connector_name,
             const std::string & binding_target,
-            _ScalarEntriesContext & context,
+            ScalarEntriesContext & context,
             dcn::chain::ResolvedScalarEntries & connector_scalar_entries)
         {
             auto binding_scalar_entries_opt = _computeScalarEntries(
@@ -599,7 +599,7 @@ namespace dcn::registry
         // `root_connector_name` is threaded through recursion only for top-level error context.
         static std::optional<std::uint32_t> _computeOpenSlots(
             const std::string & connector_name,
-            _OpenSlotsContext & context)
+            OpenSlotsContext & context)
         {
             if(const auto cache_it = context.open_slots_cache.find(connector_name); cache_it != context.open_slots_cache.end())
             {
@@ -607,7 +607,7 @@ namespace dcn::registry
             }
 
             if(const auto state_it = context.visit_state.find(connector_name);
-                state_it != context.visit_state.end() && state_it->second == _VisitState::VISITING)
+                state_it != context.visit_state.end() && state_it->second == VisitState::VISITING)
             {
                 spdlog::error("Connector dependency cycle detected at `{}`", connector_name);
                 return std::nullopt;
@@ -624,7 +624,7 @@ namespace dcn::registry
                 return std::nullopt;
             }
 
-            context.visit_state[connector_name] = _VisitState::VISITING;
+            context.visit_state[connector_name] = VisitState::VISITING;
 
             std::uint64_t open_slots = 0;
             for(std::uint32_t dim_id = 0; dim_id < static_cast<std::uint32_t>(connector->dimensions_size()); ++dim_id)
@@ -688,7 +688,7 @@ namespace dcn::registry
                 return std::nullopt;
             }
 
-            context.visit_state[connector_name] = _VisitState::DONE;
+            context.visit_state[connector_name] = VisitState::DONE;
             context.open_slots_cache.emplace(connector_name, static_cast<std::uint32_t>(open_slots));
             return static_cast<std::uint32_t>(open_slots);
         }
@@ -697,7 +697,7 @@ namespace dcn::registry
         // `root_connector_name` is threaded through recursion only for top-level error context.
         static std::optional<dcn::chain::ResolvedScalarEntries> _computeScalarEntries(
             const std::string & connector_name,
-            _ScalarEntriesContext & context)
+            ScalarEntriesContext & context)
         {
             if(const auto cache_it = context.scalar_entries_cache.find(connector_name);
                 cache_it != context.scalar_entries_cache.end())
@@ -707,7 +707,7 @@ namespace dcn::registry
 
             if(const auto state_it = context.scalar_visit_state.find(connector_name);
                 state_it != context.scalar_visit_state.end() &&
-                state_it->second == _VisitState::VISITING)
+                state_it->second == VisitState::VISITING)
             {
                 spdlog::error(
                     "Connector dependency cycle detected while resolving scalars at `{}`",
@@ -726,7 +726,7 @@ namespace dcn::registry
                 return std::nullopt;
             }
 
-            context.scalar_visit_state[connector_name] = _VisitState::VISITING;
+            context.scalar_visit_state[connector_name] = VisitState::VISITING;
 
             dcn::chain::ResolvedScalarEntries connector_scalar_entries;
             for(std::uint32_t dim_id = 0; dim_id < static_cast<std::uint32_t>(connector->dimensions_size()); ++dim_id)
@@ -799,7 +799,7 @@ namespace dcn::registry
                 }
             }
 
-            context.scalar_visit_state[connector_name] = _VisitState::DONE;
+            context.scalar_visit_state[connector_name] = VisitState::DONE;
             auto [cache_it, inserted] =
                 context.scalar_entries_cache.try_emplace(connector_name, std::move(connector_scalar_entries));
             (void)inserted;
@@ -810,16 +810,16 @@ namespace dcn::registry
         static std::optional<dcn::chain::ResolvedScalarEntries> _resolveRootScalarEntries(
             const Connector & root_connector,
             const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
-            const _ConnectorBuckets & connectors)
+            const ConnectorBuckets & connectors)
         {
-            const _ConnectorGraphContext graph_context{
+            const ConnectorGraphContext graph_context{
                 .pending_connector = root_connector,
                 .newest_connector = newest_connector,
                 .connectors = connectors,
             };
-            absl::flat_hash_map<std::string, _VisitState> scalar_visit_state;
+            absl::flat_hash_map<std::string, VisitState> scalar_visit_state;
             absl::flat_hash_map<std::string, dcn::chain::ResolvedScalarEntries> scalar_entries_cache;
-            _ScalarEntriesContext scalar_entries_context{
+            ScalarEntriesContext scalar_entries_context{
                 .root_connector_name = root_connector.name(),
                 .graph = graph_context,
                 .scalar_visit_state = scalar_visit_state,
@@ -845,16 +845,16 @@ namespace dcn::registry
         static bool _validateConnectorOpenSlots(
             const Connector & root_connector,
             const absl::flat_hash_map<std::string, chain::Address> & newest_connector,
-            const _ConnectorBuckets & connectors)
+            const ConnectorBuckets & connectors)
         {
-            const _ConnectorGraphContext graph_context{
+            const ConnectorGraphContext graph_context{
                 .pending_connector = root_connector,
                 .newest_connector = newest_connector,
                 .connectors = connectors,
             };
-            absl::flat_hash_map<std::string, _VisitState> visit_state;
+            absl::flat_hash_map<std::string, VisitState> visit_state;
             absl::flat_hash_map<std::string, std::uint32_t> open_slots_cache;
-            _OpenSlotsContext open_slots_context{
+            OpenSlotsContext open_slots_context{
                 .root_connector_name = root_connector.name(),
                 .graph = graph_context,
                 .visit_state = visit_state,
@@ -929,7 +929,7 @@ namespace dcn::registry
         }
 
         // Provide a compact summary for scalar-label sets in diagnostics.
-        static _ScalarLabelSummary _summarizeScalarLabels(const std::vector<ScalarLabel> & labels)
+        static ScalarLabelSummary _summarizeScalarLabels(const std::vector<ScalarLabel> & labels)
         {
             absl::flat_hash_set<std::string> scalars;
             absl::flat_hash_set<std::string> scalar_tail_pairs;
@@ -946,7 +946,7 @@ namespace dcn::registry
                 scalar_tail_pairs.emplace(std::move(scalar_tail_key));
             }
 
-            return _ScalarLabelSummary{
+            return ScalarLabelSummary{
                 .labels_count = labels.size(),
                 .unique_scalars_count = scalars.size(),
                 .unique_scalar_tail_pairs_count = scalar_tail_pairs.size(),
@@ -1068,8 +1068,8 @@ namespace dcn::registry
         }
         else if(!_scalarLabelsEqual(scalar_labels_it->second, canonical_scalar_labels))
         {
-            const _ScalarLabelSummary stored_summary = _summarizeScalarLabels(scalar_labels_it->second);
-            const _ScalarLabelSummary new_summary = _summarizeScalarLabels(canonical_scalar_labels);
+            const ScalarLabelSummary stored_summary = _summarizeScalarLabels(scalar_labels_it->second);
+            const ScalarLabelSummary new_summary = _summarizeScalarLabels(canonical_scalar_labels);
             spdlog::warn(
                 "Different scalar-label multisets for format hash {} while registering connector '{}' at {} "
                 "(stored: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}; "
@@ -1132,6 +1132,28 @@ namespace dcn::registry
         co_return name_it->second;
     }
 
+    asio::awaitable<std::vector<std::optional<std::string>>> Registry::getConnectorNames(
+        const std::vector<chain::Address> & addresses) const
+    {
+        co_await utils::ensureOnStrand(_strand);
+
+        std::vector<std::optional<std::string>> names;
+        names.reserve(addresses.size());
+        for(const chain::Address & address : addresses)
+        {
+            const auto name_it = _connector_name_by_address.find(address);
+            if(name_it == _connector_name_by_address.end())
+            {
+                names.emplace_back(std::nullopt);
+                continue;
+            }
+
+            names.emplace_back(name_it->second);
+        }
+
+        co_return names;
+    }
+
     asio::awaitable<std::optional<evmc::bytes32>> Registry::getNewestFormatHash(const std::string& name) const
     {
         co_await utils::ensureOnStrand(_strand);
@@ -1154,18 +1176,6 @@ namespace dcn::registry
         co_await utils::ensureOnStrand(_strand);
 
         co_return _lookupConnectorFormatHash(name, address, _connectors, _format_by_connector);
-    }
-
-    asio::awaitable<absl::flat_hash_set<chain::Address>> Registry::getConnectorsByFormatHash(const evmc::bytes32 & format_hash) const
-    {
-        co_await utils::ensureOnStrand(_strand);
-
-        if(_connectors_by_format.contains(format_hash) == false)
-        {
-            co_return absl::flat_hash_set<chain::Address>{};
-        }
-
-        co_return _connectors_by_format.at(format_hash);
     }
 
     asio::awaitable<std::size_t> Registry::getFormatConnectorsCount(const evmc::bytes32 & format_hash) const

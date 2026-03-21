@@ -3,10 +3,11 @@
 #include <algorithm>
 #include <limits>
 #include <vector>
+#include <format>
 
 namespace dcn
 {
-    asio::awaitable<http::Response> OPTIONS_format(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
+    asio::awaitable<http::Response> OPTIONS_format(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
         response.setCode(http::Code::NoContent)
@@ -115,6 +116,7 @@ namespace dcn
             *format_hash_res,
             start,
             end - start);
+        const auto connector_names = co_await registry.getConnectorNames(connector_addresses);
 
         json json_output;
         json_output["format_hash"] = evmc::hex(*format_hash_res);
@@ -140,13 +142,14 @@ namespace dcn
         }
         json_output["connectors"] = json::array();
 
-        for(const chain::Address & connector_address : connector_addresses)
+        for(std::size_t i = 0; i < connector_addresses.size(); ++i)
         {
             json connector_json;
+            const chain::Address & connector_address = connector_addresses[i];
             connector_json["local_address"] = evmc::hex(connector_address);
             connector_json["address"] = "0x0";
 
-            const auto name_res = co_await registry.getConnectorName(connector_address);
+            const auto & name_res = connector_names[i];
             if(name_res.has_value())
             {
                 connector_json["name"] = *name_res;
