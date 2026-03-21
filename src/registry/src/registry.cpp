@@ -95,6 +95,13 @@ namespace dcn::registry
             const _ConnectorBuckets & connectors,
             const absl::flat_hash_map<chain::Address, evmc::bytes32> & format_by_connector);
 
+        // Return sorted connector addresses for a format hash, rebuilding cache when dirty.
+        static const std::vector<chain::Address> & _getSortedFormatConnectors(
+            const evmc::bytes32 & format_hash,
+            const absl::flat_hash_map<evmc::bytes32, absl::flat_hash_set<chain::Address>> & connectors_by_format,
+            absl::flat_hash_map<evmc::bytes32, std::vector<chain::Address>> & sorted_connectors_by_format,
+            absl::flat_hash_set<evmc::bytes32> & dirty_sorted_connectors_by_format);
+
         // Parse a decimal slot id and reject malformed/overflowing values.
         static std::optional<std::uint32_t> _parseSlotId(const std::string & slot_str);
 
@@ -268,6 +275,43 @@ namespace dcn::registry
             }
 
             return format_it->second;
+        }
+
+        // Keep paging deterministic while avoiding O(n) insertion into a sorted vector on every add.
+        // Source of truth is `_connectors_by_format`; this function lazily rebuilds sorted cache.
+        static const std::vector<chain::Address> & _getSortedFormatConnectors(
+            const evmc::bytes32 & format_hash,
+            const absl::flat_hash_map<evmc::bytes32, absl::flat_hash_set<chain::Address>> & connectors_by_format,
+            absl::flat_hash_map<evmc::bytes32, std::vector<chain::Address>> & sorted_connectors_by_format,
+            absl::flat_hash_set<evmc::bytes32> & dirty_sorted_connectors_by_format)
+        {
+            const auto connectors_it = connectors_by_format.find(format_hash);
+            if(connectors_it == connectors_by_format.end())
+            {
+                static const std::vector<chain::Address> empty_addresses;
+                return empty_addresses;
+            }
+
+            auto [sorted_it, inserted] = sorted_connectors_by_format.try_emplace(format_hash);
+            std::vector<chain::Address> & sorted_connectors = sorted_it->second;
+            const bool rebuild_cache =
+                inserted ||
+                dirty_sorted_connectors_by_format.contains(format_hash) ||
+                sorted_connectors.size() != connectors_it->second.size();
+            if(rebuild_cache)
+            {
+                sorted_connectors.clear();
+                sorted_connectors.reserve(connectors_it->second.size());
+                for(const chain::Address & connector_address : connectors_it->second)
+                {
+                    sorted_connectors.push_back(connector_address);
+                }
+
+                std::sort(sorted_connectors.begin(), sorted_connectors.end());
+                dirty_sorted_connectors_by_format.erase(format_hash);
+            }
+
+            return sorted_connectors;
         }
 
         // Parse canonical decimal slot id used in binding maps.
@@ -1014,12 +1058,7 @@ namespace dcn::registry
         const auto [_, inserted] = format_connectors.emplace(address);
         if(inserted)
         {
-            auto & sorted_format_connectors = _sorted_connectors_by_format[format_hash];
-            const auto insert_it = std::lower_bound(
-                sorted_format_connectors.begin(),
-                sorted_format_connectors.end(),
-                address);
-            sorted_format_connectors.insert(insert_it, address);
+            _dirty_sorted_connectors_by_format.emplace(format_hash);
         }
 
         const auto scalar_labels_it = _scalar_labels_by_format.find(format_hash);
@@ -1133,19 +1172,19 @@ namespace dcn::registry
     {
         co_await utils::ensureOnStrand(_strand);
 
-        const auto sorted_it = _sorted_connectors_by_format.find(format_hash);
-        if(sorted_it == _sorted_connectors_by_format.end())
+        const auto connectors_it = _connectors_by_format.find(format_hash);
+        if(connectors_it == _connectors_by_format.end())
         {
             co_return 0;
         }
 
-        co_return sorted_it->second.size();
+        co_return connectors_it->second.size();
     }
 
     asio::awaitable<std::vector<chain::Address>> Registry::getFormatConnectorsPage(
         const evmc::bytes32 & format_hash,
         std::size_t offset,
-        std::size_t limit) const
+        std::size_t limit)
     {
         co_await utils::ensureOnStrand(_strand);
 
@@ -1154,13 +1193,16 @@ namespace dcn::registry
             co_return std::vector<chain::Address>{};
         }
 
-        const auto sorted_it = _sorted_connectors_by_format.find(format_hash);
-        if(sorted_it == _sorted_connectors_by_format.end())
+        if(_connectors_by_format.contains(format_hash) == false)
         {
             co_return std::vector<chain::Address>{};
         }
 
-        const std::vector<chain::Address> & sorted_connectors = sorted_it->second;
+        const std::vector<chain::Address> & sorted_connectors = _getSortedFormatConnectors(
+            format_hash,
+            _connectors_by_format,
+            _sorted_connectors_by_format,
+            _dirty_sorted_connectors_by_format);
         const std::size_t total = sorted_connectors.size();
         const std::size_t start = std::min(offset, total);
         const std::size_t end = (limit > (total - start)) ? total : (start + limit);

@@ -75,14 +75,13 @@ namespace dcn
             co_return response;
         }
 
-        static const std::size_t MAX_LIMIT = 256;
+        static constexpr std::size_t MAX_LIMIT = 256;
 
-        const auto limit_res = parse::parseRouteArgAs<std::size_t>(query_args.at("limit"))
-            .and_then([](std::size_t limit) -> parse::Result<std::size_t>
-            {
-                if(limit > MAX_LIMIT) return std::unexpected(parse::ParseError{parse::ParseError::Kind::OUT_OF_RANGE});
-                return limit;
-            });
+        auto limit_res = parse::parseRouteArgAs<std::size_t>(query_args.at("limit"));
+        if(limit_res && limit_res.value() > MAX_LIMIT)
+        {
+            limit_res = std::unexpected(parse::ParseError{parse::ParseError::Kind::OUT_OF_RANGE});
+        }
 
         const auto page_res = parse::parseRouteArgAs<std::size_t>(query_args.at("page"));
 

@@ -46,7 +46,7 @@ namespace dcn::registry
             asio::awaitable<std::vector<chain::Address>> getFormatConnectorsPage(
                 const evmc::bytes32 & format_hash,
                 std::size_t offset,
-                std::size_t limit) const;
+                std::size_t limit);
             asio::awaitable<std::optional<std::vector<ScalarLabel>>> getScalarLabelsByFormatHash(const evmc::bytes32 & format_hash) const;
 
             asio::awaitable<bool> addTransformation(chain::Address address, TransformationRecord transformation);
@@ -76,6 +76,7 @@ namespace dcn::registry
             absl::flat_hash_map<chain::Address, evmc::bytes32> _format_by_connector;
             absl::flat_hash_map<evmc::bytes32, absl::flat_hash_set<chain::Address>> _connectors_by_format;
             absl::flat_hash_map<evmc::bytes32, std::vector<chain::Address>> _sorted_connectors_by_format;
+            absl::flat_hash_set<evmc::bytes32> _dirty_sorted_connectors_by_format;
             absl::flat_hash_map<evmc::bytes32, std::vector<ScalarLabel>> _scalar_labels_by_format;
 
             absl::flat_hash_map<chain::Address, absl::flat_hash_set<std::string>> _owned_connectors;
