@@ -33,6 +33,10 @@ using namespace dcn::tests;
 
 namespace
 {
+    // NOTE: The format-hash primitives below intentionally duplicate production logic
+    // from src/chain/src/format_hash.cpp as an independent reference implementation
+    // for PT contract behavior. If the format-hash algorithm changes, update both
+    // this test file and the chain format_hash module.
     constexpr const char * kFormatIdentityTransformation = "FmtIdentityTx";
     constexpr std::uint8_t PATH_DIM_DOMAIN = 0x10;
     constexpr std::uint8_t PATH_CONCAT_DOMAIN = 0x11;
@@ -77,6 +81,22 @@ namespace
         return buildPath() / "tests" / "pt_format_storage" /
             std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
     }
+
+    struct FormatStorageScope
+    {
+        explicit FormatStorageScope(std::filesystem::path storage_path_)
+            : storage_path(std::move(storage_path_))
+        {
+        }
+
+        ~FormatStorageScope()
+        {
+            std::error_code ec;
+            std::filesystem::remove_all(storage_path, ec);
+        }
+
+        std::filesystem::path storage_path;
+    };
 
     bool prepareFormatStorageDirectories(const std::filesystem::path & storage_path)
     {
@@ -783,7 +803,8 @@ TEST_F(UnitTest, PT_Registry_FormatHash_MatchesForSeparateConnectorsWithSameProd
     ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
     ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
 
-    const auto storage_path = makeFormatStoragePath();
+    const FormatStorageScope storage_scope(makeFormatStoragePath());
+    const std::filesystem::path & storage_path = storage_scope.storage_path;
     ASSERT_TRUE(prepareFormatStorageDirectories(storage_path));
 
     asio::io_context io_context;
@@ -854,7 +875,8 @@ TEST_F(UnitTest, PT_Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
     ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
     ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
 
-    const auto storage_path = makeFormatStoragePath();
+    const FormatStorageScope storage_scope(makeFormatStoragePath());
+    const std::filesystem::path & storage_path = storage_scope.storage_path;
     ASSERT_TRUE(prepareFormatStorageDirectories(storage_path));
 
     asio::io_context io_context;
@@ -931,7 +953,8 @@ TEST_F(UnitTest, PT_Registry_FormatHash_PreservesScalarMultiplicity)
     ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
     ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
 
-    const auto storage_path = makeFormatStoragePath();
+    const FormatStorageScope storage_scope(makeFormatStoragePath());
+    const std::filesystem::path & storage_path = storage_scope.storage_path;
     ASSERT_TRUE(prepareFormatStorageDirectories(storage_path));
 
     asio::io_context io_context;
@@ -990,7 +1013,8 @@ TEST_F(UnitTest, PT_Registry_FormatHash_IsPathSensitiveAcrossBindingSlots)
     ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
     ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
 
-    const auto storage_path = makeFormatStoragePath();
+    const FormatStorageScope storage_scope(makeFormatStoragePath());
+    const std::filesystem::path & storage_path = storage_scope.storage_path;
     ASSERT_TRUE(prepareFormatStorageDirectories(storage_path));
 
     asio::io_context io_context;
@@ -1053,7 +1077,8 @@ TEST_F(UnitTest, PT_Registry_FormatHash_MatchesForSameScalarNamesWhenTailLabelsM
     ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
     ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
 
-    const auto storage_path = makeFormatStoragePath();
+    const FormatStorageScope storage_scope(makeFormatStoragePath());
+    const std::filesystem::path & storage_path = storage_scope.storage_path;
     ASSERT_TRUE(prepareFormatStorageDirectories(storage_path));
 
     asio::io_context io_context;

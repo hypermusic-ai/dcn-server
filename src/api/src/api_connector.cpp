@@ -220,7 +220,7 @@ namespace dcn
             }
 
             connector_address = connector_address_res.value();
-            format_hash = co_await registry.getNewestFormatHash(connector_name);
+            format_hash = co_await registry.getFormatHash(connector_name, connector_address);
         }
 
         if(!format_hash)

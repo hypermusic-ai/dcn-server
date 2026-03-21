@@ -908,9 +908,30 @@ namespace dcn::registry
         co_return _connectors_by_format.at(format_hash);
     }
 
-    asio::awaitable<std::vector<chain::Address>> Registry::getSortedConnectorsByFormatHash(const evmc::bytes32 & format_hash) const
+    asio::awaitable<std::size_t> Registry::getFormatConnectorsCount(const evmc::bytes32 & format_hash) const
     {
         co_await utils::ensureOnStrand(_strand);
+
+        const auto sorted_it = _sorted_connectors_by_format.find(format_hash);
+        if(sorted_it == _sorted_connectors_by_format.end())
+        {
+            co_return 0;
+        }
+
+        co_return sorted_it->second.size();
+    }
+
+    asio::awaitable<std::vector<chain::Address>> Registry::getFormatConnectorsPage(
+        const evmc::bytes32 & format_hash,
+        std::size_t offset,
+        std::size_t limit) const
+    {
+        co_await utils::ensureOnStrand(_strand);
+
+        if(limit == 0)
+        {
+            co_return std::vector<chain::Address>{};
+        }
 
         const auto sorted_it = _sorted_connectors_by_format.find(format_hash);
         if(sorted_it == _sorted_connectors_by_format.end())
@@ -918,7 +939,18 @@ namespace dcn::registry
             co_return std::vector<chain::Address>{};
         }
 
-        co_return sorted_it->second;
+        const std::vector<chain::Address> & sorted_connectors = sorted_it->second;
+        const std::size_t total = sorted_connectors.size();
+        const std::size_t start = std::min(offset, total);
+        const std::size_t end = (limit > (total - start)) ? total : (start + limit);
+
+        std::vector<chain::Address> page_addresses;
+        page_addresses.reserve(end - start);
+        page_addresses.insert(
+            page_addresses.end(),
+            sorted_connectors.begin() + static_cast<std::ptrdiff_t>(start),
+            sorted_connectors.begin() + static_cast<std::ptrdiff_t>(end));
+        co_return page_addresses;
     }
 
     asio::awaitable<std::optional<std::vector<ScalarLabel>>> Registry::getScalarLabelsByFormatHash(const evmc::bytes32 & format_hash) const

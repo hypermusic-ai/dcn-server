@@ -42,7 +42,11 @@ namespace dcn::registry
             asio::awaitable<std::optional<evmc::bytes32>> getNewestFormatHash(const std::string& name) const;
             asio::awaitable<std::optional<evmc::bytes32>> getFormatHash(const std::string& name, const chain::Address & address) const;
             asio::awaitable<absl::flat_hash_set<chain::Address>> getConnectorsByFormatHash(const evmc::bytes32 & format_hash) const;
-            asio::awaitable<std::vector<chain::Address>> getSortedConnectorsByFormatHash(const evmc::bytes32 & format_hash) const;
+            asio::awaitable<std::size_t> getFormatConnectorsCount(const evmc::bytes32 & format_hash) const;
+            asio::awaitable<std::vector<chain::Address>> getFormatConnectorsPage(
+                const evmc::bytes32 & format_hash,
+                std::size_t offset,
+                std::size_t limit) const;
             asio::awaitable<std::optional<std::vector<ScalarLabel>>> getScalarLabelsByFormatHash(const evmc::bytes32 & format_hash) const;
 
             asio::awaitable<bool> addTransformation(chain::Address address, TransformationRecord transformation);

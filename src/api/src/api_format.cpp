@@ -103,10 +103,7 @@ namespace dcn
         const std::size_t limit = limit_res.value();
         const std::size_t page = page_res.value();
 
-        const std::vector<chain::Address> connector_addresses =
-            co_await registry.getSortedConnectorsByFormatHash(*format_hash_res);
-
-        const std::size_t total_connectors = connector_addresses.size();
+        const std::size_t total_connectors = co_await registry.getFormatConnectorsCount(*format_hash_res);
         const std::size_t start =
             (limit == 0 || page > std::numeric_limits<std::size_t>::max() / limit)
                 ? total_connectors
@@ -115,6 +112,10 @@ namespace dcn
             (limit > (total_connectors - start))
                 ? total_connectors
                 : (start + limit);
+        const std::vector<chain::Address> connector_addresses = co_await registry.getFormatConnectorsPage(
+            *format_hash_res,
+            start,
+            end - start);
 
         json json_output;
         json_output["format_hash"] = evmc::hex(*format_hash_res);
@@ -140,9 +141,8 @@ namespace dcn
         }
         json_output["connectors"] = json::array();
 
-        for(std::size_t i = start; i < end; ++i)
+        for(const chain::Address & connector_address : connector_addresses)
         {
-            const auto & connector_address = connector_addresses[i];
             json connector_json;
             connector_json["local_address"] = evmc::hex(connector_address);
             connector_json["address"] = "0x0";
