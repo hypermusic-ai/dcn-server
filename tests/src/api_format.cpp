@@ -1,4 +1,5 @@
 #include "unit-tests.hpp"
+#include "test_connector_helpers.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -14,71 +15,11 @@ using namespace dcn::tests;
 
 namespace
 {
-    template<class AwaitableT>
-    auto runAwaitable(asio::io_context & io_context, AwaitableT awaitable)
-    {
-        auto future = asio::co_spawn(io_context, std::move(awaitable), asio::use_future);
-        io_context.restart();
-        io_context.run();
-        return future.get();
-    }
-
-    chain::Address makeAddressFromByte(std::uint8_t value)
-    {
-        chain::Address address{};
-        address.bytes[19] = value;
-        return address;
-    }
-
-    ConnectorRecord makeConnectorRecord(const std::string & name, const std::string & owner_hex)
-    {
-        ConnectorRecord record;
-        record.mutable_connector()->set_name(name);
-        record.set_owner(owner_hex);
-        return record;
-    }
-
-    void addDimension(
-        ConnectorRecord & record,
-        const std::string & composite,
-        std::initializer_list<std::pair<std::string, std::string>> bindings = {})
-    {
-        auto * dimension = record.mutable_connector()->add_dimensions();
-        dimension->set_composite(composite);
-
-        for(const auto & [slot, binding_target] : bindings)
-        {
-            (*dimension->mutable_bindings())[slot] = binding_target;
-        }
-    }
-
-    bool addConnectorRecord(
-        asio::io_context & io_context,
-        registry::Registry & registry,
-        std::uint8_t address_byte,
-        ConnectorRecord record)
-    {
-        return runAwaitable(
-            io_context,
-            registry.addConnector(makeAddressFromByte(address_byte), std::move(record)));
-    }
-
-    bool addScalarConnector(
-        asio::io_context & io_context,
-        registry::Registry & registry,
-        const std::string & name,
-        const std::string & owner_hex,
-        std::uint8_t address_byte,
-        std::uint32_t dimensions_count = 1)
-    {
-        ConnectorRecord record = makeConnectorRecord(name, owner_hex);
-        for(std::uint32_t i = 0; i < dimensions_count; ++i)
-        {
-            addDimension(record, "");
-        }
-
-        return addConnectorRecord(io_context, registry, address_byte, std::move(record));
-    }
+    using dcn::tests::helpers::addDimension;
+    using dcn::tests::helpers::addScalarConnector;
+    using dcn::tests::helpers::makeAddressFromByte;
+    using dcn::tests::helpers::makeConnectorRecord;
+    using dcn::tests::helpers::runAwaitable;
 
     server::RouteArg makeStringRouteArg(const std::string & value)
     {
@@ -216,6 +157,132 @@ TEST_F(UnitTest, API_Format_Get_UnknownHashReturnsEmptyConnectorsList)
     ASSERT_TRUE(body["scalars"].is_array());
     EXPECT_TRUE(body["scalars"].empty());
     EXPECT_FALSE(body.contains("scalar_labels"));
+    ASSERT_TRUE(body["connectors"].is_array());
+    EXPECT_TRUE(body["connectors"].empty());
+}
+
+TEST_F(UnitTest, API_Format_Get_InvalidFormatHashArgumentReturnsBadRequest)
+{
+    asio::io_context io_context;
+    registry::Registry registry(io_context);
+
+    http::Request request;
+    request.setMethod(http::Method::GET)
+           .setPath(http::URL("/format/123?limit=10&page=0"))
+           .setVersion("HTTP/1.1");
+
+    std::vector<server::RouteArg> args{makeUintRouteArg(123)};
+    server::QueryArgsList query_args;
+    query_args.emplace("limit", makeUintRouteArg(10));
+    query_args.emplace("page", makeUintRouteArg(0));
+
+    const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
+    ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+
+    const auto body = nlohmann::json::parse(response.getBody());
+    EXPECT_EQ(body["message"], "Invalid format hash argument");
+}
+
+TEST_F(UnitTest, API_Format_Get_InvalidFormatHashReturnsBadRequest)
+{
+    asio::io_context io_context;
+    registry::Registry registry(io_context);
+
+    const std::string invalid_format_hash = "not-a-bytes32";
+
+    http::Request request;
+    request.setMethod(http::Method::GET)
+           .setPath(http::URL("/format/" + invalid_format_hash + "?limit=10&page=0"))
+           .setVersion("HTTP/1.1");
+
+    std::vector<server::RouteArg> args{makeStringRouteArg(invalid_format_hash)};
+    server::QueryArgsList query_args;
+    query_args.emplace("limit", makeUintRouteArg(10));
+    query_args.emplace("page", makeUintRouteArg(0));
+
+    const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
+    ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+
+    const auto body = nlohmann::json::parse(response.getBody());
+    EXPECT_EQ(body["message"], "Invalid format hash");
+}
+
+TEST_F(UnitTest, API_Format_Get_MissingLimitOrPageReturnsBadRequest)
+{
+    asio::io_context io_context;
+    registry::Registry registry(io_context);
+
+    evmc::bytes32 unknown_hash{};
+    const std::string format_hash_hex = evmc::hex(unknown_hash);
+
+    http::Request request;
+    request.setMethod(http::Method::GET)
+           .setPath(http::URL("/format/" + format_hash_hex + "?limit=10&offset=0"))
+           .setVersion("HTTP/1.1");
+
+    std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
+    server::QueryArgsList query_args;
+    query_args.emplace("limit", makeUintRouteArg(10));
+    query_args.emplace("offset", makeUintRouteArg(0));
+
+    const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
+    ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+
+    const auto body = nlohmann::json::parse(response.getBody());
+    EXPECT_EQ(body["message"], "Missing arguments limit or page");
+}
+
+TEST_F(UnitTest, API_Format_Get_LimitAboveMaxReturnsBadRequest)
+{
+    asio::io_context io_context;
+    registry::Registry registry(io_context);
+
+    evmc::bytes32 unknown_hash{};
+    const std::string format_hash_hex = evmc::hex(unknown_hash);
+
+    http::Request request;
+    request.setMethod(http::Method::GET)
+           .setPath(http::URL("/format/" + format_hash_hex + "?limit=257&page=0"))
+           .setVersion("HTTP/1.1");
+
+    std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
+    server::QueryArgsList query_args;
+    query_args.emplace("limit", makeUintRouteArg(257));
+    query_args.emplace("page", makeUintRouteArg(0));
+
+    const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
+    ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+
+    const auto body = nlohmann::json::parse(response.getBody());
+    EXPECT_EQ(body["message"], "Invalid arguments limit or page. limit error: Out of range.");
+}
+
+TEST_F(UnitTest, API_Format_Get_ZeroLimitReturnsEmptyPage)
+{
+    asio::io_context io_context;
+    registry::Registry registry(io_context);
+
+    evmc::bytes32 unknown_hash{};
+    const std::string format_hash_hex = evmc::hex(unknown_hash);
+
+    http::Request request;
+    request.setMethod(http::Method::GET)
+           .setPath(http::URL("/format/" + format_hash_hex + "?limit=0&page=0"))
+           .setVersion("HTTP/1.1");
+
+    std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
+    server::QueryArgsList query_args;
+    query_args.emplace("limit", makeUintRouteArg(0));
+    query_args.emplace("page", makeUintRouteArg(0));
+
+    const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
+    ASSERT_EQ(response.getCode(), http::Code::OK);
+
+    const auto body = nlohmann::json::parse(response.getBody());
+    EXPECT_EQ(body["format_hash"], format_hash_hex);
+    EXPECT_EQ(body["page"], 0);
+    EXPECT_EQ(body["limit"], 0);
+    EXPECT_EQ(body["total_connectors"], 0);
     ASSERT_TRUE(body["connectors"].is_array());
     EXPECT_TRUE(body["connectors"].empty());
 }

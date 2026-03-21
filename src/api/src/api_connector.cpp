@@ -190,17 +190,9 @@ namespace dcn
             offset[31] = 0x20;
             input_data.insert(input_data.end(), offset.begin(), offset.end());
 
-            // Step 3: String length
-            std::vector<uint8_t> str_len(32, 0);
-            str_len[31] = static_cast<uint8_t>(connector_name.size());
-            input_data.insert(input_data.end(), str_len.begin(), str_len.end());
-
-            // Step 4: String bytes
-            input_data.insert(input_data.end(), connector_name.begin(), connector_name.end());
-
-            // Step 5: Padding to 32-byte boundary
-            const std::size_t padding = (32 - (connector_name.size() % 32)) % 32;
-            input_data.insert(input_data.end(), padding, 0);
+            // Step 3: String tail payload (length + bytes + padding)
+            const auto encoded_name = evm::encodeAsArg(connector_name);
+            input_data.insert(input_data.end(), encoded_name.begin(), encoded_name.end());
 
             co_await evm.setGas(evm.getRegistryAddress(), evm::DEFAULT_GAS_LIMIT);
             const auto exec_result = co_await evm.execute(evm.getRegistryAddress(), evm.getRegistryAddress(), input_data, evm::DEFAULT_GAS_LIMIT, 0);

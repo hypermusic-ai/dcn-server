@@ -100,7 +100,11 @@ namespace dcn::evm
         std::vector<std::uint8_t> encoded;
 
         std::vector<uint8_t> len_enc(32, 0);
-        len_enc[31] = static_cast<uint8_t>(str.size());
+        const std::size_t length = str.size();
+        for(std::size_t i = 0; i < sizeof(length); ++i)
+        {
+            len_enc[31 - i] = static_cast<std::uint8_t>((length >> (8 * i)) & 0xFF);
+        }
 
         encoded.insert(encoded.end(), len_enc.begin(), len_enc.end()); // string length
         encoded.insert(encoded.end(), str.begin(), str.end());             // string bytes
