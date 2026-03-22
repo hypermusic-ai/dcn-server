@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <string_view>
+
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -76,4 +79,7 @@ namespace dcn::parse
 
     template<class T>
     Result<T> decodeBytes(const std::vector<uint8_t> & bytes);
+
+    // Parse decimal uint32 and reject malformed input.
+    Result<std::uint32_t> parseUint32Decimal(std::string_view value);
 }

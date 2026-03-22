@@ -1,12 +1,8 @@
 #include "registry.hpp"
 
-#include <algorithm>
-#include <charconv>
 #include <cstdint>
-#include <format>
 #include <limits>
 #include <memory>
-#include <system_error>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -34,17 +30,6 @@ namespace dcn::registry
             absl::flat_hash_map<std::string, Connector> connector_cache;
         };
 
-        // Compact scalar-label statistics used in diagnostics when collisions are detected.
-        struct ScalarLabelSummary
-        {
-            std::size_t labels_count = 0;
-            std::size_t unique_scalars_count = 0;
-            std::size_t unique_scalar_tail_pairs_count = 0;
-        };
-
-        // Parse decimal slot id and reject malformed values.
-        static std::optional<std::uint32_t> parseSlotId(const std::string & slot_str);
-
         // Resolve connector by name from pending connector + persisted connector records.
         static const Connector * resolveConnector(const std::string & connector_name, ConnectorGraphContext & graph_context);
 
@@ -69,33 +54,6 @@ namespace dcn::registry
             const std::string & connector_name,
             std::uint32_t dim_id,
             dcn::chain::ResolvedScalarEntries & connector_scalar_entries);
-
-        // Compute format hash without building an intermediate label-hash vector.
-        static evmc::bytes32 computeFormatHashStreaming(const std::vector<dcn::chain::ScalarHashEntry> & hash_entries);
-
-        // Canonicalize scalar labels into deterministic order.
-        static std::vector<ScalarLabel> canonicalizeScalarLabels(const std::vector<ScalarLabel> & labels);
-
-        // Byte-accurate equality check for canonical scalar labels.
-        static bool scalarLabelsEqual(const std::vector<ScalarLabel> & lhs, const std::vector<ScalarLabel> & rhs);
-
-        // Produce compact scalar-label summary for diagnostics.
-        static ScalarLabelSummary summarizeScalarLabels(const std::vector<ScalarLabel> & labels);
-
-        // Parse owner hex string into address.
-        static std::optional<chain::Address> tryParseOwnerAddress(const std::string & owner);
-
-        static std::optional<std::uint32_t> parseSlotId(const std::string & slot_str)
-        {
-            std::uint32_t slot_id = 0;
-            const auto [ptr, ec] = std::from_chars(slot_str.data(), slot_str.data() + slot_str.size(), slot_id, 10);
-            if(ec != std::errc{} || ptr != (slot_str.data() + slot_str.size()))
-            {
-                return std::nullopt;
-            }
-
-            return slot_id;
-        }
 
         static const Connector * resolveConnector(const std::string & connector_name, ConnectorGraphContext & graph_context)
         {
@@ -254,7 +212,7 @@ namespace dcn::registry
                                 return std::nullopt;
                             }
 
-                            const auto slot_id_opt = parseSlotId(slot_str);
+                            const auto slot_id_opt = parse::parseUint32Decimal(slot_str);
                             if(!slot_id_opt)
                             {
                                 spdlog::error(
@@ -371,7 +329,7 @@ namespace dcn::registry
                             return std::nullopt;
                         }
 
-                        const auto slot_id_opt = parseSlotId(slot_str);
+                        const auto slot_id_opt = parse::parseUint32Decimal(slot_str);
                         if(!slot_id_opt)
                         {
                             spdlog::error(
@@ -512,7 +470,7 @@ namespace dcn::registry
                                 return std::nullopt;
                             }
 
-                            const auto slot_id_opt = parseSlotId(slot_str);
+                            const auto slot_id_opt = parse::parseUint32Decimal(slot_str);
                             if(!slot_id_opt)
                             {
                                 spdlog::error(
@@ -645,7 +603,7 @@ namespace dcn::registry
                             return std::nullopt;
                         }
 
-                        const auto slot_id_opt = parseSlotId(slot_str);
+                        const auto slot_id_opt = parse::parseUint32Decimal(slot_str);
                         if(!slot_id_opt)
                         {
                             spdlog::error(
@@ -667,111 +625,6 @@ namespace dcn::registry
             }
 
             return root_it->second;
-        }
-
-        static evmc::bytes32 computeFormatHashStreaming(const std::vector<dcn::chain::ScalarHashEntry> & hash_entries)
-        {
-            evmc::bytes32 format_hash{};
-            for(const dcn::chain::ScalarHashEntry & hash_entry : hash_entries)
-            {
-                const evmc::bytes32 label_hash = dcn::chain::scalarPathLabelHash(hash_entry.scalar_hash, hash_entry.path_hash);
-                format_hash = dcn::chain::composeFormatHash(format_hash, dcn::chain::labelHashToFormatHash(label_hash));
-            }
-
-            return format_hash;
-        }
-
-        static std::vector<ScalarLabel> canonicalizeScalarLabels(const std::vector<ScalarLabel> & labels)
-        {
-            std::vector<ScalarLabel> canonical_scalar_labels;
-            canonical_scalar_labels.reserve(labels.size());
-            for(const ScalarLabel & scalar_label : labels)
-            {
-                canonical_scalar_labels.push_back(ScalarLabel{
-                    .scalar = scalar_label.scalar,
-                    .path_hash = scalar_label.path_hash,
-                    .tail_id = scalar_label.tail_id
-                });
-            }
-
-            std::sort(
-                canonical_scalar_labels.begin(),
-                canonical_scalar_labels.end(),
-                [](const ScalarLabel & lhs, const ScalarLabel & rhs)
-                {
-                    if(dcn::chain::lessBytes32(lhs.path_hash, rhs.path_hash))
-                    {
-                        return true;
-                    }
-                    if(dcn::chain::lessBytes32(rhs.path_hash, lhs.path_hash))
-                    {
-                        return false;
-                    }
-                    if(lhs.scalar != rhs.scalar)
-                    {
-                        return lhs.scalar < rhs.scalar;
-                    }
-                    return lhs.tail_id < rhs.tail_id;
-                });
-
-            return canonical_scalar_labels;
-        }
-
-        static bool scalarLabelsEqual(const std::vector<ScalarLabel> & lhs, const std::vector<ScalarLabel> & rhs)
-        {
-            if(lhs.size() != rhs.size())
-            {
-                return false;
-            }
-
-            for(std::size_t i = 0; i < lhs.size(); ++i)
-            {
-                if(
-                    lhs[i].scalar != rhs[i].scalar ||
-                    !dcn::chain::equalBytes32(lhs[i].path_hash, rhs[i].path_hash) ||
-                    lhs[i].tail_id != rhs[i].tail_id)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        static ScalarLabelSummary summarizeScalarLabels(const std::vector<ScalarLabel> & labels)
-        {
-            absl::flat_hash_set<std::string> scalars;
-            absl::flat_hash_set<std::string> scalar_tail_pairs;
-            scalars.reserve(labels.size());
-            scalar_tail_pairs.reserve(labels.size());
-
-            for(const ScalarLabel & label : labels)
-            {
-                scalars.emplace(label.scalar);
-
-                std::string scalar_tail_key = label.scalar;
-                scalar_tail_key.push_back(':');
-                scalar_tail_key += std::to_string(label.tail_id);
-                scalar_tail_pairs.emplace(std::move(scalar_tail_key));
-            }
-
-            return ScalarLabelSummary{
-                .labels_count = labels.size(),
-                .unique_scalars_count = scalars.size(),
-                .unique_scalar_tail_pairs_count = scalar_tail_pairs.size(),
-            };
-        }
-
-        static std::optional<chain::Address> tryParseOwnerAddress(const std::string & owner)
-        {
-            const std::optional<chain::Address> owner_res = evmc::from_hex<chain::Address>(owner);
-            if(!owner_res)
-            {
-                spdlog::error(std::format("Failed to parse owner address from hex string '{}'", owner));
-                return std::nullopt;
-            }
-
-            return *owner_res;
         }
 
         template<typename RecordT>
@@ -945,21 +798,22 @@ namespace dcn::registry
             co_return false;
         }
 
-        const evmc::bytes32 format_hash = computeFormatHashStreaming((*root_scalar_entries_opt)->hash_entries);
+        const evmc::bytes32 format_hash = chain::computeFormatHash((*root_scalar_entries_opt)->hash_entries);
         const std::vector<ScalarLabel> canonical_scalar_labels =
-            canonicalizeScalarLabels((*root_scalar_entries_opt)->display_entries);
+            chain::canonicalizeScalarLabels((*root_scalar_entries_opt)->display_entries);
 
-        const auto owner_opt = tryParseOwnerAddress(record.owner());
+        const auto owner_opt = evmc::from_hex<chain::Address>(record.owner());
         if(!owner_opt)
         {
+            spdlog::error("Failed to parse owner address from hex string '{}'", record.owner());
             co_return false;
         }
 
         const auto existing_scalar_labels = _store->getScalarLabelsByFormatHash(format_hash);
-        if(existing_scalar_labels.has_value() && !scalarLabelsEqual(*existing_scalar_labels, canonical_scalar_labels))
+        if(existing_scalar_labels.has_value() && !chain::scalarLabelsEqual(*existing_scalar_labels, canonical_scalar_labels))
         {
-            const ScalarLabelSummary stored_summary = summarizeScalarLabels(*existing_scalar_labels);
-            const ScalarLabelSummary new_summary = summarizeScalarLabels(canonical_scalar_labels);
+            const chain::ScalarLabelSummary stored_summary = chain::summarizeScalarLabels(*existing_scalar_labels);
+            const chain::ScalarLabelSummary new_summary = chain::summarizeScalarLabels(canonical_scalar_labels);
             spdlog::warn(
                 "Different scalar-label multisets for format hash {} while registering connector '{}' at runtime address {} "
                 "(stored: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}; "
@@ -1131,13 +985,14 @@ namespace dcn::registry
                 continue;
             }
 
-            const evmc::bytes32 format_hash = computeFormatHashStreaming((*root_scalar_entries_opt)->hash_entries);
+            const evmc::bytes32 format_hash = chain::computeFormatHash((*root_scalar_entries_opt)->hash_entries);
             std::vector<ScalarLabel> canonical_scalar_labels =
-                canonicalizeScalarLabels((*root_scalar_entries_opt)->display_entries);
+                chain::canonicalizeScalarLabels((*root_scalar_entries_opt)->display_entries);
 
-            const auto owner_opt = tryParseOwnerAddress(record.owner());
+            const auto owner_opt = evmc::from_hex<chain::Address>(record.owner());
             if(!owner_opt)
             {
+                spdlog::error("Failed to parse owner address from hex string '{}'", record.owner());
                 all_valid = false;
                 if(all_or_nothing)
                 {
@@ -1147,10 +1002,10 @@ namespace dcn::registry
             }
 
             const auto existing_scalar_labels = _store->getScalarLabelsByFormatHash(format_hash);
-            if(existing_scalar_labels.has_value() && !scalarLabelsEqual(*existing_scalar_labels, canonical_scalar_labels))
+            if(existing_scalar_labels.has_value() && !chain::scalarLabelsEqual(*existing_scalar_labels, canonical_scalar_labels))
             {
-                const ScalarLabelSummary stored_summary = summarizeScalarLabels(*existing_scalar_labels);
-                const ScalarLabelSummary new_summary = summarizeScalarLabels(canonical_scalar_labels);
+                const chain::ScalarLabelSummary stored_summary = chain::summarizeScalarLabels(*existing_scalar_labels);
+                const chain::ScalarLabelSummary new_summary = chain::summarizeScalarLabels(canonical_scalar_labels);
                 spdlog::warn(
                     "Different scalar-label multisets for format hash {} while registering connector '{}' at runtime address {} "
                     "(stored: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}; "

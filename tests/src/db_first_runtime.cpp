@@ -455,6 +455,150 @@ TEST_F(UnitTest, API_Execute_MissingConnectorReturnsNotFound)
     EXPECT_EQ(body["message"], "Connector not found");
 }
 
+TEST_F(UnitTest, API_PostConnector_DeploysMissingTransformationDependencyFromDb)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeTestPath("post_connector_dependency_deploy");
+    PathScope storage_scope(storage_path);
+    ASSERT_TRUE(prepareStorageLayout(storage_path));
+    const auto db_path = storage_path / "registry.sqlite";
+
+    asio::io_context io_context;
+    registry::Registry registry(io_context, db_path.string());
+    auth::AuthManager auth_manager(io_context);
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    const chain::Address caller = makeAddressFromByte(0x49);
+    const std::string caller_hex = evmc::hex(caller);
+    (void)runAwaitable(io_context, evm_instance.addAccount(caller, evm::DEFAULT_GAS_LIMIT));
+    (void)runAwaitable(io_context, evm_instance.setGas(caller, evm::DEFAULT_GAS_LIMIT));
+    const std::string access_token = runAwaitable(io_context, auth_manager.generateAccessToken(caller));
+
+    const auto transformation_record = makeTransformationRecord("mul", caller_hex, "return x * 2;");
+    ASSERT_TRUE(runAwaitable(io_context, registry.addTransformation(makeAddressFromByte(0x4A), transformation_record)));
+
+    const auto contains_tx_before = containsTransformation(io_context, evm_instance, "mul");
+    ASSERT_TRUE(contains_tx_before.has_value());
+    EXPECT_FALSE(*contains_tx_before);
+
+    Connector connector;
+    connector.set_name("connector_with_mul");
+    auto * dimension = connector.add_dimensions();
+    auto * transformation = dimension->add_transformations();
+    transformation->set_name("mul");
+
+    const auto connector_json_res = parse::parseToJson(connector, parse::use_protobuf);
+    ASSERT_TRUE(connector_json_res.has_value());
+
+    config::Config cfg;
+    cfg.storage_path = storage_path;
+
+    http::Request request;
+    request.setMethod(http::Method::POST)
+           .setPath(http::URL("/connector"))
+           .setVersion("HTTP/1.1")
+           .setBody(*connector_json_res)
+           .setHeader(http::Header::Authorization, std::format("Bearer {}", access_token));
+
+    const auto response = runAwaitable(
+        io_context,
+        POST_connector(
+            request,
+            std::vector<server::RouteArg>{},
+            server::QueryArgsList{},
+            auth_manager,
+            registry,
+            evm_instance,
+            cfg));
+
+    ASSERT_EQ(response.getCode(), http::Code::Created);
+    const auto body = json::parse(response.getBody(), nullptr, false);
+    ASSERT_FALSE(body.is_discarded());
+    EXPECT_EQ(body["name"], "connector_with_mul");
+    EXPECT_EQ(body["owner"], caller_hex);
+
+    const auto contains_tx_after = containsTransformation(io_context, evm_instance, "mul");
+    ASSERT_TRUE(contains_tx_after.has_value());
+    EXPECT_TRUE(*contains_tx_after);
+
+    const auto contains_connector_after = containsConnector(io_context, evm_instance, "connector_with_mul");
+    ASSERT_TRUE(contains_connector_after.has_value());
+    EXPECT_TRUE(*contains_connector_after);
+
+    const auto connector_handle = runAwaitable(io_context, registry.getConnectorRecordHandle("connector_with_mul"));
+    ASSERT_TRUE(connector_handle.has_value());
+    ASSERT_TRUE(*connector_handle);
+    EXPECT_EQ((*connector_handle)->owner(), caller_hex);
+}
+
+TEST_F(UnitTest, API_PostConnector_MissingTransformationDependencyReturnsBadRequest)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeTestPath("post_connector_missing_dependency");
+    PathScope storage_scope(storage_path);
+    ASSERT_TRUE(prepareStorageLayout(storage_path));
+    const auto db_path = storage_path / "registry.sqlite";
+
+    asio::io_context io_context;
+    registry::Registry registry(io_context, db_path.string());
+    auth::AuthManager auth_manager(io_context);
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    const chain::Address caller = makeAddressFromByte(0x4B);
+    const std::string caller_hex = evmc::hex(caller);
+    (void)runAwaitable(io_context, evm_instance.addAccount(caller, evm::DEFAULT_GAS_LIMIT));
+    (void)runAwaitable(io_context, evm_instance.setGas(caller, evm::DEFAULT_GAS_LIMIT));
+    const std::string access_token = runAwaitable(io_context, auth_manager.generateAccessToken(caller));
+
+    Connector connector;
+    connector.set_name("connector_missing_tx");
+    auto * dimension = connector.add_dimensions();
+    auto * transformation = dimension->add_transformations();
+    transformation->set_name("mul_missing");
+
+    const auto connector_json_res = parse::parseToJson(connector, parse::use_protobuf);
+    ASSERT_TRUE(connector_json_res.has_value());
+
+    config::Config cfg;
+    cfg.storage_path = storage_path;
+
+    http::Request request;
+    request.setMethod(http::Method::POST)
+           .setPath(http::URL("/connector"))
+           .setVersion("HTTP/1.1")
+           .setBody(*connector_json_res)
+           .setHeader(http::Header::Authorization, std::format("Bearer {}", access_token));
+
+    const auto response = runAwaitable(
+        io_context,
+        POST_connector(
+            request,
+            std::vector<server::RouteArg>{},
+            server::QueryArgsList{},
+            auth_manager,
+            registry,
+            evm_instance,
+            cfg));
+
+    ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+    const auto body = json::parse(response.getBody(), nullptr, false);
+    ASSERT_FALSE(body.is_discarded());
+    EXPECT_EQ(body["message"], "Failed to deploy connector. Error: Transformation missing");
+
+    const auto contains_connector = containsConnector(io_context, evm_instance, "connector_missing_tx");
+    ASSERT_TRUE(contains_connector.has_value());
+    EXPECT_FALSE(*contains_connector);
+
+    const auto connector_handle = runAwaitable(io_context, registry.getConnectorRecordHandle("connector_missing_tx"));
+    EXPECT_FALSE(connector_handle.has_value());
+}
+
 TEST_F(UnitTest, API_Execute_LazilyDeploysConnectorClosureFromDb)
 {
     ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());

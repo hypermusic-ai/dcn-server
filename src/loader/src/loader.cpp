@@ -32,6 +32,11 @@ namespace dcn::loader
 
             absl::flat_hash_set<std::string> imported_connectors;
             absl::flat_hash_set<std::string> importing_connectors;
+
+            LoaderBatchConfig batch_config{};
+            std::vector<std::pair<chain::Address, TransformationRecord>> pending_transformations;
+            std::vector<std::pair<chain::Address, ConditionRecord>> pending_conditions;
+            std::vector<std::pair<chain::Address, ConnectorRecord>> pending_connectors;
         };
 
         struct ConnectorEnsureContext
@@ -39,6 +44,77 @@ namespace dcn::loader
             absl::flat_hash_set<std::string> done;
             absl::flat_hash_set<std::string> visiting;
         };
+
+        static std::size_t normalizeBatchSize(std::size_t batch_size)
+        {
+            return (batch_size == 0) ? 1 : batch_size;
+        }
+
+        static asio::awaitable<bool> flushPendingTransformations(
+            registry::Registry & registry,
+            JsonImportContext & context,
+            bool force)
+        {
+            const std::size_t batch_size = normalizeBatchSize(context.batch_config.transformations);
+            if(context.pending_transformations.empty() || (!force && context.pending_transformations.size() < batch_size))
+            {
+                co_return true;
+            }
+
+            std::vector<std::pair<chain::Address, TransformationRecord>> batch;
+            batch.swap(context.pending_transformations);
+            if(!co_await registry.addTransformationsBatch(std::move(batch), false))
+            {
+                spdlog::error("Failed to batch-register imported transformations");
+                co_return false;
+            }
+
+            co_return true;
+        }
+
+        static asio::awaitable<bool> flushPendingConditions(
+            registry::Registry & registry,
+            JsonImportContext & context,
+            bool force)
+        {
+            const std::size_t batch_size = normalizeBatchSize(context.batch_config.conditions);
+            if(context.pending_conditions.empty() || (!force && context.pending_conditions.size() < batch_size))
+            {
+                co_return true;
+            }
+
+            std::vector<std::pair<chain::Address, ConditionRecord>> batch;
+            batch.swap(context.pending_conditions);
+            if(!co_await registry.addConditionsBatch(std::move(batch), false))
+            {
+                spdlog::error("Failed to batch-register imported conditions");
+                co_return false;
+            }
+
+            co_return true;
+        }
+
+        static asio::awaitable<bool> flushPendingConnectors(
+            registry::Registry & registry,
+            JsonImportContext & context,
+            bool force)
+        {
+            const std::size_t batch_size = normalizeBatchSize(context.batch_config.connectors);
+            if(context.pending_connectors.empty() || (!force && context.pending_connectors.size() < batch_size))
+            {
+                co_return true;
+            }
+
+            std::vector<std::pair<chain::Address, ConnectorRecord>> batch;
+            batch.swap(context.pending_connectors);
+            if(!co_await registry.addConnectorsBatch(std::move(batch), false))
+            {
+                spdlog::error("Failed to batch-register imported connectors");
+                co_return false;
+            }
+
+            co_return true;
+        }
 
         static std::vector<std::uint8_t> makeSingleStringCallInput(
             const std::string_view signature,
@@ -580,10 +656,75 @@ namespace dcn::loader
         bool register_in_registry,
         bool persist_json)
     {
-        return _deployObjectLocally(evm,
-            registry, 
-            std::move(connector_record), 
-            &ConnectorRecord::connector, 
+        const Connector & connector = connector_record.connector();
+
+        for(const auto & dimension : connector.dimensions())
+        {
+            for(const auto & transformation : dimension.transformations())
+            {
+                const std::string & transformation_name = transformation.name();
+                if(transformation_name.empty())
+                {
+                    continue;
+                }
+
+                if(!co_await ensureTransformationDeployed(evm, registry, transformation_name, storage_path))
+                {
+                    spdlog::error(
+                        "Cannot deploy connector '{}': dependency transformation '{}' is not deployable",
+                        connector.name(),
+                        transformation_name);
+                    co_return std::unexpected(pt::PTDeployError{.kind = pt::PTDeployError::Kind::TRANSFORMATION_MISSING});
+                }
+            }
+
+            if(!dimension.composite().empty())
+            {
+                if(!co_await ensureConnectorDeployed(evm, registry, dimension.composite(), storage_path))
+                {
+                    spdlog::error(
+                        "Cannot deploy connector '{}': dependency connector '{}' is not deployable",
+                        connector.name(),
+                        dimension.composite());
+                    co_return std::unexpected(pt::PTDeployError{.kind = pt::PTDeployError::Kind::CONNECTOR_MISSING});
+                }
+            }
+
+            for(const auto & [_, binding_target] : dimension.bindings())
+            {
+                if(binding_target.empty())
+                {
+                    continue;
+                }
+
+                if(!co_await ensureConnectorDeployed(evm, registry, binding_target, storage_path))
+                {
+                    spdlog::error(
+                        "Cannot deploy connector '{}': binding dependency connector '{}' is not deployable",
+                        connector.name(),
+                        binding_target);
+                    co_return std::unexpected(pt::PTDeployError{.kind = pt::PTDeployError::Kind::CONNECTOR_MISSING});
+                }
+            }
+        }
+
+        if(!connector.condition_name().empty())
+        {
+            if(!co_await ensureConditionDeployed(evm, registry, connector.condition_name(), storage_path))
+            {
+                spdlog::error(
+                    "Cannot deploy connector '{}': dependency condition '{}' is not deployable",
+                    connector.name(),
+                    connector.condition_name());
+                co_return std::unexpected(pt::PTDeployError{.kind = pt::PTDeployError::Kind::CONDITION_MISSING});
+            }
+        }
+
+        co_return co_await _deployObjectLocally(
+            evm,
+            registry,
+            std::move(connector_record),
+            &ConnectorRecord::connector,
             storage_path / "connectors",
             &constructConnectorSolidityCode,
             pt::PTDeployError::Kind::CONNECTOR_ALREADY_REGISTERED,
@@ -992,12 +1133,20 @@ namespace dcn::loader
         evm::EVM & evm,
         registry::Registry & registry,
         const std::filesystem::path & storage_path,
-        LoaderBatchConfig)
+        LoaderBatchConfig batch_config)
     {
         JsonImportContext context;
+        context.batch_config.connectors = normalizeBatchSize(batch_config.connectors);
+        context.batch_config.transformations = normalizeBatchSize(batch_config.transformations);
+        context.batch_config.conditions = normalizeBatchSize(batch_config.conditions);
+
         context.transformations = _loadJSONRecords<TransformationRecord>(storage_path / "transformations");
         context.conditions = _loadJSONRecords<ConditionRecord>(storage_path / "conditions");
         context.connectors = _loadJSONRecords<ConnectorRecord>(storage_path / "connectors");
+
+        context.pending_transformations.reserve(std::min<std::size_t>(context.batch_config.transformations, context.transformations.size()));
+        context.pending_conditions.reserve(std::min<std::size_t>(context.batch_config.conditions, context.conditions.size()));
+        context.pending_connectors.reserve(std::min<std::size_t>(context.batch_config.connectors, context.connectors.size()));
 
         std::vector<std::string> transformation_names;
         transformation_names.reserve(context.transformations.size());
@@ -1032,6 +1181,10 @@ namespace dcn::loader
                 success = false;
             }
         }
+        if(!co_await flushPendingTransformations(registry, context, true))
+        {
+            success = false;
+        }
 
         for(const auto & name : condition_names)
         {
@@ -1040,6 +1193,10 @@ namespace dcn::loader
                 success = false;
             }
         }
+        if(!co_await flushPendingConditions(registry, context, true))
+        {
+            success = false;
+        }
 
         for(const auto & name : connector_names)
         {
@@ -1047,6 +1204,19 @@ namespace dcn::loader
             {
                 success = false;
             }
+        }
+
+        if(!co_await flushPendingTransformations(registry, context, true))
+        {
+            success = false;
+        }
+        if(!co_await flushPendingConditions(registry, context, true))
+        {
+            success = false;
+        }
+        if(!co_await flushPendingConnectors(registry, context, true))
+        {
+            success = false;
         }
 
         co_return success;
@@ -1091,7 +1261,7 @@ namespace dcn::loader
             registry,
             json_it->second,
             storage_path,
-            true,
+            false,
             false);
 
         context.importing_transformations.erase(name);
@@ -1102,6 +1272,12 @@ namespace dcn::loader
                 "Failed to import transformation '{}' from JSON into DB: {}",
                 name,
                 static_cast<int>(deploy_result.error().kind));
+            co_return false;
+        }
+
+        context.pending_transformations.emplace_back(deploy_result.value(), json_it->second);
+        if(!co_await flushPendingTransformations(registry, context, false))
+        {
             co_return false;
         }
 
@@ -1153,7 +1329,7 @@ namespace dcn::loader
             registry,
             json_it->second,
             storage_path,
-            true,
+            false,
             false);
 
         context.importing_conditions.erase(name);
@@ -1164,6 +1340,12 @@ namespace dcn::loader
                 "Failed to import condition '{}' from JSON into DB: {}",
                 name,
                 static_cast<int>(deploy_result.error().kind));
+            co_return false;
+        }
+
+        context.pending_conditions.emplace_back(deploy_result.value(), json_it->second);
+        if(!co_await flushPendingConditions(registry, context, false))
+        {
             co_return false;
         }
 
@@ -1333,7 +1515,7 @@ namespace dcn::loader
                 registry,
                 connector_record,
                 storage_path,
-                true,
+                false,
                 false);
             if(!deploy_result)
             {
@@ -1342,6 +1524,14 @@ namespace dcn::loader
                     name,
                     static_cast<int>(deploy_result.error().kind));
                 ok = false;
+            }
+            else
+            {
+                context.pending_connectors.emplace_back(deploy_result.value(), connector_record);
+                if(!co_await flushPendingConnectors(registry, context, false))
+                {
+                    ok = false;
+                }
             }
         }
 

@@ -114,11 +114,6 @@ namespace dcn::registry
             return record;
         }
 
-        static std::optional<chain::Address> parseOwnerAddress(const std::string & owner_hex)
-        {
-            return evmc::from_hex<chain::Address>(owner_hex);
-        }
-
         static std::string makeScalarLabelOccurrenceKey(const ScalarLabel & label)
         {
             std::string key;
@@ -371,7 +366,7 @@ namespace dcn::registry
         const std::vector<ScalarLabel> & canonical_scalar_labels)
     {
         const std::string & connector_name = record.connector().name();
-        const auto owner_opt = parseOwnerAddress(record.owner());
+        const auto owner_opt = evmc::from_hex<chain::Address>(record.owner());
         if(!owner_opt)
         {
             spdlog::error("Failed to parse connector owner for `{}`", connector_name);
@@ -538,7 +533,7 @@ namespace dcn::registry
                     return false;
                 };
 
-                const auto owner_opt = parseOwnerAddress(item.record.owner());
+                const auto owner_opt = evmc::from_hex<chain::Address>(item.record.owner());
                 if(!owner_opt)
                 {
                     all_ok = false;
@@ -858,7 +853,7 @@ namespace dcn::registry
     bool SQLiteRegistryStore::addTransformation(const chain::Address & address, const TransformationRecord & record)
     {
         const std::string & transformation_name = record.transformation().name();
-        const auto owner_opt = parseOwnerAddress(record.owner());
+        const auto owner_opt = evmc::from_hex<chain::Address>(record.owner());
         if(!owner_opt)
         {
             spdlog::error("Failed to parse transformation owner for `{}`", transformation_name);
@@ -933,6 +928,8 @@ namespace dcn::registry
         }
 
         bool all_ok = true;
+        std::size_t inserted_count = 0;
+        std::size_t failed_count = 0;
         auto rollback_batch_with_log = [&](const char * reason)
         {
             spdlog::debug("DB remove transformation batch pending changes count={} reason={}", items.size(), reason);
@@ -945,7 +942,36 @@ namespace dcn::registry
             Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_transformations(owner, name) VALUES(?1, ?2);");
             for(const TransformationBatchItem & item : items)
             {
-                const auto owner_opt = parseOwnerAddress(item.record.owner());
+                const bool use_savepoint = !all_or_nothing;
+                bool savepoint_active = false;
+                if(use_savepoint)
+                {
+                    if(!_exec("SAVEPOINT transformation_batch_item;"))
+                    {
+                        all_ok = false;
+                        ++failed_count;
+                        continue;
+                    }
+                    savepoint_active = true;
+                }
+
+                auto fail_item = [&](const char * reason)
+                {
+                    spdlog::debug(
+                        "DB remove transformation pending changes (batch item) name={} runtime_address={} reason={}",
+                        item.record.transformation().name(),
+                        evmc::hex(item.address),
+                        reason);
+                    if(savepoint_active)
+                    {
+                        (void)_exec("ROLLBACK TO SAVEPOINT transformation_batch_item;");
+                        (void)_exec("RELEASE SAVEPOINT transformation_batch_item;");
+                        savepoint_active = false;
+                    }
+                    return false;
+                };
+
+                const auto owner_opt = evmc::from_hex<chain::Address>(item.record.owner());
                 if(!owner_opt)
                 {
                     all_ok = false;
@@ -954,6 +980,8 @@ namespace dcn::registry
                         rollback_batch_with_log("invalid owner");
                         return false;
                     }
+                    (void)fail_item("invalid owner");
+                    ++failed_count;
                     continue;
                 }
 
@@ -966,8 +994,12 @@ namespace dcn::registry
                         rollback_batch_with_log("serialize transformation");
                         return false;
                     }
+                    (void)fail_item("serialize transformation");
+                    ++failed_count;
                     continue;
                 }
+
+                bool item_ok = true;
 
                 insert_entity.reset();
                 sqlite3_bind_text(insert_entity.get(), 1, item.record.transformation().name().c_str(), static_cast<int>(item.record.transformation().name().size()), SQLITE_TRANSIENT);
@@ -975,26 +1007,45 @@ namespace dcn::registry
                 sqlite3_bind_blob(insert_entity.get(), 3, payload_blob.data(), static_cast<int>(payload_blob.size()), SQLITE_TRANSIENT);
                 if(insert_entity.step() != SQLITE_DONE)
                 {
-                    all_ok = false;
-                    if(all_or_nothing)
-                    {
-                        rollback_batch_with_log("insert transformations");
-                        return false;
-                    }
-                    continue;
+                    item_ok = fail_item("insert transformations");
                 }
 
-                insert_owned.reset();
-                bindAddress(insert_owned.get(), 1, *owner_opt);
-                sqlite3_bind_text(insert_owned.get(), 2, item.record.transformation().name().c_str(), static_cast<int>(item.record.transformation().name().size()), SQLITE_TRANSIENT);
-                if(insert_owned.step() != SQLITE_DONE)
+                if(item_ok)
+                {
+                    insert_owned.reset();
+                    bindAddress(insert_owned.get(), 1, *owner_opt);
+                    sqlite3_bind_text(insert_owned.get(), 2, item.record.transformation().name().c_str(), static_cast<int>(item.record.transformation().name().size()), SQLITE_TRANSIENT);
+                    if(insert_owned.step() != SQLITE_DONE)
+                    {
+                        item_ok = fail_item("insert owned_transformations");
+                    }
+                }
+
+                if(item_ok && savepoint_active)
+                {
+                    if(!_exec("RELEASE SAVEPOINT transformation_batch_item;"))
+                    {
+                        item_ok = fail_item("release savepoint");
+                    }
+                    else
+                    {
+                        savepoint_active = false;
+                    }
+                }
+
+                if(!item_ok)
                 {
                     all_ok = false;
+                    ++failed_count;
                     if(all_or_nothing)
                     {
-                        rollback_batch_with_log("insert owned_transformations");
+                        rollback_batch_with_log("batch item failure");
                         return false;
                     }
+                }
+                else
+                {
+                    ++inserted_count;
                 }
             }
         }
@@ -1011,6 +1062,7 @@ namespace dcn::registry
             return false;
         }
 
+        spdlog::debug("DB add transformation batch committed inserted={} failed={}", inserted_count, failed_count);
         return all_ok;
     }
 
@@ -1042,7 +1094,7 @@ namespace dcn::registry
     bool SQLiteRegistryStore::addCondition(const chain::Address & address, const ConditionRecord & record)
     {
         const std::string & condition_name = record.condition().name();
-        const auto owner_opt = parseOwnerAddress(record.owner());
+        const auto owner_opt = evmc::from_hex<chain::Address>(record.owner());
         if(!owner_opt)
         {
             spdlog::error("Failed to parse condition owner for `{}`", condition_name);
@@ -1117,6 +1169,8 @@ namespace dcn::registry
         }
 
         bool all_ok = true;
+        std::size_t inserted_count = 0;
+        std::size_t failed_count = 0;
         auto rollback_batch_with_log = [&](const char * reason)
         {
             spdlog::debug("DB remove condition batch pending changes count={} reason={}", items.size(), reason);
@@ -1129,7 +1183,36 @@ namespace dcn::registry
             Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_conditions(owner, name) VALUES(?1, ?2);");
             for(const ConditionBatchItem & item : items)
             {
-                const auto owner_opt = parseOwnerAddress(item.record.owner());
+                const bool use_savepoint = !all_or_nothing;
+                bool savepoint_active = false;
+                if(use_savepoint)
+                {
+                    if(!_exec("SAVEPOINT condition_batch_item;"))
+                    {
+                        all_ok = false;
+                        ++failed_count;
+                        continue;
+                    }
+                    savepoint_active = true;
+                }
+
+                auto fail_item = [&](const char * reason)
+                {
+                    spdlog::debug(
+                        "DB remove condition pending changes (batch item) name={} runtime_address={} reason={}",
+                        item.record.condition().name(),
+                        evmc::hex(item.address),
+                        reason);
+                    if(savepoint_active)
+                    {
+                        (void)_exec("ROLLBACK TO SAVEPOINT condition_batch_item;");
+                        (void)_exec("RELEASE SAVEPOINT condition_batch_item;");
+                        savepoint_active = false;
+                    }
+                    return false;
+                };
+
+                const auto owner_opt = evmc::from_hex<chain::Address>(item.record.owner());
                 if(!owner_opt)
                 {
                     all_ok = false;
@@ -1138,6 +1221,8 @@ namespace dcn::registry
                         rollback_batch_with_log("invalid owner");
                         return false;
                     }
+                    (void)fail_item("invalid owner");
+                    ++failed_count;
                     continue;
                 }
 
@@ -1150,8 +1235,12 @@ namespace dcn::registry
                         rollback_batch_with_log("serialize condition");
                         return false;
                     }
+                    (void)fail_item("serialize condition");
+                    ++failed_count;
                     continue;
                 }
+
+                bool item_ok = true;
 
                 insert_entity.reset();
                 sqlite3_bind_text(insert_entity.get(), 1, item.record.condition().name().c_str(), static_cast<int>(item.record.condition().name().size()), SQLITE_TRANSIENT);
@@ -1159,26 +1248,45 @@ namespace dcn::registry
                 sqlite3_bind_blob(insert_entity.get(), 3, payload_blob.data(), static_cast<int>(payload_blob.size()), SQLITE_TRANSIENT);
                 if(insert_entity.step() != SQLITE_DONE)
                 {
-                    all_ok = false;
-                    if(all_or_nothing)
-                    {
-                        rollback_batch_with_log("insert conditions");
-                        return false;
-                    }
-                    continue;
+                    item_ok = fail_item("insert conditions");
                 }
 
-                insert_owned.reset();
-                bindAddress(insert_owned.get(), 1, *owner_opt);
-                sqlite3_bind_text(insert_owned.get(), 2, item.record.condition().name().c_str(), static_cast<int>(item.record.condition().name().size()), SQLITE_TRANSIENT);
-                if(insert_owned.step() != SQLITE_DONE)
+                if(item_ok)
+                {
+                    insert_owned.reset();
+                    bindAddress(insert_owned.get(), 1, *owner_opt);
+                    sqlite3_bind_text(insert_owned.get(), 2, item.record.condition().name().c_str(), static_cast<int>(item.record.condition().name().size()), SQLITE_TRANSIENT);
+                    if(insert_owned.step() != SQLITE_DONE)
+                    {
+                        item_ok = fail_item("insert owned_conditions");
+                    }
+                }
+
+                if(item_ok && savepoint_active)
+                {
+                    if(!_exec("RELEASE SAVEPOINT condition_batch_item;"))
+                    {
+                        item_ok = fail_item("release savepoint");
+                    }
+                    else
+                    {
+                        savepoint_active = false;
+                    }
+                }
+
+                if(!item_ok)
                 {
                     all_ok = false;
+                    ++failed_count;
                     if(all_or_nothing)
                     {
-                        rollback_batch_with_log("insert owned_conditions");
+                        rollback_batch_with_log("batch item failure");
                         return false;
                     }
+                }
+                else
+                {
+                    ++inserted_count;
                 }
             }
         }
@@ -1195,6 +1303,7 @@ namespace dcn::registry
             return false;
         }
 
+        spdlog::debug("DB add condition batch committed inserted={} failed={}", inserted_count, failed_count);
         return all_ok;
     }
 

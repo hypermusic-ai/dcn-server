@@ -1,11 +1,9 @@
 #include <algorithm>
-#include <charconv>
 #include <format>
 #include <limits>
 #include <ranges>
 #include <set>
 #include <string_view>
-#include <system_error>
 #include <tuple>
 #include <vector>
 
@@ -65,23 +63,6 @@ namespace dcn
             }
 
             return escaped;
-        }
-
-        std::optional<std::uint32_t> _parseSlotId(const std::string & slot)
-        {
-            if(slot.empty())
-            {
-                return std::nullopt;
-            }
-
-            std::uint32_t value = 0;
-            const auto [ptr, ec] = std::from_chars(slot.data(), slot.data() + slot.size(), value, 10);
-            if(ec != std::errc{} || ptr != (slot.data() + slot.size()))
-            {
-                return std::nullopt;
-            }
-
-            return value;
         }
 
     }
@@ -208,7 +189,7 @@ namespace dcn
                             slot)});
                 }
 
-                const auto slot_id = _parseSlotId(slot);
+                const auto slot_id = parse::parseUint32Decimal(slot);
                 if(!slot_id)
                 {
                     spdlog::error("Connector `{}` has non-numeric binding slot `{}` at dim {}", connector.name(), slot, dim_id);
@@ -551,7 +532,7 @@ namespace dcn::parse
 
             for(const auto & [slot, _] : dimension.bindings())
             {
-                const auto parsed_slot = _parseSlotId(slot);
+                const auto parsed_slot = parseUint32Decimal(slot);
                 if(!parsed_slot || slot != std::to_string(*parsed_slot))
                 {
                     return ParseError{

@@ -1,7 +1,10 @@
 #include "format_hash.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstring>
+#include <string>
+#include <unordered_set>
 
 #include "crypto.hpp"
 
@@ -119,14 +122,94 @@ namespace dcn::chain
 
     evmc::bytes32 computeFormatHash(const std::vector<ScalarHashEntry> & hash_entries)
     {
-        std::vector<evmc::bytes32> label_hashes;
-        label_hashes.reserve(hash_entries.size());
-
+        evmc::bytes32 format_hash{};
         for(const ScalarHashEntry & hash_entry : hash_entries)
         {
-            label_hashes.push_back(scalarPathLabelHash(hash_entry.scalar_hash, hash_entry.path_hash));
+            const evmc::bytes32 label_hash = scalarPathLabelHash(hash_entry.scalar_hash, hash_entry.path_hash);
+            format_hash = composeFormatHash(format_hash, labelHashToFormatHash(label_hash));
         }
 
-        return computeFormatHashFromLabelHashes(label_hashes);
+        return format_hash;
+    }
+
+    std::vector<ScalarLabel> canonicalizeScalarLabels(const std::vector<ScalarLabel> & labels)
+    {
+        std::vector<ScalarLabel> canonical_scalar_labels;
+        canonical_scalar_labels.reserve(labels.size());
+        for(const ScalarLabel & scalar_label : labels)
+        {
+            canonical_scalar_labels.push_back(ScalarLabel{
+                .scalar = scalar_label.scalar,
+                .path_hash = scalar_label.path_hash,
+                .tail_id = scalar_label.tail_id
+            });
+        }
+
+        std::sort(
+            canonical_scalar_labels.begin(),
+            canonical_scalar_labels.end(),
+            [](const ScalarLabel & lhs, const ScalarLabel & rhs)
+            {
+                if(lessBytes32(lhs.path_hash, rhs.path_hash))
+                {
+                    return true;
+                }
+                if(lessBytes32(rhs.path_hash, lhs.path_hash))
+                {
+                    return false;
+                }
+                if(lhs.scalar != rhs.scalar)
+                {
+                    return lhs.scalar < rhs.scalar;
+                }
+                return lhs.tail_id < rhs.tail_id;
+            });
+
+        return canonical_scalar_labels;
+    }
+
+    bool scalarLabelsEqual(const std::vector<ScalarLabel> & lhs, const std::vector<ScalarLabel> & rhs)
+    {
+        if(lhs.size() != rhs.size())
+        {
+            return false;
+        }
+
+        for(std::size_t i = 0; i < lhs.size(); ++i)
+        {
+            if(
+                lhs[i].scalar != rhs[i].scalar ||
+                !equalBytes32(lhs[i].path_hash, rhs[i].path_hash) ||
+                lhs[i].tail_id != rhs[i].tail_id)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    ScalarLabelSummary summarizeScalarLabels(const std::vector<ScalarLabel> & labels)
+    {
+        std::unordered_set<std::string> scalars;
+        std::unordered_set<std::string> scalar_tail_pairs;
+        scalars.reserve(labels.size());
+        scalar_tail_pairs.reserve(labels.size());
+
+        for(const ScalarLabel & label : labels)
+        {
+            scalars.emplace(label.scalar);
+
+            std::string scalar_tail_key = label.scalar;
+            scalar_tail_key.push_back(':');
+            scalar_tail_key += std::to_string(label.tail_id);
+            scalar_tail_pairs.emplace(std::move(scalar_tail_key));
+        }
+
+        return ScalarLabelSummary{
+            .labels_count = labels.size(),
+            .unique_scalars_count = scalars.size(),
+            .unique_scalar_tail_pairs_count = scalar_tail_pairs.size(),
+        };
     }
 }

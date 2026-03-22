@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <cstdint>
+#include <vector>
 
 
 #ifdef interface
