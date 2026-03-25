@@ -1209,6 +1209,44 @@ function cloneAccountCursorState(state) {
     };
 }
 
+function normalizeCursorToken(value) {
+    if (typeof value !== 'string') {
+        return null;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+}
+
+function findLastOwnedResourceEntry(entries) {
+    if (!Array.isArray(entries)) {
+        return null;
+    }
+
+    for (let i = entries.length - 1; i >= 0; i -= 1) {
+        const normalized = normalizeCursorToken(entries[i]);
+        if (normalized) {
+            return normalized;
+        }
+    }
+
+    return null;
+}
+
+function resolveNextAccountCursor(currentCursor, nextAfter, entries) {
+    const explicitCursor = normalizeCursorToken(nextAfter);
+    if (explicitCursor) {
+        return explicitCursor;
+    }
+
+    const terminalCursor = findLastOwnedResourceEntry(entries);
+    if (terminalCursor) {
+        return terminalCursor;
+    }
+
+    return normalizeCursorToken(currentCursor);
+}
+
 function resetAccountPaginationState() {
     currentAccountPage = 0;
     accountCursorState = {
@@ -1478,15 +1516,21 @@ async function fetchAccountResourcesPage(resetPagination) {
         const conditionsHasMore = Boolean(data.conditions_has_more);
 
         accountNextCursorState = {
-            connectors: typeof data.next_after_connectors === 'string' && data.next_after_connectors.trim().length > 0
-                ? data.next_after_connectors.trim()
-                : null,
-            transformations: typeof data.next_after_transformations === 'string' && data.next_after_transformations.trim().length > 0
-                ? data.next_after_transformations.trim()
-                : null,
-            conditions: typeof data.next_after_conditions === 'string' && data.next_after_conditions.trim().length > 0
-                ? data.next_after_conditions.trim()
-                : null
+            connectors: resolveNextAccountCursor(
+                accountCursorState.connectors,
+                data.next_after_connectors,
+                data.owned_connectors
+            ),
+            transformations: resolveNextAccountCursor(
+                accountCursorState.transformations,
+                data.next_after_transformations,
+                data.owned_transformations
+            ),
+            conditions: resolveNextAccountCursor(
+                accountCursorState.conditions,
+                data.next_after_conditions,
+                data.owned_conditions
+            )
         };
         accountHasMore = connectorsHasMore || transformationsHasMore || conditionsHasMore;
 
