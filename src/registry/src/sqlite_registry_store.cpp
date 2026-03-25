@@ -325,38 +325,62 @@ namespace dcn::registry
 
     bool SQLiteRegistryStore::hasConnector(const std::string & name) const
     {
-        Statement stmt(_db, "SELECT 1 FROM connectors WHERE name = ?1 LIMIT 1;");
-        sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-        return stmt.step() == SQLITE_ROW;
+        try
+        {
+            Statement stmt(_db, "SELECT 1 FROM connectors WHERE name = ?1 LIMIT 1;");
+            sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+            return stmt.step() == SQLITE_ROW;
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("SQLite hasConnector query failed for name={}: {}", name, e.what());
+            return false;
+        }
     }
 
     std::optional<ConnectorRecordHandle> SQLiteRegistryStore::getConnectorRecordHandle(const std::string & name) const
     {
-        Statement stmt(_db, "SELECT payload_blob FROM connectors WHERE name = ?1 LIMIT 1;");
-        sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-        if(stmt.step() != SQLITE_ROW)
+        try
         {
+            Statement stmt(_db, "SELECT payload_blob FROM connectors WHERE name = ?1 LIMIT 1;");
+            sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+            if(stmt.step() != SQLITE_ROW)
+            {
+                return std::nullopt;
+            }
+
+            auto record_opt = parseRecordBlob<ConnectorRecord>(stmt.get(), 0);
+            if(!record_opt.has_value())
+            {
+                return std::nullopt;
+            }
+
+            return std::make_shared<ConnectorRecord>(std::move(*record_opt));
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("SQLite getConnectorRecordHandle query failed for name={}: {}", name, e.what());
             return std::nullopt;
         }
-
-        auto record_opt = parseRecordBlob<ConnectorRecord>(stmt.get(), 0);
-        if(!record_opt.has_value())
-        {
-            return std::nullopt;
-        }
-
-        return std::make_shared<ConnectorRecord>(std::move(*record_opt));
     }
 
     std::optional<evmc::bytes32> SQLiteRegistryStore::getConnectorFormatHash(const std::string & name) const
     {
-        Statement stmt(_db, "SELECT format_hash FROM connectors WHERE name = ?1 LIMIT 1;");
-        sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-        if(stmt.step() != SQLITE_ROW)
+        try
         {
+            Statement stmt(_db, "SELECT format_hash FROM connectors WHERE name = ?1 LIMIT 1;");
+            sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+            if(stmt.step() != SQLITE_ROW)
+            {
+                return std::nullopt;
+            }
+            return columnBytes32(stmt.get(), 0);
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("SQLite getConnectorFormatHash query failed for name={}: {}", name, e.what());
             return std::nullopt;
         }
-        return columnBytes32(stmt.get(), 0);
     }
 
     bool SQLiteRegistryStore::addConnector(
@@ -663,13 +687,24 @@ namespace dcn::registry
 
     std::size_t SQLiteRegistryStore::getFormatConnectorNamesCount(const evmc::bytes32 & format_hash) const
     {
-        Statement stmt(_db, "SELECT COUNT(*) FROM format_members WHERE format_hash = ?1;");
-        bindBytes32(stmt.get(), 1, format_hash);
-        if(stmt.step() != SQLITE_ROW)
+        try
         {
+            Statement stmt(_db, "SELECT COUNT(*) FROM format_members WHERE format_hash = ?1;");
+            bindBytes32(stmt.get(), 1, format_hash);
+            if(stmt.step() != SQLITE_ROW)
+            {
+                return 0;
+            }
+            return static_cast<std::size_t>(sqlite3_column_int64(stmt.get(), 0));
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error(
+                "SQLite getFormatConnectorNamesCount query failed for format_hash={}: {}",
+                evmc::hex(format_hash),
+                e.what());
             return 0;
         }
-        return static_cast<std::size_t>(sqlite3_column_int64(stmt.get(), 0));
     }
 
     NameCursorPage SQLiteRegistryStore::getFormatConnectorNamesCursor(
@@ -683,45 +718,58 @@ namespace dcn::registry
             return page;
         }
 
-        const std::size_t query_limit = limit + 1;
-        if(after.has_value())
+        try
         {
-            Statement stmt(_db, "SELECT name FROM format_members WHERE format_hash = ?1 AND name > ?2 ORDER BY name ASC LIMIT ?3;");
-            bindBytes32(stmt.get(), 1, format_hash);
-            sqlite3_bind_text(stmt.get(), 2, after->c_str(), static_cast<int>(after->size()), SQLITE_TRANSIENT);
-            sqlite3_bind_int(stmt.get(), 3, toSqliteInt(query_limit));
-            for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
+            const std::size_t query_limit = limit + 1;
+            if(after.has_value())
             {
-                const unsigned char * name_text = sqlite3_column_text(stmt.get(), 0);
-                if(name_text != nullptr)
+                Statement stmt(_db, "SELECT name FROM format_members WHERE format_hash = ?1 AND name > ?2 ORDER BY name ASC LIMIT ?3;");
+                bindBytes32(stmt.get(), 1, format_hash);
+                sqlite3_bind_text(stmt.get(), 2, after->c_str(), static_cast<int>(after->size()), SQLITE_TRANSIENT);
+                sqlite3_bind_int(stmt.get(), 3, toSqliteInt(query_limit));
+                for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
                 {
-                    page.entries.emplace_back(reinterpret_cast<const char *>(name_text));
+                    const unsigned char * name_text = sqlite3_column_text(stmt.get(), 0);
+                    if(name_text != nullptr)
+                    {
+                        page.entries.emplace_back(reinterpret_cast<const char *>(name_text));
+                    }
                 }
             }
-        }
-        else
-        {
-            Statement stmt(_db, "SELECT name FROM format_members WHERE format_hash = ?1 ORDER BY name ASC LIMIT ?2;");
-            bindBytes32(stmt.get(), 1, format_hash);
-            sqlite3_bind_int(stmt.get(), 2, toSqliteInt(query_limit));
-            for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
+            else
             {
-                const unsigned char * name_text = sqlite3_column_text(stmt.get(), 0);
-                if(name_text != nullptr)
+                Statement stmt(_db, "SELECT name FROM format_members WHERE format_hash = ?1 ORDER BY name ASC LIMIT ?2;");
+                bindBytes32(stmt.get(), 1, format_hash);
+                sqlite3_bind_int(stmt.get(), 2, toSqliteInt(query_limit));
+                for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
                 {
-                    page.entries.emplace_back(reinterpret_cast<const char *>(name_text));
+                    const unsigned char * name_text = sqlite3_column_text(stmt.get(), 0);
+                    if(name_text != nullptr)
+                    {
+                        page.entries.emplace_back(reinterpret_cast<const char *>(name_text));
+                    }
                 }
             }
-        }
 
-        if(page.entries.size() > limit)
-        {
-            page.has_more = true;
-            page.entries.resize(limit);
+            if(page.entries.size() > limit)
+            {
+                page.has_more = true;
+                page.entries.resize(limit);
+            }
+            if(page.has_more && !page.entries.empty())
+            {
+                page.next_after = page.entries.back();
+            }
         }
-        if(page.has_more && !page.entries.empty())
+        catch(const std::exception & e)
         {
-            page.next_after = page.entries.back();
+            spdlog::error(
+                "SQLite getFormatConnectorNamesCursor query failed for format_hash={} after={} limit={}: {}",
+                evmc::hex(format_hash),
+                after.value_or("<none>"),
+                limit,
+                e.what());
+            return NameCursorPage{};
         }
 
         return page;
@@ -729,33 +777,44 @@ namespace dcn::registry
 
     std::optional<std::vector<ScalarLabel>> SQLiteRegistryStore::getScalarLabelsByFormatHash(const evmc::bytes32 & format_hash) const
     {
-        Statement stmt(
-            _db,
-            "SELECT scalar, path_hash, tail_id FROM scalar_labels_by_format WHERE format_hash = ?1 ORDER BY path_hash ASC, scalar ASC, tail_id ASC, label_ordinal ASC;");
-        bindBytes32(stmt.get(), 1, format_hash);
-
-        std::vector<ScalarLabel> labels;
-        for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
+        try
         {
-            const unsigned char * scalar_text = sqlite3_column_text(stmt.get(), 0);
-            const auto path_hash = columnBytes32(stmt.get(), 1);
-            const sqlite3_int64 tail_id_raw = sqlite3_column_int64(stmt.get(), 2);
-            if(scalar_text == nullptr || !path_hash.has_value())
+            Statement stmt(
+                _db,
+                "SELECT scalar, path_hash, tail_id FROM scalar_labels_by_format WHERE format_hash = ?1 ORDER BY path_hash ASC, scalar ASC, tail_id ASC, label_ordinal ASC;");
+            bindBytes32(stmt.get(), 1, format_hash);
+
+            std::vector<ScalarLabel> labels;
+            for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
             {
-                continue;
+                const unsigned char * scalar_text = sqlite3_column_text(stmt.get(), 0);
+                const auto path_hash = columnBytes32(stmt.get(), 1);
+                const sqlite3_int64 tail_id_raw = sqlite3_column_int64(stmt.get(), 2);
+                if(scalar_text == nullptr || !path_hash.has_value())
+                {
+                    continue;
+                }
+                if(tail_id_raw < 0 || tail_id_raw > static_cast<sqlite3_int64>(std::numeric_limits<std::uint32_t>::max()))
+                {
+                    continue;
+                }
+                labels.push_back(ScalarLabel{.scalar = std::string(reinterpret_cast<const char *>(scalar_text)), .path_hash = *path_hash, .tail_id = static_cast<std::uint32_t>(tail_id_raw)});
             }
-            if(tail_id_raw < 0 || tail_id_raw > static_cast<sqlite3_int64>(std::numeric_limits<std::uint32_t>::max()))
+
+            if(labels.empty())
             {
-                continue;
+                return std::nullopt;
             }
-            labels.push_back(ScalarLabel{.scalar = std::string(reinterpret_cast<const char *>(scalar_text)), .path_hash = *path_hash, .tail_id = static_cast<std::uint32_t>(tail_id_raw)});
+            return labels;
         }
-
-        if(labels.empty())
+        catch(const std::exception & e)
         {
+            spdlog::error(
+                "SQLite getScalarLabelsByFormatHash query failed for format_hash={}: {}",
+                evmc::hex(format_hash),
+                e.what());
             return std::nullopt;
         }
-        return labels;
     }
 
     bool SQLiteRegistryStore::replaceScalarLabelsByFormatHash(
@@ -827,27 +886,43 @@ namespace dcn::registry
 
     bool SQLiteRegistryStore::hasTransformation(const std::string & name) const
     {
-        Statement stmt(_db, "SELECT 1 FROM transformations WHERE name = ?1 LIMIT 1;");
-        sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-        return stmt.step() == SQLITE_ROW;
+        try
+        {
+            Statement stmt(_db, "SELECT 1 FROM transformations WHERE name = ?1 LIMIT 1;");
+            sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+            return stmt.step() == SQLITE_ROW;
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("SQLite hasTransformation query failed for name={}: {}", name, e.what());
+            return false;
+        }
     }
 
     std::optional<TransformationRecordHandle> SQLiteRegistryStore::getTransformationRecordHandle(const std::string & name) const
     {
-        Statement stmt(_db, "SELECT payload_blob FROM transformations WHERE name = ?1 LIMIT 1;");
-        sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-        if(stmt.step() != SQLITE_ROW)
+        try
         {
+            Statement stmt(_db, "SELECT payload_blob FROM transformations WHERE name = ?1 LIMIT 1;");
+            sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+            if(stmt.step() != SQLITE_ROW)
+            {
+                return std::nullopt;
+            }
+
+            auto record_opt = parseRecordBlob<TransformationRecord>(stmt.get(), 0);
+            if(!record_opt.has_value())
+            {
+                return std::nullopt;
+            }
+
+            return std::make_shared<TransformationRecord>(std::move(*record_opt));
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("SQLite getTransformationRecordHandle query failed for name={}: {}", name, e.what());
             return std::nullopt;
         }
-
-        auto record_opt = parseRecordBlob<TransformationRecord>(stmt.get(), 0);
-        if(!record_opt.has_value())
-        {
-            return std::nullopt;
-        }
-
-        return std::make_shared<TransformationRecord>(std::move(*record_opt));
     }
 
     bool SQLiteRegistryStore::addTransformation(const chain::Address & address, const TransformationRecord & record)
@@ -1068,27 +1143,43 @@ namespace dcn::registry
 
     bool SQLiteRegistryStore::hasCondition(const std::string & name) const
     {
-        Statement stmt(_db, "SELECT 1 FROM conditions WHERE name = ?1 LIMIT 1;");
-        sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-        return stmt.step() == SQLITE_ROW;
+        try
+        {
+            Statement stmt(_db, "SELECT 1 FROM conditions WHERE name = ?1 LIMIT 1;");
+            sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+            return stmt.step() == SQLITE_ROW;
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("SQLite hasCondition query failed for name={}: {}", name, e.what());
+            return false;
+        }
     }
 
     std::optional<ConditionRecordHandle> SQLiteRegistryStore::getConditionRecordHandle(const std::string & name) const
     {
-        Statement stmt(_db, "SELECT payload_blob FROM conditions WHERE name = ?1 LIMIT 1;");
-        sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-        if(stmt.step() != SQLITE_ROW)
+        try
         {
+            Statement stmt(_db, "SELECT payload_blob FROM conditions WHERE name = ?1 LIMIT 1;");
+            sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+            if(stmt.step() != SQLITE_ROW)
+            {
+                return std::nullopt;
+            }
+
+            auto record_opt = parseRecordBlob<ConditionRecord>(stmt.get(), 0);
+            if(!record_opt.has_value())
+            {
+                return std::nullopt;
+            }
+
+            return std::make_shared<ConditionRecord>(std::move(*record_opt));
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("SQLite getConditionRecordHandle query failed for name={}: {}", name, e.what());
             return std::nullopt;
         }
-
-        auto record_opt = parseRecordBlob<ConditionRecord>(stmt.get(), 0);
-        if(!record_opt.has_value())
-        {
-            return std::nullopt;
-        }
-
-        return std::make_shared<ConditionRecord>(std::move(*record_opt));
     }
 
     bool SQLiteRegistryStore::addCondition(const chain::Address & address, const ConditionRecord & record)
@@ -1319,53 +1410,67 @@ namespace dcn::registry
             return page;
         }
 
-        const std::size_t query_limit = limit + 1;
-        if(after.has_value())
+        try
         {
-            const std::string sql =
-                std::string("SELECT name FROM ") + table_name +
-                " WHERE owner = ?1 AND name > ?2 ORDER BY name ASC LIMIT ?3;";
-            Statement stmt(_db, sql.c_str());
-            bindAddress(stmt.get(), 1, owner);
-            sqlite3_bind_text(stmt.get(), 2, after->c_str(), static_cast<int>(after->size()), SQLITE_TRANSIENT);
-            sqlite3_bind_int(stmt.get(), 3, toSqliteInt(query_limit));
-
-            for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
+            const std::size_t query_limit = limit + 1;
+            if(after.has_value())
             {
-                const unsigned char * name_text = sqlite3_column_text(stmt.get(), 0);
-                if(name_text != nullptr)
+                const std::string sql =
+                    std::string("SELECT name FROM ") + table_name +
+                    " WHERE owner = ?1 AND name > ?2 ORDER BY name ASC LIMIT ?3;";
+                Statement stmt(_db, sql.c_str());
+                bindAddress(stmt.get(), 1, owner);
+                sqlite3_bind_text(stmt.get(), 2, after->c_str(), static_cast<int>(after->size()), SQLITE_TRANSIENT);
+                sqlite3_bind_int(stmt.get(), 3, toSqliteInt(query_limit));
+
+                for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
                 {
-                    page.entries.push_back(std::string(reinterpret_cast<const char *>(name_text)));
+                    const unsigned char * name_text = sqlite3_column_text(stmt.get(), 0);
+                    if(name_text != nullptr)
+                    {
+                        page.entries.push_back(std::string(reinterpret_cast<const char *>(name_text)));
+                    }
                 }
             }
-        }
-        else
-        {
-            const std::string sql =
-                std::string("SELECT name FROM ") + table_name +
-                " WHERE owner = ?1 ORDER BY name ASC LIMIT ?2;";
-            Statement stmt(_db, sql.c_str());
-            bindAddress(stmt.get(), 1, owner);
-            sqlite3_bind_int(stmt.get(), 2, toSqliteInt(query_limit));
-            for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
+            else
             {
-                const unsigned char * name_text = sqlite3_column_text(stmt.get(), 0);
-                if(name_text != nullptr)
+                const std::string sql =
+                    std::string("SELECT name FROM ") + table_name +
+                    " WHERE owner = ?1 ORDER BY name ASC LIMIT ?2;";
+                Statement stmt(_db, sql.c_str());
+                bindAddress(stmt.get(), 1, owner);
+                sqlite3_bind_int(stmt.get(), 2, toSqliteInt(query_limit));
+                for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
                 {
-                    page.entries.push_back(std::string(reinterpret_cast<const char *>(name_text)));
+                    const unsigned char * name_text = sqlite3_column_text(stmt.get(), 0);
+                    if(name_text != nullptr)
+                    {
+                        page.entries.push_back(std::string(reinterpret_cast<const char *>(name_text)));
+                    }
                 }
             }
-        }
 
-        if(page.entries.size() > limit)
-        {
-            page.has_more = true;
-            page.entries.resize(limit);
-        }
+            if(page.entries.size() > limit)
+            {
+                page.has_more = true;
+                page.entries.resize(limit);
+            }
 
-        if(page.has_more && !page.entries.empty())
+            if(page.has_more && !page.entries.empty())
+            {
+                page.next_after = page.entries.back();
+            }
+        }
+        catch(const std::exception & e)
         {
-            page.next_after = page.entries.back();
+            spdlog::error(
+                "SQLite owned cursor query failed for table={} owner={} after={} limit={}: {}",
+                table_name,
+                evmc::hex(owner),
+                after.value_or("<none>"),
+                limit,
+                e.what());
+            return NameCursorPage{};
         }
 
         return page;

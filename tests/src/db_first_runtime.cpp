@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <nlohmann/json.hpp>
+#include <sqlite3.h>
 
 #include "sqlite_registry_store.hpp"
 
@@ -122,6 +123,30 @@ namespace
 
         output << *json_result;
         return output.good();
+    }
+
+    bool executeSqlScript(const std::filesystem::path & db_path, const std::string & script)
+    {
+        sqlite3 * db = nullptr;
+        const int open_rc = sqlite3_open_v2(db_path.string().c_str(), &db, SQLITE_OPEN_READWRITE, nullptr);
+        if(open_rc != SQLITE_OK)
+        {
+            if(db != nullptr)
+            {
+                sqlite3_close(db);
+            }
+            return false;
+        }
+
+        char * error_message = nullptr;
+        const int exec_rc = sqlite3_exec(db, script.c_str(), nullptr, nullptr, &error_message);
+        if(error_message != nullptr)
+        {
+            sqlite3_free(error_message);
+        }
+
+        sqlite3_close(db);
+        return exec_rc == SQLITE_OK;
     }
 
     server::RouteArg makeStringRouteArg(const std::string & value)
@@ -720,6 +745,63 @@ TEST_F(UnitTest, API_Execute_BrokenDbDependencyReturnsInvariantError)
     const auto contains_connector_after = containsConnector(io_context, evm_instance, "BrokenConnector");
     ASSERT_TRUE(contains_connector_after.has_value());
     EXPECT_FALSE(*contains_connector_after);
+}
+
+TEST_F(UnitTest, SQLiteRegistryStore_QueryHelpers_PrepareFailureReturnsSafeDefaults)
+{
+    const auto storage_path = makeTestPath("sqlite_prepare_failure");
+    PathScope storage_scope(storage_path);
+    ASSERT_TRUE(prepareStorageLayout(storage_path));
+    const auto db_path = storage_path / "registry.sqlite";
+
+    registry::SQLiteRegistryStore store(db_path.string());
+
+    ASSERT_TRUE(executeSqlScript(
+        db_path,
+        "PRAGMA foreign_keys=OFF;"
+        "DROP TABLE connectors;"
+        "DROP TABLE transformations;"
+        "DROP TABLE conditions;"
+        "DROP TABLE format_members;"
+        "DROP TABLE scalar_labels_by_format;"
+        "DROP TABLE owned_connectors;"
+        "DROP TABLE owned_transformations;"
+        "DROP TABLE owned_conditions;"));
+
+    const evmc::bytes32 format_hash{};
+    const chain::Address owner = makeAddressFromByte(0x64);
+
+    EXPECT_FALSE(store.hasConnector("missing"));
+    EXPECT_FALSE(store.getConnectorRecordHandle("missing").has_value());
+    EXPECT_FALSE(store.getConnectorFormatHash("missing").has_value());
+
+    EXPECT_EQ(store.getFormatConnectorNamesCount(format_hash), 0u);
+    const auto format_page = store.getFormatConnectorNamesCursor(format_hash, std::nullopt, 16);
+    EXPECT_TRUE(format_page.entries.empty());
+    EXPECT_FALSE(format_page.has_more);
+    EXPECT_FALSE(format_page.next_after.has_value());
+    EXPECT_FALSE(store.getScalarLabelsByFormatHash(format_hash).has_value());
+
+    EXPECT_FALSE(store.hasTransformation("missing"));
+    EXPECT_FALSE(store.getTransformationRecordHandle("missing").has_value());
+
+    EXPECT_FALSE(store.hasCondition("missing"));
+    EXPECT_FALSE(store.getConditionRecordHandle("missing").has_value());
+
+    const auto owned_connectors_page = store.getOwnedConnectorsCursor(owner, std::nullopt, 16);
+    EXPECT_TRUE(owned_connectors_page.entries.empty());
+    EXPECT_FALSE(owned_connectors_page.has_more);
+    EXPECT_FALSE(owned_connectors_page.next_after.has_value());
+
+    const auto owned_transformations_page = store.getOwnedTransformationsCursor(owner, std::nullopt, 16);
+    EXPECT_TRUE(owned_transformations_page.entries.empty());
+    EXPECT_FALSE(owned_transformations_page.has_more);
+    EXPECT_FALSE(owned_transformations_page.next_after.has_value());
+
+    const auto owned_conditions_page = store.getOwnedConditionsCursor(owner, std::nullopt, 16);
+    EXPECT_TRUE(owned_conditions_page.entries.empty());
+    EXPECT_FALSE(owned_conditions_page.has_more);
+    EXPECT_FALSE(owned_conditions_page.next_after.has_value());
 }
 
 TEST_F(UnitTest, Loader_StartupImport_DbHitJsonIsNoopAndKeepsFile)

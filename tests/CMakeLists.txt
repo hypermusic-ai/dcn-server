@@ -40,6 +40,7 @@ function(configure_test_target test_target)
         PRIVATE
             GTest::gtest_main
             spdlog::spdlog
+            sqlite3
             DecentralisedArtServerLib)
 
     set_target_properties("${test_target}" PROPERTIES CXX_STANDARD 23)
