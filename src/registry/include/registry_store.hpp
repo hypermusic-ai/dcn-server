@@ -46,6 +46,13 @@ namespace dcn::registry
         bool has_more = false;
     };
 
+    enum class WalCheckpointMode : std::uint8_t
+    {
+        PASSIVE,
+        FULL,
+        TRUNCATE
+    };
+
     class IRegistryStore
     {
         public:
@@ -69,9 +76,6 @@ namespace dcn::registry
                 std::size_t limit) const = 0;
             virtual std::optional<std::vector<ScalarLabel>> getScalarLabelsByFormatHash(
                 const evmc::bytes32 & format_hash) const = 0;
-            virtual bool replaceScalarLabelsByFormatHash(
-                const evmc::bytes32 & format_hash,
-                const std::vector<ScalarLabel> & canonical_scalar_labels) = 0;
 
             virtual bool hasTransformation(const std::string & name) const = 0;
             virtual std::optional<TransformationRecordHandle> getTransformationRecordHandle(
@@ -105,5 +109,7 @@ namespace dcn::registry
                 const chain::Address & owner,
                 const std::optional<NameCursor> & after,
                 std::size_t limit) const = 0;
+
+            virtual bool checkpointWal(WalCheckpointMode mode) const = 0;
     };
 }

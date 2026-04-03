@@ -779,19 +779,43 @@ contract FakeConnectorCaller is IConnector
 
     evmc::bytes32 expectedFormatHash(std::initializer_list<std::pair<std::string_view, evmc::bytes32>> labels)
     {
-        evmc::bytes32 format_hash{};
+        std::vector<evmc::bytes32> unique_label_hashes;
+        unique_label_hashes.reserve(labels.size());
         for(const auto & [scalar_name, path_hash] : labels)
         {
             const evmc::bytes32 scalar_hash = keccakBytes(
                 reinterpret_cast<const std::uint8_t *>(scalar_name.data()),
                 scalar_name.size());
             const evmc::bytes32 label_hash = scalarPathLabelHash(scalar_hash, path_hash);
+            unique_label_hashes.push_back(label_hash);
+        }
+
+        std::sort(
+            unique_label_hashes.begin(),
+            unique_label_hashes.end(),
+            [](const evmc::bytes32 & lhs, const evmc::bytes32 & rhs)
+            {
+                return std::memcmp(lhs.bytes, rhs.bytes, sizeof(lhs.bytes)) < 0;
+            });
+
+        unique_label_hashes.erase(
+            std::unique(
+                unique_label_hashes.begin(),
+                unique_label_hashes.end(),
+                [](const evmc::bytes32 & lhs, const evmc::bytes32 & rhs)
+                {
+                    return std::memcmp(lhs.bytes, rhs.bytes, sizeof(lhs.bytes)) == 0;
+                }),
+            unique_label_hashes.end());
+
+        evmc::bytes32 format_hash{};
+        for(const evmc::bytes32 & label_hash : unique_label_hashes)
+        {
             format_hash = composeFormatHash(format_hash, labelHashToFormatHash(label_hash));
         }
 
         return format_hash;
     }
-
     bool equalBytes32(const evmc::bytes32 & lhs, const evmc::bytes32 & rhs)
     {
         return std::memcmp(lhs.bytes, rhs.bytes, sizeof(lhs.bytes)) == 0;
@@ -948,7 +972,7 @@ TEST_F(UnitTest, PT_Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
         (*first_bucket_item == *right_result && *second_bucket_item == left_address));
 }
 
-TEST_F(UnitTest, PT_Registry_FormatHash_PreservesScalarMultiplicity)
+TEST_F(UnitTest, PT_Registry_FormatHash_IgnoresScalarMultiplicity)
 {
     ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
     ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
@@ -998,7 +1022,7 @@ TEST_F(UnitTest, PT_Registry_FormatHash_PreservesScalarMultiplicity)
     const auto two_hash_res = callGetFormatHash(io_context, evm_instance, owner, "FMT_TWO_PITCH");
     ASSERT_TRUE(two_hash_res.has_value()) << two_hash_res.error();
 
-    EXPECT_FALSE(equalBytes32(*one_hash_res, *two_hash_res));
+    EXPECT_TRUE(equalBytes32(*one_hash_res, *two_hash_res));
     EXPECT_TRUE(equalBytes32(*one_hash_res, expectedFormatHash({
         {"PITCH", pathHash({0})}
     })));

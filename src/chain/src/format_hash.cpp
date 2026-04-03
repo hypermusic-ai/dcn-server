@@ -4,7 +4,6 @@
 #include <array>
 #include <cstring>
 #include <string>
-#include <unordered_set>
 
 #include "crypto.hpp"
 
@@ -13,6 +12,27 @@ namespace
     constexpr std::uint8_t PATH_DIM_DOMAIN = 0x10;
     constexpr std::uint8_t PATH_CONCAT_DOMAIN = 0x11;
     constexpr std::uint8_t SCALAR_PATH_LABEL_DOMAIN = 0x12;
+
+    void sortAndUniqueBytes32(std::vector<evmc::bytes32> & hashes)
+    {
+        std::sort(
+            hashes.begin(),
+            hashes.end(),
+            [](const evmc::bytes32 & lhs, const evmc::bytes32 & rhs)
+            {
+                return dcn::chain::lessBytes32(lhs, rhs);
+            });
+
+        hashes.erase(
+            std::unique(
+                hashes.begin(),
+                hashes.end(),
+                [](const evmc::bytes32 & lhs, const evmc::bytes32 & rhs)
+                {
+                    return dcn::chain::equalBytes32(lhs, rhs);
+                }),
+            hashes.end());
+    }
 }
 
 namespace dcn::chain
@@ -111,8 +131,11 @@ namespace dcn::chain
 
     evmc::bytes32 computeFormatHashFromLabelHashes(const std::vector<evmc::bytes32> & label_hashes)
     {
+        std::vector<evmc::bytes32> unique_label_hashes = label_hashes;
+        sortAndUniqueBytes32(unique_label_hashes);
+
         evmc::bytes32 format_hash{};
-        for(const evmc::bytes32 & label_hash : label_hashes)
+        for(const evmc::bytes32 & label_hash : unique_label_hashes)
         {
             format_hash = composeFormatHash(format_hash, labelHashToFormatHash(label_hash));
         }
@@ -122,10 +145,18 @@ namespace dcn::chain
 
     evmc::bytes32 computeFormatHash(const std::vector<ScalarHashEntry> & hash_entries)
     {
+        std::vector<evmc::bytes32> label_hashes;
+        label_hashes.reserve(hash_entries.size());
         evmc::bytes32 format_hash{};
         for(const ScalarHashEntry & hash_entry : hash_entries)
         {
             const evmc::bytes32 label_hash = scalarPathLabelHash(hash_entry.scalar_hash, hash_entry.path_hash);
+            label_hashes.push_back(label_hash);
+        }
+
+        sortAndUniqueBytes32(label_hashes);
+        for(const evmc::bytes32 & label_hash : label_hashes)
+        {
             format_hash = composeFormatHash(format_hash, labelHashToFormatHash(label_hash));
         }
 
@@ -165,6 +196,18 @@ namespace dcn::chain
                 return lhs.tail_id < rhs.tail_id;
             });
 
+        canonical_scalar_labels.erase(
+            std::unique(
+                canonical_scalar_labels.begin(),
+                canonical_scalar_labels.end(),
+                [](const ScalarLabel & lhs, const ScalarLabel & rhs)
+                {
+                    return lhs.scalar == rhs.scalar &&
+                        equalBytes32(lhs.path_hash, rhs.path_hash) &&
+                        lhs.tail_id == rhs.tail_id;
+                }),
+            canonical_scalar_labels.end());
+
         return canonical_scalar_labels;
     }
 
@@ -187,29 +230,5 @@ namespace dcn::chain
         }
 
         return true;
-    }
-
-    ScalarLabelSummary summarizeScalarLabels(const std::vector<ScalarLabel> & labels)
-    {
-        std::unordered_set<std::string> scalars;
-        std::unordered_set<std::string> scalar_tail_pairs;
-        scalars.reserve(labels.size());
-        scalar_tail_pairs.reserve(labels.size());
-
-        for(const ScalarLabel & label : labels)
-        {
-            scalars.emplace(label.scalar);
-
-            std::string scalar_tail_key = label.scalar;
-            scalar_tail_key.push_back(':');
-            scalar_tail_key += std::to_string(label.tail_id);
-            scalar_tail_pairs.emplace(std::move(scalar_tail_key));
-        }
-
-        return ScalarLabelSummary{
-            .labels_count = labels.size(),
-            .unique_scalars_count = scalars.size(),
-            .unique_scalar_tail_pairs_count = scalar_tail_pairs.size(),
-        };
     }
 }

@@ -7,13 +7,11 @@
 #include <string>
 #include <vector>
 
-#include "native.h"
-#include <asio.hpp>
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 #include <spdlog/spdlog.h>
 
-#include "utils.hpp"
+#include "async.hpp"
 #include "pt.hpp"
 #include "address.hpp"
 #include "format_hash.hpp"
@@ -94,6 +92,8 @@ namespace dcn::registry
                 const std::optional<NameCursor> & after,
                 std::size_t limit) const;
 
+            asio::awaitable<bool> checkpointWal(WalCheckpointMode mode) const;
+
         private:
             static constexpr std::size_t kHotCacheCapacity = 1024;
 
@@ -105,3 +105,5 @@ namespace dcn::registry
             mutable LruCache<std::string, std::optional<ConditionRecordHandle>> _condition_record_cache;
     };
 }
+
+

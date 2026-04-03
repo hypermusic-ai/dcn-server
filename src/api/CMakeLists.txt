@@ -1,6 +1,7 @@
 add_module(NAME "API"
     DEPENDENCIES
         "${PROJECT_PREFIX}::Utils"
+        "${PROJECT_PREFIX}::Async"
         "${PROJECT_PREFIX}::Native"
         "${PROJECT_PREFIX}::Version"
         "${PROJECT_PREFIX}::Config"

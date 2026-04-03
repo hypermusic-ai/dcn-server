@@ -1,8 +1,9 @@
 include("${PROJECT_SOURCE_DIR}/cmake/add_module.cmake")
 
-add_module(NAME "Utils"
+add_module(NAME "Async"
     DEPENDENCIES
+        "${PROJECT_PREFIX}::Native"
+        asio
+
         spdlog::spdlog
-        absl::hash
-        absl::flat_hash_map 
 )

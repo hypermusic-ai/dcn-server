@@ -17,7 +17,7 @@ namespace dcn::auth
     {
         std::string nonce =  std::to_string(_dist(_rng));
         
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         _nonces[address] = nonce;
         co_return nonce;
@@ -25,7 +25,7 @@ namespace dcn::auth
 
     asio::awaitable<bool> AuthManager::verifyNonce(const chain::Address & address, const std::string & nonce)
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         auto it = _nonces.find(address);
         if (it == _nonces.end()) co_return false;
@@ -44,7 +44,7 @@ namespace dcn::auth
 
     asio::awaitable<bool> AuthManager::verifySignature(const chain::Address & address, const std::string& sig_hex, const std::string& message)
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
         
         // verify signature
         const std::optional<evmc::bytes> signature_bytes_result = evmc::from_hex(sig_hex);
@@ -86,7 +86,7 @@ namespace dcn::auth
 
     asio::awaitable<std::string> AuthManager::generateAccessToken(const chain::Address & address)
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         auto token = jwt::create()
             .set_issuer("eth-auth-demo")
@@ -103,7 +103,7 @@ namespace dcn::auth
 
     asio::awaitable<std::expected<chain::Address, AuthError>> AuthManager::verifyAccessToken(std::string token) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         if(token.empty()) co_return std::unexpected(AuthError{AuthError::Kind::INVALID_TOKEN});
         if(token.back() == '\r')token.pop_back(); // remove \r if present
@@ -183,7 +183,7 @@ namespace dcn::auth
 
     asio::awaitable<bool> AuthManager::compareAccessToken(const chain::Address & address, std::string token) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         if(token.empty()) co_return false;
         if(token.back() == '\r')token.pop_back(); // remove \r if present
@@ -200,7 +200,7 @@ namespace dcn::auth
 
     asio::awaitable<void> AuthManager::invalidateAccessToken(const chain::Address & address)
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         _access_tokens.erase(address);
     }

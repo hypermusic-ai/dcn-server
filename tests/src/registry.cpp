@@ -288,7 +288,7 @@ TEST_F(UnitTest, Registry_AddConnector_AllowsAddressReuseAcrossDifferentNames)
     EXPECT_TRUE(second_hash.has_value());
 }
 
-TEST_F(UnitTest, Registry_FormatHash_PreservesScalarMultiplicity)
+TEST_F(UnitTest, Registry_FormatHash_IgnoresScalarMultiplicity)
 {
     asio::io_context io_context;
     registry::Registry registry(io_context);
@@ -313,7 +313,7 @@ TEST_F(UnitTest, Registry_FormatHash_PreservesScalarMultiplicity)
     ASSERT_TRUE(one_hash.has_value());
     ASSERT_TRUE(two_hash.has_value());
 
-    EXPECT_FALSE(chain::equalBytes32(*one_hash, *two_hash));
+    EXPECT_TRUE(chain::equalBytes32(*one_hash, *two_hash));
 
     const evmc::bytes32 expected_one = expectedFormatHash({
         {"PITCH", pathHash({0})}
@@ -327,9 +327,8 @@ TEST_F(UnitTest, Registry_FormatHash_PreservesScalarMultiplicity)
 
     const auto two_labels = runAwaitable(io_context, registry.getScalarLabelsByFormatHash(*two_hash));
     ASSERT_TRUE(two_labels.has_value());
-    EXPECT_EQ(two_labels->size(), 2u);
+    EXPECT_EQ(two_labels->size(), 1u);
     EXPECT_EQ(two_labels->at(0).scalar, "PITCH");
-    EXPECT_EQ(two_labels->at(1).scalar, "PITCH");
 }
 
 TEST_F(UnitTest, Registry_FormatHash_MatchesForSameScalarNamesWhenTailLabelsMatch)

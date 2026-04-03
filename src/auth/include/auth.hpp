@@ -6,18 +6,13 @@
 #include <format>
 #include <regex>
 
-#include "native.h"
-#include <asio.hpp>
-#include <asio/experimental/awaitable_operators.hpp>
-using namespace asio::experimental::awaitable_operators;
-
 #include <absl/container/flat_hash_map.h>
 #include <spdlog/spdlog.h>
 #include <secp256k1.h>
 #include <secp256k1_recovery.h>
 #include <jwt-cpp/jwt.h>
 
-#include "utils.hpp"
+#include "async.hpp"
 #include "keccak256.hpp"
 #include "chain.hpp"
 

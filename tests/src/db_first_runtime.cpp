@@ -358,6 +358,67 @@ TEST_F(UnitTest, Registry_SQLite_PersistsRecordsAcrossReopen)
     }
 }
 
+TEST_F(UnitTest, SQLiteRegistryStore_CheckpointWal_TruncatePersistsAndShrinksWal)
+{
+    const auto storage_path = makeTestPath("registry_checkpoint_truncate");
+    PathScope storage_scope(storage_path);
+    ASSERT_TRUE(std::filesystem::create_directories(storage_path));
+    const auto db_path = storage_path / "registry.sqlite";
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0xC1));
+    {
+        registry::SQLiteRegistryStore store(db_path.string());
+        for(int i = 0; i < 96; ++i)
+        {
+            const auto name = std::format("WalTx{}", i);
+            auto record = makeTransformationRecord(name, owner_hex, "return x + 1;");
+            ASSERT_TRUE(store.addTransformation(makeAddressFromByte(static_cast<std::uint8_t>(0x10 + (i % 20))), record));
+        }
+
+        const auto wal_path = std::filesystem::path(db_path.string() + "-wal");
+        ASSERT_TRUE(std::filesystem::exists(wal_path));
+
+        std::error_code before_ec;
+        const auto wal_size_before = std::filesystem::file_size(wal_path, before_ec);
+        ASSERT_FALSE(before_ec);
+        EXPECT_GT(wal_size_before, 0u);
+
+        EXPECT_TRUE(store.checkpointWal(registry::WalCheckpointMode::TRUNCATE));
+
+        std::error_code after_ec;
+        const auto wal_size_after = std::filesystem::file_size(wal_path, after_ec);
+        ASSERT_FALSE(after_ec);
+        EXPECT_LE(wal_size_after, wal_size_before);
+        EXPECT_LE(wal_size_after, static_cast<std::uintmax_t>(4096));
+    }
+
+    {
+        asio::io_context io_context;
+        registry::Registry registry(io_context, db_path.string());
+        const auto handle = runAwaitable(io_context, registry.getTransformationRecordHandle("WalTx95"));
+        ASSERT_TRUE(handle.has_value());
+        ASSERT_TRUE(*handle);
+        EXPECT_EQ((*handle)->owner(), owner_hex);
+    }
+}
+
+TEST_F(UnitTest, Registry_CheckpointWal_PassiveReturnsTrue)
+{
+    const auto storage_path = makeTestPath("registry_checkpoint_passive");
+    PathScope storage_scope(storage_path);
+    ASSERT_TRUE(std::filesystem::create_directories(storage_path));
+    const auto db_path = storage_path / "registry.sqlite";
+
+    asio::io_context io_context;
+    registry::Registry registry(io_context, db_path.string());
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0xC2));
+    const auto record = makeTransformationRecord("PassiveCheckpointTx", owner_hex, "return x;");
+    ASSERT_TRUE(runAwaitable(io_context, registry.addTransformation(makeAddressFromByte(0x55), record)));
+
+    EXPECT_TRUE(runAwaitable(io_context, registry.checkpointWal(registry::WalCheckpointMode::PASSIVE)));
+}
+
 TEST_F(UnitTest, API_ReadEndpoints_ReturnFromDbWithoutEvmDeployment)
 {
     asio::io_context io_context;

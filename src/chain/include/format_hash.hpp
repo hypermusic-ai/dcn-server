@@ -29,13 +29,6 @@ namespace dcn::chain
         std::uint32_t tail_id;
     };
 
-    struct ScalarLabelSummary
-    {
-        std::size_t labels_count = 0;
-        std::size_t unique_scalars_count = 0;
-        std::size_t unique_scalar_tail_pairs_count = 0;
-    };
-
     struct ResolvedScalarEntries
     {
         std::vector<ScalarHashEntry> hash_entries;
@@ -67,6 +60,4 @@ namespace dcn::chain
     std::vector<ScalarLabel> canonicalizeScalarLabels(const std::vector<ScalarLabel> & labels);
 
     bool scalarLabelsEqual(const std::vector<ScalarLabel> & lhs, const std::vector<ScalarLabel> & rhs);
-
-    ScalarLabelSummary summarizeScalarLabels(const std::vector<ScalarLabel> & labels);
 }

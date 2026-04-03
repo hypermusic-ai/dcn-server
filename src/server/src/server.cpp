@@ -28,7 +28,7 @@ namespace dcn::server
         while (_close == false)
         {
             listen_deadline = std::chrono::steady_clock::now() + _idle_interval;
-            auto socket_result = co_await (_acceptor.async_accept(asio::use_awaitable) || utils::watchdog(listen_deadline));
+            auto socket_result = co_await (_acceptor.async_accept(asio::use_awaitable) || async::watchdog(listen_deadline));
             if(std::holds_alternative<asio::ip::tcp::socket>(socket_result))
             {
                 // spawn handleConnection to _io_context - not use server strand
@@ -49,7 +49,7 @@ namespace dcn::server
         std::chrono::steady_clock::time_point deadline{};
 
         // read data
-        co_await (readData(sock, deadline) || utils::watchdog(deadline));
+        co_await (readData(sock, deadline) || async::watchdog(deadline));
 
         spdlog::info("Connection ended");
     }

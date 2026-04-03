@@ -1,13 +1,9 @@
 #pragma once
 #include <ranges>
 
-#include "native.h"
-#include <asio.hpp>
-#include <asio/experimental/awaitable_operators.hpp>
-using namespace asio::experimental::awaitable_operators;
-
 #include <spdlog/spdlog.h>
 
+#include "async.hpp"
 #include "utils.hpp"
 #include "config.hpp"
 #include "route.hpp"

@@ -27,6 +27,24 @@ static void _configureLogger(const std::filesystem::path& logs_path)
     spdlog::set_default_logger(std::make_shared<spdlog::logger>(logger));
 }
 
+static std::vector<int> _configureShutdownSignals()
+{
+    std::vector<int> shutdown_signal_ids{
+        SIGINT,
+        SIGTERM
+    };
+#if defined(SIGBREAK)
+    shutdown_signal_ids.push_back(SIGBREAK);
+#endif
+#if defined(SIGQUIT)
+    shutdown_signal_ids.push_back(SIGQUIT);
+#endif
+#if defined(SIGHUP)
+    shutdown_signal_ids.push_back(SIGHUP);
+#endif
+    return shutdown_signal_ids;
+}
+
 int main(int argc, char* argv[])
 {
     dcn::config::Config cfg;
@@ -74,6 +92,7 @@ int main(int argc, char* argv[])
     arg_parser.addArg("--chain-confirmations", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Finality confirmation depth");
     arg_parser.addArg("--chain-batch-size", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Max number of blocks fetched per eth_getLogs request");
     arg_parser.addArg("--registry-db", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::String, "SQLite path for registry storage");
+    arg_parser.addArg("--registry-wal-sync-ms", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Interval in milliseconds for periodic SQLite WAL passive checkpoints");
     arg_parser.addArg("--loader-batch-connectors", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Batch size used while adding loaded connectors to registry");
     arg_parser.addArg("--loader-batch-transformations", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Batch size used while adding loaded transformations to registry");
     arg_parser.addArg("--loader-batch-conditions", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Batch size used while adding loaded conditions to registry");
@@ -166,9 +185,19 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    const int registry_wal_sync_ms_arg =
+        arg_parser.getArg<std::vector<int>>("--registry-wal-sync-ms").value_or(std::vector<int>{30000}).at(0);
+
+    if(registry_wal_sync_ms_arg <= 0)
+    {
+        spdlog::error("Invalid --registry-wal-sync-ms value. Expected positive value.");
+        return 1;
+    }
+
     const std::size_t loader_batch_connectors = static_cast<std::size_t>(loader_batch_connectors_arg);
     const std::size_t loader_batch_transformations = static_cast<std::size_t>(loader_batch_transformations_arg);
     const std::size_t loader_batch_conditions = static_cast<std::size_t>(loader_batch_conditions_arg);
+    const std::chrono::milliseconds registry_wal_sync_interval(registry_wal_sync_ms_arg);
 
     std::filesystem::path registry_db_path =
         cfg.storage_path / "registry.sqlite";
@@ -291,16 +320,19 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::GET, "/format/<string>?limit=<uint>&after=<~string>"}, dcn::GET_format, std::ref(registry));
 
     server.addRoute({dcn::http::Method::HEAD, "/connector/<string>"},       dcn::HEAD_connector, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/connector"},             dcn::OPTIONS_connector);
     server.addRoute({dcn::http::Method::OPTIONS, "/connector/<string>"},    dcn::OPTIONS_connector);
     server.addRoute({dcn::http::Method::GET,     "/connector/<string>"},    dcn::GET_connector, std::ref(registry));
     server.addRoute({dcn::http::Method::POST,    "/connector"},                       dcn::POST_connector, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
     server.addRoute({dcn::http::Method::HEAD, "/transformation/<string>"},    dcn::HEAD_transformation, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/transformation"},          dcn::OPTIONS_transformation);
     server.addRoute({dcn::http::Method::OPTIONS, "/transformation/<string>"}, dcn::OPTIONS_transformation);
     server.addRoute({dcn::http::Method::GET,     "/transformation/<string>"}, dcn::GET_transformation, std::ref(registry));
     server.addRoute({dcn::http::Method::POST,    "/transformation"},                    dcn::POST_transformation, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
     server.addRoute({dcn::http::Method::HEAD, "/condition/<string>"},    dcn::HEAD_condition, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/condition"},          dcn::OPTIONS_condition);
     server.addRoute({dcn::http::Method::OPTIONS, "/condition/<string>"}, dcn::OPTIONS_condition);
     server.addRoute({dcn::http::Method::GET,     "/condition/<string>"}, dcn::GET_condition, std::ref(registry));
     server.addRoute({dcn::http::Method::POST,    "/condition"},                    dcn::POST_condition, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
@@ -322,6 +354,121 @@ int main(int argc, char* argv[])
         spdlog::error("Failed to prepare PT Solidity build cache");
         return 1;
     }
+
+    const bool wal_enabled = (registry_db_path.string() != ":memory:");
+    std::atomic<bool> wal_sync_worker_stopped = true;
+    std::optional<dcn::registry::RegistryWalSyncWorker> wal_sync_worker;
+    if(wal_enabled)
+    {
+        // create wal sync worker
+        wal_sync_worker_stopped.store(false, std::memory_order_release);
+        wal_sync_worker.emplace(
+            io_context,
+            registry,
+            registry_wal_sync_interval);
+        
+        // start wal sync worker
+        asio::co_spawn(
+            io_context,
+            wal_sync_worker->run(),
+            [&wal_sync_worker_stopped](std::exception_ptr exception_ptr)
+            {
+                wal_sync_worker_stopped.store(true, std::memory_order_release);
+                if(exception_ptr)
+                {
+                    try
+                    {
+                        std::rethrow_exception(exception_ptr);
+                    }
+                    catch(const std::exception & e)
+                    {
+                        spdlog::error("Registry WAL sync worker failed: {}", e.what());
+                    }
+                    catch(...)
+                    {
+                        spdlog::error("Registry WAL sync worker failed with unknown error");
+                    }
+                }
+            });
+        spdlog::info("Registry WAL sync worker enabled with interval {}ms", registry_wal_sync_interval.count());
+    }
+    else
+    {
+        spdlog::info("Registry WAL sync worker disabled for in-memory SQLite database");
+    }
+
+    dcn::async::SignalWorker signal_worker(
+        io_context,
+        _configureShutdownSignals(),
+
+        // graceful shutdown
+        [&server,
+         &wal_sync_worker,
+         &wal_sync_worker_stopped,
+         &registry,
+         wal_enabled]() -> asio::awaitable<void>
+        {
+            spdlog::info("Decentralised Art server stopping...");
+            co_await server.close();
+            spdlog::info("Decentralised Art server close requested");
+
+            if(wal_sync_worker != std::nullopt)
+            {
+                spdlog::info("Requesting registry WAL sync worker stop...");
+                wal_sync_worker->requestStop();
+
+                auto exec = co_await asio::this_coro::executor;
+                asio::steady_timer wait_timer(exec);
+
+                while(!wal_sync_worker_stopped.load(std::memory_order_acquire))
+                {
+                    wait_timer.expires_after(std::chrono::milliseconds(25));
+                    std::error_code wait_ec;
+                    co_await wait_timer.async_wait(asio::redirect_error(asio::use_awaitable, wait_ec));
+                    if(wait_ec)
+                    {
+                        if(wait_ec != asio::error::operation_aborted)
+                        {
+                            spdlog::warn("Waiting for registry WAL sync worker stop failed: {}", wait_ec.message());
+                        }
+                        break;
+                    }
+                }
+
+                spdlog::info("Registry WAL sync worker stopped");
+            }
+
+            if(wal_enabled)
+            {
+                spdlog::info("Running final registry WAL truncate checkpoint...");
+                const bool checkpoint_ok =
+                    co_await registry.checkpointWal(dcn::registry::WalCheckpointMode::TRUNCATE);
+                if(!checkpoint_ok)
+                {
+                    spdlog::warn("Final registry WAL truncate checkpoint failed");
+                }
+                else
+                {
+                    spdlog::info("Final registry WAL truncate checkpoint complete");
+                }
+            }
+
+            co_return;
+        },
+
+        // immediate shutdown
+        [&wal_sync_worker]()
+        {
+            if(wal_sync_worker)
+            {
+                spdlog::info("Registry WAL sync worker stopping...");
+                wal_sync_worker->requestStop();
+                spdlog::info("Stopped registry WAL sync worker");
+            }
+        }
+    );
+    
+    signal_worker.start();
 
     asio::co_spawn(
         io_context,

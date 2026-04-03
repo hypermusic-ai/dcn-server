@@ -755,7 +755,7 @@ namespace dcn::registry
             co_return false;
         }
 
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         if(connector.dimensions_size() <= 0)
         {
@@ -812,22 +812,15 @@ namespace dcn::registry
         const auto existing_scalar_labels = _store->getScalarLabelsByFormatHash(format_hash);
         if(existing_scalar_labels.has_value() && !chain::scalarLabelsEqual(*existing_scalar_labels, canonical_scalar_labels))
         {
-            const chain::ScalarLabelSummary stored_summary = chain::summarizeScalarLabels(*existing_scalar_labels);
-            const chain::ScalarLabelSummary new_summary = chain::summarizeScalarLabels(canonical_scalar_labels);
             spdlog::warn(
-                "Different scalar-label multisets for format hash {} while registering connector '{}' at runtime address {} "
-                "(stored: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}; "
-                "new: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}); "
+                "Different scalar-label sets for format hash {} while registering connector '{}' at runtime address {} "
+                "(stored_labels={}, new_labels={}); "
                 "keeping first inserted representation",
                 evmc::hex(format_hash),
                 connector_name,
                 evmc::hex(address),
-                stored_summary.labels_count,
-                stored_summary.unique_scalars_count,
-                stored_summary.unique_scalar_tail_pairs_count,
-                new_summary.labels_count,
-                new_summary.unique_scalars_count,
-                new_summary.unique_scalar_tail_pairs_count);
+                existing_scalar_labels->size(),
+                canonical_scalar_labels.size());
         }
 
         const auto existing_record_handle_opt = _store->getConnectorRecordHandle(connector_name);
@@ -882,7 +875,7 @@ namespace dcn::registry
         std::vector<std::pair<chain::Address, ConnectorRecord>> connectors,
         bool all_or_nothing)
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         std::vector<ConnectorBatchItem> batch_items;
         batch_items.reserve(connectors.size());
@@ -1004,22 +997,15 @@ namespace dcn::registry
             const auto existing_scalar_labels = _store->getScalarLabelsByFormatHash(format_hash);
             if(existing_scalar_labels.has_value() && !chain::scalarLabelsEqual(*existing_scalar_labels, canonical_scalar_labels))
             {
-                const chain::ScalarLabelSummary stored_summary = chain::summarizeScalarLabels(*existing_scalar_labels);
-                const chain::ScalarLabelSummary new_summary = chain::summarizeScalarLabels(canonical_scalar_labels);
                 spdlog::warn(
-                    "Different scalar-label multisets for format hash {} while registering connector '{}' at runtime address {} "
-                    "(stored: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}; "
-                    "new: labels={}, unique_scalars={}, unique_scalar_tail_pairs={}); "
+                    "Different scalar-label sets for format hash {} while registering connector '{}' at runtime address {} "
+                    "(stored_labels={}, new_labels={}); "
                     "keeping first inserted representation",
                     evmc::hex(format_hash),
                     connector_name,
                     evmc::hex(address),
-                    stored_summary.labels_count,
-                    stored_summary.unique_scalars_count,
-                    stored_summary.unique_scalar_tail_pairs_count,
-                    new_summary.labels_count,
-                    new_summary.unique_scalars_count,
-                    new_summary.unique_scalar_tail_pairs_count);
+                    existing_scalar_labels->size(),
+                    canonical_scalar_labels.size());
             }
 
             const auto existing_record_handle_opt = _store->getConnectorRecordHandle(connector_name);
@@ -1108,7 +1094,7 @@ namespace dcn::registry
     asio::awaitable<std::optional<ConnectorRecordHandle>> Registry::getConnectorRecordHandle(
         const std::string & name) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         if(const auto * cached = getHotCacheEntry(_connector_record_cache, name))
         {
@@ -1122,7 +1108,7 @@ namespace dcn::registry
 
     asio::awaitable<std::optional<evmc::bytes32>> Registry::getFormatHash(const std::string & name) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         if(const auto * cached = getHotCacheEntry(_format_hash_cache, name))
         {
@@ -1136,7 +1122,7 @@ namespace dcn::registry
 
     asio::awaitable<std::size_t> Registry::getFormatConnectorNamesCount(const evmc::bytes32 & format_hash) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
         co_return _store->getFormatConnectorNamesCount(format_hash);
     }
 
@@ -1145,14 +1131,14 @@ namespace dcn::registry
         const std::optional<NameCursor> & after,
         std::size_t limit) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
         co_return _store->getFormatConnectorNamesCursor(format_hash, after, limit);
     }
 
     asio::awaitable<std::optional<std::vector<ScalarLabel>>> Registry::getScalarLabelsByFormatHash(
         const evmc::bytes32 & format_hash) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
         co_return _store->getScalarLabelsByFormatHash(format_hash);
     }
 
@@ -1165,7 +1151,7 @@ namespace dcn::registry
             co_return false;
         }
 
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         const auto existing_record_handle_opt = _store->getTransformationRecordHandle(transformation_name);
         if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
@@ -1202,7 +1188,7 @@ namespace dcn::registry
         std::vector<std::pair<chain::Address, TransformationRecord>> transformations,
         bool all_or_nothing)
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         std::vector<TransformationBatchItem> batch_items;
         batch_items.reserve(transformations.size());
@@ -1291,7 +1277,7 @@ namespace dcn::registry
     asio::awaitable<std::optional<TransformationRecordHandle>> Registry::getTransformationRecordHandle(
         const std::string & name) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         if(const auto * cached = getHotCacheEntry(_transformation_record_cache, name))
         {
@@ -1312,7 +1298,7 @@ namespace dcn::registry
             co_return false;
         }
 
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         const auto existing_record_handle_opt = _store->getConditionRecordHandle(condition_name);
         if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
@@ -1349,7 +1335,7 @@ namespace dcn::registry
         std::vector<std::pair<chain::Address, ConditionRecord>> conditions,
         bool all_or_nothing)
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         std::vector<ConditionBatchItem> batch_items;
         batch_items.reserve(conditions.size());
@@ -1438,7 +1424,7 @@ namespace dcn::registry
     asio::awaitable<std::optional<ConditionRecordHandle>> Registry::getConditionRecordHandle(
         const std::string & name) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         if(const auto * cached = getHotCacheEntry(_condition_record_cache, name))
         {
@@ -1455,7 +1441,7 @@ namespace dcn::registry
         const std::optional<NameCursor> & after,
         std::size_t limit) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
         co_return _store->getOwnedConnectorsCursor(owner, after, limit);
     }
 
@@ -1464,7 +1450,7 @@ namespace dcn::registry
         const std::optional<NameCursor> & after,
         std::size_t limit) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
         co_return _store->getOwnedTransformationsCursor(owner, after, limit);
     }
 
@@ -1473,8 +1459,14 @@ namespace dcn::registry
         const std::optional<NameCursor> & after,
         std::size_t limit) const
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
         co_return _store->getOwnedConditionsCursor(owner, after, limit);
+    }
+
+    asio::awaitable<bool> Registry::checkpointWal(const WalCheckpointMode mode) const
+    {
+        co_await async::ensureOnStrand(_strand);
+        co_return _store->checkpointWal(mode);
     }
 
     asio::awaitable<bool> Registry::add(chain::Address address, ConnectorRecord connector)

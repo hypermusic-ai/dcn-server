@@ -4,6 +4,8 @@ add_module(NAME "Loader"
     DEPENDENCIES
 
     "${PROJECT_PREFIX}::Native"
+    "${PROJECT_PREFIX}::Async"
+    "${PROJECT_PREFIX}::Utils"
     "${PROJECT_PREFIX}::PT"
     "${PROJECT_PREFIX}::Utils"
     "${PROJECT_PREFIX}::EVM"

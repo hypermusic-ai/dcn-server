@@ -10,7 +10,6 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
 
 #include <evmc/hex.hpp>
 #include <spdlog/spdlog.h>
@@ -22,6 +21,8 @@ namespace dcn::registry
     {
         constexpr std::size_t ADDRESS_BYTES_SIZE = 20;
         constexpr std::size_t BYTES32_SIZE = 32;
+        constexpr int SQLITE_DEFAULT_BUSY_TIMEOUT_MS = 5000;
+        constexpr int SQLITE_CHECKPOINT_BUSY_TIMEOUT_MS = 250;
 
         class Statement
         {
@@ -114,35 +115,34 @@ namespace dcn::registry
             return record;
         }
 
-        static std::string makeScalarLabelOccurrenceKey(const ScalarLabel & label)
+        static const char * checkpointModeToString(const WalCheckpointMode mode)
         {
-            std::string key;
-            key.reserve(label.scalar.size() + 1 + BYTES32_SIZE + sizeof(std::uint32_t));
-            key.append(label.scalar);
-            key.push_back('\0');
-            key.append(reinterpret_cast<const char *>(label.path_hash.bytes), BYTES32_SIZE);
-            key.push_back(static_cast<char>((label.tail_id >> 24) & 0xFFu));
-            key.push_back(static_cast<char>((label.tail_id >> 16) & 0xFFu));
-            key.push_back(static_cast<char>((label.tail_id >> 8) & 0xFFu));
-            key.push_back(static_cast<char>(label.tail_id & 0xFFu));
-            return key;
+            switch(mode)
+            {
+                case WalCheckpointMode::PASSIVE:
+                    return "PASSIVE";
+                case WalCheckpointMode::FULL:
+                    return "FULL";
+                case WalCheckpointMode::TRUNCATE:
+                    return "TRUNCATE";
+                default:
+                    return "UNKNOWN";
+            }
         }
 
-        static std::uint32_t nextScalarLabelOrdinal(
-            std::unordered_map<std::string, std::uint32_t> & occurrence_by_label,
-            const ScalarLabel & label)
+        static int toSqliteCheckpointMode(const WalCheckpointMode mode)
         {
-            std::string key = makeScalarLabelOccurrenceKey(label);
-            const auto it = occurrence_by_label.find(key);
-            if(it == occurrence_by_label.end())
+            switch(mode)
             {
-                occurrence_by_label.emplace(std::move(key), 1u);
-                return 0u;
+                case WalCheckpointMode::PASSIVE:
+                    return SQLITE_CHECKPOINT_PASSIVE;
+                case WalCheckpointMode::FULL:
+                    return SQLITE_CHECKPOINT_FULL;
+                case WalCheckpointMode::TRUNCATE:
+                    return SQLITE_CHECKPOINT_TRUNCATE;
+                default:
+                    return SQLITE_CHECKPOINT_PASSIVE;
             }
-
-            const std::uint32_t ordinal = it->second;
-            it->second = ordinal + 1u;
-            return ordinal;
         }
     }
 
@@ -165,7 +165,7 @@ namespace dcn::registry
             throw std::runtime_error(msg);
         }
 
-        sqlite3_busy_timeout(_db, 5000);
+        sqlite3_busy_timeout(_db, SQLITE_DEFAULT_BUSY_TIMEOUT_MS);
 
         if(!_exec("PRAGMA journal_mode=WAL;") || !_exec("PRAGMA synchronous=NORMAL;") ||
             !_exec("PRAGMA temp_store=MEMORY;") || !_exec("PRAGMA foreign_keys=OFF;"))
@@ -260,8 +260,7 @@ namespace dcn::registry
                 "scalar TEXT NOT NULL,"
                 "path_hash BLOB NOT NULL,"
                 "tail_id INTEGER NOT NULL,"
-                "label_ordinal INTEGER NOT NULL DEFAULT 0,"
-                "PRIMARY KEY(format_hash, scalar, path_hash, tail_id, label_ordinal)"
+                "PRIMARY KEY(format_hash, scalar, path_hash, tail_id)"
                 ");") &&
             _exec(
                 "CREATE TABLE IF NOT EXISTS owned_connectors ("
@@ -289,34 +288,6 @@ namespace dcn::registry
 
         if(!base_schema_ok)
         {
-            return false;
-        }
-
-        bool has_label_ordinal = false;
-        try
-        {
-            Statement pragma_stmt(_db, "PRAGMA table_info(scalar_labels_by_format);");
-            for(int rc = pragma_stmt.step(); rc == SQLITE_ROW; rc = pragma_stmt.step())
-            {
-                const unsigned char * column_name = sqlite3_column_text(pragma_stmt.get(), 1);
-                if(column_name != nullptr && std::strcmp(reinterpret_cast<const char *>(column_name), "label_ordinal") == 0)
-                {
-                    has_label_ordinal = true;
-                    break;
-                }
-            }
-        }
-        catch(const std::exception & e)
-        {
-            spdlog::error("Failed to inspect scalar_labels_by_format schema: {}", e.what());
-            return false;
-        }
-
-        if(!has_label_ordinal)
-        {
-            spdlog::error(
-                "Incompatible scalar_labels_by_format schema (missing label_ordinal). "
-                "This dev build requires a clean DB created with current schema.");
             return false;
         }
 
@@ -454,10 +425,8 @@ namespace dcn::registry
 
             Statement insert_scalar_label(
                 _db,
-                "INSERT OR IGNORE INTO scalar_labels_by_format(format_hash, scalar, path_hash, tail_id, label_ordinal) "
-                "VALUES(?1, ?2, ?3, ?4, ?5);");
-            std::unordered_map<std::string, std::uint32_t> occurrence_by_label;
-            occurrence_by_label.reserve(canonical_scalar_labels.size());
+                "INSERT OR IGNORE INTO scalar_labels_by_format(format_hash, scalar, path_hash, tail_id) "
+                "VALUES(?1, ?2, ?3, ?4);");
             for(const ScalarLabel & label : canonical_scalar_labels)
             {
                 insert_scalar_label.reset();
@@ -465,8 +434,6 @@ namespace dcn::registry
                 sqlite3_bind_text(insert_scalar_label.get(), 2, label.scalar.c_str(), static_cast<int>(label.scalar.size()), SQLITE_TRANSIENT);
                 bindBytes32(insert_scalar_label.get(), 3, label.path_hash);
                 sqlite3_bind_int64(insert_scalar_label.get(), 4, static_cast<sqlite3_int64>(label.tail_id));
-                const std::uint32_t label_ordinal = nextScalarLabelOrdinal(occurrence_by_label, label);
-                sqlite3_bind_int64(insert_scalar_label.get(), 5, static_cast<sqlite3_int64>(label_ordinal));
                 if(insert_scalar_label.step() != SQLITE_DONE)
                 {
                     rollback_with_log("insert scalar_labels_by_format");
@@ -527,7 +494,7 @@ namespace dcn::registry
         {
             Statement insert_connector(_db, "INSERT INTO connectors(name, owner, format_hash, payload_blob) VALUES(?1, ?2, ?3, ?4);");
             Statement insert_format_member(_db, "INSERT OR IGNORE INTO format_members(format_hash, name) VALUES(?1, ?2);");
-            Statement insert_scalar_label(_db, "INSERT OR IGNORE INTO scalar_labels_by_format(format_hash, scalar, path_hash, tail_id, label_ordinal) VALUES(?1, ?2, ?3, ?4, ?5);");
+            Statement insert_scalar_label(_db, "INSERT OR IGNORE INTO scalar_labels_by_format(format_hash, scalar, path_hash, tail_id) VALUES(?1, ?2, ?3, ?4);");
             Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_connectors(owner, name) VALUES(?1, ?2);");
 
             for(const ConnectorBatchItem & item : items)
@@ -610,8 +577,6 @@ namespace dcn::registry
 
                 if(item_ok)
                 {
-                    std::unordered_map<std::string, std::uint32_t> occurrence_by_label;
-                    occurrence_by_label.reserve(item.canonical_scalar_labels.size());
                     for(const ScalarLabel & label : item.canonical_scalar_labels)
                     {
                         insert_scalar_label.reset();
@@ -619,8 +584,6 @@ namespace dcn::registry
                         sqlite3_bind_text(insert_scalar_label.get(), 2, label.scalar.c_str(), static_cast<int>(label.scalar.size()), SQLITE_TRANSIENT);
                         bindBytes32(insert_scalar_label.get(), 3, label.path_hash);
                         sqlite3_bind_int64(insert_scalar_label.get(), 4, static_cast<sqlite3_int64>(label.tail_id));
-                        const std::uint32_t label_ordinal = nextScalarLabelOrdinal(occurrence_by_label, label);
-                        sqlite3_bind_int64(insert_scalar_label.get(), 5, static_cast<sqlite3_int64>(label_ordinal));
                         if(insert_scalar_label.step() != SQLITE_DONE)
                         {
                             item_ok = fail_item("insert scalar_labels_by_format");
@@ -781,7 +744,7 @@ namespace dcn::registry
         {
             Statement stmt(
                 _db,
-                "SELECT scalar, path_hash, tail_id FROM scalar_labels_by_format WHERE format_hash = ?1 ORDER BY path_hash ASC, scalar ASC, tail_id ASC, label_ordinal ASC;");
+                "SELECT scalar, path_hash, tail_id FROM scalar_labels_by_format WHERE format_hash = ?1 ORDER BY path_hash ASC, scalar ASC, tail_id ASC;");
             bindBytes32(stmt.get(), 1, format_hash);
 
             std::vector<ScalarLabel> labels;
@@ -815,73 +778,6 @@ namespace dcn::registry
                 e.what());
             return std::nullopt;
         }
-    }
-
-    bool SQLiteRegistryStore::replaceScalarLabelsByFormatHash(
-        const evmc::bytes32 & format_hash,
-        const std::vector<ScalarLabel> & canonical_scalar_labels)
-    {
-        if(!_beginTransaction())
-        {
-            return false;
-        }
-
-        auto rollback_with_log = [&](const char * action)
-        {
-            spdlog::error(
-                "Failed to {} for format_hash={}",
-                action,
-                evmc::hex(format_hash));
-            _rollbackTransaction();
-            return false;
-        };
-
-        try
-        {
-            Statement delete_stmt(_db, "DELETE FROM scalar_labels_by_format WHERE format_hash = ?1;");
-            bindBytes32(delete_stmt.get(), 1, format_hash);
-            if(delete_stmt.step() != SQLITE_DONE)
-            {
-                return rollback_with_log("delete scalar_labels_by_format");
-            }
-
-            Statement insert_stmt(
-                _db,
-                "INSERT INTO scalar_labels_by_format(format_hash, scalar, path_hash, tail_id, label_ordinal) "
-                "VALUES(?1, ?2, ?3, ?4, ?5);");
-            std::unordered_map<std::string, std::uint32_t> occurrence_by_label;
-            occurrence_by_label.reserve(canonical_scalar_labels.size());
-            for(const ScalarLabel & label : canonical_scalar_labels)
-            {
-                insert_stmt.reset();
-                bindBytes32(insert_stmt.get(), 1, format_hash);
-                sqlite3_bind_text(insert_stmt.get(), 2, label.scalar.c_str(), static_cast<int>(label.scalar.size()), SQLITE_TRANSIENT);
-                bindBytes32(insert_stmt.get(), 3, label.path_hash);
-                sqlite3_bind_int64(insert_stmt.get(), 4, static_cast<sqlite3_int64>(label.tail_id));
-                const std::uint32_t label_ordinal = nextScalarLabelOrdinal(occurrence_by_label, label);
-                sqlite3_bind_int64(insert_stmt.get(), 5, static_cast<sqlite3_int64>(label_ordinal));
-                if(insert_stmt.step() != SQLITE_DONE)
-                {
-                    return rollback_with_log("insert scalar_labels_by_format");
-                }
-            }
-        }
-        catch(const std::exception & e)
-        {
-            spdlog::error(
-                "SQLite exception while replacing scalar labels for format_hash={}: {}",
-                evmc::hex(format_hash),
-                e.what());
-            _rollbackTransaction();
-            return false;
-        }
-
-        if(!_commitTransaction())
-        {
-            return rollback_with_log("commit scalar_labels_by_format replacement");
-        }
-
-        return true;
     }
 
     bool SQLiteRegistryStore::hasTransformation(const std::string & name) const
@@ -1489,5 +1385,50 @@ namespace dcn::registry
     NameCursorPage SQLiteRegistryStore::getOwnedConditionsCursor(const chain::Address & owner, const std::optional<NameCursor> & after, std::size_t limit) const
     {
         return _getOwnedCursorFromTable("owned_conditions", owner, after, limit);
+    }
+
+    bool SQLiteRegistryStore::checkpointWal(const WalCheckpointMode mode) const
+    {
+        if(_db == nullptr)
+        {
+            return false;
+        }
+
+        const int set_short_timeout_res = sqlite3_busy_timeout(_db, SQLITE_CHECKPOINT_BUSY_TIMEOUT_MS);
+        if(set_short_timeout_res != SQLITE_OK)
+        {
+            spdlog::warn(
+                "Failed to set SQLite checkpoint busy timeout mode={} rc={} err={}",
+                checkpointModeToString(mode),
+                set_short_timeout_res,
+                sqlite3_errmsg(_db));
+        }
+
+        int wal_frames_total = 0;
+        int wal_frames_checkpointed = 0;
+        const int res = sqlite3_wal_checkpoint_v2(
+            _db,
+            nullptr,
+            toSqliteCheckpointMode(mode),
+            &wal_frames_total,
+            &wal_frames_checkpointed);
+        (void)sqlite3_busy_timeout(_db, SQLITE_DEFAULT_BUSY_TIMEOUT_MS);
+
+        if(res != SQLITE_OK)
+        {
+            spdlog::warn(
+                "SQLite WAL checkpoint failed mode={} rc={} err={}",
+                checkpointModeToString(mode),
+                res,
+                sqlite3_errmsg(_db));
+            return false;
+        }
+
+        spdlog::debug(
+            "SQLite WAL checkpoint mode={} frames_total={} frames_checkpointed={}",
+            checkpointModeToString(mode),
+            wal_frames_total,
+            wal_frames_checkpointed);
+        return true;
     }
 }

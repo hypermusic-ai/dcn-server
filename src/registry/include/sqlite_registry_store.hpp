@@ -41,9 +41,6 @@ namespace dcn::registry
                 std::size_t limit) const override;
             std::optional<std::vector<ScalarLabel>> getScalarLabelsByFormatHash(
                 const evmc::bytes32 & format_hash) const override;
-            bool replaceScalarLabelsByFormatHash(
-                const evmc::bytes32 & format_hash,
-                const std::vector<ScalarLabel> & canonical_scalar_labels) override;
 
             bool hasTransformation(const std::string & name) const override;
             std::optional<TransformationRecordHandle> getTransformationRecordHandle(
@@ -77,6 +74,8 @@ namespace dcn::registry
                 const chain::Address & owner,
                 const std::optional<NameCursor> & after,
                 std::size_t limit) const override;
+
+            bool checkpointWal(WalCheckpointMode mode) const override;
 
         private:
             sqlite3 * _db = nullptr;

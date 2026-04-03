@@ -7,6 +7,7 @@
 #include <asio.hpp>
 #include <spdlog/spdlog.h>
 
+#include "utils.hpp"
 #include "pt.hpp"
 #include "registry.hpp"
 #include "parser.hpp"

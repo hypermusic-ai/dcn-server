@@ -181,6 +181,7 @@ message(STATUS "Fetching dependency `sqlite3` ...")
 FetchContent_Declare(
     sqlite3
     URL "https://www.sqlite.org/2026/sqlite-amalgamation-3510300.zip"
+    DOWNLOAD_NO_PROGRESS TRUE
     SYSTEM
     OVERRIDE_FIND_PACKAGE
 )
