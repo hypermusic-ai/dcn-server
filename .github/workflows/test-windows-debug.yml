@@ -1,10 +1,10 @@
-name: Build and Test (Windows Debug)
+name: Test (Windows Debug)
 
 on:
   push:
 
 jobs:
-  build-windows-debug:
+  test-windows-debug:
     runs-on: windows-latest
 
     steps:
@@ -20,12 +20,3 @@ jobs:
 
     - name: Run tests
       run: ctest --test-dir build-windows-debug/tests -C Debug --output-on-failure
-
-    - name: Install artifacts
-      run: cmake --build build-windows-debug --config Debug --target install -j 4
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: decentralised-art-server-windows-debug
-        path: install-windows-debug
