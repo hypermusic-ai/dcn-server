@@ -56,4 +56,8 @@ namespace dcn::chain
     evmc::bytes32 computeFormatHashFromLabelHashes(const std::vector<evmc::bytes32> & label_hashes);
 
     evmc::bytes32 computeFormatHash(const std::vector<ScalarHashEntry> & hash_entries);
+
+    std::vector<ScalarLabel> canonicalizeScalarLabels(const std::vector<ScalarLabel> & labels);
+
+    bool scalarLabelsEqual(const std::vector<ScalarLabel> & lhs, const std::vector<ScalarLabel> & rhs);
 }

@@ -1,7 +1,21 @@
 #include "api.hpp"
 
+#include <algorithm>
+#include <cctype>
+
 namespace dcn
 {
+    namespace
+    {
+        constexpr std::size_t MAX_LIMIT = 256;
+
+
+        std::string serializeNameCursor(const storage::NameCursor & cursor)
+        {
+            return cursor;
+        }
+    }
+
     asio::awaitable<http::Response> OPTIONS_accountInfo(const http::Request & request, std::vector<server::RouteArg>, server::QueryArgsList)
     {
         http::Response response;
@@ -16,7 +30,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList query_args, registry::Registry & registry)
+    asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList query_args, storage::Registry & registry)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -25,7 +39,7 @@ namespace dcn
                 .setHeader(http::Header::Connection, "close")
                 .setHeader(http::Header::ContentType, "application/json");
 
-        if(args.size() != 1 || query_args.size() != 2)
+        if(args.size() != 1)
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json{
@@ -46,11 +60,11 @@ namespace dcn
             co_return response;
         }
 
-        if(query_args.contains("limit") == false || query_args.contains("page") == false)
+        if(query_args.contains("limit") == false)
         {
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json {
-                    {"message", "Missing arguments limit or page"}
+                    {"message", "Missing argument limit"}
                 }.dump());
             
             co_return response;
@@ -68,22 +82,15 @@ namespace dcn
         }
         const auto & address = address_res.value();
 
-        static const std::size_t MAX_LIMIT = 256;
-
-        const auto limit_res = parse::parseRouteArgAs<std::size_t>(query_args.at("limit"))  
-            .and_then([](std::size_t limit) -> parse::Result<std::size_t>
-            {
-                if(limit > MAX_LIMIT) return std::unexpected(parse::ParseError{parse::ParseError::Kind::OUT_OF_RANGE});
-                return limit;
-            });
-
-        const auto page_res = parse::parseRouteArgAs<std::size_t>(query_args.at("page"));
-
-        if(!limit_res || !page_res)
+        auto limit_res = parse::parseRouteArgAs<std::size_t>(query_args.at("limit"));
+        if(limit_res && limit_res.value() > MAX_LIMIT)
         {
-            std::string msg_str = "Invalid arguments limit or page.";
+            limit_res = std::unexpected(parse::ParseError{parse::ParseError::Kind::OUT_OF_RANGE});
+        }
+        if(!limit_res)
+        {
+            std::string msg_str = "Invalid argument limit.";
             if(!limit_res) msg_str += std::format(" limit error: {}.", limit_res.error().kind);
-            if(!page_res) msg_str += std::format(" page error: {}.", page_res.error().kind);
 
             response.setCode(http::Code::BadRequest)
                 .setBodyWithContentLength(json {
@@ -93,46 +100,100 @@ namespace dcn
             co_return response;
         }
 
-        const auto & limit = limit_res.value();
-        const auto & page = page_res.value();
-        const std::size_t start = page * limit;
+        std::optional<storage::NameCursor> after_connectors;
+        std::optional<storage::NameCursor> after_transformations;
+        std::optional<storage::NameCursor> after_conditions;
 
-        const auto connectors = co_await registry.getOwnedConnectors(address);
-        const auto transformations = co_await registry.getOwnedTransformations(address);
-        const auto conditions = co_await registry.getOwnedConditions(address);
+        if(query_args.contains("after_connectors"))
+        {
+            const auto after_connectors_res = 
+                parse::parseRouteArgAs<std::string>(query_args.at("after_connectors"))
+                .and_then([&](const std::string & token) { return parse::parseNameCursor(token); });
 
-        auto connectors_sub = connectors 
-            | std::views::drop(start)
-            | std::views::take(limit);
+            if(!after_connectors_res)
+            {
+                response.setCode(http::Code::BadRequest)
+                    .setBodyWithContentLength(json{
+                        {"message", "Invalid after_connectors cursor"}
+                    }.dump());
+                co_return response;
+            }
 
-        // Subrange transformations
-        auto transformations_sub = transformations 
-            | std::views::drop(start)
-            | std::views::take(limit);
+            after_connectors = std::move(after_connectors_res.value());
+        }
 
-        // Subrange conditions
-        auto conditions_sub = conditions 
-            | std::views::drop(start)
-            | std::views::take(limit);
+        if(query_args.contains("after_transformations"))
+        {
+            const auto after_transformations_res = 
+                parse::parseRouteArgAs<std::string>(query_args.at("after_transformations"))
+                .and_then([&](const std::string & token) { return parse::parseNameCursor(token); });
 
-        // implement subrange 
+            if(!after_transformations_res)
+            {
+                response.setCode(http::Code::BadRequest)
+                    .setBodyWithContentLength(json{
+                        {"message", "Invalid after_transformations cursor"}
+                    }.dump());
+                co_return response;
+            }
+
+            after_transformations = std::move(after_transformations_res.value());
+        }
+
+        if(query_args.contains("after_conditions"))
+        {
+            const auto after_conditions_res = 
+                parse::parseRouteArgAs<std::string>(query_args.at("after_conditions"))
+                .and_then([&](const std::string & token) { return parse::parseNameCursor(token); });
+
+            if(!after_conditions_res)
+            {
+                response.setCode(http::Code::BadRequest)
+                    .setBodyWithContentLength(json{
+                        {"message", "Invalid after_conditions cursor"}
+                    }.dump());
+                co_return response;
+            }
+
+            after_conditions = std::move(after_conditions_res.value());
+        }
+
+        const std::size_t limit = limit_res.value();
+        const auto connectors_page = co_await registry.getOwnedConnectorsCursor(address, after_connectors, limit);
+        const auto transformations_page = co_await registry.getOwnedTransformationsCursor(address, after_transformations, limit);
+        const auto conditions_page = co_await registry.getOwnedConditionsCursor(address, after_conditions, limit);
+
         json json_output;
 
         json_output["owned_connectors"] = json::array();
-        for (const auto& p : connectors_sub) json_output["owned_connectors"].push_back(p);
+        for(const auto & name : connectors_page.entries)
+        {
+            json_output["owned_connectors"].push_back(name);
+        }
 
         json_output["owned_transformations"] = json::array();
-        for (const auto& t : transformations_sub) json_output["owned_transformations"].push_back(t);
+        for(const auto & name : transformations_page.entries)
+        {
+            json_output["owned_transformations"].push_back(name);
+        }
 
         json_output["owned_conditions"] = json::array();
-        for (const auto& c : conditions_sub) json_output["owned_conditions"].push_back(c);
+        for(const auto & name : conditions_page.entries)
+        {
+            json_output["owned_conditions"].push_back(name);
+        }
 
         json_output["address"] = evmc::hex(address);
-        json_output["page"] = page;
         json_output["limit"] = limit;
-        json_output["total_connectors"] = connectors.size();
-        json_output["total_transformations"] = transformations.size();
-        json_output["total_conditions"] = conditions.size();
+        json_output["connectors_has_more"] = connectors_page.has_more;
+        json_output["transformations_has_more"] = transformations_page.has_more;
+        json_output["conditions_has_more"] = conditions_page.has_more;
+        json_output["next_after_connectors"] =
+            connectors_page.next_after.has_value() ? json(serializeNameCursor(*connectors_page.next_after)) : json(nullptr);
+        json_output["next_after_transformations"] =
+            transformations_page.next_after.has_value() ? json(serializeNameCursor(*transformations_page.next_after)) : json(nullptr);
+        json_output["next_after_conditions"] =
+            conditions_page.next_after.has_value() ? json(serializeNameCursor(*conditions_page.next_after)) : json(nullptr);
 
         response.setCode(http::Code::OK)
             .setBodyWithContentLength(json_output.dump());

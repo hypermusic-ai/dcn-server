@@ -174,7 +174,7 @@ namespace
             evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solc_path, pt_path);
             io_context.run();
 
-            registry::Registry registry(io_context);
+            storage::Registry registry(io_context);
 
             snapshot.owner = makeAddressFromSuffix("pt_deploy_owner");
             runAwaitable(io_context, evm_instance.addAccount(snapshot.owner, evm::DEFAULT_GAS_LIMIT));
@@ -231,29 +231,35 @@ namespace
             }
             snapshot.connector_address = connector_deploy_result.value();
 
-            const auto transformation_res = runAwaitable(io_context, registry.getNewestTransformation("DeployTransformation"));
-            if(!transformation_res)
+            const auto transformation_res = runAwaitable(
+                io_context,
+                registry.getTransformationRecordHandle("DeployTransformation"));
+            if(!transformation_res.has_value())
             {
-                snapshot.error_message = "getNewestTransformation returned no value";
+                snapshot.error_message = "getTransformation returned no value";
                 return snapshot;
             }
-            snapshot.transformation = *transformation_res;
+            snapshot.transformation = (*transformation_res)->transformation();
 
-            const auto condition_res = runAwaitable(io_context, registry.getNewestCondition("DeployCondition"));
-            if(!condition_res)
+            const auto condition_res = runAwaitable(
+                io_context,
+                registry.getConditionRecordHandle("DeployCondition"));
+            if(!condition_res.has_value())
             {
-                snapshot.error_message = "getNewestCondition returned no value";
+                snapshot.error_message = "getCondition returned no value";
                 return snapshot;
             }
-            snapshot.condition = *condition_res;
+            snapshot.condition = (*condition_res)->condition();
 
-            const auto connector_res = runAwaitable(io_context, registry.getNewestConnector("DeployConnector"));
-            if(!connector_res)
+            const auto connector_res = runAwaitable(
+                io_context,
+                registry.getConnectorRecordHandle("DeployConnector"));
+            if(!connector_res.has_value())
             {
-                snapshot.error_message = "getNewestConnector returned no value";
+                snapshot.error_message = "getConnector returned no value";
                 return snapshot;
             }
-            snapshot.connector = *connector_res;
+            snapshot.connector = (*connector_res)->connector();
 
             const auto transformation_owner_res = fetchOwnerAddress(io_context, evm_instance, snapshot.transformation_address);
             if(!transformation_owner_res)
@@ -357,7 +363,7 @@ TEST_F(UnitTest, PT_Deploy_Connector_DuplicateName_ReturnsConnectorAlreadyRegist
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("pt_dup_owner");
     runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
     runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
@@ -415,7 +421,7 @@ TEST_F(UnitTest, PT_Deploy_Connector_InvalidInput_CleansTemporarySoliditySourceF
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     ConnectorRecord connector_record;
     connector_record.mutable_connector()->set_name("CleanupInvalidConnector");
@@ -443,7 +449,7 @@ TEST_F(UnitTest, PT_Deploy_Transformation_InvalidInput_CleansTemporarySoliditySo
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     TransformationRecord transformation_record;
     transformation_record.mutable_transformation()->set_name("bad-name");
@@ -459,3 +465,5 @@ TEST_F(UnitTest, PT_Deploy_Transformation_InvalidInput_CleansTemporarySoliditySo
     const auto source_path = storage_path / "transformations" / "build" / "bad-name.sol";
     EXPECT_FALSE(std::filesystem::exists(source_path)) << std::format("Temporary Solidity source still exists: {}", source_path.string());
 }
+
+

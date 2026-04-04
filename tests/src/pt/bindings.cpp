@@ -323,7 +323,7 @@ namespace
 
     bool addIdentityTransformation(
         asio::io_context & io_context,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & owner_hex,
         std::uint8_t address_byte)
     {
@@ -336,7 +336,7 @@ namespace
 
     bool addConnectorRecord(
         asio::io_context & io_context,
-        registry::Registry & registry,
+        storage::Registry & registry,
         std::uint8_t address_byte,
         ConnectorRecord record)
     {
@@ -347,7 +347,7 @@ namespace
 
     bool addScalarConnector(
         asio::io_context & io_context,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::string & owner_hex,
         std::uint8_t address_byte,
@@ -365,7 +365,7 @@ namespace
     std::expected<chain::Address, std::string> deployIdentityTransformation(
         asio::io_context & io_context,
         evm::EVM & evm_instance,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & owner_hex,
         const std::filesystem::path & storage_path)
     {
@@ -399,7 +399,7 @@ namespace
     std::expected<chain::Address, std::string> deployConnectorRecord(
         asio::io_context & io_context,
         evm::EVM & evm_instance,
-        registry::Registry & registry,
+        storage::Registry & registry,
         ConnectorRecord record,
         const std::filesystem::path & storage_path)
     {
@@ -510,7 +510,7 @@ namespace
 TEST_F(UnitTest, PT_Bindings_RegistryAcceptsDeepBindingToNestedSlot)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -538,7 +538,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAcceptsDeepBindingToNestedSlot)
 TEST_F(UnitTest, PT_Bindings_RegistryAcceptsBindingToPropagatedStaticChildSlot)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -560,7 +560,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAcceptsBindingToPropagatedStaticChildSlot)
 TEST_F(UnitTest, PT_Bindings_RegistryComputesNestedPropagatedSlotsAcrossMixedStaticBindings)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -591,7 +591,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryComputesNestedPropagatedSlotsAcrossMixedSta
 TEST_F(UnitTest, PT_Bindings_RegistryRejectsBindingsOnScalarDimension)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -607,7 +607,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryRejectsBindingsOnScalarDimension)
 TEST_F(UnitTest, PT_Bindings_RegistryRejectsNonNumericSlotId)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -624,7 +624,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryRejectsNonNumericSlotId)
 TEST_F(UnitTest, PT_Bindings_RegistryRejectsOutOfRangeSlotId)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -641,7 +641,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryRejectsOutOfRangeSlotId)
 TEST_F(UnitTest, PT_Bindings_RegistryRejectsMissingBindingTarget)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -657,7 +657,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryRejectsMissingBindingTarget)
 TEST_F(UnitTest, PT_Bindings_RegistryRejectsDuplicateCanonicalSlotIds)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -675,7 +675,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryRejectsDuplicateCanonicalSlotIds)
 TEST_F(UnitTest, PT_Bindings_RegistryRejectsCycleThroughBindingTarget)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -695,7 +695,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryRejectsCycleThroughBindingTarget)
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsParentOverrideOfChildStaticBinding)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -716,7 +716,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAllowsParentOverrideOfChildStaticBinding)
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingRemainingUnboundChildSlots)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -737,7 +737,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingRemainingUnboundChildSlots)
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingToConnectorWithStaticBindings)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -761,7 +761,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingToConnectorWithStaticBindings)
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsCompositeWithStaticBindingsReusedAcrossDimensions)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -783,7 +783,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAllowsCompositeWithStaticBindingsReusedAcro
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingToPropagatedSlotWhenChildHasStaticBindings)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -803,7 +803,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingToPropagatedSlotWhenChildHasSt
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingTargetWithoutOpenSlots)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -832,7 +832,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingTargetWithoutOpenSlots)
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingAllRemainingSlotsAfterChildStaticBindings)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -853,7 +853,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingAllRemainingSlotsAfterChildSta
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingToMiddlePropagatedSlotAfterMultipleChildStaticBindings)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -874,7 +874,7 @@ TEST_F(UnitTest, PT_Bindings_RegistryAllowsBindingToMiddlePropagatedSlotAfterMul
 TEST_F(UnitTest, PT_Bindings_RegistryAllowsSameCompactedSlotIdOnDifferentDimensions)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromSuffix("bindings_owner"));
 
@@ -948,7 +948,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerResolvesDeepGrandchildBinding)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 
@@ -1004,7 +1004,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerResolvesBindingOnPropagatedStaticChildSlot)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 
@@ -1067,7 +1067,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerMapsStaticRangeStartToInternalSlot)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 
@@ -1127,7 +1127,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerMapsStaticRangeOffsetToInternalSlot)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 
@@ -1187,7 +1187,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerMapsMultipleBindingsIntoSameStaticCompositeOf
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 
@@ -1251,7 +1251,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerResolvesNestedPropagatedBindingAcrossTwoLevel
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 
@@ -1329,7 +1329,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerMapsParentBindingIntoChildStaticSlotRange)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 
@@ -1386,7 +1386,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerAllowsBindingToConnectorWithStaticBindings)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 
@@ -1445,7 +1445,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerSupportsChainedBoundCompositesAsComposite)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 
@@ -1506,7 +1506,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerMapsParentBindingsAcrossChildStaticSlotRange)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 
@@ -1566,7 +1566,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerSupportsReusingBoundCompositeAcrossParentDime
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 
@@ -1632,7 +1632,7 @@ TEST_F(UnitTest, PT_Bindings_RunnerAllowsBindingToSealedCompositeTarget)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
     const std::string owner_hex = evmc::hex(owner);
 

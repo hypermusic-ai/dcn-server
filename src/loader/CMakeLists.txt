@@ -4,11 +4,13 @@ add_module(NAME "Loader"
     DEPENDENCIES
 
     "${PROJECT_PREFIX}::Native"
+    "${PROJECT_PREFIX}::Async"
+    "${PROJECT_PREFIX}::Utils"
     "${PROJECT_PREFIX}::PT"
     "${PROJECT_PREFIX}::Utils"
     "${PROJECT_PREFIX}::EVM"
     "${PROJECT_PREFIX}::Parser"
-    "${PROJECT_PREFIX}::Registry"
+    "${PROJECT_PREFIX}::Storage"
     "${PROJECT_PREFIX}::Crypto"
     "${PROJECT_PREFIX}::Chain"
 

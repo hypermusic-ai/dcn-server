@@ -373,7 +373,7 @@ namespace
 TEST_F(UnitTest, Chain_Ingestion_RegistersConnectorFromFetchedEvents)
 {
     asio::io_context io_context{};
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const auto storage_path = makeStoragePath("connector_events");
 
@@ -427,16 +427,22 @@ TEST_F(UnitTest, Chain_Ingestion_RegistersConnectorFromFetchedEvents)
 
     runAwaitable(io_context, chain::runEventIngestion(config, registry, runtime_options));
 
-    const auto connector_res = runAwaitable(io_context, registry.getConnector("ConnectorAlpha", connector_address));
+    const auto connector_res = runAwaitable(io_context, registry.getConnectorRecordHandle("ConnectorAlpha"));
     ASSERT_TRUE(connector_res.has_value());
-    ASSERT_EQ(connector_res->dimensions_size(), 2);
-    EXPECT_EQ(connector_res->condition_name(), "");
-    ASSERT_EQ(connector_res->condition_args_size(), 2);
-    EXPECT_EQ(connector_res->condition_args(0), 7);
-    EXPECT_EQ(connector_res->condition_args(1), -3);
+    ASSERT_TRUE(*connector_res);
+    ASSERT_EQ((*connector_res)->connector().dimensions_size(), 2);
+    EXPECT_EQ((*connector_res)->connector().condition_name(), "");
+    ASSERT_EQ((*connector_res)->connector().condition_args_size(), 2);
+    EXPECT_EQ((*connector_res)->connector().condition_args(0), 7);
+    EXPECT_EQ((*connector_res)->connector().condition_args(1), -3);
 
-    const auto owned_connectors = runAwaitable(io_context, registry.getOwnedConnectors(owner));
-    EXPECT_TRUE(owned_connectors.contains("ConnectorAlpha"));
+    const auto owned_connectors = runAwaitable(
+        io_context,
+        registry.getOwnedConnectorsCursor(owner, std::nullopt, 128));
+    EXPECT_TRUE(std::find(
+        owned_connectors.entries.begin(),
+        owned_connectors.entries.end(),
+        "ConnectorAlpha") != owned_connectors.entries.end());
 
     EXPECT_TRUE(std::filesystem::exists(storage_path / "connectors" / "ConnectorAlpha.json"));
 
@@ -452,7 +458,7 @@ TEST_F(UnitTest, Chain_Ingestion_RegistersConnectorFromFetchedEvents)
 TEST_F(UnitTest, Chain_Ingestion_RegistersTransformationAndConditionFromFetchedEvents)
 {
     asio::io_context io_context{};
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const auto storage_path = makeStoragePath("transformation_condition_events");
 
@@ -518,17 +524,31 @@ TEST_F(UnitTest, Chain_Ingestion_RegistersTransformationAndConditionFromFetchedE
 
     runAwaitable(io_context, chain::runEventIngestion(config, registry, runtime_options));
 
-    const auto transformation_res = runAwaitable(io_context, registry.getTransformation("TransformAlpha", transformation_address));
+    const auto transformation_res =
+        runAwaitable(io_context, registry.getTransformationRecordHandle("TransformAlpha"));
     ASSERT_TRUE(transformation_res.has_value());
+    ASSERT_TRUE(*transformation_res);
 
-    const auto condition_res = runAwaitable(io_context, registry.getCondition("ConditionAlpha", condition_address));
+    const auto condition_res =
+        runAwaitable(io_context, registry.getConditionRecordHandle("ConditionAlpha"));
     ASSERT_TRUE(condition_res.has_value());
+    ASSERT_TRUE(*condition_res);
 
-    const auto owned_transformations = runAwaitable(io_context, registry.getOwnedTransformations(owner));
-    EXPECT_TRUE(owned_transformations.contains("TransformAlpha"));
+    const auto owned_transformations = runAwaitable(
+        io_context,
+        registry.getOwnedTransformationsCursor(owner, std::nullopt, 128));
+    EXPECT_TRUE(std::find(
+        owned_transformations.entries.begin(),
+        owned_transformations.entries.end(),
+        "TransformAlpha") != owned_transformations.entries.end());
 
-    const auto owned_conditions = runAwaitable(io_context, registry.getOwnedConditions(condition_caller));
-    EXPECT_TRUE(owned_conditions.contains("ConditionAlpha"));
+    const auto owned_conditions = runAwaitable(
+        io_context,
+        registry.getOwnedConditionsCursor(condition_caller, std::nullopt, 128));
+    EXPECT_TRUE(std::find(
+        owned_conditions.entries.begin(),
+        owned_conditions.entries.end(),
+        "ConditionAlpha") != owned_conditions.entries.end());
 
     EXPECT_TRUE(std::filesystem::exists(storage_path / "transformations" / "TransformAlpha.json"));
     EXPECT_TRUE(std::filesystem::exists(storage_path / "conditions" / "ConditionAlpha.json"));
@@ -541,3 +561,4 @@ TEST_F(UnitTest, Chain_Ingestion_RegistersTransformationAndConditionFromFetchedE
     EXPECT_EQ(rpc.get_logs_calls, 1);
     EXPECT_EQ(rpc.eth_call_calls, 2);
 }
+

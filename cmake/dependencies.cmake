@@ -175,6 +175,57 @@ FetchContent_MakeAvailable(json)
 silence_warnings(TARGETS nlohmann_json)
 
 # ---------------------------------------------------------
+# sqlite3
+# ---------------------------------------------------------
+message(STATUS "Fetching dependency `sqlite3` ...")
+FetchContent_Declare(
+    sqlite3
+    URL "https://www.sqlite.org/2026/sqlite-amalgamation-3510300.zip"
+    DOWNLOAD_NO_PROGRESS TRUE
+    SYSTEM
+)
+FetchContent_MakeAvailable(sqlite3)
+
+# SQLite amalgamation archives usually do not contain a CMake project.
+# Build directly from sqlite3.c/sqlite3.h regardless of archive layout.
+set(sqlite3_amalgamation_dir "${sqlite3_SOURCE_DIR}")
+if(NOT EXISTS "${sqlite3_amalgamation_dir}/sqlite3.c")
+    file(GLOB sqlite3_c_candidates LIST_DIRECTORIES FALSE "${sqlite3_SOURCE_DIR}/*/sqlite3.c")
+    list(LENGTH sqlite3_c_candidates sqlite3_c_candidates_count)
+    if(sqlite3_c_candidates_count GREATER 0)
+        list(GET sqlite3_c_candidates 0 sqlite3_c_path)
+        get_filename_component(sqlite3_amalgamation_dir "${sqlite3_c_path}" DIRECTORY)
+    endif()
+endif()
+
+if(NOT TARGET sqlite3)
+    if(NOT EXISTS "${sqlite3_amalgamation_dir}/sqlite3.c")
+        message(FATAL_ERROR "sqlite3.c not found in fetched sqlite3 source directory: ${sqlite3_SOURCE_DIR}")
+    endif()
+    if(NOT EXISTS "${sqlite3_amalgamation_dir}/sqlite3.h")
+        message(FATAL_ERROR "sqlite3.h not found in fetched sqlite3 source directory: ${sqlite3_SOURCE_DIR}")
+    endif()
+    if(NOT EXISTS "${sqlite3_amalgamation_dir}/sqlite3ext.h")
+        message(FATAL_ERROR "sqlite3ext.h not found in fetched sqlite3 source directory: ${sqlite3_SOURCE_DIR}")
+    endif()
+
+    add_library(sqlite3 STATIC "${sqlite3_amalgamation_dir}/sqlite3.c")
+    target_include_directories(sqlite3 PUBLIC "${sqlite3_amalgamation_dir}")
+    if(WIN32)
+        target_compile_definitions(sqlite3 PRIVATE _CRT_SECURE_NO_WARNINGS)
+        target_compile_options(sqlite3 PRIVATE /wd4996)
+    endif()
+else()
+    message(STATUS "Using sqlite3 target provided by fetched project")
+endif()
+
+silence_warnings(TARGETS sqlite3)
+install(FILES
+    "${sqlite3_amalgamation_dir}/sqlite3.h"
+    "${sqlite3_amalgamation_dir}/sqlite3ext.h"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+# ---------------------------------------------------------
 # jwt-cpp
 # ---------------------------------------------------------
 message(STATUS "Fetching dependency `jwt-cpp` ...")

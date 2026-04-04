@@ -27,6 +27,24 @@ static void _configureLogger(const std::filesystem::path& logs_path)
     spdlog::set_default_logger(std::make_shared<spdlog::logger>(logger));
 }
 
+static std::vector<int> _configureShutdownSignals()
+{
+    std::vector<int> shutdown_signal_ids{
+        SIGINT,
+        SIGTERM
+    };
+#if defined(SIGBREAK)
+    shutdown_signal_ids.push_back(SIGBREAK);
+#endif
+#if defined(SIGQUIT)
+    shutdown_signal_ids.push_back(SIGQUIT);
+#endif
+#if defined(SIGHUP)
+    shutdown_signal_ids.push_back(SIGHUP);
+#endif
+    return shutdown_signal_ids;
+}
+
 int main(int argc, char* argv[])
 {
     dcn::config::Config cfg;
@@ -73,6 +91,11 @@ int main(int argc, char* argv[])
     arg_parser.addArg("--chain-poll-ms", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Chain poll interval in milliseconds");
     arg_parser.addArg("--chain-confirmations", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Finality confirmation depth");
     arg_parser.addArg("--chain-batch-size", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Max number of blocks fetched per eth_getLogs request");
+    arg_parser.addArg("--registry-db", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::String, "SQLite path for registry storage");
+    arg_parser.addArg("--registry-wal-sync-ms", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Interval in milliseconds for periodic SQLite WAL passive checkpoints");
+    arg_parser.addArg("--loader-batch-connectors", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Batch size used while adding loaded connectors to registry");
+    arg_parser.addArg("--loader-batch-transformations", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Batch size used while adding loaded transformations to registry");
+    arg_parser.addArg("--loader-batch-conditions", dcn::cmd::CommandLineArgDef::NArgs::One, dcn::cmd::CommandLineArgDef::Type::Int, "Batch size used while adding loaded conditions to registry");
 
     arg_parser.parse(argc, argv);
 
@@ -149,6 +172,54 @@ int main(int argc, char* argv[])
             chain_ingestion_cfg.block_batch_size);
     }
 
+    const int loader_batch_connectors_arg =
+        arg_parser.getArg<std::vector<int>>("--loader-batch-connectors").value_or(std::vector<int>{1000}).at(0);
+    const int loader_batch_transformations_arg =
+        arg_parser.getArg<std::vector<int>>("--loader-batch-transformations").value_or(std::vector<int>{5000}).at(0);
+    const int loader_batch_conditions_arg =
+        arg_parser.getArg<std::vector<int>>("--loader-batch-conditions").value_or(std::vector<int>{5000}).at(0);
+
+    if(loader_batch_connectors_arg <= 0 || loader_batch_transformations_arg <= 0 || loader_batch_conditions_arg <= 0)
+    {
+        spdlog::error("Invalid loader batch sizes. Expected positive values.");
+        return 1;
+    }
+
+    const int registry_wal_sync_ms_arg =
+        arg_parser.getArg<std::vector<int>>("--registry-wal-sync-ms").value_or(std::vector<int>{30000}).at(0);
+
+    if(registry_wal_sync_ms_arg <= 0)
+    {
+        spdlog::error("Invalid --registry-wal-sync-ms value. Expected positive value.");
+        return 1;
+    }
+
+    const std::size_t loader_batch_connectors = static_cast<std::size_t>(loader_batch_connectors_arg);
+    const std::size_t loader_batch_transformations = static_cast<std::size_t>(loader_batch_transformations_arg);
+    const std::size_t loader_batch_conditions = static_cast<std::size_t>(loader_batch_conditions_arg);
+    const std::chrono::milliseconds registry_wal_sync_interval(registry_wal_sync_ms_arg);
+
+    std::filesystem::path registry_db_path =
+        cfg.storage_path / "registry.sqlite";
+    if(const auto registry_db_arg = arg_parser.getArg<std::vector<std::string>>("--registry-db"))
+    {
+        registry_db_path = registry_db_arg->at(0);
+    }
+
+    std::error_code registry_dir_ec;
+    if(!registry_db_path.parent_path().empty())
+    {
+        std::filesystem::create_directories(registry_db_path.parent_path(), registry_dir_ec);
+        if(registry_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create registry DB directory '{}': {}",
+                registry_db_path.parent_path().string(),
+                registry_dir_ec.message());
+            return 1;
+        }
+    }
+
     spdlog::info("Current working path: {}", std::filesystem::current_path().string());
 
     // solidity check
@@ -162,9 +233,13 @@ int main(int argc, char* argv[])
     const auto pt_path = cfg.bin_path.parent_path() / "pt";
     spdlog::info(std::format("Path to PT framework : {}", pt_path.string()));
 
+    const std::string registry_db = registry_db_path.string();
+    const bool registry_db_in_memory =
+        registry_db.empty() || registry_db == ":memory:";
+
     asio::io_context io_context;
 
-    dcn::registry::Registry registry(io_context);
+    dcn::storage::Registry registry(io_context, registry_db);
 
     dcn::auth::AuthManager auth_manager(io_context);
 
@@ -237,29 +312,37 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::OPTIONS, "/auth"},  dcn::OPTIONS_auth);
     server.addRoute({dcn::http::Method::POST, "/auth"},     dcn::POST_auth, std::ref(auth_manager));
 
-    server.addRoute({dcn::http::Method::OPTIONS, "/account/<string>?limit=<uint>&page=<uint>"}, dcn::OPTIONS_accountInfo);
-    server.addRoute({dcn::http::Method::GET,    "/account/<string>?limit=<uint>&page=<uint>"},  dcn::GET_accountInfo, std::ref(registry));
+    server.addRoute(
+        {dcn::http::Method::OPTIONS, "/account/<string>?limit=<uint>&after_connectors=<~string>&after_transformations=<~string>&after_conditions=<~string>"},
+        dcn::OPTIONS_accountInfo);
+    server.addRoute(
+        {dcn::http::Method::GET, "/account/<string>?limit=<uint>&after_connectors=<~string>&after_transformations=<~string>&after_conditions=<~string>"},
+        dcn::GET_accountInfo,
+        std::ref(registry));
 
-    server.addRoute({dcn::http::Method::OPTIONS, "/format/<string>?limit=<uint>&page=<uint>"}, dcn::OPTIONS_format);
-    server.addRoute({dcn::http::Method::GET,     "/format/<string>?limit=<uint>&page=<uint>"}, dcn::GET_format, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/format/<string>?limit=<uint>&after=<~string>"}, dcn::OPTIONS_format);
+    server.addRoute({dcn::http::Method::GET, "/format/<string>?limit=<uint>&after=<~string>"}, dcn::GET_format, std::ref(registry));
 
-    server.addRoute({dcn::http::Method::HEAD, "/connector/<string>/<~string>"},       dcn::HEAD_connector, std::ref(registry));
-    server.addRoute({dcn::http::Method::OPTIONS, "/connector/<string>/<~string>"},    dcn::OPTIONS_connector);
-    server.addRoute({dcn::http::Method::GET,     "/connector/<string>/<~string>"},    dcn::GET_connector, std::ref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::HEAD, "/connector/<string>"},       dcn::HEAD_connector, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/connector"},             dcn::OPTIONS_connector);
+    server.addRoute({dcn::http::Method::OPTIONS, "/connector/<string>"},    dcn::OPTIONS_connector);
+    server.addRoute({dcn::http::Method::GET,     "/connector/<string>"},    dcn::GET_connector, std::ref(registry));
     server.addRoute({dcn::http::Method::POST,    "/connector"},                       dcn::POST_connector, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
-    server.addRoute({dcn::http::Method::HEAD, "/transformation/<string>/<~string>"},    dcn::HEAD_transformation, std::ref(registry));
-    server.addRoute({dcn::http::Method::OPTIONS, "/transformation/<string>/<~string>"}, dcn::OPTIONS_transformation);
-    server.addRoute({dcn::http::Method::GET,     "/transformation/<string>/<~string>"}, dcn::GET_transformation, std::ref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::HEAD, "/transformation/<string>"},    dcn::HEAD_transformation, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/transformation"},          dcn::OPTIONS_transformation);
+    server.addRoute({dcn::http::Method::OPTIONS, "/transformation/<string>"}, dcn::OPTIONS_transformation);
+    server.addRoute({dcn::http::Method::GET,     "/transformation/<string>"}, dcn::GET_transformation, std::ref(registry));
     server.addRoute({dcn::http::Method::POST,    "/transformation"},                    dcn::POST_transformation, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
-    server.addRoute({dcn::http::Method::HEAD, "/condition/<string>/<~string>"},    dcn::HEAD_condition, std::ref(registry));
-    server.addRoute({dcn::http::Method::OPTIONS, "/condition/<string>/<~string>"}, dcn::OPTIONS_condition);
-    server.addRoute({dcn::http::Method::GET,     "/condition/<string>/<~string>"}, dcn::GET_condition, std::ref(registry), std::ref(evm));
+    server.addRoute({dcn::http::Method::HEAD, "/condition/<string>"},    dcn::HEAD_condition, std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/condition"},          dcn::OPTIONS_condition);
+    server.addRoute({dcn::http::Method::OPTIONS, "/condition/<string>"}, dcn::OPTIONS_condition);
+    server.addRoute({dcn::http::Method::GET,     "/condition/<string>"}, dcn::GET_condition, std::ref(registry));
     server.addRoute({dcn::http::Method::POST,    "/condition"},                    dcn::POST_condition, std::ref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
     server.addRoute({dcn::http::Method::OPTIONS, "/execute"},   dcn::OPTIONS_execute);
-    server.addRoute({dcn::http::Method::POST, "/execute"},      dcn::POST_execute, std::cref(auth_manager), std::ref(evm));
+    server.addRoute({dcn::http::Method::POST, "/execute"},      dcn::POST_execute, std::cref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
     // create directories
     std::filesystem::create_directory(cfg.storage_path);
@@ -276,25 +359,153 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    asio::co_spawn(io_context, 
-        (dcn::loader::loadStoredTransformations(evm, registry, cfg.storage_path)  &&
-        dcn::loader::loadStoredConditions(evm, registry, cfg.storage_path)), 
-        [&io_context, &registry, &evm, &server, &cfg, &chain_ingestion_cfg](std::exception_ptr, std::tuple<bool, bool>)
-        {
-            // transformation and condition loaded
-            asio::co_spawn(io_context, dcn::loader::loadStoredConnectors(evm, registry, cfg.storage_path), 
-                [&io_context, &server, &chain_ingestion_cfg](std::exception_ptr, bool)
+    const bool wal_enabled = !registry_db_in_memory;
+    std::atomic<bool> wal_sync_worker_stopped = true;
+    std::optional<dcn::storage::RegistryWalSyncWorker> wal_sync_worker;
+    if(wal_enabled)
+    {
+        // create wal sync worker
+        wal_sync_worker_stopped.store(false, std::memory_order_release);
+        wal_sync_worker.emplace(
+            io_context,
+            registry,
+            registry_wal_sync_interval);
+        
+        // start wal sync worker
+        asio::co_spawn(
+            io_context,
+            wal_sync_worker->run(),
+            [&wal_sync_worker_stopped](std::exception_ptr exception_ptr)
+            {
+                wal_sync_worker_stopped.store(true, std::memory_order_release);
+                if(exception_ptr)
                 {
-                    // connectors loaded
-                    if(chain_ingestion_cfg.enabled)
+                    try
                     {
-                        //asio::co_spawn(io_context, dcn::chain::runEventIngestion(chain_ingestion_cfg, registry), asio::detached);
+                        std::rethrow_exception(exception_ptr);
                     }
-                    asio::co_spawn(io_context, server.listen(), asio::detached);
+                    catch(const std::exception & e)
+                    {
+                        spdlog::error("Registry WAL sync worker failed: {}", e.what());
+                    }
+                    catch(...)
+                    {
+                        spdlog::error("Registry WAL sync worker failed with unknown error");
+                    }
                 }
-            );
+            });
+        spdlog::info("Registry WAL sync worker enabled with interval {}ms", registry_wal_sync_interval.count());
+    }
+    else
+    {
+        spdlog::info("Registry WAL sync worker disabled for in-memory SQLite database");
+    }
+
+    dcn::async::SignalWorker signal_worker(
+        io_context,
+        _configureShutdownSignals(),
+
+        // graceful shutdown
+        [&server,
+         &wal_sync_worker,
+         &wal_sync_worker_stopped,
+         &registry,
+         wal_enabled]() -> asio::awaitable<void>
+        {
+            spdlog::info("Decentralised Art server stopping...");
+            co_await server.close();
+            spdlog::info("Decentralised Art server close requested");
+
+            if(wal_sync_worker != std::nullopt)
+            {
+                spdlog::info("Requesting registry WAL sync worker stop...");
+                wal_sync_worker->requestStop();
+
+                auto exec = co_await asio::this_coro::executor;
+                asio::steady_timer wait_timer(exec);
+
+                while(!wal_sync_worker_stopped.load(std::memory_order_acquire))
+                {
+                    wait_timer.expires_after(std::chrono::milliseconds(25));
+                    std::error_code wait_ec;
+                    co_await wait_timer.async_wait(asio::redirect_error(asio::use_awaitable, wait_ec));
+                    if(wait_ec)
+                    {
+                        if(wait_ec != asio::error::operation_aborted)
+                        {
+                            spdlog::warn("Waiting for registry WAL sync worker stop failed: {}", wait_ec.message());
+                        }
+                        break;
+                    }
+                }
+
+                spdlog::info("Registry WAL sync worker stopped");
+            }
+
+            if(wal_enabled)
+            {
+                spdlog::info("Running final registry WAL truncate checkpoint...");
+                const bool checkpoint_ok =
+                    co_await registry.checkpointWal(dcn::storage::WalCheckpointMode::TRUNCATE);
+                if(!checkpoint_ok)
+                {
+                    spdlog::warn("Final registry WAL truncate checkpoint failed");
+                }
+                else
+                {
+                    spdlog::info("Final registry WAL truncate checkpoint complete");
+                }
+            }
+
+            co_return;
+        },
+
+        // immediate shutdown
+        [&wal_sync_worker]()
+        {
+            if(wal_sync_worker)
+            {
+                spdlog::info("Registry WAL sync worker stopping...");
+                wal_sync_worker->requestStop();
+                spdlog::info("Stopped registry WAL sync worker");
+            }
         }
     );
+    
+    signal_worker.start();
+
+    asio::co_spawn(
+        io_context,
+        [&io_context,
+         &registry,
+         &evm,
+         &server,
+         &cfg,
+         &chain_ingestion_cfg,
+         loader_batch_connectors,
+         loader_batch_transformations,
+         loader_batch_conditions]() -> asio::awaitable<void>
+        {
+            const dcn::loader::LoaderBatchConfig loader_batch_config{
+                .connectors = loader_batch_connectors,
+                .transformations = loader_batch_transformations,
+                .conditions = loader_batch_conditions
+            };
+
+            (void)co_await dcn::loader::importJsonStorageToDatabase(
+                evm,
+                registry,
+                cfg.storage_path,
+                loader_batch_config);
+
+            if(chain_ingestion_cfg.enabled)
+            {
+                //asio::co_spawn(io_context, dcn::chain::runEventIngestion(chain_ingestion_cfg, registry), asio::detached);
+            }
+            asio::co_spawn(io_context, server.listen(), asio::detached);
+            co_return;
+        }(),
+        asio::detached);
 
     try
     {

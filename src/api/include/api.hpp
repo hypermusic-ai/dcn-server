@@ -1,13 +1,9 @@
 #pragma once
 #include <ranges>
 
-#include "native.h"
-#include <asio.hpp>
-#include <asio/experimental/awaitable_operators.hpp>
-using namespace asio::experimental::awaitable_operators;
-
 #include <spdlog/spdlog.h>
 
+#include "async.hpp"
 #include "utils.hpp"
 #include "config.hpp"
 #include "route.hpp"
@@ -136,7 +132,7 @@ namespace dcn
      * @param registry Registry instance
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry);
+    asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
 
     /**
      * @brief Handles a OPTIONS request to /format/<hash>?limit=<uint>&page=<uint>
@@ -159,7 +155,7 @@ namespace dcn
      * @param registry Registry instance
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> GET_format(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry);
+    asio::awaitable<http::Response> GET_format(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
 
 
     /**
@@ -171,7 +167,7 @@ namespace dcn
      * @param registry Registry instance for retrieving connectors
      * @return An HTTP response
     */
-    asio::awaitable<http::Response> HEAD_connector(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry);
+    asio::awaitable<http::Response> HEAD_connector(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
     
     /**
      * @brief Handles OPTIONS requests by returning a response with CORS headers.
@@ -192,7 +188,11 @@ namespace dcn
      * @param registry Registry instance for retrieving connectors
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> GET_connector(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> GET_connector(
+        const http::Request & request,
+        std::vector<server::RouteArg> route_args,
+        server::QueryArgsList query_args,
+        storage::Registry & registry);
 
     /**
      * @brief Handle a POST request to /connectors
@@ -204,7 +204,7 @@ namespace dcn
      * @return An HTTP response
      */
     asio::awaitable<http::Response> POST_connector(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args,
-        auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config);
+        auth::AuthManager & auth_manager, storage::Registry & registry, evm::EVM & evm, const config::Config & config);
 
     /**
      * @brief Handles HEAD requests for the transformation endpoint.
@@ -215,7 +215,7 @@ namespace dcn
      * @param registry Registry instance for retrieving transformations
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> HEAD_transformation(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry);
+    asio::awaitable<http::Response> HEAD_transformation(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
 
     /**
      * @brief Handles OPTIONS requests for the transformation endpoint by returning a response with CORS headers.
@@ -239,7 +239,11 @@ namespace dcn
      * @param evm EVM instance
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> GET_transformation(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> GET_transformation(
+        const http::Request & request,
+        std::vector<server::RouteArg> route_args,
+        server::QueryArgsList query_args,
+        storage::Registry & registry);
 
     /**
      * @brief Handles POST requests for the transformation endpoint.
@@ -255,7 +259,7 @@ namespace dcn
      * @return An HTTP response
      */
     asio::awaitable<http::Response> POST_transformation(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args,
-        auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config);
+        auth::AuthManager & auth_manager, storage::Registry & registry, evm::EVM & evm, const config::Config & config);
 
 
     /**
@@ -267,7 +271,7 @@ namespace dcn
      * @param registry Registry instance for retrieving conditions
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> HEAD_condition(const http::Request & request,  std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry);
+    asio::awaitable<http::Response> HEAD_condition(const http::Request & request,  std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
 
     /**
      * @brief Handles OPTIONS requests for the condition endpoint by returning a response with CORS headers.
@@ -291,7 +295,11 @@ namespace dcn
      * @param evm EVM instance
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> GET_condition(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, registry::Registry & registry, evm::EVM & evm);
+    asio::awaitable<http::Response> GET_condition(
+        const http::Request & request,
+        std::vector<server::RouteArg> route_args,
+        server::QueryArgsList query_args,
+        storage::Registry & registry);
 
     /**
      * @brief Handles POST requests for the condition endpoint.
@@ -307,7 +315,7 @@ namespace dcn
      * @return An HTTP response
      */
     asio::awaitable<http::Response> POST_condition(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, 
-        auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config);
+        auth::AuthManager & auth_manager, storage::Registry & registry, evm::EVM & evm, const config::Config & config);
 
     /**
      * @brief Handles OPTIONS requests for the execute endpoint by returning a response with CORS headers.
@@ -331,5 +339,12 @@ namespace dcn
      * @param evm EVM instance
      * @return An HTTP response
      */
-    asio::awaitable<http::Response> POST_execute(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, const auth::AuthManager & auth_manager, evm::EVM & evm);
+    asio::awaitable<http::Response> POST_execute(
+        const http::Request & request,
+        std::vector<server::RouteArg> route_args,
+        server::QueryArgsList query_args,
+        const auth::AuthManager & auth_manager,
+        storage::Registry & registry,
+        evm::EVM & evm,
+        const config::Config & config);
 }

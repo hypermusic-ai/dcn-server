@@ -20,6 +20,22 @@ namespace
     using dcn::tests::helpers::makeConnectorRecord;
     using dcn::tests::helpers::runAwaitable;
 
+    TransformationRecord makeTransformationRecord(const std::string & name, const std::string & owner_hex)
+    {
+        TransformationRecord record;
+        record.set_owner(owner_hex);
+        record.mutable_transformation()->set_name(name);
+        return record;
+    }
+
+    ConditionRecord makeConditionRecord(const std::string & name, const std::string & owner_hex)
+    {
+        ConditionRecord record;
+        record.set_owner(owner_hex);
+        record.mutable_condition()->set_name(name);
+        return record;
+    }
+
     evmc::bytes32 pathHash(std::initializer_list<std::uint32_t> dim_ids)
     {
         auto it = dim_ids.begin();
@@ -55,11 +71,11 @@ namespace
     }
 
     bool containsScalarLabel(
-        const std::vector<registry::ScalarLabel> & labels,
+        const std::vector<storage::ScalarLabel> & labels,
         std::string_view scalar,
         const evmc::bytes32 & path_hash)
     {
-        for(const registry::ScalarLabel & label : labels)
+        for(const storage::ScalarLabel & label : labels)
         {
             if(label.scalar == scalar && chain::equalBytes32(label.path_hash, path_hash))
             {
@@ -70,11 +86,11 @@ namespace
         return false;
     }
 
-    std::vector<std::string> scalarNamesFromLabels(const std::vector<registry::ScalarLabel> & labels)
+    std::vector<std::string> scalarNamesFromLabels(const std::vector<storage::ScalarLabel> & labels)
     {
         std::vector<std::string> names;
         names.reserve(labels.size());
-        for(const registry::ScalarLabel & label : labels)
+        for(const storage::ScalarLabel & label : labels)
         {
             names.push_back(label.scalar);
         }
@@ -83,30 +99,49 @@ namespace
         return names;
     }
 
-    std::vector<chain::Address> getAllFormatConnectors(
+    std::vector<std::string> getAllFormatConnectors(
         asio::io_context & io_context,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const evmc::bytes32 & format_hash)
     {
-        const std::size_t connectors_count =
-            runAwaitable(io_context, registry.getFormatConnectorsCount(format_hash));
-        return runAwaitable(
-            io_context,
-            registry.getFormatConnectorsPage(format_hash, 0, connectors_count));
+        std::vector<std::string> connectors;
+        std::optional<storage::NameCursor> after;
+        while(true)
+        {
+            const auto page = runAwaitable(
+                io_context,
+                registry.getFormatConnectorNamesCursor(format_hash, after, 1024));
+            connectors.insert(connectors.end(), page.entries.begin(), page.entries.end());
+
+            if(!page.has_more)
+            {
+                EXPECT_FALSE(page.next_after.has_value());
+                break;
+            }
+
+            if(!page.next_after.has_value())
+            {
+                ADD_FAILURE() << "Expected next_after cursor when has_more is true";
+                return connectors;
+            }
+            after = page.next_after;
+        }
+
+        return connectors;
     }
 
-    bool containsAddress(
-        const std::vector<chain::Address> & addresses,
-        const chain::Address & address)
+    bool containsName(
+        const std::vector<std::string> & names,
+        const std::string & name)
     {
-        return std::find(addresses.begin(), addresses.end(), address) != addresses.end();
+        return std::find(names.begin(), names.end(), name) != names.end();
     }
 }
 
 TEST_F(UnitTest, Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xF0));
 
@@ -125,13 +160,12 @@ TEST_F(UnitTest, Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
     addDimension(right, "TIME");
     ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(right_address, std::move(right))));
 
-    const auto left_hash = runAwaitable(io_context, registry.getFormatHash("LEFT", left_address));
-    const auto right_hash = runAwaitable(io_context, registry.getFormatHash("RIGHT", right_address));
+    const auto left_hash = runAwaitable(io_context, registry.getFormatHash("LEFT"));
+    const auto right_hash = runAwaitable(io_context, registry.getFormatHash("RIGHT"));
     ASSERT_TRUE(left_hash.has_value());
     ASSERT_TRUE(right_hash.has_value());
 
     EXPECT_TRUE(chain::equalBytes32(*left_hash, *right_hash));
-
     const evmc::bytes32 expected_left = expectedFormatHash({
         {"TIME", pathHash({0})},
         {"PITCH", pathHash({0})}
@@ -145,14 +179,14 @@ TEST_F(UnitTest, Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
     EXPECT_TRUE(chain::equalBytes32(*right_hash, expected_right));
 
     const auto left_connectors = getAllFormatConnectors(io_context, registry, *left_hash);
-    EXPECT_TRUE(containsAddress(left_connectors, left_address));
-    EXPECT_TRUE(containsAddress(left_connectors, right_address));
+    EXPECT_TRUE(containsName(left_connectors, "LEFT"));
+    EXPECT_TRUE(containsName(left_connectors, "RIGHT"));
 }
 
 TEST_F(UnitTest, Registry_FormatHash_IsPathSensitiveAcrossBindingSlots)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xE0));
 
@@ -169,8 +203,8 @@ TEST_F(UnitTest, Registry_FormatHash_IsPathSensitiveAcrossBindingSlots)
     addDimension(slot1, "BASE2", {{"1", "PITCH"}});
     ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(slot1_address, std::move(slot1))));
 
-    const auto slot0_hash = runAwaitable(io_context, registry.getFormatHash("BIND_SLOT0", slot0_address));
-    const auto slot1_hash = runAwaitable(io_context, registry.getFormatHash("BIND_SLOT1", slot1_address));
+    const auto slot0_hash = runAwaitable(io_context, registry.getFormatHash("BIND_SLOT0"));
+    const auto slot1_hash = runAwaitable(io_context, registry.getFormatHash("BIND_SLOT1"));
     ASSERT_TRUE(slot0_hash.has_value());
     ASSERT_TRUE(slot1_hash.has_value());
 
@@ -192,7 +226,7 @@ TEST_F(UnitTest, Registry_FormatHash_IsPathSensitiveAcrossBindingSlots)
 TEST_F(UnitTest, Registry_FormatHash_MatchesForSeparateConnectorsWithSameProducedLabels)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xD0));
 
@@ -211,8 +245,8 @@ TEST_F(UnitTest, Registry_FormatHash_MatchesForSeparateConnectorsWithSameProduce
     addDimension(second, "PITCH");
     ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(second_address, std::move(second))));
 
-    const auto first_hash = runAwaitable(io_context, registry.getFormatHash("SAME_A", first_address));
-    const auto second_hash = runAwaitable(io_context, registry.getFormatHash("SAME_B", second_address));
+    const auto first_hash = runAwaitable(io_context, registry.getFormatHash("SAME_A"));
+    const auto second_hash = runAwaitable(io_context, registry.getFormatHash("SAME_B"));
     ASSERT_TRUE(first_hash.has_value());
     ASSERT_TRUE(second_hash.has_value());
 
@@ -220,14 +254,14 @@ TEST_F(UnitTest, Registry_FormatHash_MatchesForSeparateConnectorsWithSameProduce
 
     const auto connectors = getAllFormatConnectors(io_context, registry, *first_hash);
     EXPECT_EQ(connectors.size(), 2u);
-    EXPECT_TRUE(containsAddress(connectors, first_address));
-    EXPECT_TRUE(containsAddress(connectors, second_address));
+    EXPECT_TRUE(containsName(connectors, "SAME_A"));
+    EXPECT_TRUE(containsName(connectors, "SAME_B"));
 }
 
-TEST_F(UnitTest, Registry_GetNewestFormatHash_TracksNewestConnectorAddress)
+TEST_F(UnitTest, Registry_FormatHash_RejectsSecondConnectorWithSameName)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xC0));
 
@@ -242,24 +276,19 @@ TEST_F(UnitTest, Registry_GetNewestFormatHash_TracksNewestConnectorAddress)
     const chain::Address second_address = makeAddressFromByte(0x74);
     ConnectorRecord second = makeConnectorRecord("DUP", owner_hex);
     addDimension(second, "PITCH");
-    ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(second_address, std::move(second))));
+    EXPECT_FALSE(runAwaitable(io_context, registry.addConnector(second_address, std::move(second))));
 
-    const auto first_hash = runAwaitable(io_context, registry.getFormatHash("DUP", first_address));
-    const auto second_hash = runAwaitable(io_context, registry.getFormatHash("DUP", second_address));
-    const auto newest_hash = runAwaitable(io_context, registry.getNewestFormatHash("DUP"));
-
+    const auto first_hash = runAwaitable(io_context, registry.getFormatHash("DUP"));
+    const auto second_hash = runAwaitable(io_context, registry.getFormatHash("DUP"));
     ASSERT_TRUE(first_hash.has_value());
     ASSERT_TRUE(second_hash.has_value());
-    ASSERT_TRUE(newest_hash.has_value());
-
-    EXPECT_TRUE(chain::equalBytes32(*newest_hash, *second_hash));
-    EXPECT_FALSE(chain::equalBytes32(*newest_hash, *first_hash));
+    EXPECT_TRUE(chain::equalBytes32(*second_hash, *first_hash));
 }
 
-TEST_F(UnitTest, Registry_AddConnector_RejectsAddressReuseAcrossDifferentNames)
+TEST_F(UnitTest, Registry_AddConnector_AllowsAddressReuseAcrossDifferentNames)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xC1));
 
@@ -270,24 +299,18 @@ TEST_F(UnitTest, Registry_AddConnector_RejectsAddressReuseAcrossDifferentNames)
 
     ConnectorRecord second = makeConnectorRecord("ADDR_B", owner_hex);
     addDimension(second, "");
-    EXPECT_FALSE(runAwaitable(io_context, registry.addConnector(reused_address, std::move(second))));
+    EXPECT_TRUE(runAwaitable(io_context, registry.addConnector(reused_address, std::move(second))));
 
-    const auto first_hash = runAwaitable(io_context, registry.getFormatHash("ADDR_A", reused_address));
-    const auto second_hash = runAwaitable(io_context, registry.getFormatHash("ADDR_B", reused_address));
-    const auto second_newest_hash = runAwaitable(io_context, registry.getNewestFormatHash("ADDR_B"));
-    const auto connector_name = runAwaitable(io_context, registry.getConnectorName(reused_address));
-
+    const auto first_hash = runAwaitable(io_context, registry.getFormatHash("ADDR_A"));
+    const auto second_hash = runAwaitable(io_context, registry.getFormatHash("ADDR_B"));
     EXPECT_TRUE(first_hash.has_value());
-    EXPECT_FALSE(second_hash.has_value());
-    EXPECT_FALSE(second_newest_hash.has_value());
-    ASSERT_TRUE(connector_name.has_value());
-    EXPECT_EQ(*connector_name, "ADDR_A");
+    EXPECT_TRUE(second_hash.has_value());
 }
 
-TEST_F(UnitTest, Registry_FormatHash_PreservesScalarMultiplicity)
+TEST_F(UnitTest, Registry_FormatHash_IgnoresScalarMultiplicity)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xB0));
 
@@ -304,12 +327,12 @@ TEST_F(UnitTest, Registry_FormatHash_PreservesScalarMultiplicity)
     addDimension(two, "PITCH");
     ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(two_address, std::move(two))));
 
-    const auto one_hash = runAwaitable(io_context, registry.getFormatHash("ONE_PITCH", one_address));
-    const auto two_hash = runAwaitable(io_context, registry.getFormatHash("TWO_PITCH", two_address));
+    const auto one_hash = runAwaitable(io_context, registry.getFormatHash("ONE_PITCH"));
+    const auto two_hash = runAwaitable(io_context, registry.getFormatHash("TWO_PITCH"));
     ASSERT_TRUE(one_hash.has_value());
     ASSERT_TRUE(two_hash.has_value());
 
-    EXPECT_FALSE(chain::equalBytes32(*one_hash, *two_hash));
+    EXPECT_TRUE(chain::equalBytes32(*one_hash, *two_hash));
 
     const evmc::bytes32 expected_one = expectedFormatHash({
         {"PITCH", pathHash({0})}
@@ -320,12 +343,17 @@ TEST_F(UnitTest, Registry_FormatHash_PreservesScalarMultiplicity)
     });
     EXPECT_TRUE(chain::equalBytes32(*one_hash, expected_one));
     EXPECT_TRUE(chain::equalBytes32(*two_hash, expected_two));
+
+    const auto two_labels = runAwaitable(io_context, registry.getScalarLabelsByFormatHash(*two_hash));
+    ASSERT_TRUE(two_labels.has_value());
+    EXPECT_EQ(two_labels->size(), 1u);
+    EXPECT_EQ(two_labels->at(0).scalar, "PITCH");
 }
 
 TEST_F(UnitTest, Registry_FormatHash_MatchesForSameScalarNamesWhenTailLabelsMatch)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA0));
 
@@ -344,8 +372,8 @@ TEST_F(UnitTest, Registry_FormatHash_MatchesForSameScalarNamesWhenTailLabelsMatc
     addDimension(bound, "BASE2", {{"0", "TIME"}, {"1", "PITCH"}});
     ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(bound_address, std::move(bound))));
 
-    const auto direct_hash = runAwaitable(io_context, registry.getFormatHash("DIRECT", direct_address));
-    const auto bound_hash = runAwaitable(io_context, registry.getFormatHash("BOUND", bound_address));
+    const auto direct_hash = runAwaitable(io_context, registry.getFormatHash("DIRECT"));
+    const auto bound_hash = runAwaitable(io_context, registry.getFormatHash("BOUND"));
     ASSERT_TRUE(direct_hash.has_value());
     ASSERT_TRUE(bound_hash.has_value());
 
@@ -358,6 +386,162 @@ TEST_F(UnitTest, Registry_FormatHash_MatchesForSameScalarNamesWhenTailLabelsMatc
     EXPECT_EQ(scalarNamesFromLabels(*direct_labels), scalarNamesFromLabels(*bound_labels));
 
     const auto format_connectors = getAllFormatConnectors(io_context, registry, *direct_hash);
-    EXPECT_TRUE(containsAddress(format_connectors, direct_address));
-    EXPECT_TRUE(containsAddress(format_connectors, bound_address));
+    EXPECT_TRUE(containsName(format_connectors, "DIRECT"));
+    EXPECT_TRUE(containsName(format_connectors, "BOUND"));
 }
+
+TEST_F(UnitTest, Registry_AddConnectorsBatch_AllOrNothingRejectsEntireBatch)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0x9A));
+
+    const chain::Address valid_address = makeAddressFromByte(0x9B);
+    ConnectorRecord valid = makeConnectorRecord("BATCH_VALID_AON", owner_hex);
+    addDimension(valid, "");
+
+    const chain::Address invalid_address = makeAddressFromByte(0x9C);
+    ConnectorRecord invalid = makeConnectorRecord("BATCH_INVALID_AON", owner_hex);
+    // Invalid: zero dimensions.
+
+    std::vector<std::pair<chain::Address, ConnectorRecord>> batch;
+    batch.emplace_back(valid_address, std::move(valid));
+    batch.emplace_back(invalid_address, std::move(invalid));
+
+    EXPECT_FALSE(runAwaitable(io_context, registry.addConnectorsBatch(std::move(batch), true)));
+    EXPECT_FALSE(runAwaitable(io_context, registry.getConnectorRecordHandle("BATCH_VALID_AON")).has_value());
+}
+
+TEST_F(UnitTest, Registry_AddConnectorsBatch_PartialModeKeepsValidItems)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0x8A));
+
+    const chain::Address valid_address = makeAddressFromByte(0x8B);
+    ConnectorRecord valid = makeConnectorRecord("BATCH_VALID_PARTIAL", owner_hex);
+    addDimension(valid, "");
+
+    const chain::Address invalid_address = makeAddressFromByte(0x8C);
+    ConnectorRecord invalid = makeConnectorRecord("BATCH_INVALID_PARTIAL", owner_hex);
+    // Invalid: zero dimensions.
+
+    std::vector<std::pair<chain::Address, ConnectorRecord>> batch;
+    batch.emplace_back(valid_address, std::move(valid));
+    batch.emplace_back(invalid_address, std::move(invalid));
+
+    EXPECT_FALSE(runAwaitable(io_context, registry.addConnectorsBatch(std::move(batch), false)));
+    EXPECT_TRUE(runAwaitable(io_context, registry.getConnectorRecordHandle("BATCH_VALID_PARTIAL")).has_value());
+    EXPECT_FALSE(runAwaitable(io_context, registry.getConnectorRecordHandle("BATCH_INVALID_PARTIAL")).has_value());
+}
+
+TEST_F(UnitTest, Registry_AddConnectorsBatch_ResolvesDependenciesWithinBatchOrder)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0x7A));
+
+    const chain::Address base_address = makeAddressFromByte(0x7B);
+    ConnectorRecord base = makeConnectorRecord("BATCH_BASE", owner_hex);
+    addDimension(base, "");
+
+    const chain::Address derived_address = makeAddressFromByte(0x7C);
+    ConnectorRecord derived = makeConnectorRecord("BATCH_DERIVED", owner_hex);
+    addDimension(derived, "BATCH_BASE");
+
+    std::vector<std::pair<chain::Address, ConnectorRecord>> batch;
+    batch.emplace_back(base_address, std::move(base));
+    batch.emplace_back(derived_address, std::move(derived));
+
+    EXPECT_TRUE(runAwaitable(io_context, registry.addConnectorsBatch(std::move(batch), true)));
+    EXPECT_TRUE(runAwaitable(io_context, registry.getConnectorRecordHandle("BATCH_BASE")).has_value());
+    EXPECT_TRUE(runAwaitable(io_context, registry.getConnectorRecordHandle("BATCH_DERIVED")).has_value());
+}
+
+TEST_F(UnitTest, Registry_AddConnector_IsIdempotentForExactDuplicateAndRejectsPayloadConflict)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0x71));
+    const chain::Address connector_address = makeAddressFromByte(0x72);
+
+    ConnectorRecord first = makeConnectorRecord("IDEMPOTENT_CONNECTOR", owner_hex);
+    addDimension(first, "");
+    ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(connector_address, first)));
+
+    ConnectorRecord exact_duplicate = makeConnectorRecord("IDEMPOTENT_CONNECTOR", owner_hex);
+    addDimension(exact_duplicate, "");
+    EXPECT_TRUE(runAwaitable(io_context, registry.addConnector(connector_address, exact_duplicate)));
+
+    ConnectorRecord payload_mismatch = makeConnectorRecord("IDEMPOTENT_CONNECTOR", owner_hex);
+    payload_mismatch.set_owner(evmc::hex(makeAddressFromByte(0x73)));
+    addDimension(payload_mismatch, "");
+    EXPECT_FALSE(runAwaitable(io_context, registry.addConnector(connector_address, payload_mismatch)));
+}
+
+TEST_F(UnitTest, Registry_AddConnector_AllowsAddressReuseAcrossNames)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0x74));
+    const chain::Address shared_address = makeAddressFromByte(0x75);
+
+    ConnectorRecord first = makeConnectorRecord("ADDR_REUSE_A", owner_hex);
+    addDimension(first, "");
+    ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(shared_address, first)));
+
+    ConnectorRecord second = makeConnectorRecord("ADDR_REUSE_B", owner_hex);
+    addDimension(second, "");
+    EXPECT_TRUE(runAwaitable(io_context, registry.addConnector(shared_address, second)));
+}
+
+TEST_F(UnitTest, Registry_AddTransformation_IsIdempotentForExactDuplicateAndRejectsConflicts)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0x76));
+    const chain::Address transformation_address = makeAddressFromByte(0x77);
+
+    TransformationRecord first = makeTransformationRecord("IDEMPOTENT_TRANSFORMATION", owner_hex);
+    ASSERT_TRUE(runAwaitable(io_context, registry.addTransformation(transformation_address, first)));
+
+    TransformationRecord exact_duplicate = makeTransformationRecord("IDEMPOTENT_TRANSFORMATION", owner_hex);
+    EXPECT_TRUE(runAwaitable(io_context, registry.addTransformation(transformation_address, exact_duplicate)));
+
+    TransformationRecord payload_mismatch =
+        makeTransformationRecord("IDEMPOTENT_TRANSFORMATION", evmc::hex(makeAddressFromByte(0x78)));
+    EXPECT_FALSE(runAwaitable(io_context, registry.addTransformation(transformation_address, payload_mismatch)));
+
+    TransformationRecord different_name_same_address =
+        makeTransformationRecord("IDEMPOTENT_TRANSFORMATION_OTHER", owner_hex);
+    EXPECT_TRUE(runAwaitable(io_context, registry.addTransformation(transformation_address, different_name_same_address)));
+}
+
+TEST_F(UnitTest, Registry_AddCondition_IsIdempotentForExactDuplicateAndRejectsConflicts)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0x79));
+    const chain::Address condition_address = makeAddressFromByte(0x7A);
+
+    ConditionRecord first = makeConditionRecord("IDEMPOTENT_CONDITION", owner_hex);
+    ASSERT_TRUE(runAwaitable(io_context, registry.addCondition(condition_address, first)));
+
+    ConditionRecord exact_duplicate = makeConditionRecord("IDEMPOTENT_CONDITION", owner_hex);
+    EXPECT_TRUE(runAwaitable(io_context, registry.addCondition(condition_address, exact_duplicate)));
+
+    ConditionRecord payload_mismatch =
+        makeConditionRecord("IDEMPOTENT_CONDITION", evmc::hex(makeAddressFromByte(0x7B)));
+    EXPECT_FALSE(runAwaitable(io_context, registry.addCondition(condition_address, payload_mismatch)));
+
+    ConditionRecord different_name_same_address =
+        makeConditionRecord("IDEMPOTENT_CONDITION_OTHER", owner_hex);
+    EXPECT_TRUE(runAwaitable(io_context, registry.addCondition(condition_address, different_name_same_address)));
+}
+

@@ -180,7 +180,7 @@ namespace dcn::evm
 
     asio::awaitable<bool> EVM::addAccount(chain::Address address, std::uint64_t initial_gas) noexcept
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         if(_storage.account_exists(address))
         {
@@ -202,7 +202,7 @@ namespace dcn::evm
 
     asio::awaitable<bool> EVM::setGas(chain::Address address, std::uint64_t gas) noexcept
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         if(!_storage.account_exists(address))
         {
@@ -216,7 +216,7 @@ namespace dcn::evm
 
     asio::awaitable<bool> EVM::compile(std::filesystem::path code_path, std::filesystem::path out_dir, std::filesystem::path base_path, std::filesystem::path includes) const noexcept
     {
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         if(!std::filesystem::exists(code_path))
         {
@@ -320,7 +320,7 @@ namespace dcn::evm
         std::memcpy(&value256.bytes[24], &value, sizeof(value));  // Big endian: last 8 bytes hold the value
         create_msg.value = value256;
 
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
 
         const evmc::Result result = _storage.call(create_msg);        
 
@@ -404,7 +404,7 @@ namespace dcn::evm
         std::memcpy(&value256.bytes[24], &value, sizeof(value));  // Big endian: last 8 bytes hold the value
         msg.value = value256;
 
-        co_await utils::ensureOnStrand(_strand);
+        co_await async::ensureOnStrand(_strand);
         evmc::Result result = _storage.call(msg);
         
         if (result.status_code != EVMC_SUCCESS)

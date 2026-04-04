@@ -15,6 +15,7 @@ project("${PROJECT_NAME}"
 # --------------------------------------------------------------------------
 option(DECENTRALISED_ART_ENABLE_INSTALL "Enable install rule" OFF)
 option(DECENTRALISED_ART_BUILD_TESTS "Build tests" OFF)
+option(DECENTRALISED_ART_BUILD_STRESS_TESTS "Build stress test module" OFF)
 option(DECENTRALISED_ART_USE_SUBMODULE_PT "Use submodule PT" OFF)
 
 # --------------------------------------------------------------------------
@@ -53,6 +54,7 @@ target_link_libraries("${PROJECT_NAME}Lib"
         proto_gen
         
         "${PROJECT_PREFIX}::Native"
+        "${PROJECT_PREFIX}::Async"
         "${PROJECT_PREFIX}::Config"
         "${PROJECT_PREFIX}::CMD"
         "${PROJECT_PREFIX}::Version"
@@ -67,7 +69,7 @@ target_link_libraries("${PROJECT_NAME}Lib"
         "${PROJECT_PREFIX}::API"
         "${PROJECT_PREFIX}::EVM"
         "${PROJECT_PREFIX}::Loader"
-        "${PROJECT_PREFIX}::Registry"
+        "${PROJECT_PREFIX}::Storage"
         "${PROJECT_PREFIX}::Chain"
         "${PROJECT_PREFIX}::Sepolia"
 )

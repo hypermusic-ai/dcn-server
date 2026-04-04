@@ -19,12 +19,9 @@
     #define interface __STRUCT__
 #endif
 
-#include "native.h"
-#include <asio.hpp>
 #include <spdlog/spdlog.h>
 #include <absl/container/flat_hash_map.h>
 
-#include "utils.hpp"
 #include "keccak256.hpp"
 
 #include "evm_formatter.hpp"

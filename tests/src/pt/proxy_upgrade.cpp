@@ -377,7 +377,7 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
     const ScopedLogLevel scoped_log_level(spdlog::level::err);
 
     ProxyTestEnv env;
-    registry::Registry registry(env.io_context);
+    storage::Registry registry(env.io_context);
 
     const auto runner_proxy = env.evm_instance.getRunnerAddress();
     ASSERT_FALSE(isZeroAddress(runner_proxy));

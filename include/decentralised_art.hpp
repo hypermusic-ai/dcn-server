@@ -1,11 +1,7 @@
 #pragma once
 
 #include <format>
-
-#include "native.h"
-#include <asio.hpp>
-#include <asio/experimental/awaitable_operators.hpp>
-using namespace asio::experimental::awaitable_operators;
+#include <csignal>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -13,6 +9,8 @@ using namespace asio::experimental::awaitable_operators;
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 
+#include "native.h"
+#include "async.hpp"
 #include "cmd.hpp"
 #include "config.hpp"
 #include "server.hpp"
@@ -27,6 +25,7 @@ using namespace asio::experimental::awaitable_operators;
 #include "loader.hpp"
 #include "chain.hpp"
 #include "crypto.hpp"
+#include "storage.hpp"
 
 #include "sepolia_backend.hpp"
 
