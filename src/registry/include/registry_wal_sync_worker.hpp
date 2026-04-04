@@ -6,7 +6,7 @@
 #include "native.h"
 #include <asio.hpp>
 
-namespace dcn::registry
+namespace dcn::storage
 {
     class Registry;
 

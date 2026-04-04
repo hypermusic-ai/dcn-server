@@ -6,7 +6,7 @@ namespace dcn
     {
         constexpr std::size_t MAX_LIMIT = 256;
 
-        std::optional<registry::NameCursor> parseNameCursor(const std::string & name_token)
+        std::optional<storage::NameCursor> parseNameCursor(const std::string & name_token)
         {
             if(name_token.empty())
             {
@@ -16,7 +16,7 @@ namespace dcn
             return name_token;
         }
 
-        std::string serializeNameCursor(const registry::NameCursor & cursor)
+        std::string serializeNameCursor(const storage::NameCursor & cursor)
         {
             return cursor;
         }
@@ -36,7 +36,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList query_args, registry::Registry & registry)
+    asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList query_args, storage::Registry & registry)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -106,9 +106,9 @@ namespace dcn
             co_return response;
         }
 
-        std::optional<registry::NameCursor> after_connectors;
-        std::optional<registry::NameCursor> after_transformations;
-        std::optional<registry::NameCursor> after_conditions;
+        std::optional<storage::NameCursor> after_connectors;
+        std::optional<storage::NameCursor> after_transformations;
+        std::optional<storage::NameCursor> after_conditions;
 
         if(query_args.contains("after_connectors"))
         {

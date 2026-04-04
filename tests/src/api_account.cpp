@@ -36,7 +36,7 @@ namespace
 TEST_F(UnitTest, API_Account_Get_InvalidAddressArgumentReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     http::Request request;
     request.setMethod(http::Method::GET)
@@ -56,7 +56,7 @@ TEST_F(UnitTest, API_Account_Get_InvalidAddressArgumentReturnsBadRequest)
 TEST_F(UnitTest, API_Account_Get_MissingLimitReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA1));
 
@@ -77,7 +77,7 @@ TEST_F(UnitTest, API_Account_Get_MissingLimitReturnsBadRequest)
 TEST_F(UnitTest, API_Account_Get_LimitAboveMaxReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA2));
 
@@ -99,7 +99,7 @@ TEST_F(UnitTest, API_Account_Get_LimitAboveMaxReturnsBadRequest)
 TEST_F(UnitTest, API_Account_Get_InvalidLimitReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA5));
 
@@ -121,7 +121,7 @@ TEST_F(UnitTest, API_Account_Get_InvalidLimitReturnsBadRequest)
 TEST_F(UnitTest, API_Account_Get_InvalidAfterCursorReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA3));
 
@@ -144,7 +144,7 @@ TEST_F(UnitTest, API_Account_Get_InvalidAfterCursorReturnsBadRequest)
 TEST_F(UnitTest, API_Account_Get_InvalidAfterTransformationsCursorReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA6));
 
@@ -167,7 +167,7 @@ TEST_F(UnitTest, API_Account_Get_InvalidAfterTransformationsCursorReturnsBadRequ
 TEST_F(UnitTest, API_Account_Get_InvalidAfterConditionsCursorReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA7));
 
@@ -190,7 +190,7 @@ TEST_F(UnitTest, API_Account_Get_InvalidAfterConditionsCursorReturnsBadRequest)
 TEST_F(UnitTest, API_Account_Get_NameCursorPaginationIsStableAcrossInsert)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const chain::Address owner = makeAddressFromByte(0xA4);
     const std::string owner_hex = evmc::hex(owner);

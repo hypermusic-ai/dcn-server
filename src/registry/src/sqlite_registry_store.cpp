@@ -15,7 +15,7 @@
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 
-namespace dcn::registry
+namespace dcn::storage
 {
     namespace
     {

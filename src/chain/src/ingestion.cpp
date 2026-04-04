@@ -341,7 +341,7 @@ namespace dcn::chain
             return true;
         }
 
-        // asio::awaitable<bool> _addFeatureRecord(registry::Registry & registry, const std::filesystem::path & storage_path,
+        // asio::awaitable<bool> _addFeatureRecord(storage::Registry & registry, const std::filesystem::path & storage_path,
         //                                         const chain::Address & address, const FeatureRecord & record)
         // {
         //     bool added = co_await registry.addFeature(address, record);
@@ -359,7 +359,7 @@ namespace dcn::chain
         //     co_return added;
         // }
 
-        // asio::awaitable<bool> _addTransformationRecord(registry::Registry & registry, const std::filesystem::path & storage_path,
+        // asio::awaitable<bool> _addTransformationRecord(storage::Registry & registry, const std::filesystem::path & storage_path,
         //                                                const chain::Address & address, const TransformationRecord & record)
         // {
         //     bool added = co_await registry.addTransformation(address, record);
@@ -377,7 +377,7 @@ namespace dcn::chain
         //     co_return added;
         // }
 
-        // asio::awaitable<bool> _addConditionRecord(registry::Registry & registry, const std::filesystem::path & storage_path,
+        // asio::awaitable<bool> _addConditionRecord(storage::Registry & registry, const std::filesystem::path & storage_path,
         //                                           const chain::Address & address, const ConditionRecord & record)
         // {
         //     bool added = co_await registry.addCondition(address, record);
@@ -395,7 +395,7 @@ namespace dcn::chain
         //     co_return added;
         // }
 
-        // asio::awaitable<bool> _addConnectorRecord(registry::Registry & registry, const std::filesystem::path & storage_path,
+        // asio::awaitable<bool> _addConnectorRecord(storage::Registry & registry, const std::filesystem::path & storage_path,
         //                                          const chain::Address & address, const ConnectorRecord & record)
         // {
         //     bool added = co_await registry.addConnector(address, record);
@@ -419,7 +419,7 @@ namespace dcn::chain
         // }
 
         // asio::awaitable<void> _retryPendingConnectors(std::vector<PendingConnector> & pending_connectors,
-        //                                              registry::Registry & registry,
+        //                                              storage::Registry & registry,
         //                                              const std::filesystem::path & storage_path)
         // {
         //     std::vector<PendingConnector> unresolved;
@@ -444,7 +444,7 @@ namespace dcn::chain
         }
     }
 
-    // asio::awaitable<void> runEventIngestion(IngestionConfig cfg, registry::Registry & registry, IngestionRuntimeOptions runtime_options)
+    // asio::awaitable<void> runEventIngestion(IngestionConfig cfg, storage::Registry & registry, IngestionRuntimeOptions runtime_options)
     // {
     //     if(!cfg.enabled)
     //     {
@@ -717,7 +717,7 @@ namespace dcn::chain
     //     }
     // }
 
-    // asio::awaitable<void> runEventIngestion(IngestionConfig cfg, registry::Registry & registry)
+    // asio::awaitable<void> runEventIngestion(IngestionConfig cfg, storage::Registry & registry)
     // {
     //     co_await runEventIngestion(std::move(cfg), registry, IngestionRuntimeOptions{});
     // }

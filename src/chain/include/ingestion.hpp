@@ -40,6 +40,6 @@ namespace dcn::chain
         bool skip_sleep = false;
     };
 
-    //asio::awaitable<void> runEventIngestion(IngestionConfig cfg, registry::Registry & registry, IngestionRuntimeOptions runtime_options);
-    //asio::awaitable<void> runEventIngestion(IngestionConfig cfg, registry::Registry & registry);
+    //asio::awaitable<void> runEventIngestion(IngestionConfig cfg, storage::Registry & registry, IngestionRuntimeOptions runtime_options);
+    //asio::awaitable<void> runEventIngestion(IngestionConfig cfg, storage::Registry & registry);
 }

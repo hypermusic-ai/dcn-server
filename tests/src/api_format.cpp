@@ -39,7 +39,7 @@ namespace
 TEST_F(UnitTest, API_Format_Get_ReturnsPaginatedConnectorsForGivenHash)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xF0));
 
@@ -130,7 +130,7 @@ TEST_F(UnitTest, API_Format_Get_ReturnsPaginatedConnectorsForGivenHash)
 TEST_F(UnitTest, API_Format_Get_UnknownHashReturnsEmptyConnectorsList)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     evmc::bytes32 unknown_hash{};
     const std::string format_hash_hex = evmc::hex(unknown_hash);
@@ -163,7 +163,7 @@ TEST_F(UnitTest, API_Format_Get_UnknownHashReturnsEmptyConnectorsList)
 TEST_F(UnitTest, API_Format_Get_InvalidFormatHashArgumentReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     http::Request request;
     request.setMethod(http::Method::GET)
@@ -184,7 +184,7 @@ TEST_F(UnitTest, API_Format_Get_InvalidFormatHashArgumentReturnsBadRequest)
 TEST_F(UnitTest, API_Format_Get_InvalidFormatHashReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string invalid_format_hash = "not-a-bytes32";
 
@@ -207,7 +207,7 @@ TEST_F(UnitTest, API_Format_Get_InvalidFormatHashReturnsBadRequest)
 TEST_F(UnitTest, API_Format_Get_MissingLimitReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     evmc::bytes32 unknown_hash{};
     const std::string format_hash_hex = evmc::hex(unknown_hash);
@@ -230,7 +230,7 @@ TEST_F(UnitTest, API_Format_Get_MissingLimitReturnsBadRequest)
 TEST_F(UnitTest, API_Format_Get_LimitAboveMaxReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     evmc::bytes32 unknown_hash{};
     const std::string format_hash_hex = evmc::hex(unknown_hash);
@@ -254,7 +254,7 @@ TEST_F(UnitTest, API_Format_Get_LimitAboveMaxReturnsBadRequest)
 TEST_F(UnitTest, API_Format_Get_ZeroLimitReturnsEmptyPage)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     evmc::bytes32 unknown_hash{};
     const std::string format_hash_hex = evmc::hex(unknown_hash);
@@ -284,7 +284,7 @@ TEST_F(UnitTest, API_Format_Get_ZeroLimitReturnsEmptyPage)
 TEST_F(UnitTest, API_Format_Get_InvalidAfterCursorReturnsBadRequest)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     evmc::bytes32 unknown_hash{};
     const std::string format_hash_hex = evmc::hex(unknown_hash);

@@ -324,7 +324,7 @@ TEST_F(UnitTest, Registry_SQLite_PersistsRecordsAcrossReopen)
 
     {
         asio::io_context io_context;
-        registry::Registry registry(io_context, db_path.string());
+        storage::Registry registry(io_context, db_path.string());
 
         ASSERT_TRUE(runAwaitable(io_context, registry.addTransformation(makeAddressFromByte(0x11), transformation_record)));
         ASSERT_TRUE(runAwaitable(io_context, registry.addCondition(makeAddressFromByte(0x12), condition_record)));
@@ -333,7 +333,7 @@ TEST_F(UnitTest, Registry_SQLite_PersistsRecordsAcrossReopen)
 
     {
         asio::io_context io_context;
-        registry::Registry registry(io_context, db_path.string());
+        storage::Registry registry(io_context, db_path.string());
 
         const auto transformation_handle = runAwaitable(io_context, registry.getTransformationRecordHandle("PersistTx"));
         ASSERT_TRUE(transformation_handle.has_value());
@@ -367,7 +367,7 @@ TEST_F(UnitTest, SQLiteRegistryStore_CheckpointWal_TruncatePersistsAndShrinksWal
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xC1));
     {
-        registry::SQLiteRegistryStore store(db_path.string());
+        storage::SQLiteRegistryStore store(db_path.string());
         for(int i = 0; i < 96; ++i)
         {
             const auto name = std::format("WalTx{}", i);
@@ -383,7 +383,7 @@ TEST_F(UnitTest, SQLiteRegistryStore_CheckpointWal_TruncatePersistsAndShrinksWal
         ASSERT_FALSE(before_ec);
         EXPECT_GT(wal_size_before, 0u);
 
-        EXPECT_TRUE(store.checkpointWal(registry::WalCheckpointMode::TRUNCATE));
+        EXPECT_TRUE(store.checkpointWal(storage::WalCheckpointMode::TRUNCATE));
 
         std::error_code after_ec;
         const auto wal_size_after = std::filesystem::file_size(wal_path, after_ec);
@@ -394,7 +394,7 @@ TEST_F(UnitTest, SQLiteRegistryStore_CheckpointWal_TruncatePersistsAndShrinksWal
 
     {
         asio::io_context io_context;
-        registry::Registry registry(io_context, db_path.string());
+        storage::Registry registry(io_context, db_path.string());
         const auto handle = runAwaitable(io_context, registry.getTransformationRecordHandle("WalTx95"));
         ASSERT_TRUE(handle.has_value());
         ASSERT_TRUE(*handle);
@@ -410,19 +410,19 @@ TEST_F(UnitTest, Registry_CheckpointWal_PassiveReturnsTrue)
     const auto db_path = storage_path / "registry.sqlite";
 
     asio::io_context io_context;
-    registry::Registry registry(io_context, db_path.string());
+    storage::Registry registry(io_context, db_path.string());
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xC2));
     const auto record = makeTransformationRecord("PassiveCheckpointTx", owner_hex, "return x;");
     ASSERT_TRUE(runAwaitable(io_context, registry.addTransformation(makeAddressFromByte(0x55), record)));
 
-    EXPECT_TRUE(runAwaitable(io_context, registry.checkpointWal(registry::WalCheckpointMode::PASSIVE)));
+    EXPECT_TRUE(runAwaitable(io_context, registry.checkpointWal(storage::WalCheckpointMode::PASSIVE)));
 }
 
 TEST_F(UnitTest, API_ReadEndpoints_ReturnFromDbWithoutEvmDeployment)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xB1));
 
@@ -509,7 +509,7 @@ TEST_F(UnitTest, API_Execute_MissingConnectorReturnsNotFound)
     const auto db_path = storage_path / "registry.sqlite";
 
     asio::io_context io_context;
-    registry::Registry registry(io_context, db_path.string());
+    storage::Registry registry(io_context, db_path.string());
     auth::AuthManager auth_manager(io_context);
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
@@ -552,7 +552,7 @@ TEST_F(UnitTest, API_PostConnector_DeploysMissingTransformationDependencyFromDb)
     const auto db_path = storage_path / "registry.sqlite";
 
     asio::io_context io_context;
-    registry::Registry registry(io_context, db_path.string());
+    storage::Registry registry(io_context, db_path.string());
     auth::AuthManager auth_manager(io_context);
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
@@ -631,7 +631,7 @@ TEST_F(UnitTest, API_PostConnector_MissingTransformationDependencyReturnsBadRequ
     const auto db_path = storage_path / "registry.sqlite";
 
     asio::io_context io_context;
-    registry::Registry registry(io_context, db_path.string());
+    storage::Registry registry(io_context, db_path.string());
     auth::AuthManager auth_manager(io_context);
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
@@ -696,7 +696,7 @@ TEST_F(UnitTest, API_Execute_LazilyDeploysConnectorClosureFromDb)
     const auto db_path = storage_path / "registry.sqlite";
 
     asio::io_context io_context;
-    registry::Registry registry(io_context, db_path.string());
+    storage::Registry registry(io_context, db_path.string());
     auth::AuthManager auth_manager(io_context);
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
@@ -768,14 +768,14 @@ TEST_F(UnitTest, API_Execute_BrokenDbDependencyReturnsInvariantError)
     addConnectorDimension(broken_connector, "", "MissingTx");
 
     {
-        registry::SQLiteRegistryStore store(db_path.string());
+        storage::SQLiteRegistryStore store(db_path.string());
         const evmc::bytes32 zero_format_hash{};
-        const std::vector<registry::ScalarLabel> empty_labels;
+        const std::vector<storage::ScalarLabel> empty_labels;
         ASSERT_TRUE(store.addConnector(makeAddressFromByte(0x62), broken_connector, zero_format_hash, empty_labels));
     }
 
     asio::io_context io_context;
-    registry::Registry registry(io_context, db_path.string());
+    storage::Registry registry(io_context, db_path.string());
     auth::AuthManager auth_manager(io_context);
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
@@ -815,7 +815,7 @@ TEST_F(UnitTest, SQLiteRegistryStore_QueryHelpers_PrepareFailureReturnsSafeDefau
     ASSERT_TRUE(prepareStorageLayout(storage_path));
     const auto db_path = storage_path / "registry.sqlite";
 
-    registry::SQLiteRegistryStore store(db_path.string());
+    storage::SQLiteRegistryStore store(db_path.string());
 
     ASSERT_TRUE(executeSqlScript(
         db_path,
@@ -876,7 +876,7 @@ TEST_F(UnitTest, Loader_StartupImport_DbHitJsonIsNoopAndKeepsFile)
     const auto db_path = storage_path / "registry.sqlite";
 
     asio::io_context io_context;
-    registry::Registry registry(io_context, db_path.string());
+    storage::Registry registry(io_context, db_path.string());
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
@@ -925,7 +925,7 @@ TEST_F(UnitTest, Loader_StartupImport_DbMissImportsConnectorDependencyChain)
     const auto db_path = storage_path / "registry.sqlite";
 
     asio::io_context io_context;
-    registry::Registry registry(io_context, db_path.string());
+    storage::Registry registry(io_context, db_path.string());
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
@@ -996,7 +996,7 @@ TEST_F(UnitTest, Loader_StartupImport_UnresolvedDependencySkipsAndDoesNotInsertO
     const auto db_path = storage_path / "registry.sqlite";
 
     asio::io_context io_context;
-    registry::Registry registry(io_context, db_path.string());
+    storage::Registry registry(io_context, db_path.string());
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 

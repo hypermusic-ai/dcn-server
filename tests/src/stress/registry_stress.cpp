@@ -83,7 +83,7 @@ TEST_F(StressTest, Stress_Registry_LargeFormatBucketCursorPagination)
     const std::size_t connector_count = readEnvSizeOrDefault("DCN_STRESS_CONNECTOR_COUNT", 500000);
 
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x11));
     ASSERT_TRUE(addScalarConnector(io_context, registry, "TIME", owner_hex, 0x12));
@@ -107,7 +107,7 @@ TEST_F(StressTest, Stress_Registry_LargeFormatBucketCursorPagination)
     const std::size_t total_count = runAwaitable(io_context, registry.getFormatConnectorNamesCount(*first_hash));
     EXPECT_EQ(total_count, connector_count);
 
-    std::optional<registry::NameCursor> after;
+    std::optional<storage::NameCursor> after;
     std::size_t seen_count = 0;
     absl::flat_hash_set<std::string> seen_names;
     seen_names.reserve(connector_count);
@@ -145,7 +145,7 @@ TEST_F(StressTest, Stress_Registry_DeepConnectorDependencyChainBatch)
     const std::size_t chain_depth = readEnvSizeOrDefault("DCN_STRESS_CHAIN_DEPTH", 2500);
 
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x21));
     const chain::Address base_address = makeAddressFromIndex(200'001);
@@ -186,7 +186,7 @@ TEST_F(StressTest, Stress_Registry_LargeOwnerCursorForTransformationsAndConditio
         readEnvSizeOrDefault("DCN_STRESS_CONDITIONS_COUNT", 4000);
 
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x31));
 
@@ -214,7 +214,7 @@ TEST_F(StressTest, Stress_Registry_LargeOwnerCursorForTransformationsAndConditio
     ASSERT_TRUE(owner_opt.has_value());
     const chain::Address owner = *owner_opt;
 
-    std::optional<registry::NameCursor> tx_after;
+    std::optional<storage::NameCursor> tx_after;
     std::size_t tx_seen = 0;
     while(true)
     {
@@ -229,7 +229,7 @@ TEST_F(StressTest, Stress_Registry_LargeOwnerCursorForTransformationsAndConditio
     }
     EXPECT_EQ(tx_seen, transformations_count);
 
-    std::optional<registry::NameCursor> cond_after;
+    std::optional<storage::NameCursor> cond_after;
     std::size_t cond_seen = 0;
     while(true)
     {
@@ -251,7 +251,7 @@ TEST_F(StressTest, DISABLED_Stress_Registry_MillionConnectorsSingleFormat)
         readEnvSizeOrDefault("DCN_STRESS_HEAVY_CONNECTOR_COUNT", 1'000'000);
 
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x41));
     ASSERT_TRUE(addScalarConnector(io_context, registry, "TIME", owner_hex, 0x42));
@@ -282,7 +282,7 @@ TEST_F(StressTest, DISABLED_Stress_Registry_DeepConnectorDependencyChain10k)
         readEnvSizeOrDefault("DCN_STRESS_HEAVY_CHAIN_DEPTH", 10'000);
 
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x51));
     const chain::Address base_address = makeAddressFromIndex(700'000);
@@ -317,7 +317,7 @@ TEST_F(StressTest, DISABLED_Stress_Registry_MillionOwnerEntriesForTransformation
         readEnvSizeOrDefault("DCN_STRESS_HEAVY_CONDITIONS_COUNT", 1'000'000);
 
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x61));
     const auto owner_opt = evmc::from_hex<chain::Address>(owner_hex);
@@ -344,7 +344,7 @@ TEST_F(StressTest, DISABLED_Stress_Registry_MillionOwnerEntriesForTransformation
     }
     ASSERT_TRUE(runAwaitable(io_context, registry.addConditionsBatch(std::move(cond_batch), true)));
 
-    std::optional<registry::NameCursor> tx_after;
+    std::optional<storage::NameCursor> tx_after;
     std::size_t tx_seen = 0;
     while(true)
     {
@@ -359,7 +359,7 @@ TEST_F(StressTest, DISABLED_Stress_Registry_MillionOwnerEntriesForTransformation
     }
     EXPECT_EQ(tx_seen, transformations_count);
 
-    std::optional<registry::NameCursor> cond_after;
+    std::optional<storage::NameCursor> cond_after;
     std::size_t cond_seen = 0;
     while(true)
     {

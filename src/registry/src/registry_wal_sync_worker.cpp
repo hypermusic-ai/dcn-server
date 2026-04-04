@@ -6,7 +6,7 @@
 
 #include "registry.hpp"
 
-namespace dcn::registry
+namespace dcn::storage
 {
     RegistryWalSyncWorker::RegistryWalSyncWorker(
         asio::io_context & io_context,
@@ -44,7 +44,7 @@ namespace dcn::registry
             }
             else
             {
-                spdlog::info("Registry WAL passive checkpoint ok");
+                spdlog::debug("Registry WAL passive checkpoint ok");
             }
         }
 

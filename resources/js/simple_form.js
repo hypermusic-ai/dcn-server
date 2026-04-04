@@ -1191,6 +1191,8 @@ let formatAfterCursor = null;
 let formatNextAfterCursor = null;
 let formatHasMore = false;
 const formatCursorHistory = [];
+let lastAccountAddressInputValue = '';
+let lastFormatHashInputValue = '';
 
 function escapeHtml(value) {
     return String(value ?? '')
@@ -1347,25 +1349,31 @@ function updateFormatFetchAvailability() {
 function initializeAccountControls() {
     const addressInput = document.getElementById('accountAddressInput');
     if (addressInput) {
+        lastAccountAddressInputValue = addressInput.value.trim();
         addressInput.addEventListener('input', () => {
-            const hasAddress = addressInput.value.trim().length > 0;
+            const normalizedAddress = addressInput.value.trim();
+            const addressChanged = normalizedAddress !== lastAccountAddressInputValue;
             updateAccountFetchAvailability();
-            if (!hasAddress) {
+            if (addressChanged) {
                 resetAccountPaginationState();
                 updateAccountPaginationControls();
             }
+            lastAccountAddressInputValue = normalizedAddress;
         });
     }
 
     const hashInput = document.getElementById('formatHashInput');
     if (hashInput) {
+        lastFormatHashInputValue = hashInput.value.trim();
         hashInput.addEventListener('input', () => {
-            const hasHash = hashInput.value.trim().length > 0;
+            const normalizedHash = hashInput.value.trim();
+            const hashChanged = normalizedHash !== lastFormatHashInputValue;
             updateFormatFetchAvailability();
-            if (!hasHash) {
+            if (hashChanged) {
                 resetFormatPaginationState();
                 updateFormatPaginationControls();
             }
+            lastFormatHashInputValue = normalizedHash;
         });
     }
 

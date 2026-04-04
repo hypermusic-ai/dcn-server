@@ -7,9 +7,8 @@
 #include <asio.hpp>
 #include <spdlog/spdlog.h>
 
-#include "utils.hpp"
 #include "pt.hpp"
-#include "registry.hpp"
+#include "storage.hpp"
 #include "parser.hpp"
 #include "evm.hpp"
 #include "chain.hpp"
@@ -27,21 +26,21 @@ namespace dcn::loader
 
     asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployConnector(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         ConnectorRecord connector,
         const std::filesystem::path & storage_path,
         bool register_in_registry = true,
         bool persist_json = true);
     asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployTransformation(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         TransformationRecord transformation,
         const std::filesystem::path & storage_path,
         bool register_in_registry = true,
         bool persist_json = true);
     asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployCondition(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         ConditionRecord condition,
         const std::filesystem::path & storage_path,
         bool register_in_registry = true,
@@ -49,40 +48,40 @@ namespace dcn::loader
 
     asio::awaitable<bool> importJsonStorageToDatabase(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::filesystem::path & storage_path,
         LoaderBatchConfig batch_config = {});
 
     asio::awaitable<bool> ensureTransformationDeployed(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path);
     asio::awaitable<bool> ensureConditionDeployed(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path);
     asio::awaitable<bool> ensureConnectorDeployed(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path);
 
 
     asio::awaitable<bool> loadStoredConnectors(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::filesystem::path & storage_path,
         std::size_t registry_batch_size = 1000);
     asio::awaitable<bool> loadStoredConditions(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::filesystem::path & storage_path,
         std::size_t registry_batch_size = 5000);
     asio::awaitable<bool> loadStoredTransformations(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::filesystem::path & storage_path,
         std::size_t registry_batch_size = 5000);
 }

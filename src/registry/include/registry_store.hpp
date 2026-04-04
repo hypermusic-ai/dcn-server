@@ -10,7 +10,7 @@
 #include "pt.hpp"
 #include "format_hash.hpp"
 
-namespace dcn::registry
+namespace dcn::storage
 {
     using ScalarLabel = dcn::chain::ScalarLabel;
     using ConnectorRecordHandle = std::shared_ptr<const ConnectorRecord>;

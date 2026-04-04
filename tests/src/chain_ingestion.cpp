@@ -373,7 +373,7 @@ namespace
 TEST_F(UnitTest, Chain_Ingestion_RegistersConnectorFromFetchedEvents)
 {
     asio::io_context io_context{};
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const auto storage_path = makeStoragePath("connector_events");
 
@@ -458,7 +458,7 @@ TEST_F(UnitTest, Chain_Ingestion_RegistersConnectorFromFetchedEvents)
 TEST_F(UnitTest, Chain_Ingestion_RegistersTransformationAndConditionFromFetchedEvents)
 {
     asio::io_context io_context{};
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const auto storage_path = makeStoragePath("transformation_condition_events");
 

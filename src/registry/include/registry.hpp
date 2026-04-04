@@ -17,7 +17,7 @@
 #include "format_hash.hpp"
 #include "registry_store.hpp"
 
-namespace dcn::registry
+namespace dcn::storage
 {
     using ScalarLabel = dcn::chain::ScalarLabel;
 

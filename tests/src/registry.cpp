@@ -71,11 +71,11 @@ namespace
     }
 
     bool containsScalarLabel(
-        const std::vector<registry::ScalarLabel> & labels,
+        const std::vector<storage::ScalarLabel> & labels,
         std::string_view scalar,
         const evmc::bytes32 & path_hash)
     {
-        for(const registry::ScalarLabel & label : labels)
+        for(const storage::ScalarLabel & label : labels)
         {
             if(label.scalar == scalar && chain::equalBytes32(label.path_hash, path_hash))
             {
@@ -86,11 +86,11 @@ namespace
         return false;
     }
 
-    std::vector<std::string> scalarNamesFromLabels(const std::vector<registry::ScalarLabel> & labels)
+    std::vector<std::string> scalarNamesFromLabels(const std::vector<storage::ScalarLabel> & labels)
     {
         std::vector<std::string> names;
         names.reserve(labels.size());
-        for(const registry::ScalarLabel & label : labels)
+        for(const storage::ScalarLabel & label : labels)
         {
             names.push_back(label.scalar);
         }
@@ -101,13 +101,33 @@ namespace
 
     std::vector<std::string> getAllFormatConnectors(
         asio::io_context & io_context,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const evmc::bytes32 & format_hash)
     {
-        const auto page = runAwaitable(
-            io_context,
-            registry.getFormatConnectorNamesCursor(format_hash, std::nullopt, 1024));
-        return page.entries;
+        std::vector<std::string> connectors;
+        std::optional<storage::NameCursor> after;
+        while(true)
+        {
+            const auto page = runAwaitable(
+                io_context,
+                registry.getFormatConnectorNamesCursor(format_hash, after, 1024));
+            connectors.insert(connectors.end(), page.entries.begin(), page.entries.end());
+
+            if(!page.has_more)
+            {
+                EXPECT_FALSE(page.next_after.has_value());
+                break;
+            }
+
+            if(!page.next_after.has_value())
+            {
+                ADD_FAILURE() << "Expected next_after cursor when has_more is true";
+                return connectors;
+            }
+            after = page.next_after;
+        }
+
+        return connectors;
     }
 
     bool containsName(
@@ -121,7 +141,7 @@ namespace
 TEST_F(UnitTest, Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xF0));
 
@@ -146,7 +166,6 @@ TEST_F(UnitTest, Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
     ASSERT_TRUE(right_hash.has_value());
 
     EXPECT_TRUE(chain::equalBytes32(*left_hash, *right_hash));
-
     const evmc::bytes32 expected_left = expectedFormatHash({
         {"TIME", pathHash({0})},
         {"PITCH", pathHash({0})}
@@ -167,7 +186,7 @@ TEST_F(UnitTest, Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
 TEST_F(UnitTest, Registry_FormatHash_IsPathSensitiveAcrossBindingSlots)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xE0));
 
@@ -207,7 +226,7 @@ TEST_F(UnitTest, Registry_FormatHash_IsPathSensitiveAcrossBindingSlots)
 TEST_F(UnitTest, Registry_FormatHash_MatchesForSeparateConnectorsWithSameProducedLabels)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xD0));
 
@@ -239,10 +258,10 @@ TEST_F(UnitTest, Registry_FormatHash_MatchesForSeparateConnectorsWithSameProduce
     EXPECT_TRUE(containsName(connectors, "SAME_B"));
 }
 
-TEST_F(UnitTest, Registry_getFormatHash_RejectsSecondConnectorWithSameName)
+TEST_F(UnitTest, Registry_FormatHash_RejectsSecondConnectorWithSameName)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xC0));
 
@@ -269,7 +288,7 @@ TEST_F(UnitTest, Registry_getFormatHash_RejectsSecondConnectorWithSameName)
 TEST_F(UnitTest, Registry_AddConnector_AllowsAddressReuseAcrossDifferentNames)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xC1));
 
@@ -291,7 +310,7 @@ TEST_F(UnitTest, Registry_AddConnector_AllowsAddressReuseAcrossDifferentNames)
 TEST_F(UnitTest, Registry_FormatHash_IgnoresScalarMultiplicity)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xB0));
 
@@ -334,7 +353,7 @@ TEST_F(UnitTest, Registry_FormatHash_IgnoresScalarMultiplicity)
 TEST_F(UnitTest, Registry_FormatHash_MatchesForSameScalarNamesWhenTailLabelsMatch)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA0));
 
@@ -374,7 +393,7 @@ TEST_F(UnitTest, Registry_FormatHash_MatchesForSameScalarNamesWhenTailLabelsMatc
 TEST_F(UnitTest, Registry_AddConnectorsBatch_AllOrNothingRejectsEntireBatch)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x9A));
 
@@ -397,7 +416,7 @@ TEST_F(UnitTest, Registry_AddConnectorsBatch_AllOrNothingRejectsEntireBatch)
 TEST_F(UnitTest, Registry_AddConnectorsBatch_PartialModeKeepsValidItems)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x8A));
 
@@ -421,7 +440,7 @@ TEST_F(UnitTest, Registry_AddConnectorsBatch_PartialModeKeepsValidItems)
 TEST_F(UnitTest, Registry_AddConnectorsBatch_ResolvesDependenciesWithinBatchOrder)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x7A));
 
@@ -445,8 +464,7 @@ TEST_F(UnitTest, Registry_AddConnectorsBatch_ResolvesDependenciesWithinBatchOrde
 TEST_F(UnitTest, Registry_AddConnector_IsIdempotentForExactDuplicateAndRejectsPayloadConflict)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
-
+    storage::Registry registry(io_context);
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x71));
     const chain::Address connector_address = makeAddressFromByte(0x72);
 
@@ -467,7 +485,7 @@ TEST_F(UnitTest, Registry_AddConnector_IsIdempotentForExactDuplicateAndRejectsPa
 TEST_F(UnitTest, Registry_AddConnector_AllowsAddressReuseAcrossNames)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x74));
     const chain::Address shared_address = makeAddressFromByte(0x75);
@@ -484,7 +502,7 @@ TEST_F(UnitTest, Registry_AddConnector_AllowsAddressReuseAcrossNames)
 TEST_F(UnitTest, Registry_AddTransformation_IsIdempotentForExactDuplicateAndRejectsConflicts)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x76));
     const chain::Address transformation_address = makeAddressFromByte(0x77);
@@ -507,7 +525,7 @@ TEST_F(UnitTest, Registry_AddTransformation_IsIdempotentForExactDuplicateAndReje
 TEST_F(UnitTest, Registry_AddCondition_IsIdempotentForExactDuplicateAndRejectsConflicts)
 {
     asio::io_context io_context;
-    registry::Registry registry(io_context);
+    storage::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0x79));
     const chain::Address condition_address = makeAddressFromByte(0x7A);

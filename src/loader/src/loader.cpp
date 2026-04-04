@@ -1,5 +1,7 @@
 #include "loader.hpp"
 
+#include "utils.hpp"
+
 #include <algorithm>
 #include <array>
 #include <string_view>
@@ -51,7 +53,7 @@ namespace dcn::loader
         }
 
         static asio::awaitable<bool> flushPendingTransformations(
-            registry::Registry & registry,
+            storage::Registry & registry,
             JsonImportContext & context,
             bool force)
         {
@@ -73,7 +75,7 @@ namespace dcn::loader
         }
 
         static asio::awaitable<bool> flushPendingConditions(
-            registry::Registry & registry,
+            storage::Registry & registry,
             JsonImportContext & context,
             bool force)
         {
@@ -95,7 +97,7 @@ namespace dcn::loader
         }
 
         static asio::awaitable<bool> flushPendingConnectors(
-            registry::Registry & registry,
+            storage::Registry & registry,
             JsonImportContext & context,
             bool force)
         {
@@ -183,25 +185,25 @@ namespace dcn::loader
 
     asio::awaitable<bool> ensureTransformationImported(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path,
         JsonImportContext & context);
     asio::awaitable<bool> ensureConditionImported(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path,
         JsonImportContext & context);
     asio::awaitable<bool> ensureConnectorImported(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path,
         JsonImportContext & context);
     asio::awaitable<bool> ensureConnectorDeployedImpl(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path,
         ConnectorEnsureContext & context);
@@ -416,7 +418,7 @@ namespace dcn::loader
 
     template<class T, class InternalGetter, class SolidityCodeCtor>
     static asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> _deployObjectLocally(evm::EVM & evm, 
-        registry::Registry & registry, T object, InternalGetter getter,
+        storage::Registry & registry, T object, InternalGetter getter,
         const std::filesystem::path out_dir, SolidityCodeCtor solidity_code_ctor, pt::PTDeployError::Kind expected_conflict_error
         , bool register_in_registry = true,
         bool persist_json = true
@@ -650,7 +652,7 @@ namespace dcn::loader
 
     asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployConnector(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         ConnectorRecord connector_record,
         const std::filesystem::path & storage_path,
         bool register_in_registry,
@@ -734,7 +736,7 @@ namespace dcn::loader
 
     asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployTransformation(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         TransformationRecord transformation_record,
         const std::filesystem::path & storage_path,
         bool register_in_registry,
@@ -754,7 +756,7 @@ namespace dcn::loader
 
     asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> deployCondition(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         ConditionRecord condition_record,
         const std::filesystem::path & storage_path,
         bool register_in_registry,
@@ -774,7 +776,7 @@ namespace dcn::loader
 
     asio::awaitable<bool> loadStoredConnectors(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::filesystem::path & storage_path,
         std::size_t registry_batch_size)
     {
@@ -884,7 +886,7 @@ namespace dcn::loader
 
     asio::awaitable<bool> loadStoredTransformations(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::filesystem::path & storage_path,
         std::size_t registry_batch_size)
     {
@@ -954,7 +956,7 @@ namespace dcn::loader
 
     asio::awaitable<bool> loadStoredConditions(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::filesystem::path & storage_path,
         std::size_t registry_batch_size)
     {
@@ -1024,7 +1026,7 @@ namespace dcn::loader
 
     asio::awaitable<bool> ensureTransformationDeployed(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path)
     {
@@ -1073,7 +1075,7 @@ namespace dcn::loader
 
     asio::awaitable<bool> ensureConditionDeployed(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path)
     {
@@ -1121,7 +1123,7 @@ namespace dcn::loader
 
     asio::awaitable<bool> ensureConnectorDeployed(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path)
     {
@@ -1131,7 +1133,7 @@ namespace dcn::loader
 
     asio::awaitable<bool> importJsonStorageToDatabase(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::filesystem::path & storage_path,
         LoaderBatchConfig batch_config)
     {
@@ -1224,7 +1226,7 @@ namespace dcn::loader
 
     asio::awaitable<bool> ensureTransformationImported(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path,
         JsonImportContext & context)
@@ -1287,7 +1289,7 @@ namespace dcn::loader
 
     asio::awaitable<bool> ensureConditionImported(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path,
         JsonImportContext & context)
@@ -1355,7 +1357,7 @@ namespace dcn::loader
 
     asio::awaitable<bool> ensureConnectorImported(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path,
         JsonImportContext & context)
@@ -1548,7 +1550,7 @@ namespace dcn::loader
 
     asio::awaitable<bool> ensureConnectorDeployedImpl(
         evm::EVM & evm,
-        registry::Registry & registry,
+        storage::Registry & registry,
         const std::string & name,
         const std::filesystem::path & storage_path,
         ConnectorEnsureContext & context)

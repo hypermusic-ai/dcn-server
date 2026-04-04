@@ -11,7 +11,7 @@
 
 #include "sqlite_registry_store.hpp"
 
-namespace dcn::registry
+namespace dcn::storage
 {
     namespace
     {

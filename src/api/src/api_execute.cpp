@@ -26,7 +26,7 @@ namespace dcn
         std::vector<server::RouteArg> args,
         server::QueryArgsList,
         const auth::AuthManager & auth_manager,
-        registry::Registry & registry,
+        storage::Registry & registry,
         evm::EVM & evm,
         const config::Config & config)
     {

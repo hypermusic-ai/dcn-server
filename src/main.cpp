@@ -233,9 +233,13 @@ int main(int argc, char* argv[])
     const auto pt_path = cfg.bin_path.parent_path() / "pt";
     spdlog::info(std::format("Path to PT framework : {}", pt_path.string()));
 
+    const std::string registry_db = registry_db_path.string();
+    const bool registry_db_in_memory =
+        registry_db.empty() || registry_db == ":memory:";
+
     asio::io_context io_context;
 
-    dcn::registry::Registry registry(io_context, registry_db_path.string());
+    dcn::storage::Registry registry(io_context, registry_db);
 
     dcn::auth::AuthManager auth_manager(io_context);
 
@@ -355,9 +359,9 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    const bool wal_enabled = (registry_db_path.string() != ":memory:");
+    const bool wal_enabled = !registry_db_in_memory;
     std::atomic<bool> wal_sync_worker_stopped = true;
-    std::optional<dcn::registry::RegistryWalSyncWorker> wal_sync_worker;
+    std::optional<dcn::storage::RegistryWalSyncWorker> wal_sync_worker;
     if(wal_enabled)
     {
         // create wal sync worker
@@ -442,7 +446,7 @@ int main(int argc, char* argv[])
             {
                 spdlog::info("Running final registry WAL truncate checkpoint...");
                 const bool checkpoint_ok =
-                    co_await registry.checkpointWal(dcn::registry::WalCheckpointMode::TRUNCATE);
+                    co_await registry.checkpointWal(dcn::storage::WalCheckpointMode::TRUNCATE);
                 if(!checkpoint_ok)
                 {
                     spdlog::warn("Final registry WAL truncate checkpoint failed");

@@ -8,7 +8,7 @@
 
 struct sqlite3;
 
-namespace dcn::registry
+namespace dcn::storage
 {
     class SQLiteRegistryStore final : public IRegistryStore
     {
