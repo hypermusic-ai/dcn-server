@@ -1,4 +1,4 @@
-name: Build (linux Release)
+name: Build (linux-x64 Release)
 
 on:
   workflow_run:
@@ -22,15 +22,15 @@ jobs:
 
     - name: Configure and build (Release)
       run: |
-        cmake -S . -B build-linux-release -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
+        cmake -S . -B build-linux-release -A x64 -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
         cmake --build build-linux-release --config Release --target install -j 4
 
     - name: Pack install directory into tarball
       run: |
-        tar -czf dcn-server-linux.tar.gz -C install .
+        tar -czf dcn-server-linux-x64.tar.gz -C install .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: dcn-server-linux
-        path: dcn-server-linux.tar.gz 
+        name: dcn-server-linux-x64
+        path: dcn-server-linux-x64.tar.gz 

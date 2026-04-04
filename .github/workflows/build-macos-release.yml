@@ -1,4 +1,4 @@
-name: Build (macos Release)
+name: Build (macos-arm64 Release)
 
 on:
   workflow_run:
@@ -22,15 +22,15 @@ jobs:
 
     - name: Configure and build (Release)
       run: |
-        cmake -S . -B build-macos-release -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
+        cmake -S . -B build-macos-release -A x64 -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
         cmake --build build-macos-release --config Release --target install -j 4
 
     - name: Pack install directory into tarball
       run: |
-        tar -czf dcn-server-macos.tar.gz -C install .
+        tar -czf dcn-server-macos-arm64.tar.gz -C install .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: dcn-server-macos
-        path: dcn-server-macos.tar.gz 
+        name: dcn-server-macos-arm64
+        path: dcn-server-macos-arm64.tar.gz 
