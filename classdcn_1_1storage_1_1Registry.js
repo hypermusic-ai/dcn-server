@@ -24,5 +24,8 @@ var classdcn_1_1storage_1_1Registry =
     [ "getOwnedTransformationsCursor", "classdcn_1_1storage_1_1Registry.html#adca6163b099bb9f0d2626adadee0528a", null ],
     [ "getScalarLabelsByFormatHash", "classdcn_1_1storage_1_1Registry.html#a75dbb606de900414b4f3b4014df7d9a3", null ],
     [ "getTransformationRecordHandle", "classdcn_1_1storage_1_1Registry.html#a769518999467b49a5c6728cb867b3fb0", null ],
+    [ "hasCondition", "classdcn_1_1storage_1_1Registry.html#a68d10200844642fa7056ab8bbabf3eda", null ],
+    [ "hasConnector", "classdcn_1_1storage_1_1Registry.html#a2b6d1d5501471a952ba190d504938216", null ],
+    [ "hasTransformation", "classdcn_1_1storage_1_1Registry.html#a0e12468215bdb274032b1533438c065f", null ],
     [ "operator=", "classdcn_1_1storage_1_1Registry.html#a3607536a6f49d7a1a28fae6305189188", null ]
 ];
