@@ -1505,7 +1505,7 @@ async function fetchAccountResourcesPage(resetPagination) {
             queryParams.set('after_conditions', accountCursorState.conditions);
         }
 
-        const res = await requestWithLogin(apiUrl(`/account/${encodeURIComponent(address)}?${queryParams.toString()}`), {
+        const res = await fetch(apiUrl(`/account/${encodeURIComponent(address)}?${queryParams.toString()}`), {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -1604,7 +1604,7 @@ async function fetchFormatResourcesPage(resetPagination) {
             queryParams.set('after', formatAfterCursor);
         }
 
-        const res = await requestWithLogin(apiUrl(`/format/${encodeURIComponent(formatHash)}?${queryParams.toString()}`), {
+        const res = await fetch(apiUrl(`/format/${encodeURIComponent(formatHash)}?${queryParams.toString()}`), {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });

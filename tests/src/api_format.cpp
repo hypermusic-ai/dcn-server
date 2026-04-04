@@ -125,6 +125,28 @@ TEST_F(UnitTest, API_Format_Get_ReturnsPaginatedConnectorsForGivenHash)
         ASSERT_EQ(body["connectors"].size(), 1);
         EXPECT_EQ(body["connectors"][0], "FMT_C");
     }
+
+    {
+        http::Request request;
+        request.setMethod(http::Method::GET)
+               .setPath(http::URL("/format/" + format_hash_hex + "?limit=2&after=%20FMT_B%20"))
+               .setVersion("HTTP/1.1");
+
+        std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
+        server::QueryArgsList query_args;
+        query_args.emplace("limit", makeUintRouteArg(2));
+        query_args.emplace("after", makeStringRouteArg(" FMT_B "));
+
+        const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
+        ASSERT_EQ(response.getCode(), http::Code::OK);
+
+        const auto body = nlohmann::json::parse(response.getBody());
+        EXPECT_EQ(body["total_connectors"], 3);
+        EXPECT_EQ(body["has_more"], false);
+        EXPECT_EQ(body["next_after"], nullptr);
+        ASSERT_EQ(body["connectors"].size(), 1);
+        EXPECT_EQ(body["connectors"][0], "FMT_C");
+    }
 }
 
 TEST_F(UnitTest, API_Format_Get_UnknownHashReturnsEmptyConnectorsList)
@@ -306,3 +328,27 @@ TEST_F(UnitTest, API_Format_Get_InvalidAfterCursorReturnsBadRequest)
     EXPECT_EQ(body["message"], "Invalid after cursor");
 }
 
+TEST_F(UnitTest, API_Format_Get_WhitespaceOnlyAfterCursorReturnsBadRequest)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+
+    evmc::bytes32 unknown_hash{};
+    const std::string format_hash_hex = evmc::hex(unknown_hash);
+
+    http::Request request;
+    request.setMethod(http::Method::GET)
+           .setPath(http::URL("/format/" + format_hash_hex + "?limit=10&after=%20%20"))
+           .setVersion("HTTP/1.1");
+
+    std::vector<server::RouteArg> args{makeStringRouteArg(format_hash_hex)};
+    server::QueryArgsList query_args;
+    query_args.emplace("limit", makeUintRouteArg(10));
+    query_args.emplace("after", makeStringRouteArg("  "));
+
+    const auto response = runAwaitable(io_context, GET_format(request, std::move(args), std::move(query_args), registry));
+    ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+
+    const auto body = nlohmann::json::parse(response.getBody());
+    EXPECT_EQ(body["message"], "Invalid after cursor");
+}

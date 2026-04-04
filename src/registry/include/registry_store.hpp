@@ -9,6 +9,7 @@
 #include "address.hpp"
 #include "pt.hpp"
 #include "format_hash.hpp"
+#include "parser.hpp"
 
 namespace dcn::storage
 {
@@ -112,4 +113,9 @@ namespace dcn::storage
 
             virtual bool checkpointWal(WalCheckpointMode mode) const = 0;
     };
+}
+
+namespace dcn::parse
+{
+    Result<storage::NameCursor> parseNameCursor(const std::string & name_token);
 }

@@ -1432,3 +1432,38 @@ namespace dcn::storage
         return true;
     }
 }
+
+
+namespace dcn::parse
+{
+    Result<storage::NameCursor> parseNameCursor(const std::string & name_token)
+    {
+        if(name_token.empty())
+        {
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Name cannot be empty"});
+        }
+
+        const auto first_non_space = std::find_if_not(
+            name_token.begin(),
+            name_token.end(),
+            [](unsigned char ch)
+            {
+                return std::isspace(ch) != 0;
+            });
+        
+        if(first_non_space == name_token.end())
+        {
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "Name cannot be empty"});
+        }
+
+        const auto last_non_space = std::find_if_not(
+            name_token.rbegin(),
+            name_token.rend(),
+            [](unsigned char ch)
+            {
+                return std::isspace(ch) != 0;
+            }).base();
+        
+        return std::string(first_non_space, last_non_space);
+    }
+}

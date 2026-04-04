@@ -1,20 +1,14 @@
 #include "api.hpp"
 
+#include <algorithm>
+#include <cctype>
+
 namespace dcn
 {
     namespace
     {
         constexpr std::size_t MAX_LIMIT = 256;
 
-        std::optional<storage::NameCursor> parseNameCursor(const std::string & name_token)
-        {
-            if(name_token.empty())
-            {
-                return std::nullopt;
-            }
-
-            return name_token;
-        }
 
         std::string serializeNameCursor(const storage::NameCursor & cursor)
         {
@@ -112,8 +106,11 @@ namespace dcn
 
         if(query_args.contains("after_connectors"))
         {
-            const auto token = parse::parseRouteArgAs<std::string>(query_args.at("after_connectors"));
-            if(!token || !(after_connectors = parseNameCursor(token.value())).has_value())
+            const auto after_connectors_res = 
+                parse::parseRouteArgAs<std::string>(query_args.at("after_connectors"))
+                .and_then([&](const std::string & token) { return parse::parseNameCursor(token); });
+
+            if(!after_connectors_res)
             {
                 response.setCode(http::Code::BadRequest)
                     .setBodyWithContentLength(json{
@@ -121,11 +118,17 @@ namespace dcn
                     }.dump());
                 co_return response;
             }
+
+            after_connectors = std::move(after_connectors_res.value());
         }
+
         if(query_args.contains("after_transformations"))
         {
-            const auto token = parse::parseRouteArgAs<std::string>(query_args.at("after_transformations"));
-            if(!token || !(after_transformations = parseNameCursor(token.value())).has_value())
+            const auto after_transformations_res = 
+                parse::parseRouteArgAs<std::string>(query_args.at("after_transformations"))
+                .and_then([&](const std::string & token) { return parse::parseNameCursor(token); });
+
+            if(!after_transformations_res)
             {
                 response.setCode(http::Code::BadRequest)
                     .setBodyWithContentLength(json{
@@ -133,11 +136,17 @@ namespace dcn
                     }.dump());
                 co_return response;
             }
+
+            after_transformations = std::move(after_transformations_res.value());
         }
+
         if(query_args.contains("after_conditions"))
         {
-            const auto token = parse::parseRouteArgAs<std::string>(query_args.at("after_conditions"));
-            if(!token || !(after_conditions = parseNameCursor(token.value())).has_value())
+            const auto after_conditions_res = 
+                parse::parseRouteArgAs<std::string>(query_args.at("after_conditions"))
+                .and_then([&](const std::string & token) { return parse::parseNameCursor(token); });
+
+            if(!after_conditions_res)
             {
                 response.setCode(http::Code::BadRequest)
                     .setBodyWithContentLength(json{
@@ -145,6 +154,8 @@ namespace dcn
                     }.dump());
                 co_return response;
             }
+
+            after_conditions = std::move(after_conditions_res.value());
         }
 
         const std::size_t limit = limit_res.value();

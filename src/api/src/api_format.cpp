@@ -1,6 +1,7 @@
 #include "api.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <vector>
 #include <format>
 
@@ -89,18 +90,13 @@ namespace dcn
         std::optional<storage::NameCursor> after_name;
         if(query_args.contains("after"))
         {
-            const auto after_res = parse::parseRouteArgAs<std::string>(query_args.at("after"));
+            const auto after_res = 
+                parse::parseRouteArgAs<std::string>(query_args.at("after"))
+                .and_then([&](const std::string & s) { 
+                    return parse::parseNameCursor(s); 
+                });
+
             if(!after_res)
-            {
-                response.setCode(http::Code::BadRequest)
-                    .setBodyWithContentLength(json{
-                        {"message", "Invalid after argument"}
-                    }.dump());
-
-                co_return response;
-            }
-
-            if(after_res->empty())
             {
                 response.setCode(http::Code::BadRequest)
                     .setBodyWithContentLength(json{
@@ -112,6 +108,7 @@ namespace dcn
 
             after_name = after_res.value();
         }
+
         if(!limit_res)
         {
             std::string msg_str = "Invalid argument limit.";

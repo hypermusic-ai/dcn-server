@@ -141,6 +141,29 @@ TEST_F(UnitTest, API_Account_Get_InvalidAfterCursorReturnsBadRequest)
     EXPECT_EQ(body["message"], "Invalid after_connectors cursor");
 }
 
+TEST_F(UnitTest, API_Account_Get_WhitespaceOnlyAfterCursorReturnsBadRequest)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA8));
+
+    http::Request request;
+    request.setMethod(http::Method::GET)
+        .setPath(http::URL("/account/" + owner_hex + "?limit=10&after_connectors=%20%20"))
+        .setVersion("HTTP/1.1");
+
+    std::vector<server::RouteArg> args{makeStringRouteArg(owner_hex)};
+    server::QueryArgsList query_args;
+    query_args.emplace("limit", makeUintRouteArg(10));
+    query_args.emplace("after_connectors", makeStringRouteArg("  "));
+
+    const auto response = runAwaitable(io_context, GET_accountInfo(request, std::move(args), std::move(query_args), registry));
+    ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+    const auto body = nlohmann::json::parse(response.getBody());
+    EXPECT_EQ(body["message"], "Invalid after_connectors cursor");
+}
+
 TEST_F(UnitTest, API_Account_Get_InvalidAfterTransformationsCursorReturnsBadRequest)
 {
     asio::io_context io_context;
@@ -157,6 +180,29 @@ TEST_F(UnitTest, API_Account_Get_InvalidAfterTransformationsCursorReturnsBadRequ
     server::QueryArgsList query_args;
     query_args.emplace("limit", makeUintRouteArg(10));
     query_args.emplace("after_transformations", makeStringRouteArg(""));
+
+    const auto response = runAwaitable(io_context, GET_accountInfo(request, std::move(args), std::move(query_args), registry));
+    ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+    const auto body = nlohmann::json::parse(response.getBody());
+    EXPECT_EQ(body["message"], "Invalid after_transformations cursor");
+}
+
+TEST_F(UnitTest, API_Account_Get_WhitespaceOnlyAfterTransformationsCursorReturnsBadRequest)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA9));
+
+    http::Request request;
+    request.setMethod(http::Method::GET)
+        .setPath(http::URL("/account/" + owner_hex + "?limit=10&after_transformations=%20%20"))
+        .setVersion("HTTP/1.1");
+
+    std::vector<server::RouteArg> args{makeStringRouteArg(owner_hex)};
+    server::QueryArgsList query_args;
+    query_args.emplace("limit", makeUintRouteArg(10));
+    query_args.emplace("after_transformations", makeStringRouteArg("  "));
 
     const auto response = runAwaitable(io_context, GET_accountInfo(request, std::move(args), std::move(query_args), registry));
     ASSERT_EQ(response.getCode(), http::Code::BadRequest);
@@ -185,6 +231,72 @@ TEST_F(UnitTest, API_Account_Get_InvalidAfterConditionsCursorReturnsBadRequest)
     ASSERT_EQ(response.getCode(), http::Code::BadRequest);
     const auto body = nlohmann::json::parse(response.getBody());
     EXPECT_EQ(body["message"], "Invalid after_conditions cursor");
+}
+
+TEST_F(UnitTest, API_Account_Get_WhitespaceOnlyAfterConditionsCursorReturnsBadRequest)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0xAA));
+
+    http::Request request;
+    request.setMethod(http::Method::GET)
+        .setPath(http::URL("/account/" + owner_hex + "?limit=10&after_conditions=%20%20"))
+        .setVersion("HTTP/1.1");
+
+    std::vector<server::RouteArg> args{makeStringRouteArg(owner_hex)};
+    server::QueryArgsList query_args;
+    query_args.emplace("limit", makeUintRouteArg(10));
+    query_args.emplace("after_conditions", makeStringRouteArg("  "));
+
+    const auto response = runAwaitable(io_context, GET_accountInfo(request, std::move(args), std::move(query_args), registry));
+    ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+    const auto body = nlohmann::json::parse(response.getBody());
+    EXPECT_EQ(body["message"], "Invalid after_conditions cursor");
+}
+
+TEST_F(UnitTest, API_Account_Get_AfterConnectorsCursorIsTrimmed)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+
+    const chain::Address owner = makeAddressFromByte(0xAB);
+    const std::string owner_hex = evmc::hex(owner);
+    const std::string scalar_owner_hex = evmc::hex(makeAddressFromByte(0xE5));
+
+    ASSERT_TRUE(addScalarConnector(io_context, registry, "TIME", scalar_owner_hex, 0xC1));
+
+    {
+        ConnectorRecord alpha = makeConnectorRecord("ALPHA", owner_hex);
+        addDimension(alpha, "TIME");
+        ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(makeAddressFromByte(0xC2), std::move(alpha))));
+    }
+    {
+        ConnectorRecord beta = makeConnectorRecord("BETA", owner_hex);
+        addDimension(beta, "TIME");
+        ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(makeAddressFromByte(0xC3), std::move(beta))));
+    }
+
+    http::Request request;
+    request.setMethod(http::Method::GET)
+        .setPath(http::URL("/account/" + owner_hex + "?limit=1&after_connectors=%20ALPHA%20"))
+        .setVersion("HTTP/1.1");
+
+    std::vector<server::RouteArg> args{makeStringRouteArg(owner_hex)};
+    server::QueryArgsList query_args;
+    query_args.emplace("limit", makeUintRouteArg(1));
+    query_args.emplace("after_connectors", makeStringRouteArg(" ALPHA "));
+
+    const auto response =
+        runAwaitable(io_context, GET_accountInfo(request, std::move(args), std::move(query_args), registry));
+    ASSERT_EQ(response.getCode(), http::Code::OK);
+
+    const auto body = nlohmann::json::parse(response.getBody());
+    ASSERT_TRUE(body["owned_connectors"].is_array());
+    ASSERT_EQ(body["owned_connectors"].size(), 1);
+    EXPECT_EQ(body["owned_connectors"][0], "BETA");
+    EXPECT_EQ(body["next_after_connectors"], nullptr);
 }
 
 TEST_F(UnitTest, API_Account_Get_NameCursorPaginationIsStableAcrossInsert)
