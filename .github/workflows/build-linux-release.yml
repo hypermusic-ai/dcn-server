@@ -22,7 +22,7 @@ jobs:
 
     - name: Configure and build (Release)
       run: |
-        cmake -S . -B build-linux-release -A x64 -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
+        cmake -S . -B build-linux-release -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/toolchain-gcc.cmake -DGCC_TARGET_BITS=64 -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
         cmake --build build-linux-release --config Release --target install -j 4
 
     - name: Pack install directory into tarball
