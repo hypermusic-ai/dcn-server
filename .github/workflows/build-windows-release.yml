@@ -1,4 +1,4 @@
-name: Build (windows Release)
+name: Build (windows-x64 Release)
 
 on:
   workflow_run:
@@ -19,15 +19,15 @@ jobs:
 
     - name: Configure and build (Release)
       run: |
-        cmake -S . -B build-windows-release -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
+        cmake -S . -B build-windows-release -A x64 -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
         cmake --build build-windows-release --config Release --target install -j 4
 
     - name: Pack install directory into tarball
       run: |
-        tar -czf dcn-server-windows.tar.gz -C install .
+        tar -czf dcn-server-windows-x64.tar.gz -C install .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: dcn-server-windows
-        path: dcn-server-windows.tar.gz 
+        name: dcn-server-windows-x64
+        path: dcn-server-windows-x64.tar.gz 

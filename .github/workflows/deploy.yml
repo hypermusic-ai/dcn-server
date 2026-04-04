@@ -2,7 +2,7 @@ name: Deploy to Server
 
 on:
   workflow_run:
-    workflows: ["Build (linux Release)"]
+    workflows: ["Build (linux-x64 Release)"]
     types: [completed]
     branches: [ main ]
 
@@ -20,7 +20,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         REPO: ${{ github.repository }}
         RUN_ID: ${{ github.event.workflow_run.id }}
-        ARTIFACT_NAME: dcn-server-linux
+        ARTIFACT_NAME: dcn-server-linux-x64
       run: |
         mkdir -p artifact
         echo "Getting artifact list..."

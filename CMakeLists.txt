@@ -116,18 +116,63 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 if(MSVC)
-    # install debug information
+    # Install debug symbols only for non-Release configs.
     install(FILES "$<TARGET_PDB_FILE:${PROJECT_NAME}>"
         DESTINATION ${CMAKE_INSTALL_BINDIR}
+        CONFIGURATIONS Debug RelWithDebInfo
         OPTIONAL
     )
+elseif(APPLE OR UNIX)
+    # For single-config generators, only generate debug-symbol sidecars
+    # when building Debug/RelWithDebInfo. For multi-config generators,
+    # keep the post-build generation and constrain installation by config.
+    set(_install_debug_symbols FALSE)
+    if(CMAKE_CONFIGURATION_TYPES)
+        set(_install_debug_symbols TRUE)
+    elseif(CMAKE_BUILD_TYPE MATCHES "^(Debug|RelWithDebInfo)$")
+        set(_install_debug_symbols TRUE)
+    endif()
+
+    if(_install_debug_symbols)
+        if(APPLE)
+            find_program(DSYMUTIL_EXECUTABLE dsymutil)
+            if(DSYMUTIL_EXECUTABLE)
+                add_custom_command(
+                    TARGET ${PROJECT_NAME}
+                    POST_BUILD
+                    COMMAND "${DSYMUTIL_EXECUTABLE}" "$<TARGET_FILE:${PROJECT_NAME}>" -o "$<TARGET_FILE:${PROJECT_NAME}>.dSYM"
+                    COMMENT "Generating dSYM for ${PROJECT_NAME}"
+                    VERBATIM
+                )
+                install(DIRECTORY "$<TARGET_FILE:${PROJECT_NAME}>.dSYM"
+                    DESTINATION ${CMAKE_INSTALL_BINDIR}
+                    CONFIGURATIONS Debug RelWithDebInfo
+                    OPTIONAL
+                )
+            endif()
+        elseif(UNIX)
+            if(CMAKE_OBJCOPY)
+                add_custom_command(
+                    TARGET ${PROJECT_NAME}
+                    POST_BUILD
+                    COMMAND "${CMAKE_OBJCOPY}" --only-keep-debug "$<TARGET_FILE:${PROJECT_NAME}>" "$<TARGET_FILE:${PROJECT_NAME}>.debug"
+                    COMMENT "Generating debug symbols for ${PROJECT_NAME}"
+                    VERBATIM
+                )
+                install(FILES "$<TARGET_FILE:${PROJECT_NAME}>.debug"
+                    DESTINATION ${CMAKE_INSTALL_BINDIR}
+                    CONFIGURATIONS Debug RelWithDebInfo
+                    OPTIONAL
+                )
+            endif()
+        endif()
+    endif()
 endif()
 
 # make install target of resources directory
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/resources/"
     DESTINATION "${CMAKE_INSTALL_PREFIX}/resources/"
 )
-
 
 # Generate version config
 include(CMakePackageConfigHelpers)

@@ -81,7 +81,7 @@ if (MSVC)
 
     # Linker flags for Release
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE
-        "/LTCG /OPT:REF /OPT:ICF /INCREMENTAL:NO"
+        "/LTCG /OPT:REF /OPT:ICF /INCREMENTAL:NO /DEBUG:NONE"
         CACHE STRING "" FORCE)
 
     # Also apply to shared libraries:
