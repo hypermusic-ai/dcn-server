@@ -1,4 +1,30 @@
 #include "server.hpp"
+#include <exception>
+#include <string_view>
+
+namespace
+{
+    void logUnhandledCoroutineException(const std::exception_ptr & exception_ptr, const std::string_view context)
+    {
+        if(!exception_ptr)
+        {
+            return;
+        }
+
+        try
+        {
+            std::rethrow_exception(exception_ptr);
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("{}: {}", context, e.what());
+        }
+        catch(...)
+        {
+            spdlog::error("{}: unknown exception", context);
+        }
+    }
+}
 
 namespace dcn::server
 {
@@ -32,7 +58,13 @@ namespace dcn::server
             if(std::holds_alternative<asio::ip::tcp::socket>(socket_result))
             {
                 // spawn handleConnection to _io_context - not use server strand
-                asio::co_spawn(_io_context, handleConnection(std::move(std::get<asio::ip::tcp::socket>(socket_result))), asio::detached);
+                asio::co_spawn(
+                    _io_context,
+                    handleConnection(std::move(std::get<asio::ip::tcp::socket>(socket_result))),
+                    [](std::exception_ptr exception_ptr)
+                    {
+                        logUnhandledCoroutineException(exception_ptr, "Connection coroutine failed");
+                    });
             }
         }
         co_return;
@@ -48,10 +80,22 @@ namespace dcn::server
         spdlog::info("New connection started");
         std::chrono::steady_clock::time_point deadline{};
 
-        // read data
-        co_await (readData(sock, deadline) || async::watchdog(deadline));
+        try
+        {
+            // read data
+            co_await (readData(sock, deadline) || async::watchdog(deadline));
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("Connection terminated with exception: {}", e.what());
+        }
+        catch(...)
+        {
+            spdlog::error("Connection terminated with unknown exception");
+        }
 
         spdlog::info("Connection ended");
+        co_return;
     }
 
     asio::awaitable<void> Server::readData(asio::ip::tcp::socket & sock, std::chrono::steady_clock::time_point & deadline)

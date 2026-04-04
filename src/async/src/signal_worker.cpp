@@ -44,6 +44,8 @@ namespace dcn::async
 
     void SignalWorker::start()
     {
+        spdlog::info("Starting signal worker");
+        
         if(_started)
         {
             spdlog::warn("Signal worker already started");

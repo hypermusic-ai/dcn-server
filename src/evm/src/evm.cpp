@@ -1,8 +1,34 @@
 #include "evm.hpp"
+#include <exception>
 #include <limits>
+#include <string_view>
 
 namespace dcn::evm
 {
+    namespace
+    {
+        void logUnhandledCoroutineException(const std::exception_ptr & exception_ptr, const std::string_view context)
+        {
+            if(!exception_ptr)
+            {
+                return;
+            }
+
+            try
+            {
+                std::rethrow_exception(exception_ptr);
+            }
+            catch(const std::exception & e)
+            {
+                spdlog::critical("{}: {}", context, e.what());
+            }
+            catch(...)
+            {
+                spdlog::critical("{}: unknown exception", context);
+            }
+        }
+    }
+
     template<>
     std::vector<std::uint8_t> encodeAsArg<chain::Address>(const chain::Address & address)
     {
@@ -149,13 +175,26 @@ namespace dcn::evm
         std::memcpy(_console_log_address.bytes + (20 - 11), "console.log", 11);
         addAccount(_console_log_address, DEFAULT_GAS_LIMIT);
 
-        co_spawn(io_context, loadPT(), [](std::exception_ptr e, bool r){
-            if(e || !r)
+        co_spawn(
+            io_context,
+            loadPT(),
+            [&io_context](std::exception_ptr exception_ptr, bool loaded_ok)
             {
-                spdlog::error("Failed to load PT");
-                throw std::runtime_error("Failed to load PT");
-            }
-        });
+                if(exception_ptr)
+                {
+                    logUnhandledCoroutineException(exception_ptr, "PT loader coroutine failed");
+                    spdlog::critical("Stopping io_context because PT failed to load");
+                    io_context.stop();
+                    return;
+                }
+
+                if(!loaded_ok)
+                {
+                    spdlog::critical("PT failed to load");
+                    spdlog::critical("Stopping io_context because PT failed to load");
+                    io_context.stop();
+                }
+            });
     }
     
     chain::Address EVM::getRegistryAddress() const
