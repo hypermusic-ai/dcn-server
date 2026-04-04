@@ -3,8 +3,8 @@ name: Deploy to Server
 on:
   workflow_run:
     workflows: ["Build (linux Release)"]
-    types:
-      - completed
+    types: [completed]
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -20,11 +20,11 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         REPO: ${{ github.repository }}
         RUN_ID: ${{ github.event.workflow_run.id }}
-        ARTIFACT_NAME: decentralised-art-server
+        ARTIFACT_NAME: dcn-server-linux
       run: |
         mkdir -p artifact
         echo "Getting artifact list..."
-        curl -s -H "Authorization: token $GITHUB_TOKEN" \
+        curl -f -s -H "Authorization: token $GITHUB_TOKEN" \
              "https://api.github.com/repos/$REPO/actions/runs/$RUN_ID/artifacts" \
           > artifacts.json
 
@@ -37,13 +37,13 @@ jobs:
 
         echo "✅ Found artifact ID: $ARTIFACT_ID"
         echo "Downloading artifact..."
-        curl -L -H "Authorization: token $GITHUB_TOKEN" \
+        curl -f -L -H "Authorization: token $GITHUB_TOKEN" \
           -o artifact.zip \
           "https://api.github.com/repos/$REPO/actions/artifacts/$ARTIFACT_ID/zip"
 
         unzip artifact.zip -d artifact
         mkdir install
-        tar -xzf artifact/decentralised-art-server.tar.gz -C install
+        tar -xzf artifact/${ARTIFACT_NAME}.tar.gz -C install
     
     - name: Stop server service
       uses: appleboy/ssh-action@v1.0.3
