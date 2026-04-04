@@ -1,4 +1,6 @@
 #include "decentralised_art.hpp"
+#include <exception>
+#include <string_view>
 
 #ifndef Solidity_SOLC_EXECUTABLE
     #error "Solidity_SOLC_EXECUTABLE is not defined"
@@ -43,6 +45,27 @@ static std::vector<int> _configureShutdownSignals()
     shutdown_signal_ids.push_back(SIGHUP);
 #endif
     return shutdown_signal_ids;
+}
+
+static void _logUnhandledException(const std::exception_ptr & exception_ptr, const std::string_view context)
+{
+    if(!exception_ptr)
+    {
+        return;
+    }
+
+    try
+    {
+        std::rethrow_exception(exception_ptr);
+    }
+    catch(const std::exception & e)
+    {
+        spdlog::critical("{}: {}", context, e.what());
+    }
+    catch(...)
+    {
+        spdlog::critical("{}: unknown exception", context);
+    }
 }
 
 int main(int argc, char* argv[])
@@ -476,8 +499,7 @@ int main(int argc, char* argv[])
 
     asio::co_spawn(
         io_context,
-        [&io_context,
-         &registry,
+        [&registry,
          &evm,
          &server,
          &cfg,
@@ -492,20 +514,37 @@ int main(int argc, char* argv[])
                 .conditions = loader_batch_conditions
             };
 
-            (void)co_await dcn::loader::importJsonStorageToDatabase(
+            spdlog::info("Starting JSON storage import...");
+
+            const bool import_success = co_await dcn::loader::importJsonStorageToDatabase(
                 evm,
                 registry,
                 cfg.storage_path,
                 loader_batch_config);
+            if(!import_success)
+            {
+                spdlog::warn("JSON storage import finished with errors");
+            }
 
             if(chain_ingestion_cfg.enabled)
             {
                 //asio::co_spawn(io_context, dcn::chain::runEventIngestion(chain_ingestion_cfg, registry), asio::detached);
             }
-            asio::co_spawn(io_context, server.listen(), asio::detached);
+
+            co_await server.listen();
             co_return;
         }(),
-        asio::detached);
+        [&io_context](std::exception_ptr exception_ptr)
+        {
+            if(!exception_ptr)
+            {
+                return;
+            }
+
+            _logUnhandledException(exception_ptr, "Startup/listen coroutine failed");
+            spdlog::critical("Stopping io_context due to startup/listen failure");
+            io_context.stop();
+        });
 
     try
     {

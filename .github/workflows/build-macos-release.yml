@@ -1,0 +1,36 @@
+name: Build (macos Release)
+
+on:
+  workflow_run:
+    workflows: ["Test (macos Debug)"]
+    types: [completed]
+    branches: [ main ]
+
+jobs:
+  build-macos-release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Install dependencies
+      run: brew install npm
+
+    - name: Configure and build (Release)
+      run: |
+        cmake -S . -B build-macos-release -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
+        cmake --build build-macos-release --config Release --target install -j 4
+
+    - name: Pack install directory into tarball
+      run: |
+        tar -czf dcn-server-macos.tar.gz -C install .
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dcn-server-macos
+        path: dcn-server-macos.tar.gz 

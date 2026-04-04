@@ -1,0 +1,33 @@
+name: Build (windows Release)
+
+on:
+  workflow_run:
+    workflows: ["Test (windows Debug)"]
+    types: [completed]
+    branches: [ main ]
+
+jobs:
+  build-windows-release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Configure and build (Release)
+      run: |
+        cmake -S . -B build-windows-release -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
+        cmake --build build-windows-release --config Release --target install -j 4
+
+    - name: Pack install directory into tarball
+      run: |
+        tar -czf dcn-server-windows.tar.gz -C install .
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dcn-server-windows
+        path: dcn-server-windows.tar.gz 

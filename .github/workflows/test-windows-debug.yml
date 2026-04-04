@@ -1,10 +1,10 @@
-name: Build and Test (Windows Debug)
+name: Test (Windows Debug)
 
 on:
   push:
 
 jobs:
-  build-windows-debug:
+  test-windows-debug:
     runs-on: windows-latest
 
     steps:
@@ -13,19 +13,13 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Configure and build (Debug)
+    - name: Configure and build tests (Debug)
       run: |
         cmake -S . -B build-windows-debug -DDECENTRALISED_ART_BUILD_TESTS=ON -DDECENTRALISED_ART_USE_SUBMODULE_PT=ON -DCMAKE_INSTALL_PREFIX=install-windows-debug -DCMAKE_BUILD_TYPE=Debug
         cmake --build build-windows-debug --config Debug --target DecentralisedArtServerTests -j 4
 
+    - name: Build executable (Debug)
+      run: cmake --build build-windows-debug --config Debug --target DecentralisedArtServer
+
     - name: Run tests
       run: ctest --test-dir build-windows-debug/tests -C Debug --output-on-failure
-
-    - name: Install artifacts
-      run: cmake --build build-windows-debug --config Debug --target install -j 4
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: decentralised-art-server-windows-debug
-        path: install-windows-debug

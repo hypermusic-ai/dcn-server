@@ -1,34 +1,36 @@
-name: Build Decentralised Art Server
+name: Build (linux Release)
 
 on:
   workflow_run:
-    workflows: ["Build and Test (linux Debug)"]
+    workflows: ["Test (linux Debug)"]
     types: [completed]
     branches: [ main ]
 
 jobs:
-  build:
+  build-linux-release:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
+      with:
+        submodules: recursive
+    
     - name: Install dependencies
       run: sudo apt update && sudo apt install -y cmake build-essential libssl-dev npm
 
     - name: Configure and build (Release)
       run: |
-        cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
-        cmake --build build --config Release --target install -j 4
+        cmake -S . -B build-linux-release -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
+        cmake --build build-linux-release --config Release --target install -j 4
 
     - name: Pack install directory into tarball
       run: |
-        tar -czf decentralised-art-server.tar.gz -C install .
+        tar -czf dcn-server-linux.tar.gz -C install .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: decentralised-art-server
-        path: decentralised-art-server.tar.gz 
+        name: dcn-server-linux
+        path: dcn-server-linux.tar.gz 
