@@ -7,6 +7,16 @@ namespace dcn::evm
 {
     namespace
     {
+        std::vector<std::uint8_t> copyResultBytes(const evmc::Result & result)
+        {
+            if(result.output_data == nullptr || result.output_size == 0)
+            {
+                return {};
+            }
+
+            return std::vector<std::uint8_t>(result.output_data, result.output_data + result.output_size);
+        }
+
         void logUnhandledCoroutineException(const std::exception_ptr & exception_ptr, const std::string_view context)
         {
             if(!exception_ptr)
@@ -370,7 +380,7 @@ namespace dcn::evm
                     ? chain::DeployError::Kind::TRANSACTION_REVERTED
                     : chain::DeployError::Kind::UNKNOWN,
                 .message = std::format("Failed to deploy contract: {}", result.status_code),
-                .result_bytes = std::vector<std::uint8_t>(result.output_data, result.output_data + result.output_size)
+                .result_bytes = copyResultBytes(result)
             };
 
             std::string output_hex = "<empty>";
@@ -451,7 +461,7 @@ namespace dcn::evm
             const chain::ExecuteError error
             {
                 .kind = chain::ExecuteError::Kind::TRANSACTION_REVERTED,
-                .result_bytes = std::vector<std::uint8_t>(result.output_data, result.output_data + result.output_size)
+                .result_bytes = copyResultBytes(result)
             };
 
             std::string output_hex = "<empty>";
@@ -472,7 +482,7 @@ namespace dcn::evm
             spdlog::debug("Output size: {}", result.output_size);
         }
 
-        co_return std::vector<std::uint8_t>(result.output_data, result.output_data + result.output_size);
+        co_return copyResultBytes(result);
     }
 
     asio::awaitable<bool> EVM::loadPT()

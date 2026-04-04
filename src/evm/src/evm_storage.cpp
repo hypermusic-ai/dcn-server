@@ -100,6 +100,18 @@ namespace dcn::evm
         }
         // Push current sender onto the stack
         _sender_stack.push(actual_sender);
+        struct SenderStackScopeGuard
+        {
+            std::stack<evmc::address> & stack;
+            ~SenderStackScopeGuard()
+            {
+                if(!stack.empty())
+                {
+                    stack.pop();
+                }
+            }
+        };
+        SenderStackScopeGuard sender_stack_scope_guard{_sender_stack};
 
         if (msg.kind == EVMC_CALL || msg.kind == EVMC_DELEGATECALL || msg.kind == EVMC_CALLCODE) 
         {
@@ -127,7 +139,6 @@ namespace dcn::evm
             evmc_message patched_msg = msg;
             //patched_msg.sender = actual_sender;
             evmc::Result result = _vm.execute(*this, _revision, patched_msg, code.data(), code.size());
-            _sender_stack.pop();
 
             if (result.status_code != EVMC_SUCCESS)
             {
@@ -178,7 +189,6 @@ namespace dcn::evm
 
             //patched_msg.sender = actual_sender;
             evmc::Result result = _vm.execute(*this, _revision, patched_msg, init_code.data(), init_code.size());
-            _sender_stack.pop();
 
             if (result.status_code != EVMC_SUCCESS)
             {
@@ -192,7 +202,13 @@ namespace dcn::evm
                 return result;
             }
 
-            deploy_contract(new_address, std::vector<std::uint8_t>(result.output_data, result.output_data + result.output_size),
+            std::vector<std::uint8_t> deployed_code;
+            if(result.output_data != nullptr && result.output_size > 0)
+            {
+                deployed_code.assign(result.output_data, result.output_data + result.output_size);
+            }
+
+            deploy_contract(new_address, std::move(deployed_code),
                 patched_msg.value, actual_sender, _create_nonce[actual_sender] - 1);
 
             result.create_address = new_address;
@@ -250,17 +266,51 @@ namespace dcn::evm
         return {};
     }
 
-    static std::string _decodeString(const std::uint8_t* data, std::size_t data_size, std::size_t offset)
+    static bool _decodeAbiWordToSize(const std::uint8_t * word, std::size_t & out)
     {
-        if (offset + 32 > data_size) return "<out-of-bounds>";
+        constexpr std::size_t kWordSize = 32;
+        constexpr std::size_t kValueBytes = sizeof(std::size_t);
+        static_assert(kValueBytes <= kWordSize);
 
-        std::uint64_t len = 0;
-        for (int i = 0; i < 32; ++i)
-            len = (len << 8) | data[offset + i];
+        // Reject values that do not fit into size_t.
+        for(std::size_t i = 0; i < (kWordSize - kValueBytes); ++i)
+        {
+            if(word[i] != 0)
+            {
+                return false;
+            }
+        }
 
-        if (offset + 32 + len > data_size) return "<out-of-bounds>";
+        out = 0;
+        for(std::size_t i = kWordSize - kValueBytes; i < kWordSize; ++i)
+        {
+            out = (out << 8) | static_cast<std::size_t>(word[i]);
+        }
 
-        return std::string(reinterpret_cast<const char*>(data + offset + 32), len);
+        return true;
+    }
+
+    static std::string _decodeString(const std::uint8_t * data, std::size_t data_size, std::size_t offset)
+    {
+        constexpr std::size_t kWordSize = 32;
+        if(offset > data_size || (data_size - offset) < kWordSize)
+        {
+            return "<out-of-bounds>";
+        }
+
+        std::size_t len = 0;
+        if(!_decodeAbiWordToSize(data + offset, len))
+        {
+            return "<out-of-bounds>";
+        }
+
+        const std::size_t payload_offset = offset + kWordSize;
+        if(len > (data_size - payload_offset))
+        {
+            return "<out-of-bounds>";
+        }
+
+        return std::string(reinterpret_cast<const char *>(data + payload_offset), len);
     }
 
 
@@ -373,15 +423,20 @@ namespace dcn::evm
         std::string label = "<n/a>";
         std::string value = "<n/a>";
 
-        if (data_size >= 64) {
-            uint64_t offset_label = 0, offset_value = 0;
-            for (int i = 0; i < 32; ++i)
-                offset_label = (offset_label << 8) | data[i];
-            for (int i = 0; i < 32; ++i)
-                offset_value = (offset_value << 8) | data[32 + i];
-
-            label = _decodeString(data, data_size, offset_label);
-            value = _decodeString(data, data_size, offset_value);
+        if(data_size >= 64)
+        {
+            std::size_t offset_label = 0;
+            std::size_t offset_value = 0;
+            if(_decodeAbiWordToSize(data, offset_label) && _decodeAbiWordToSize(data + 32, offset_value))
+            {
+                label = _decodeString(data, data_size, offset_label);
+                value = _decodeString(data, data_size, offset_value);
+            }
+            else
+            {
+                label = "<out-of-bounds>";
+                value = "<out-of-bounds>";
+            }
         }
 
         // Format topics
