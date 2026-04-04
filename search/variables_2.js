@@ -14,7 +14,9 @@ var searchData=
   ['confirmations_11',['confirmations',['../structdcn_1_1chain_1_1IngestionConfig.html#afb98a3abde336f57e2d9a2aae610fe02',1,'dcn::chain::IngestionConfig']]],
   ['connector_5faddress_12',['connector_address',['../structdcn_1_1pt_1_1ConnectorAddedEvent.html#ad7a40d501c4032b44000072549309681',1,'dcn::pt::ConnectorAddedEvent']]],
   ['connector_5fcache_13',['connector_cache',['../registry_8cpp.html#a40fe292adbca3b0a69e33efcc782d701',1,'registry.cpp']]],
-  ['connectors_14',['connectors',['../structdcn_1_1loader_1_1LoaderBatchConfig.html#aba41d52b7d0f9a4302041af650d089ed',1,'dcn::loader::LoaderBatchConfig::connectors'],['../loader_8cpp.html#aea6a432b33efbd5748408698d25730b8',1,'connectors:&#160;loader.cpp']]],
-  ['contract_5faddress_15',['contract_address',['../structdcn_1_1chain_1_1DeployReceipt.html#a57a37cfba2caa9ad8cd03de5cfe83e2b',1,'dcn::chain::DeployReceipt']]],
-  ['creator_16',['creator',['../structdcn_1_1evm_1_1EVMStorage_1_1Account.html#a7da4cddc4c2293c0215e45df96525258',1,'dcn::evm::EVMStorage::Account']]]
+  ['connector_5fdeploy_5fstack_14',['connector_deploy_stack',['../loader_8cpp.html#a8022cefd6424242b2139a4823169b8e4',1,'loader.cpp']]],
+  ['connector_5fimport_5fstack_15',['connector_import_stack',['../loader_8cpp.html#a6483b32f8ead911b8f8fdc0f33fef03d',1,'loader.cpp']]],
+  ['connectors_16',['connectors',['../structdcn_1_1loader_1_1LoaderBatchConfig.html#aba41d52b7d0f9a4302041af650d089ed',1,'dcn::loader::LoaderBatchConfig::connectors'],['../loader_8cpp.html#aea6a432b33efbd5748408698d25730b8',1,'connectors:&#160;loader.cpp']]],
+  ['contract_5faddress_17',['contract_address',['../structdcn_1_1chain_1_1DeployReceipt.html#a57a37cfba2caa9ad8cd03de5cfe83e2b',1,'dcn::chain::DeployReceipt']]],
+  ['creator_18',['creator',['../structdcn_1_1evm_1_1EVMStorage_1_1Account.html#a7da4cddc4c2293c0215e45df96525258',1,'dcn::evm::EVMStorage::Account']]]
 ];

@@ -17,6 +17,8 @@ var loader_8cpp =
     [ "loadStoredTransformations", "loader_8cpp.html#aa0d678f7e7cd2eccb9c7045c945d8743", null ],
     [ "batch_config", "loader_8cpp.html#a22bb218a9611071931aced8c04e8b75a", null ],
     [ "conditions", "loader_8cpp.html#a66fdccb93ad83a5027d4309368026b95", null ],
+    [ "connector_deploy_stack", "loader_8cpp.html#a8022cefd6424242b2139a4823169b8e4", null ],
+    [ "connector_import_stack", "loader_8cpp.html#a6483b32f8ead911b8f8fdc0f33fef03d", null ],
     [ "connectors", "loader_8cpp.html#aea6a432b33efbd5748408698d25730b8", null ],
     [ "done", "loader_8cpp.html#a4c573b6ebb641771921f0d9af8df1d6a", null ],
     [ "imported_conditions", "loader_8cpp.html#ab078e837d52d88fbd33db2f33e796212", null ],
@@ -28,6 +30,8 @@ var loader_8cpp =
     [ "pending_conditions", "loader_8cpp.html#a78f2b8c85de18d2595abede7b69e6944", null ],
     [ "pending_connectors", "loader_8cpp.html#a0f32c3aae90da9d385a0776aec49943e", null ],
     [ "pending_transformations", "loader_8cpp.html#a8d9d46185770e2b3757b921838d1eb5d", null ],
+    [ "stack_ref", "loader_8cpp.html#aa61eb555e4ca945ff45f1a8bf5111c9a", null ],
+    [ "trace_enabled", "loader_8cpp.html#af2337e1b3ddf34962096358e9f0fbf5a", null ],
     [ "transformations", "loader_8cpp.html#adfe41b262f3aecd33b25e2dbc68bcbfd", null ],
     [ "visiting", "loader_8cpp.html#a1833574ecd6e4d2cfbda0298917ad6ef", null ]
 ];
