@@ -97,31 +97,53 @@ $(document).ready(function(){initNavTree('namespacedcn_1_1loader.html',''); init
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcn::loader Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1loader_1_1LoaderBatchConfig.html">LoaderBatchConfig</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a4aa5e028062655a056723923e9bbd76c" id="r_a4aa5e028062655a056723923e9bbd76c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a4aa5e028062655a056723923e9bbd76c">ensurePTBuildVersion</a> (const std::filesystem::path &amp;storage_path)</td></tr>
 <tr class="separator:a4aa5e028062655a056723923e9bbd76c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb35828fa2bffd15212302e8b71a7b9c" id="r_acb35828fa2bffd15212302e8b71a7b9c"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a>, <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#acb35828fa2bffd15212302e8b71a7b9c">deployConnector</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry, ConnectorRecord connector, const std::filesystem::path &amp;storage_path)</td></tr>
-<tr class="separator:acb35828fa2bffd15212302e8b71a7b9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a426cdf6a4bafc32bea8495a5ed7e7318" id="r_a426cdf6a4bafc32bea8495a5ed7e7318"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a>, <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a426cdf6a4bafc32bea8495a5ed7e7318">deployTransformation</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry, TransformationRecord transformation, const std::filesystem::path &amp;storage_path)</td></tr>
-<tr class="separator:a426cdf6a4bafc32bea8495a5ed7e7318"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a72589955cdcf100dcd783c4551fbc8f2" id="r_a72589955cdcf100dcd783c4551fbc8f2"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a>, <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a72589955cdcf100dcd783c4551fbc8f2">deployCondition</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry, ConditionRecord condition, const std::filesystem::path &amp;storage_path)</td></tr>
-<tr class="separator:a72589955cdcf100dcd783c4551fbc8f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1a2a08134ea5eeecf2ff1c06dddcc588" id="r_a1a2a08134ea5eeecf2ff1c06dddcc588"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a1a2a08134ea5eeecf2ff1c06dddcc588">loadStoredConnectors</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry, const std::filesystem::path &amp;storage_path)</td></tr>
-<tr class="separator:a1a2a08134ea5eeecf2ff1c06dddcc588"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1ad7bab1f6fffbeec5e8fe2e0ff8b1fc" id="r_a1ad7bab1f6fffbeec5e8fe2e0ff8b1fc"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a1ad7bab1f6fffbeec5e8fe2e0ff8b1fc">loadStoredConditions</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry, const std::filesystem::path &amp;storage_path)</td></tr>
-<tr class="separator:a1ad7bab1f6fffbeec5e8fe2e0ff8b1fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a91f278da6af894bfc8ca35a593175505" id="r_a91f278da6af894bfc8ca35a593175505"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a91f278da6af894bfc8ca35a593175505">loadStoredTransformations</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;registry, const std::filesystem::path &amp;storage_path)</td></tr>
-<tr class="separator:a91f278da6af894bfc8ca35a593175505"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a857e58a146cb0b3edaa0cf571d3382dc" id="r_a857e58a146cb0b3edaa0cf571d3382dc"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a>, <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a857e58a146cb0b3edaa0cf571d3382dc">deployConnector</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, ConnectorRecord connector, const std::filesystem::path &amp;storage_path, bool register_in_registry=true, bool persist_json=true)</td></tr>
+<tr class="separator:a857e58a146cb0b3edaa0cf571d3382dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65eaa849b967b5f4deef39aef8fcbe2f" id="r_a65eaa849b967b5f4deef39aef8fcbe2f"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a>, <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a65eaa849b967b5f4deef39aef8fcbe2f">deployTransformation</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, TransformationRecord transformation, const std::filesystem::path &amp;storage_path, bool register_in_registry=true, bool persist_json=true)</td></tr>
+<tr class="separator:a65eaa849b967b5f4deef39aef8fcbe2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb402025aba73fdd3b9fba104d5979e6" id="r_acb402025aba73fdd3b9fba104d5979e6"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a>, <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#acb402025aba73fdd3b9fba104d5979e6">deployCondition</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, ConditionRecord condition, const std::filesystem::path &amp;storage_path, bool register_in_registry=true, bool persist_json=true)</td></tr>
+<tr class="separator:acb402025aba73fdd3b9fba104d5979e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc1a0d3d782638f0514ecd2d4c393409" id="r_adc1a0d3d782638f0514ecd2d4c393409"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#adc1a0d3d782638f0514ecd2d4c393409">importJsonStorageToDatabase</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, const std::filesystem::path &amp;storage_path, <a class="el" href="structdcn_1_1loader_1_1LoaderBatchConfig.html">LoaderBatchConfig</a> <a class="el" href="loader_8cpp.html#a22bb218a9611071931aced8c04e8b75a">batch_config</a>={})</td></tr>
+<tr class="separator:adc1a0d3d782638f0514ecd2d4c393409"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42628c4365cafc50d323334fdbe48350" id="r_a42628c4365cafc50d323334fdbe48350"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a42628c4365cafc50d323334fdbe48350">ensureTransformationDeployed</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const std::filesystem::path &amp;storage_path)</td></tr>
+<tr class="separator:a42628c4365cafc50d323334fdbe48350"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e4dc6d119bd54aa08612d69ac0ffcdc" id="r_a5e4dc6d119bd54aa08612d69ac0ffcdc"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a5e4dc6d119bd54aa08612d69ac0ffcdc">ensureConditionDeployed</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const std::filesystem::path &amp;storage_path)</td></tr>
+<tr class="separator:a5e4dc6d119bd54aa08612d69ac0ffcdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4361f56d3be786fce6a2c831140add57" id="r_a4361f56d3be786fce6a2c831140add57"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a4361f56d3be786fce6a2c831140add57">ensureConnectorDeployed</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const std::filesystem::path &amp;storage_path)</td></tr>
+<tr class="separator:a4361f56d3be786fce6a2c831140add57"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8c0c89b64943818cf6082685f6f915f" id="r_ab8c0c89b64943818cf6082685f6f915f"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#ab8c0c89b64943818cf6082685f6f915f">loadStoredConnectors</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, const std::filesystem::path &amp;storage_path, std::size_t registry_batch_size=1000)</td></tr>
+<tr class="separator:ab8c0c89b64943818cf6082685f6f915f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6cc7f3ccc55aa0ac5b6f07847adea65a" id="r_a6cc7f3ccc55aa0ac5b6f07847adea65a"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a6cc7f3ccc55aa0ac5b6f07847adea65a">loadStoredConditions</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, const std::filesystem::path &amp;storage_path, std::size_t registry_batch_size=5000)</td></tr>
+<tr class="separator:a6cc7f3ccc55aa0ac5b6f07847adea65a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0d678f7e7cd2eccb9c7045c945d8743" id="r_aa0d678f7e7cd2eccb9c7045c945d8743"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#aa0d678f7e7cd2eccb9c7045c945d8743">loadStoredTransformations</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, const std::filesystem::path &amp;storage_path, std::size_t registry_batch_size=5000)</td></tr>
+<tr class="separator:aa0d678f7e7cd2eccb9c7045c945d8743"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7bce25dc57bcdf7b3144aa273d7c329" id="r_ae7bce25dc57bcdf7b3144aa273d7c329"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#ae7bce25dc57bcdf7b3144aa273d7c329">ensureTransformationImported</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const std::filesystem::path &amp;storage_path, JsonImportContext &amp;context)</td></tr>
+<tr class="separator:ae7bce25dc57bcdf7b3144aa273d7c329"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22a8744bf961ebc31b7a2f02661b6632" id="r_a22a8744bf961ebc31b7a2f02661b6632"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#a22a8744bf961ebc31b7a2f02661b6632">ensureConditionImported</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const std::filesystem::path &amp;storage_path, JsonImportContext &amp;context)</td></tr>
+<tr class="separator:a22a8744bf961ebc31b7a2f02661b6632"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace097f9b2deaa659688cb74c30fb3a61" id="r_ace097f9b2deaa659688cb74c30fb3a61"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#ace097f9b2deaa659688cb74c30fb3a61">ensureConnectorImported</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const std::filesystem::path &amp;storage_path, JsonImportContext &amp;context)</td></tr>
+<tr class="separator:ace097f9b2deaa659688cb74c30fb3a61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada087f9a65f4632ffc7e9587de065e75" id="r_ada087f9a65f4632ffc7e9587de065e75"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1loader.html#ada087f9a65f4632ffc7e9587de065e75">ensureConnectorDeployedImpl</a> (<a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;evm, <a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;registry, const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>, const std::filesystem::path &amp;storage_path, ConnectorEnsureContext &amp;context)</td></tr>
+<tr class="separator:ada087f9a65f4632ffc7e9587de065e75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a72589955cdcf100dcd783c4551fbc8f2" name="a72589955cdcf100dcd783c4551fbc8f2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a72589955cdcf100dcd783c4551fbc8f2">&#9670;&#160;</a></span>deployCondition()</h2>
+<a id="acb402025aba73fdd3b9fba104d5979e6" name="acb402025aba73fdd3b9fba104d5979e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb402025aba73fdd3b9fba104d5979e6">&#9670;&#160;</a></span>deployCondition()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -135,7 +157,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
           <td class="paramname"><em>registry</em>, </td>
         </tr>
         <tr>
@@ -148,7 +170,19 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
-          <td class="paramname"><em>storage_path</em>&#160;</td>
+          <td class="paramname"><em>storage_path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>register_in_registry</em> = <code>true</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>persist_json</em> = <code>true</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -160,8 +194,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="acb35828fa2bffd15212302e8b71a7b9c" name="acb35828fa2bffd15212302e8b71a7b9c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acb35828fa2bffd15212302e8b71a7b9c">&#9670;&#160;</a></span>deployConnector()</h2>
+<a id="a857e58a146cb0b3edaa0cf571d3382dc" name="a857e58a146cb0b3edaa0cf571d3382dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a857e58a146cb0b3edaa0cf571d3382dc">&#9670;&#160;</a></span>deployConnector()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -175,7 +209,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
           <td class="paramname"><em>registry</em>, </td>
         </tr>
         <tr>
@@ -183,6 +217,110 @@ Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">ConnectorRecord&#160;</td>
           <td class="paramname"><em>connector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
+          <td class="paramname"><em>storage_path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>register_in_registry</em> = <code>true</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>persist_json</em> = <code>true</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a65eaa849b967b5f4deef39aef8fcbe2f" name="a65eaa849b967b5f4deef39aef8fcbe2f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a65eaa849b967b5f4deef39aef8fcbe2f">&#9670;&#160;</a></span>deployTransformation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a>, <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt; &gt; dcn::loader::deployTransformation </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
+          <td class="paramname"><em>evm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
+          <td class="paramname"><em>registry</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">TransformationRecord&#160;</td>
+          <td class="paramname"><em>transformation</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
+          <td class="paramname"><em>storage_path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>register_in_registry</em> = <code>true</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>persist_json</em> = <code>true</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5e4dc6d119bd54aa08612d69ac0ffcdc" name="a5e4dc6d119bd54aa08612d69ac0ffcdc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e4dc6d119bd54aa08612d69ac0ffcdc">&#9670;&#160;</a></span>ensureConditionDeployed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::loader::ensureConditionDeployed </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
+          <td class="paramname"><em>evm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
+          <td class="paramname"><em>registry</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -200,14 +338,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a426cdf6a4bafc32bea8495a5ed7e7318" name="a426cdf6a4bafc32bea8495a5ed7e7318"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a426cdf6a4bafc32bea8495a5ed7e7318">&#9670;&#160;</a></span>deployTransformation()</h2>
+<a id="a22a8744bf961ebc31b7a2f02661b6632" name="a22a8744bf961ebc31b7a2f02661b6632"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22a8744bf961ebc31b7a2f02661b6632">&#9670;&#160;</a></span>ensureConditionImported()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">asio::awaitable&lt; std::expected&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a>, <a class="el" href="structdcn_1_1pt_1_1PTDeployError.html">pt::PTDeployError</a> &gt; &gt; dcn::loader::deployTransformation </td>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::loader::ensureConditionImported </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
           <td class="paramname"><em>evm</em>, </td>
@@ -215,20 +353,158 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
           <td class="paramname"><em>registry</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">TransformationRecord&#160;</td>
-          <td class="paramname"><em>transformation</em>, </td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
+          <td class="paramname"><em>storage_path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">JsonImportContext &amp;&#160;</td>
+          <td class="paramname"><em>context</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4361f56d3be786fce6a2c831140add57" name="a4361f56d3be786fce6a2c831140add57"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4361f56d3be786fce6a2c831140add57">&#9670;&#160;</a></span>ensureConnectorDeployed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::loader::ensureConnectorDeployed </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
+          <td class="paramname"><em>evm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
+          <td class="paramname"><em>registry</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
           <td class="paramname"><em>storage_path</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ada087f9a65f4632ffc7e9587de065e75" name="ada087f9a65f4632ffc7e9587de065e75"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada087f9a65f4632ffc7e9587de065e75">&#9670;&#160;</a></span>ensureConnectorDeployedImpl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::loader::ensureConnectorDeployedImpl </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
+          <td class="paramname"><em>evm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
+          <td class="paramname"><em>registry</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
+          <td class="paramname"><em>storage_path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ConnectorEnsureContext &amp;&#160;</td>
+          <td class="paramname"><em>context</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ace097f9b2deaa659688cb74c30fb3a61" name="ace097f9b2deaa659688cb74c30fb3a61"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ace097f9b2deaa659688cb74c30fb3a61">&#9670;&#160;</a></span>ensureConnectorImported()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::loader::ensureConnectorImported </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
+          <td class="paramname"><em>evm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
+          <td class="paramname"><em>registry</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
+          <td class="paramname"><em>storage_path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">JsonImportContext &amp;&#160;</td>
+          <td class="paramname"><em>context</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -258,8 +534,134 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a1ad7bab1f6fffbeec5e8fe2e0ff8b1fc" name="a1ad7bab1f6fffbeec5e8fe2e0ff8b1fc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1ad7bab1f6fffbeec5e8fe2e0ff8b1fc">&#9670;&#160;</a></span>loadStoredConditions()</h2>
+<a id="a42628c4365cafc50d323334fdbe48350" name="a42628c4365cafc50d323334fdbe48350"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a42628c4365cafc50d323334fdbe48350">&#9670;&#160;</a></span>ensureTransformationDeployed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::loader::ensureTransformationDeployed </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
+          <td class="paramname"><em>evm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
+          <td class="paramname"><em>registry</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
+          <td class="paramname"><em>storage_path</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae7bce25dc57bcdf7b3144aa273d7c329" name="ae7bce25dc57bcdf7b3144aa273d7c329"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae7bce25dc57bcdf7b3144aa273d7c329">&#9670;&#160;</a></span>ensureTransformationImported()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::loader::ensureTransformationImported </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
+          <td class="paramname"><em>evm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
+          <td class="paramname"><em>registry</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
+          <td class="paramname"><em>storage_path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">JsonImportContext &amp;&#160;</td>
+          <td class="paramname"><em>context</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="adc1a0d3d782638f0514ecd2d4c393409" name="adc1a0d3d782638f0514ecd2d4c393409"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adc1a0d3d782638f0514ecd2d4c393409">&#9670;&#160;</a></span>importJsonStorageToDatabase()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">asio::awaitable&lt; bool &gt; dcn::loader::importJsonStorageToDatabase </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1evm_1_1EVM.html">evm::EVM</a> &amp;&#160;</td>
+          <td class="paramname"><em>evm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
+          <td class="paramname"><em>registry</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
+          <td class="paramname"><em>storage_path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structdcn_1_1loader_1_1LoaderBatchConfig.html">LoaderBatchConfig</a>&#160;</td>
+          <td class="paramname"><em>batch_config</em> = <code>{}</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6cc7f3ccc55aa0ac5b6f07847adea65a" name="a6cc7f3ccc55aa0ac5b6f07847adea65a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6cc7f3ccc55aa0ac5b6f07847adea65a">&#9670;&#160;</a></span>loadStoredConditions()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -273,14 +675,20 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
           <td class="paramname"><em>registry</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
-          <td class="paramname"><em>storage_path</em>&#160;</td>
+          <td class="paramname"><em>storage_path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>registry_batch_size</em> = <code>5000</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -292,8 +700,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a1a2a08134ea5eeecf2ff1c06dddcc588" name="a1a2a08134ea5eeecf2ff1c06dddcc588"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1a2a08134ea5eeecf2ff1c06dddcc588">&#9670;&#160;</a></span>loadStoredConnectors()</h2>
+<a id="ab8c0c89b64943818cf6082685f6f915f" name="ab8c0c89b64943818cf6082685f6f915f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab8c0c89b64943818cf6082685f6f915f">&#9670;&#160;</a></span>loadStoredConnectors()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -307,14 +715,20 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
           <td class="paramname"><em>registry</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
-          <td class="paramname"><em>storage_path</em>&#160;</td>
+          <td class="paramname"><em>storage_path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>registry_batch_size</em> = <code>1000</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -326,8 +740,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a91f278da6af894bfc8ca35a593175505" name="a91f278da6af894bfc8ca35a593175505"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a91f278da6af894bfc8ca35a593175505">&#9670;&#160;</a></span>loadStoredTransformations()</h2>
+<a id="aa0d678f7e7cd2eccb9c7045c945d8743" name="aa0d678f7e7cd2eccb9c7045c945d8743"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa0d678f7e7cd2eccb9c7045c945d8743">&#9670;&#160;</a></span>loadStoredTransformations()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -341,14 +755,20 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classdcn_1_1registry_1_1Registry.html">registry::Registry</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1storage_1_1Registry.html">storage::Registry</a> &amp;&#160;</td>
           <td class="paramname"><em>registry</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
-          <td class="paramname"><em>storage_path</em>&#160;</td>
+          <td class="paramname"><em>storage_path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>registry_batch_size</em> = <code>5000</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

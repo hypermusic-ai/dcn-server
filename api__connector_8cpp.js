@@ -1,7 +1,7 @@
 var api__connector_8cpp =
 [
-    [ "GET_connector", "api__connector_8cpp.html#a86a9335fe7bd4fcf0e61f51d5c047e9a", null ],
-    [ "HEAD_connector", "api__connector_8cpp.html#a55063c3b7cd0f36f7d4372fa04d9586d", null ],
+    [ "GET_connector", "api__connector_8cpp.html#a9d78d70604e7c4522ada14965a430dfd", null ],
+    [ "HEAD_connector", "api__connector_8cpp.html#a97682137078768149a59cb3426621d68", null ],
     [ "OPTIONS_connector", "api__connector_8cpp.html#a826ed0d422537dfd844cb94b05a492a9", null ],
-    [ "POST_connector", "api__connector_8cpp.html#a1cbb98b47368a38377effbe55b2be736", null ]
+    [ "POST_connector", "api__connector_8cpp.html#a566cf871b6a72d646ee45d335f36c048", null ]
 ];

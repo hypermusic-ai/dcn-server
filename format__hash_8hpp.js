@@ -4,6 +4,7 @@ var format__hash_8hpp =
     [ "dcn::chain::ScalarLabel", "structdcn_1_1chain_1_1ScalarLabel.html", "structdcn_1_1chain_1_1ScalarLabel" ],
     [ "dcn::chain::ResolvedScalarEntries", "structdcn_1_1chain_1_1ResolvedScalarEntries.html", "structdcn_1_1chain_1_1ResolvedScalarEntries" ],
     [ "interface", "format__hash_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a", null ],
+    [ "canonicalizeScalarLabels", "format__hash_8hpp.html#a88cb16bb98c8b9691827db31e83a8c84", null ],
     [ "composeFormatHash", "format__hash_8hpp.html#afff80c379072be67d2ba0e68b0e690e8", null ],
     [ "computeFormatHash", "format__hash_8hpp.html#a352c10f5ccef138738524ef1df32c34b", null ],
     [ "computeFormatHashFromLabelHashes", "format__hash_8hpp.html#a7472a1cb70ebce4b06c79914005aedcb", null ],
@@ -14,5 +15,6 @@ var format__hash_8hpp =
     [ "keccakString", "format__hash_8hpp.html#a52dd5b59b28a67d1cce1300b80557863", null ],
     [ "labelHashToFormatHash", "format__hash_8hpp.html#aa342fe66ed2e087f258c6d91f9a595bc", null ],
     [ "lessBytes32", "format__hash_8hpp.html#a01aa0bdc8cabaf84a06184b41ec2a858", null ],
+    [ "scalarLabelsEqual", "format__hash_8hpp.html#a5c5a4047a6360db27ed4c30ba3155752", null ],
     [ "scalarPathLabelHash", "format__hash_8hpp.html#a2202bba30e77e1dc828656cf9568b16c", null ]
 ];

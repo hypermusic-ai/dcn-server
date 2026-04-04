@@ -5,5 +5,6 @@ var searchData=
   ['transformation_5falready_5fregistered_2',['TRANSFORMATION_ALREADY_REGISTERED',['../structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba86450e1895931d1c1b1547c93993e5e7',1,'dcn::pt::PTDeployError']]],
   ['transformation_5farguments_5fmismatch_3',['TRANSFORMATION_ARGUMENTS_MISMATCH',['../structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba59b243b01295e0c1e55ccabd751b3fb1',1,'dcn::pt::PTDeployError']]],
   ['transformation_5fmissing_4',['TRANSFORMATION_MISSING',['../structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba4c2c0dc6f56d831a44db6e61704b1946',1,'dcn::pt::PTDeployError']]],
-  ['type_5fmismatch_5',['TYPE_MISMATCH',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bea2f93918ef99e03b7b8e7230b2a28fb52',1,'dcn::parse::ParseError']]]
+  ['truncate_5',['TRUNCATE',['../namespacedcn_1_1storage.html#a206ce14429e34d4b951fb2a6745c403fa0a83d15fde12983f199bdeb76667660f',1,'dcn::storage']]],
+  ['type_5fmismatch_6',['TYPE_MISMATCH',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bea2f93918ef99e03b7b8e7230b2a28fb52',1,'dcn::parse::ParseError']]]
 ];

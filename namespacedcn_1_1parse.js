@@ -58,6 +58,7 @@ var namespacedcn_1_1parse =
     [ "parseFromJson", "namespacedcn_1_1parse.html#acf6fe1b9943960225181b8ee124b0902", null ],
     [ "parseHeaderFromString", "namespacedcn_1_1parse.html#a23b7828fd641751e92aefd8569c06b88", null ],
     [ "parseMethodFromString", "namespacedcn_1_1parse.html#a4579b9652a3b7c60cae457a7ea2a6ab6", null ],
+    [ "parseNameCursor", "namespacedcn_1_1parse.html#a759a1aa7170657ecddc4ca25334febfb", null ],
     [ "parseRouteArgAs< std::size_t >", "namespacedcn_1_1parse.html#a1f3fe62d8791af1fb63333cf8fb411fb", null ],
     [ "parseRouteArgAs< std::string >", "namespacedcn_1_1parse.html#a3877ea81100c802a1cc07fd3cfcd0744", null ],
     [ "parseRouteArgAs< std::uint32_t >", "namespacedcn_1_1parse.html#ad58c377369051cf1c6e1333bb34bc1e0", null ],
@@ -102,5 +103,6 @@ var namespacedcn_1_1parse =
     [ "parseToJson", "namespacedcn_1_1parse.html#aff20377d0e51523e0d7faa253a71b518", null ],
     [ "parseToJson", "namespacedcn_1_1parse.html#aff20377d0e51523e0d7faa253a71b518", null ],
     [ "parseToJson", "namespacedcn_1_1parse.html#a4761dcb19e85d80ce3fba65a9ce486cc", null ],
-    [ "parseToJson", "namespacedcn_1_1parse.html#a4761dcb19e85d80ce3fba65a9ce486cc", null ]
+    [ "parseToJson", "namespacedcn_1_1parse.html#a4761dcb19e85d80ce3fba65a9ce486cc", null ],
+    [ "parseUint32Decimal", "namespacedcn_1_1parse.html#ad9a804d2d43f15fa8d11dc1ebce6c7ba", null ]
 ];

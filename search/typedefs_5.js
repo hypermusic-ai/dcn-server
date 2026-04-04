@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['scalarlabel_0',['ScalarLabel',['../namespacedcn_1_1registry.html#a9a429b2fbdc2d9013be0945a867215c3',1,'dcn::registry']]]
+  ['queryargslist_0',['QueryArgsList',['../namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8',1,'dcn::server']]]
 ];

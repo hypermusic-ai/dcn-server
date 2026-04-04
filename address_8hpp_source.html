@@ -103,35 +103,36 @@ $(document).ready(function(){initNavTree('address_8hpp_source.html',''); initRes
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;cstdint&gt;</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#ifdef interface</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">    #undef interface</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;evmc/evmc.hpp&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#ifndef interface</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno"><a class="line" href="address_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a">   12</a></span><span class="preprocessor">    #define interface __STRUCT__</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
-<div class="foldopen" id="foldopen00015" data-start="{" data-end="}">
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno"><a class="line" href="namespacedcn_1_1chain.html">   15</a></span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedcn_1_1chain.html">dcn::chain</a></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>{</div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">   17</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">Address</a> = evmc::address;</div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    std::optional&lt;chain::Address&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a125061b48c7531a204ad1f30fcf26f55">readAddressWord</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t offset = 0);</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    std::optional&lt;chain::Address&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a125061b48c7531a204ad1f30fcf26f55">readAddressWord</a>(<span class="keyword">const</span> std::vector&lt;std::uint8_t&gt; &amp; data, std::size_t offset = 0);</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <a class="code hl_typedef" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> <a class="code hl_function" href="namespacedcn_1_1chain.html#a04330e216ba84dcfab89dbc0abfe0898">topicWordToAddress</a>(<span class="keyword">const</span> evmc::bytes32 &amp; topic_word);</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="comment">// Get Ethereum address from public key (last 20 bytes of Keccak256(pubkey))</span></div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <a class="code hl_typedef" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> <a class="code hl_function" href="namespacedcn_1_1chain.html#ad51ebf49627ccd48bf2a67ee915dd806">ethAddressFromPublicKey</a>(<span class="keyword">const</span> std::uint8_t* pubkey, std::size_t len);</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>}</div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#ifdef interface</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">    #undef interface</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;evmc/evmc.hpp&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#ifndef interface</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno"><a class="line" href="address_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a">   13</a></span><span class="preprocessor">    #define interface __STRUCT__</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
+<div class="foldopen" id="foldopen00016" data-start="{" data-end="}">
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="namespacedcn_1_1chain.html">   16</a></span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedcn_1_1chain.html">dcn::chain</a></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>{</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno"><a class="line" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">   18</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">Address</a> = evmc::address;</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    std::optional&lt;chain::Address&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a125061b48c7531a204ad1f30fcf26f55">readAddressWord</a>(<span class="keyword">const</span> std::uint8_t* data, std::size_t data_size, std::size_t offset = 0);</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    std::optional&lt;chain::Address&gt; <a class="code hl_function" href="namespacedcn_1_1chain.html#a125061b48c7531a204ad1f30fcf26f55">readAddressWord</a>(<span class="keyword">const</span> std::vector&lt;std::uint8_t&gt; &amp; data, std::size_t offset = 0);</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <a class="code hl_typedef" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> <a class="code hl_function" href="namespacedcn_1_1chain.html#a04330e216ba84dcfab89dbc0abfe0898">topicWordToAddress</a>(<span class="keyword">const</span> evmc::bytes32 &amp; topic_word);</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="comment">// Get Ethereum address from public key (last 20 bytes of Keccak256(pubkey))</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <a class="code hl_typedef" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> <a class="code hl_function" href="namespacedcn_1_1chain.html#ad51ebf49627ccd48bf2a67ee915dd806">ethAddressFromPublicKey</a>(<span class="keyword">const</span> std::uint8_t* pubkey, std::size_t len);</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>}</div>
 </div>
-<div class="ttc" id="anamespacedcn_1_1chain_html"><div class="ttname"><a href="namespacedcn_1_1chain.html">dcn::chain</a></div><div class="ttdef"><b>Definition</b> address.hpp:16</div></div>
+<div class="ttc" id="anamespacedcn_1_1chain_html"><div class="ttname"><a href="namespacedcn_1_1chain.html">dcn::chain</a></div><div class="ttdef"><b>Definition</b> address.hpp:17</div></div>
 <div class="ttc" id="anamespacedcn_1_1chain_html_a04330e216ba84dcfab89dbc0abfe0898"><div class="ttname"><a href="namespacedcn_1_1chain.html#a04330e216ba84dcfab89dbc0abfe0898">dcn::chain::topicWordToAddress</a></div><div class="ttdeci">chain::Address topicWordToAddress(const evmc::bytes32 &amp;topic_word)</div><div class="ttdef"><b>Definition</b> address.cpp:25</div></div>
 <div class="ttc" id="anamespacedcn_1_1chain_html_a125061b48c7531a204ad1f30fcf26f55"><div class="ttname"><a href="namespacedcn_1_1chain.html#a125061b48c7531a204ad1f30fcf26f55">dcn::chain::readAddressWord</a></div><div class="ttdeci">std::optional&lt; chain::Address &gt; readAddressWord(const std::uint8_t *data, std::size_t data_size, std::size_t offset=0)</div><div class="ttdef"><b>Definition</b> address.cpp:8</div></div>
 <div class="ttc" id="anamespacedcn_1_1chain_html_ad51ebf49627ccd48bf2a67ee915dd806"><div class="ttname"><a href="namespacedcn_1_1chain.html#ad51ebf49627ccd48bf2a67ee915dd806">dcn::chain::ethAddressFromPublicKey</a></div><div class="ttdeci">chain::Address ethAddressFromPublicKey(const std::uint8_t *pubkey, std::size_t len)</div><div class="ttdef"><b>Definition</b> address.cpp:32</div></div>
-<div class="ttc" id="anamespacedcn_1_1chain_html_ae8d0a9327d8b662620d649428105a5cb"><div class="ttname"><a href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">dcn::chain::Address</a></div><div class="ttdeci">evmc::address Address</div><div class="ttdef"><b>Definition</b> address.hpp:17</div></div>
+<div class="ttc" id="anamespacedcn_1_1chain_html_ae8d0a9327d8b662620d649428105a5cb"><div class="ttname"><a href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">dcn::chain::Address</a></div><div class="ttdeci">evmc::address Address</div><div class="ttdef"><b>Definition</b> address.hpp:18</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

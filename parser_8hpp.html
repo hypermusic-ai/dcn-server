@@ -104,7 +104,9 @@ $(document).ready(function(){initNavTree('parser_8hpp.html',''); initResizable()
   <div class="headertitle"><div class="title">parser.hpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;nlohmann/json.hpp&gt;</code><br />
+<div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;string_view&gt;</code><br />
+<code>#include &lt;nlohmann/json.hpp&gt;</code><br />
 <code>#include &lt;google/protobuf/util/json_util.h&gt;</code><br />
 <code>#include &quot;<a class="el" href="parse__error_8hpp_source.html">parse_error.hpp</a>&quot;</code><br />
 </div>
@@ -152,6 +154,8 @@ Functions</h2></td></tr>
 <tr class="memitem:ac1b0a71bd827db3afc8643d61a0f664e" id="r_ac1b0a71bd827db3afc8643d61a0f664e"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:ac1b0a71bd827db3afc8643d61a0f664e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#ac1b0a71bd827db3afc8643d61a0f664e">dcn::parse::decodeBytes</a> (const std::vector&lt; uint8_t &gt; &amp;bytes)</td></tr>
 <tr class="separator:ac1b0a71bd827db3afc8643d61a0f664e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad9a804d2d43f15fa8d11dc1ebce6c7ba" id="r_ad9a804d2d43f15fa8d11dc1ebce6c7ba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::uint32_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#ad9a804d2d43f15fa8d11dc1ebce6c7ba">dcn::parse::parseUint32Decimal</a> (std::string_view value)</td></tr>
+<tr class="separator:ad9a804d2d43f15fa8d11dc1ebce6c7ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Typedef Documentation</h2>
 <a id="ab701e3ac61a85b337ec5c1abaad6742d" name="ab701e3ac61a85b337ec5c1abaad6742d"></a>

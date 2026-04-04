@@ -1,6 +1,9 @@
 var annotated_dup =
 [
     [ "dcn", "namespacedcn.html", [
+      [ "async", "namespacedcn_1_1async.html", [
+        [ "SignalWorker", "classdcn_1_1async_1_1SignalWorker.html", "classdcn_1_1async_1_1SignalWorker" ]
+      ] ],
       [ "auth", "namespacedcn_1_1auth.html", [
         [ "AuthError", "structdcn_1_1auth_1_1AuthError.html", "structdcn_1_1auth_1_1AuthError" ],
         [ "AuthManager", "classdcn_1_1auth_1_1AuthManager.html", "classdcn_1_1auth_1_1AuthManager" ]
@@ -37,6 +40,9 @@ var annotated_dup =
         [ "Response", "classdcn_1_1http_1_1Response.html", "classdcn_1_1http_1_1Response" ],
         [ "URL", "classdcn_1_1http_1_1URL.html", "classdcn_1_1http_1_1URL" ]
       ] ],
+      [ "loader", "namespacedcn_1_1loader.html", [
+        [ "LoaderBatchConfig", "structdcn_1_1loader_1_1LoaderBatchConfig.html", "structdcn_1_1loader_1_1LoaderBatchConfig" ]
+      ] ],
       [ "parse", "namespacedcn_1_1parse.html", [
         [ "ParseError", "structdcn_1_1parse_1_1ParseError.html", "structdcn_1_1parse_1_1ParseError" ],
         [ "use_json_t", "structdcn_1_1parse_1_1use__json__t.html", null ],
@@ -49,9 +55,6 @@ var annotated_dup =
         [ "PTExecuteError", "structdcn_1_1pt_1_1PTExecuteError.html", "structdcn_1_1pt_1_1PTExecuteError" ],
         [ "TransformationAddedEvent", "structdcn_1_1pt_1_1TransformationAddedEvent.html", "structdcn_1_1pt_1_1TransformationAddedEvent" ]
       ] ],
-      [ "registry", "namespacedcn_1_1registry.html", [
-        [ "Registry", "classdcn_1_1registry_1_1Registry.html", "classdcn_1_1registry_1_1Registry" ]
-      ] ],
       [ "sepolia", "namespacedcn_1_1sepolia.html", [
         [ "BackendConfig", "structdcn_1_1sepolia_1_1BackendConfig.html", "structdcn_1_1sepolia_1_1BackendConfig" ],
         [ "SepoliaBackend", "classdcn_1_1sepolia_1_1SepoliaBackend.html", "classdcn_1_1sepolia_1_1SepoliaBackend" ]
@@ -63,6 +66,17 @@ var annotated_dup =
         [ "RouteKey", "classdcn_1_1server_1_1RouteKey.html", "classdcn_1_1server_1_1RouteKey" ],
         [ "Router", "classdcn_1_1server_1_1Router.html", "classdcn_1_1server_1_1Router" ],
         [ "Server", "classdcn_1_1server_1_1Server.html", "classdcn_1_1server_1_1Server" ]
+      ] ],
+      [ "storage", "namespacedcn_1_1storage.html", [
+        [ "ConditionBatchItem", "structdcn_1_1storage_1_1ConditionBatchItem.html", "structdcn_1_1storage_1_1ConditionBatchItem" ],
+        [ "ConnectorBatchItem", "structdcn_1_1storage_1_1ConnectorBatchItem.html", "structdcn_1_1storage_1_1ConnectorBatchItem" ],
+        [ "IRegistryStore", "classdcn_1_1storage_1_1IRegistryStore.html", "classdcn_1_1storage_1_1IRegistryStore" ],
+        [ "LruCache", "structdcn_1_1storage_1_1LruCache.html", "structdcn_1_1storage_1_1LruCache" ],
+        [ "NameCursorPage", "structdcn_1_1storage_1_1NameCursorPage.html", "structdcn_1_1storage_1_1NameCursorPage" ],
+        [ "Registry", "classdcn_1_1storage_1_1Registry.html", "classdcn_1_1storage_1_1Registry" ],
+        [ "RegistryWalSyncWorker", "classdcn_1_1storage_1_1RegistryWalSyncWorker.html", "classdcn_1_1storage_1_1RegistryWalSyncWorker" ],
+        [ "SQLiteRegistryStore", "classdcn_1_1storage_1_1SQLiteRegistryStore.html", "classdcn_1_1storage_1_1SQLiteRegistryStore" ],
+        [ "TransformationBatchItem", "structdcn_1_1storage_1_1TransformationBatchItem.html", "structdcn_1_1storage_1_1TransformationBatchItem" ]
       ] ],
       [ "utils", "namespacedcn_1_1utils.html", [
         [ "LogoASCII_t", "structdcn_1_1utils_1_1LogoASCII__t.html", null ],

@@ -123,11 +123,6 @@ Functions</h2></td></tr>
 <tr class="separator:afe5529604b645836efa07f3d4d662540"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07545fa1ab2d1ccc349667eae8ba746f" id="r_a07545fa1ab2d1ccc349667eae8ba746f"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#a07545fa1ab2d1ccc349667eae8ba746f">currentTimestamp</a> ()</td></tr>
 <tr class="separator:a07545fa1ab2d1ccc349667eae8ba746f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d90cd25bc6985e0d5d00227bf125b3e" id="r_a3d90cd25bc6985e0d5d00227bf125b3e"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#a3d90cd25bc6985e0d5d00227bf125b3e">watchdog</a> (std::chrono::steady_clock::time_point &amp;deadline)</td></tr>
-<tr class="memdesc:a3d90cd25bc6985e0d5d00227bf125b3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Suspends the coroutine until the given deadline is reached.  <br /></td></tr>
-<tr class="separator:a3d90cd25bc6985e0d5d00227bf125b3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae9b2c4db93b9f4d05974a60179eb86a" id="r_aae9b2c4db93b9f4d05974a60179eb86a"><td class="memItemLeft" align="right" valign="top">asio::awaitable&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#aae9b2c4db93b9f4d05974a60179eb86a">ensureOnStrand</a> (const asio::strand&lt; asio::io_context::executor_type &gt; &amp;strand)</td></tr>
-<tr class="separator:aae9b2c4db93b9f4d05974a60179eb86a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a213229fb0c30f9ca92e2d1c60f550442" id="r_a213229fb0c30f9ca92e2d1c60f550442"><td class="memTemplParams" colspan="2">template&lt;class DataT , class ChildT , template&lt; typename... &gt; class ChildListT&gt; </td></tr>
 <tr class="memitem:a213229fb0c30f9ca92e2d1c60f550442"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; std::string &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#a213229fb0c30f9ca92e2d1c60f550442">topologicalSort</a> (const absl::flat_hash_map&lt; std::string, DataT &gt; &amp;data, std::function&lt; ChildListT&lt; ChildT &gt;(const DataT &amp;)&gt; get_childreen, std::function&lt; std::string(const ChildT &amp;)&gt; get_child_name)</td></tr>
 <tr class="separator:a213229fb0c30f9ca92e2d1c60f550442"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -151,24 +146,6 @@ Variables</h2></td></tr>
           <td class="memname">std::string dcn::utils::currentTimestamp </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="aae9b2c4db93b9f4d05974a60179eb86a" name="aae9b2c4db93b9f4d05974a60179eb86a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aae9b2c4db93b9f4d05974a60179eb86a">&#9670;&#160;</a></span>ensureOnStrand()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; void &gt; dcn::utils::ensureOnStrand </td>
-          <td>(</td>
-          <td class="paramtype">const asio::strand&lt; asio::io_context::executor_type &gt; &amp;&#160;</td>
-          <td class="paramname"><em>strand</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -297,33 +274,6 @@ template&lt;class DataT , class ChildT , template&lt; typename... &gt; class Chi
         </tr>
       </table>
 </div><div class="memdoc">
-
-</div>
-</div>
-<a id="a3d90cd25bc6985e0d5d00227bf125b3e" name="a3d90cd25bc6985e0d5d00227bf125b3e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3d90cd25bc6985e0d5d00227bf125b3e">&#9670;&#160;</a></span>watchdog()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">asio::awaitable&lt; void &gt; dcn::utils::watchdog </td>
-          <td>(</td>
-          <td class="paramtype">std::chrono::steady_clock::time_point &amp;&#160;</td>
-          <td class="paramname"><em>deadline</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Suspends the coroutine until the given deadline is reached. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">deadline</td><td>The point in time when the coroutine should be resumed</td></tr>
-  </table>
-  </dd>
-</dl>
-<p>This function is used to implement a watchdog like behavior in the server. It is used for example in the listening function to periodically check if the server should be shut down. </p>
 
 </div>
 </div>

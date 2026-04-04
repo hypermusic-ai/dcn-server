@@ -15,7 +15,11 @@ var searchData=
   ['transformation_5farguments_5fmismatch_12',['TRANSFORMATION_ARGUMENTS_MISMATCH',['../structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba59b243b01295e0c1e55ccabd751b3fb1',1,'dcn::pt::PTDeployError']]],
   ['transformation_5fmissing_13',['TRANSFORMATION_MISSING',['../structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba4c2c0dc6f56d831a44db6e61704b1946',1,'dcn::pt::PTDeployError']]],
   ['transformationaddedevent_14',['TransformationAddedEvent',['../structdcn_1_1pt_1_1TransformationAddedEvent.html',1,'dcn::pt']]],
-  ['tx_5fhash_15',['tx_hash',['../structdcn_1_1chain_1_1DeployReceipt.html#aa4741651ded75b3bc06a01771ad38d59',1,'dcn::chain::DeployReceipt']]],
-  ['type_16',['type',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a1ef6eb8d1ae3e55c12258ec8b075926b',1,'dcn::cmd::CommandLineArgDef::type'],['../structdcn_1_1server_1_1RouteArgDef.html#aa4a11a8d56ef2b25816b936673fd0c1e',1,'dcn::server::RouteArgDef::type'],['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053b',1,'dcn::cmd::CommandLineArgDef::Type']]],
-  ['type_5fmismatch_17',['TYPE_MISMATCH',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bea2f93918ef99e03b7b8e7230b2a28fb52',1,'dcn::parse::ParseError']]]
+  ['transformationbatchitem_15',['TransformationBatchItem',['../structdcn_1_1storage_1_1TransformationBatchItem.html',1,'dcn::storage']]],
+  ['transformationrecordhandle_16',['TransformationRecordHandle',['../namespacedcn_1_1storage.html#a351f54b6380a86f7a547182caca466a8',1,'dcn::storage']]],
+  ['transformations_17',['transformations',['../structdcn_1_1loader_1_1LoaderBatchConfig.html#a51daab1b2decd7ddc992ce9d34ab06f6',1,'dcn::loader::LoaderBatchConfig::transformations'],['../loader_8cpp.html#adfe41b262f3aecd33b25e2dbc68bcbfd',1,'transformations:&#160;loader.cpp']]],
+  ['truncate_18',['TRUNCATE',['../namespacedcn_1_1storage.html#a206ce14429e34d4b951fb2a6745c403fa0a83d15fde12983f199bdeb76667660f',1,'dcn::storage']]],
+  ['tx_5fhash_19',['tx_hash',['../structdcn_1_1chain_1_1DeployReceipt.html#aa4741651ded75b3bc06a01771ad38d59',1,'dcn::chain::DeployReceipt']]],
+  ['type_20',['type',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a1ef6eb8d1ae3e55c12258ec8b075926b',1,'dcn::cmd::CommandLineArgDef::type'],['../structdcn_1_1server_1_1RouteArgDef.html#aa4a11a8d56ef2b25816b936673fd0c1e',1,'dcn::server::RouteArgDef::type'],['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053b',1,'dcn::cmd::CommandLineArgDef::Type']]],
+  ['type_5fmismatch_21',['TYPE_MISMATCH',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bea2f93918ef99e03b7b8e7230b2a28fb52',1,'dcn::parse::ParseError']]]
 ];

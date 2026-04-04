@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['json_0',['json',['../namespacedcn_1_1chain.html#a8fae9bdaf68ec05869093b0dcbfb2a6e',1,'dcn::chain::json'],['../parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d',1,'json:&#160;parser.hpp'],['../namespacedcn_1_1sepolia.html#a7d5608f81711fe84a95fcec3aa22d930',1,'dcn::sepolia::json']]]
+  ['handlerdefinition_0',['HandlerDefinition',['../namespacedcn_1_1server.html#ab1b911fe729d02d6eb0ad5460e3ee8ad',1,'dcn::server']]],
+  ['headerslist_1',['HeadersList',['../namespacedcn_1_1http.html#acbde0b4461bbaf8168c379b61f063798',1,'dcn::http']]]
 ];

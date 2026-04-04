@@ -42,7 +42,7 @@ var NAVTREE =
       [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", "functions_dup" ],
-        [ "Functions", "functions_func.html", null ],
+        [ "Functions", "functions_func.html", "functions_func" ],
         [ "Variables", "functions_vars.html", null ],
         [ "Enumerations", "functions_enum.html", null ]
       ] ]
@@ -63,12 +63,13 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "address_8cpp.html",
-"classdcn_1_1evm_1_1EVMStorage.html#ad83015033595b41d24f6556f7cef9218",
-"conceptdcn_1_1parse_1_1IsTupleLike.html",
-"hierarchy.html",
-"namespacedcn_1_1parse.html#a099e01b41b2ee816c860b1a7eeae0a20",
-"route__arg_8hpp.html#aa0ab598ae418cd408597c83cff2534c3af1f713c9e000f5d3f280adbd124df4f5",
-"structdcn_1_1pt_1_1ConnectorAddedEvent.html#abff1b24dda3409e39a177a9b00f3d7c2"
+"classdcn_1_1evm_1_1EVMStorage.html#a6378e01098f73f1d7fe1b54e104ba8dc",
+"classdcn_1_1storage_1_1IRegistryStore.html#afbf2b99f24589f2e70ab55ed94fe25b8",
+"dir_c9a0e68adfc4a42e7713574ecc15c7dc.html",
+"loader_8hpp.html#a4aa5e028062655a056723923e9bbd76c",
+"namespacedcn_1_1parse.html#a8974a5dd5e18be950d75178969f221d2",
+"structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57caec48a8d732016127cb8abee5ffc3777d",
+"structdcn_1_1pt_1_1PTDeployError.html#ae9fac7c742b4c4f5ca4eb8d115891fcba4c2c0dc6f56d831a44db6e61704b1946"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

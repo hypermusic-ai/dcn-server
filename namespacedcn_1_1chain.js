@@ -13,6 +13,7 @@ var namespacedcn_1_1chain =
     [ "Address", "namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb", null ],
     [ "json", "namespacedcn_1_1chain.html#a8fae9bdaf68ec05869093b0dcbfb2a6e", null ],
     [ "RpcCall", "namespacedcn_1_1chain.html#af32a722613800d708413e4c9fcc01faa", null ],
+    [ "canonicalizeScalarLabels", "namespacedcn_1_1chain.html#a88cb16bb98c8b9691827db31e83a8c84", null ],
     [ "composeFormatHash", "namespacedcn_1_1chain.html#afff80c379072be67d2ba0e68b0e690e8", null ],
     [ "computeFormatHash", "namespacedcn_1_1chain.html#a352c10f5ccef138738524ef1df32c34b", null ],
     [ "computeFormatHashFromLabelHashes", "namespacedcn_1_1chain.html#a7472a1cb70ebce4b06c79914005aedcb", null ],
@@ -39,6 +40,7 @@ var namespacedcn_1_1chain =
     [ "readUint32Padded", "namespacedcn_1_1chain.html#abdd48f3e9d0f1c91b09a93ebe5655a53", null ],
     [ "readUint32Word", "namespacedcn_1_1chain.html#a508038791cac99f71c7e03d905d002a2", null ],
     [ "readWordAsSizeT", "namespacedcn_1_1chain.html#a09748629091c6f97b2166b04ae9a1c29", null ],
+    [ "scalarLabelsEqual", "namespacedcn_1_1chain.html#a5c5a4047a6360db27ed4c30ba3155752", null ],
     [ "scalarPathLabelHash", "namespacedcn_1_1chain.html#a2202bba30e77e1dc828656cf9568b16c", null ],
     [ "topicWordToAddress", "namespacedcn_1_1chain.html#a04330e216ba84dcfab89dbc0abfe0898", null ]
 ];

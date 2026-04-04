@@ -112,12 +112,12 @@ $(document).ready(function(){initNavTree('classdcn_1_1server_1_1RouteHandlerFunc
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a20a8949a7908436fe7d0eacea12af196" id="r_a20a8949a7908436fe7d0eacea12af196"><td class="memTemplParams" colspan="2">template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:a20a8949a7908436fe7d0eacea12af196"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdcn_1_1server_1_1RouteHandlerFunc.html#a20a8949a7908436fe7d0eacea12af196">RouteHandlerFunc</a> (std::function&lt; asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt;(Args...)&gt; <a class="el" href="namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d">func</a>)</td></tr>
+<tr class="memitem:a20a8949a7908436fe7d0eacea12af196"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdcn_1_1server_1_1RouteHandlerFunc.html#a20a8949a7908436fe7d0eacea12af196">RouteHandlerFunc</a> (std::function&lt; asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt;(Args...)&gt; func)</td></tr>
 <tr class="separator:a20a8949a7908436fe7d0eacea12af196"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afad65b7fae57837d04f6478e9341eff6" id="r_afad65b7fae57837d04f6478e9341eff6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1server_1_1RouteHandlerFunc.html#afad65b7fae57837d04f6478e9341eff6">RouteHandlerFunc</a> (<a class="el" href="classdcn_1_1server_1_1RouteHandlerFunc.html">RouteHandlerFunc</a> &amp;&amp;<a class="el" href="namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d">other</a>)=<a class="el" href="namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d">default</a></td></tr>
+<tr class="memitem:afad65b7fae57837d04f6478e9341eff6" id="r_afad65b7fae57837d04f6478e9341eff6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1server_1_1RouteHandlerFunc.html#afad65b7fae57837d04f6478e9341eff6">RouteHandlerFunc</a> (<a class="el" href="classdcn_1_1server_1_1RouteHandlerFunc.html">RouteHandlerFunc</a> &amp;&amp;other)=default</td></tr>
 <tr class="separator:afad65b7fae57837d04f6478e9341eff6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1c0782bf3d7475e68da93db92116b75c" id="r_a1c0782bf3d7475e68da93db92116b75c"><td class="memTemplParams" colspan="2">template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:a1c0782bf3d7475e68da93db92116b75c"><td class="memTemplItemLeft" align="right" valign="top">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdcn_1_1server_1_1RouteHandlerFunc.html#a1c0782bf3d7475e68da93db92116b75c">operator()</a> (<a class="el" href="namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d">Args</a> &amp;&amp;... <a class="el" href="namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d">args</a>) <a class="el" href="namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d">const</a></td></tr>
+<tr class="memitem:a1c0782bf3d7475e68da93db92116b75c"><td class="memTemplItemLeft" align="right" valign="top">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdcn_1_1server_1_1RouteHandlerFunc.html#a1c0782bf3d7475e68da93db92116b75c">operator()</a> (Args &amp;&amp;... args) const</td></tr>
 <tr class="separator:a1c0782bf3d7475e68da93db92116b75c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -193,7 +193,7 @@ template&lt;typename... Args&gt; </div>
         <tr>
           <td class="memname">asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">http::Response</a> &gt; dcn::server::RouteHandlerFunc::operator() </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d">Args</a> &amp;&amp;...&#160;</td>
+          <td class="paramtype">Args &amp;&amp;...&#160;</td>
           <td class="paramname"><em>args</em></td><td>)</td>
           <td> const</td>
         </tr>

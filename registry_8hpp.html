@@ -104,37 +104,42 @@ $(document).ready(function(){initNavTree('registry_8hpp.html',''); initResizable
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;list&gt;</code><br />
+<code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;optional&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
-<code>#include &quot;<a class="el" href="native_8h_source.html">native.h</a>&quot;</code><br />
-<code>#include &lt;asio.hpp&gt;</code><br />
 <code>#include &lt;absl/container/flat_hash_map.h&gt;</code><br />
 <code>#include &lt;absl/container/flat_hash_set.h&gt;</code><br />
 <code>#include &lt;spdlog/spdlog.h&gt;</code><br />
-<code>#include &quot;<a class="el" href="utils_8hpp_source.html">utils.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="async_8hpp_source.html">async.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="pt_8hpp_source.html">pt.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="address_8hpp_source.html">address.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="format__hash_8hpp_source.html">format_hash.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="registry__store_8hpp_source.html">registry_store.hpp</a>&quot;</code><br />
 </div>
 <p><a href="registry_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1registry_1_1Registry.html">dcn::registry::Registry</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1storage_1_1LruCache.html">dcn::storage::LruCache&lt; KeyT, ValueT &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1storage_1_1LruCache_1_1Entry.html">dcn::storage::LruCache&lt; KeyT, ValueT &gt;::Entry</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1storage_1_1Registry.html">dcn::storage::Registry</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespacedcn" id="r_namespacedcn"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn.html">dcn</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespacedcn_1_1registry" id="r_namespacedcn_1_1registry"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1registry.html">dcn::registry</a></td></tr>
+<tr class="memitem:namespacedcn_1_1storage" id="r_namespacedcn_1_1storage"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1storage.html">dcn::storage</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a9a429b2fbdc2d9013be0945a867215c3" id="r_a9a429b2fbdc2d9013be0945a867215c3"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1registry.html#a9a429b2fbdc2d9013be0945a867215c3">dcn::registry::ScalarLabel</a> = <a class="el" href="structdcn_1_1chain_1_1ScalarLabel.html">dcn::chain::ScalarLabel</a></td></tr>
-<tr class="separator:a9a429b2fbdc2d9013be0945a867215c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62449d64d7c9a63d6ab1869e182ebc8a" id="r_a62449d64d7c9a63d6ab1869e182ebc8a"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1storage.html#a62449d64d7c9a63d6ab1869e182ebc8a">dcn::storage::ScalarLabel</a> = <a class="el" href="structdcn_1_1chain_1_1ScalarLabel.html">dcn::chain::ScalarLabel</a></td></tr>
+<tr class="separator:a62449d64d7c9a63d6ab1869e182ebc8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->
