@@ -1,8 +1,10 @@
 #include "registry.hpp"
 
 #include <cstdint>
+#include <cstdlib>
 #include <limits>
 #include <memory>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -15,6 +17,23 @@ namespace dcn::storage
 {
     namespace
     {
+        static bool isImportTraceEnabled()
+        {
+            const char * env_value = std::getenv("DECENTRALISED_ART_IMPORT_TRACE");
+            if(env_value == nullptr)
+            {
+                return false;
+            }
+
+            const std::string_view flag(env_value);
+            return !(flag.empty() ||
+                flag == "0" ||
+                flag == "false" ||
+                flag == "FALSE" ||
+                flag == "off" ||
+                flag == "OFF");
+        }
+
         enum class VisitState : std::uint8_t
         {
             VISITING,
@@ -1094,16 +1113,81 @@ namespace dcn::storage
     asio::awaitable<std::optional<ConnectorRecordHandle>> Registry::getConnectorRecordHandle(
         const std::string & name) const
     {
+        const bool trace_enabled = isImportTraceEnabled();
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::getConnectorRecordHandle('{}'): enter", name);
+        }
+
         co_await async::ensureOnStrand(_strand);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::getConnectorRecordHandle('{}'): on strand", name);
+        }
 
         if(const auto * cached = getHotCacheEntry(_connector_record_cache, name))
         {
+            if(trace_enabled)
+            {
+                spdlog::info("Registry::getConnectorRecordHandle('{}'): cache hit has_value={}", name, cached->has_value());
+            }
             co_return *cached;
         }
 
         const auto record_handle_opt = _store->getConnectorRecordHandle(name);
+        if(trace_enabled)
+        {
+            spdlog::info(
+                "Registry::getConnectorRecordHandle('{}'): store result has_value={}, has_record={}",
+                name,
+                record_handle_opt.has_value(),
+                record_handle_opt.has_value() ? static_cast<bool>(*record_handle_opt) : false);
+        }
         putHotCacheEntry(_connector_record_cache, name, record_handle_opt);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::getConnectorRecordHandle('{}'): done", name);
+        }
         co_return record_handle_opt;
+    }
+
+    asio::awaitable<bool> Registry::hasConnector(const std::string & name) const
+    {
+        const bool trace_enabled = isImportTraceEnabled();
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::hasConnector('{}'): enter", name);
+        }
+
+        co_await async::ensureOnStrand(_strand);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::hasConnector('{}'): on strand", name);
+        }
+
+        if(const auto * cached = getHotCacheEntry(_connector_record_cache, name))
+        {
+            const bool cache_has_record = cached->has_value() && static_cast<bool>(cached->value());
+            if(trace_enabled)
+            {
+                spdlog::info("Registry::hasConnector('{}'): cache hit has_record={}", name, cache_has_record);
+            }
+            if(cache_has_record)
+            {
+                co_return true;
+            }
+        }
+
+        const bool exists = _store->hasConnector(name);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::hasConnector('{}'): store result={}", name, exists);
+        }
+        if(!exists)
+        {
+            putHotCacheEntry(_connector_record_cache, name, std::nullopt);
+        }
+        co_return exists;
     }
 
     asio::awaitable<std::optional<evmc::bytes32>> Registry::getFormatHash(const std::string & name) const
@@ -1277,16 +1361,84 @@ namespace dcn::storage
     asio::awaitable<std::optional<TransformationRecordHandle>> Registry::getTransformationRecordHandle(
         const std::string & name) const
     {
+        const bool trace_enabled = isImportTraceEnabled();
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::getTransformationRecordHandle('{}'): enter", name);
+        }
+
         co_await async::ensureOnStrand(_strand);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::getTransformationRecordHandle('{}'): on strand", name);
+        }
 
         if(const auto * cached = getHotCacheEntry(_transformation_record_cache, name))
         {
+            if(trace_enabled)
+            {
+                spdlog::info(
+                    "Registry::getTransformationRecordHandle('{}'): cache hit has_value={}",
+                    name,
+                    cached->has_value());
+            }
             co_return *cached;
         }
 
         const auto record_handle_opt = _store->getTransformationRecordHandle(name);
+        if(trace_enabled)
+        {
+            spdlog::info(
+                "Registry::getTransformationRecordHandle('{}'): store result has_value={}, has_record={}",
+                name,
+                record_handle_opt.has_value(),
+                record_handle_opt.has_value() ? static_cast<bool>(*record_handle_opt) : false);
+        }
         putHotCacheEntry(_transformation_record_cache, name, record_handle_opt);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::getTransformationRecordHandle('{}'): done", name);
+        }
         co_return record_handle_opt;
+    }
+
+    asio::awaitable<bool> Registry::hasTransformation(const std::string & name) const
+    {
+        const bool trace_enabled = isImportTraceEnabled();
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::hasTransformation('{}'): enter", name);
+        }
+
+        co_await async::ensureOnStrand(_strand);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::hasTransformation('{}'): on strand", name);
+        }
+
+        if(const auto * cached = getHotCacheEntry(_transformation_record_cache, name))
+        {
+            const bool cache_has_record = cached->has_value() && static_cast<bool>(cached->value());
+            if(trace_enabled)
+            {
+                spdlog::info("Registry::hasTransformation('{}'): cache hit has_record={}", name, cache_has_record);
+            }
+            if(cache_has_record)
+            {
+                co_return true;
+            }
+        }
+
+        const bool exists = _store->hasTransformation(name);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::hasTransformation('{}'): store result={}", name, exists);
+        }
+        if(!exists)
+        {
+            putHotCacheEntry(_transformation_record_cache, name, std::nullopt);
+        }
+        co_return exists;
     }
 
     asio::awaitable<bool> Registry::addCondition(chain::Address address, ConditionRecord record)
@@ -1424,16 +1576,81 @@ namespace dcn::storage
     asio::awaitable<std::optional<ConditionRecordHandle>> Registry::getConditionRecordHandle(
         const std::string & name) const
     {
+        const bool trace_enabled = isImportTraceEnabled();
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::getConditionRecordHandle('{}'): enter", name);
+        }
+
         co_await async::ensureOnStrand(_strand);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::getConditionRecordHandle('{}'): on strand", name);
+        }
 
         if(const auto * cached = getHotCacheEntry(_condition_record_cache, name))
         {
+            if(trace_enabled)
+            {
+                spdlog::info("Registry::getConditionRecordHandle('{}'): cache hit has_value={}", name, cached->has_value());
+            }
             co_return *cached;
         }
 
         const auto record_handle_opt = _store->getConditionRecordHandle(name);
+        if(trace_enabled)
+        {
+            spdlog::info(
+                "Registry::getConditionRecordHandle('{}'): store result has_value={}, has_record={}",
+                name,
+                record_handle_opt.has_value(),
+                record_handle_opt.has_value() ? static_cast<bool>(*record_handle_opt) : false);
+        }
         putHotCacheEntry(_condition_record_cache, name, record_handle_opt);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::getConditionRecordHandle('{}'): done", name);
+        }
         co_return record_handle_opt;
+    }
+
+    asio::awaitable<bool> Registry::hasCondition(const std::string & name) const
+    {
+        const bool trace_enabled = isImportTraceEnabled();
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::hasCondition('{}'): enter", name);
+        }
+
+        co_await async::ensureOnStrand(_strand);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::hasCondition('{}'): on strand", name);
+        }
+
+        if(const auto * cached = getHotCacheEntry(_condition_record_cache, name))
+        {
+            const bool cache_has_record = cached->has_value() && static_cast<bool>(cached->value());
+            if(trace_enabled)
+            {
+                spdlog::info("Registry::hasCondition('{}'): cache hit has_record={}", name, cache_has_record);
+            }
+            if(cache_has_record)
+            {
+                co_return true;
+            }
+        }
+
+        const bool exists = _store->hasCondition(name);
+        if(trace_enabled)
+        {
+            spdlog::info("Registry::hasCondition('{}'): store result={}", name, exists);
+        }
+        if(!exists)
+        {
+            putHotCacheEntry(_condition_record_cache, name, std::nullopt);
+        }
+        co_return exists;
     }
 
     asio::awaitable<NameCursorPage> Registry::getOwnedConnectorsCursor(

@@ -1017,3 +1017,51 @@ TEST_F(UnitTest, Loader_StartupImport_UnresolvedDependencySkipsAndDoesNotInsertO
     ASSERT_TRUE(contains_connector.has_value());
     EXPECT_FALSE(*contains_connector);
 }
+
+TEST_F(UnitTest, Loader_StartupImport_DbCycleDependencyReturnsErrorWithoutCrash)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeTestPath("startup_import_db_cycle_dependency");
+    PathScope storage_scope(storage_path);
+    ASSERT_TRUE(prepareStorageLayout(storage_path));
+    const auto db_path = storage_path / "registry.sqlite";
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA1));
+
+    ConnectorRecord cycle_a = makeConnectorRecord("ImportCycleA", owner_hex);
+    addConnectorDimension(cycle_a, "ImportCycleB", "");
+
+    ConnectorRecord cycle_b = makeConnectorRecord("ImportCycleB", owner_hex);
+    addConnectorDimension(cycle_b, "ImportCycleA", "");
+
+    {
+        storage::SQLiteRegistryStore store(db_path.string());
+        const evmc::bytes32 zero_format_hash{};
+        const std::vector<storage::ScalarLabel> empty_labels;
+        ASSERT_TRUE(store.addConnector(makeAddressFromByte(0xA2), cycle_a, zero_format_hash, empty_labels));
+        ASSERT_TRUE(store.addConnector(makeAddressFromByte(0xA3), cycle_b, zero_format_hash, empty_labels));
+    }
+
+    ConnectorRecord root_connector = makeConnectorRecord("ImportUsesCycle", owner_hex);
+    addConnectorDimension(root_connector, "ImportCycleA", "");
+    ASSERT_TRUE(writeJsonRecord(storage_path / "connectors" / "ImportUsesCycle.json", root_connector));
+
+    asio::io_context io_context;
+    storage::Registry registry(io_context, db_path.string());
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    const bool import_result = runAwaitable(
+        io_context,
+        loader::importJsonStorageToDatabase(evm_instance, registry, storage_path));
+    EXPECT_FALSE(import_result);
+
+    const auto imported_handle = runAwaitable(io_context, registry.getConnectorRecordHandle("ImportUsesCycle"));
+    EXPECT_FALSE(imported_handle.has_value());
+
+    const auto contains_imported = containsConnector(io_context, evm_instance, "ImportUsesCycle");
+    ASSERT_TRUE(contains_imported.has_value());
+    EXPECT_FALSE(*contains_imported);
+}

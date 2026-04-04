@@ -57,6 +57,7 @@ namespace dcn::storage
                 bool all_or_nothing = true);
             asio::awaitable<std::optional<ConnectorRecordHandle>> getConnectorRecordHandle(
                 const std::string & name) const;
+            asio::awaitable<bool> hasConnector(const std::string & name) const;
             asio::awaitable<std::optional<evmc::bytes32>> getFormatHash(const std::string& name) const;
             asio::awaitable<std::size_t> getFormatConnectorNamesCount(const evmc::bytes32 & format_hash) const;
             asio::awaitable<NameCursorPage> getFormatConnectorNamesCursor(
@@ -71,6 +72,7 @@ namespace dcn::storage
                 bool all_or_nothing = true);
             asio::awaitable<std::optional<TransformationRecordHandle>> getTransformationRecordHandle(
                 const std::string & name) const;
+            asio::awaitable<bool> hasTransformation(const std::string & name) const;
 
             asio::awaitable<bool> addCondition(chain::Address address, ConditionRecord condition);
             asio::awaitable<bool> addConditionsBatch(
@@ -78,6 +80,7 @@ namespace dcn::storage
                 bool all_or_nothing = true);
             asio::awaitable<std::optional<ConditionRecordHandle>> getConditionRecordHandle(
                 const std::string & name) const;
+            asio::awaitable<bool> hasCondition(const std::string & name) const;
 
             asio::awaitable<NameCursorPage> getOwnedConnectorsCursor(
                 const chain::Address & owner,

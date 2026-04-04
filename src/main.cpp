@@ -68,6 +68,113 @@ static void _logUnhandledException(const std::exception_ptr & exception_ptr, con
     }
 }
 
+static asio::awaitable<void> _runStartupAndListen(
+    dcn::storage::Registry & registry,
+    dcn::evm::EVM & evm,
+    dcn::server::Server & server,
+    const dcn::config::Config & cfg,
+    const dcn::chain::IngestionConfig & chain_ingestion_cfg,
+    std::size_t loader_batch_connectors,
+    std::size_t loader_batch_transformations,
+    std::size_t loader_batch_conditions)
+{
+    const dcn::loader::LoaderBatchConfig loader_batch_config{
+        .connectors = loader_batch_connectors,
+        .transformations = loader_batch_transformations,
+        .conditions = loader_batch_conditions
+    };
+
+    spdlog::info("Starting JSON storage import...");
+
+    const bool import_success = co_await dcn::loader::importJsonStorageToDatabase(
+        evm,
+        registry,
+        cfg.storage_path,
+        loader_batch_config);
+
+    if(!import_success)
+    {
+        spdlog::warn("JSON storage import finished with errors");
+    }
+    else
+    {
+        spdlog::info("JSON storage import finished");
+    }
+
+    if(chain_ingestion_cfg.enabled)
+    {
+        //asio::co_spawn(io_context, dcn::chain::runEventIngestion(chain_ingestion_cfg, registry), asio::detached);
+    }
+
+    co_await server.listen();
+    co_return;
+}
+
+[[maybe_unused]] static asio::awaitable<void> _runGracefulShutdown(
+    dcn::server::Server & server,
+    std::optional<dcn::storage::RegistryWalSyncWorker> & wal_sync_worker,
+    std::atomic<bool> & wal_sync_worker_stopped,
+    dcn::storage::Registry & registry,
+    bool wal_enabled)
+{
+    spdlog::info("Decentralised Art server stopping...");
+    co_await server.close();
+    spdlog::info("Decentralised Art server close requested");
+
+    if(wal_sync_worker != std::nullopt)
+    {
+        spdlog::info("Requesting registry WAL sync worker stop...");
+        wal_sync_worker->requestStop();
+
+        auto exec = co_await asio::this_coro::executor;
+        asio::steady_timer wait_timer(exec);
+
+        while(!wal_sync_worker_stopped.load(std::memory_order_acquire))
+        {
+            wait_timer.expires_after(std::chrono::milliseconds(25));
+            std::error_code wait_ec;
+            co_await wait_timer.async_wait(asio::redirect_error(asio::use_awaitable, wait_ec));
+            if(wait_ec)
+            {
+                if(wait_ec != asio::error::operation_aborted)
+                {
+                    spdlog::warn("Waiting for registry WAL sync worker stop failed: {}", wait_ec.message());
+                }
+                break;
+            }
+        }
+
+        spdlog::info("Registry WAL sync worker stopped");
+    }
+
+    if(wal_enabled)
+    {
+        spdlog::info("Running final registry WAL truncate checkpoint...");
+        const bool checkpoint_ok =
+            co_await registry.checkpointWal(dcn::storage::WalCheckpointMode::TRUNCATE);
+        if(!checkpoint_ok)
+        {
+            spdlog::warn("Final registry WAL truncate checkpoint failed");
+        }
+        else
+        {
+            spdlog::info("Final registry WAL truncate checkpoint complete");
+        }
+    }
+
+    co_return;
+}
+
+[[maybe_unused]] static void _runImmediateShutdown(std::optional<dcn::storage::RegistryWalSyncWorker> & wal_sync_worker)
+{
+    if(wal_sync_worker)
+    {
+        spdlog::info("Registry WAL sync worker stopping...");
+        wal_sync_worker->requestStop();
+        spdlog::info("Stopped registry WAL sync worker");
+    }
+}
+
 int main(int argc, char* argv[])
 {
     dcn::config::Config cfg;
@@ -382,6 +489,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+
     const bool wal_enabled = !registry_db_in_memory;
     std::atomic<bool> wal_sync_worker_stopped = true;
     std::optional<dcn::storage::RegistryWalSyncWorker> wal_sync_worker;
@@ -435,63 +543,18 @@ int main(int argc, char* argv[])
          &registry,
          wal_enabled]() -> asio::awaitable<void>
         {
-            spdlog::info("Decentralised Art server stopping...");
-            co_await server.close();
-            spdlog::info("Decentralised Art server close requested");
-
-            if(wal_sync_worker != std::nullopt)
-            {
-                spdlog::info("Requesting registry WAL sync worker stop...");
-                wal_sync_worker->requestStop();
-
-                auto exec = co_await asio::this_coro::executor;
-                asio::steady_timer wait_timer(exec);
-
-                while(!wal_sync_worker_stopped.load(std::memory_order_acquire))
-                {
-                    wait_timer.expires_after(std::chrono::milliseconds(25));
-                    std::error_code wait_ec;
-                    co_await wait_timer.async_wait(asio::redirect_error(asio::use_awaitable, wait_ec));
-                    if(wait_ec)
-                    {
-                        if(wait_ec != asio::error::operation_aborted)
-                        {
-                            spdlog::warn("Waiting for registry WAL sync worker stop failed: {}", wait_ec.message());
-                        }
-                        break;
-                    }
-                }
-
-                spdlog::info("Registry WAL sync worker stopped");
-            }
-
-            if(wal_enabled)
-            {
-                spdlog::info("Running final registry WAL truncate checkpoint...");
-                const bool checkpoint_ok =
-                    co_await registry.checkpointWal(dcn::storage::WalCheckpointMode::TRUNCATE);
-                if(!checkpoint_ok)
-                {
-                    spdlog::warn("Final registry WAL truncate checkpoint failed");
-                }
-                else
-                {
-                    spdlog::info("Final registry WAL truncate checkpoint complete");
-                }
-            }
-
-            co_return;
+            return _runGracefulShutdown(
+                server,
+                wal_sync_worker,
+                wal_sync_worker_stopped,
+                registry,
+                wal_enabled);
         },
 
         // immediate shutdown
         [&wal_sync_worker]()
         {
-            if(wal_sync_worker)
-            {
-                spdlog::info("Registry WAL sync worker stopping...");
-                wal_sync_worker->requestStop();
-                spdlog::info("Stopped registry WAL sync worker");
-            }
+            _runImmediateShutdown(wal_sync_worker);
         }
     );
     
@@ -499,41 +562,15 @@ int main(int argc, char* argv[])
 
     asio::co_spawn(
         io_context,
-        [&registry,
-         &evm,
-         &server,
-         &cfg,
-         &chain_ingestion_cfg,
-         loader_batch_connectors,
-         loader_batch_transformations,
-         loader_batch_conditions]() -> asio::awaitable<void>
-        {
-            const dcn::loader::LoaderBatchConfig loader_batch_config{
-                .connectors = loader_batch_connectors,
-                .transformations = loader_batch_transformations,
-                .conditions = loader_batch_conditions
-            };
-
-            spdlog::info("Starting JSON storage import...");
-
-            const bool import_success = co_await dcn::loader::importJsonStorageToDatabase(
-                evm,
-                registry,
-                cfg.storage_path,
-                loader_batch_config);
-            if(!import_success)
-            {
-                spdlog::warn("JSON storage import finished with errors");
-            }
-
-            if(chain_ingestion_cfg.enabled)
-            {
-                //asio::co_spawn(io_context, dcn::chain::runEventIngestion(chain_ingestion_cfg, registry), asio::detached);
-            }
-
-            co_await server.listen();
-            co_return;
-        }(),
+        _runStartupAndListen(
+            registry,
+            evm,
+            server,
+            cfg,
+            chain_ingestion_cfg,
+            loader_batch_connectors,
+            loader_batch_transformations,
+            loader_batch_conditions),
         [&io_context](std::exception_ptr exception_ptr)
         {
             if(!exception_ptr)
