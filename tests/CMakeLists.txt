@@ -38,7 +38,7 @@ function(configure_test_target test_target)
 
     target_link_libraries("${test_target}"
         PRIVATE
-            GTest::gtest_main
+            GTest::gtest
             spdlog::spdlog
             sqlite3
             DecentralisedArtServerLib)
