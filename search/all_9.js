@@ -24,5 +24,6 @@ var searchData=
   ['invalid_5fvalue_21',['INVALID_VALUE',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bead8f24f388e990b9ccf8905b7993b99ae',1,'dcn::parse::ParseError']]],
   ['invalidateaccesstoken_22',['invalidateAccessToken',['../classdcn_1_1auth_1_1AuthManager.html#a84ede0a39c6ca519a16921d6bce0b86f',1,'dcn::auth::AuthManager']]],
   ['iregistrystore_23',['IRegistryStore',['../classdcn_1_1storage_1_1IRegistryStore.html',1,'dcn::storage']]],
-  ['isvalidsolidityidentifier_24',['isValidSolidityIdentifier',['../namespacedcn_1_1pt.html#aa4251e4ac308073e4be8e830c15ff5a5',1,'dcn::pt']]]
+  ['isimporttraceenabled_24',['isImportTraceEnabled',['../namespacedcn_1_1utils.html#a878c4b3b07d030945a20c8876e5db658',1,'dcn::utils']]],
+  ['isvalidsolidityidentifier_25',['isValidSolidityIdentifier',['../namespacedcn_1_1pt.html#aa4251e4ac308073e4be8e830c15ff5a5',1,'dcn::pt']]]
 ];

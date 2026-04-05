@@ -9,5 +9,6 @@ var searchData=
   ['loadstoredconditions_6',['loadStoredConditions',['../namespacedcn_1_1loader.html#a6cc7f3ccc55aa0ac5b6f07847adea65a',1,'dcn::loader']]],
   ['loadstoredconnectors_7',['loadStoredConnectors',['../namespacedcn_1_1loader.html#ab8c0c89b64943818cf6082685f6f915f',1,'dcn::loader']]],
   ['loadstoredtransformations_8',['loadStoredTransformations',['../namespacedcn_1_1loader.html#aa0d678f7e7cd2eccb9c7045c945d8743',1,'dcn::loader']]],
-  ['loadtextfile_9',['loadTextFile',['../namespacedcn_1_1file.html#aa8691407ea5dcd69fa48b99616323244',1,'dcn::file']]]
+  ['loadtextfile_9',['loadTextFile',['../namespacedcn_1_1file.html#aa8691407ea5dcd69fa48b99616323244',1,'dcn::file']]],
+  ['logexception_10',['logException',['../namespacedcn_1_1utils.html#a82319650a16ef5fc8b0e92c6a28bf9fe',1,'dcn::utils']]]
 ];

@@ -4,7 +4,9 @@ var utils_8hpp =
     [ "TOSTRING", "utils_8hpp.html#a9063e80f8777300c93afde6e6f4c9cea", null ],
     [ "currentTimestamp", "utils_8hpp.html#a07545fa1ab2d1ccc349667eae8ba746f", null ],
     [ "equalsIgnoreCase", "utils_8hpp.html#ac5be949d9e1bfe957e75587b3ef85c4e", null ],
+    [ "isImportTraceEnabled", "utils_8hpp.html#a878c4b3b07d030945a20c8876e5db658", null ],
     [ "loadBuildTimestamp", "utils_8hpp.html#afe5529604b645836efa07f3d4d662540", null ],
+    [ "logException", "utils_8hpp.html#a82319650a16ef5fc8b0e92c6a28bf9fe", null ],
     [ "topologicalSort", "utils_8hpp.html#a213229fb0c30f9ca92e2d1c60f550442", null ],
     [ "always_false", "utils_8hpp.html#afc4bf0995d381a01e93043a56f6f9978", null ]
 ];
