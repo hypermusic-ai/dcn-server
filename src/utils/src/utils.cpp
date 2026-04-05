@@ -66,21 +66,4 @@ namespace dcn::utils
         }
     }
 
-
-    bool isImportTraceEnabled()
-    {
-        const char * env_value = std::getenv("DECENTRALISED_ART_IMPORT_TRACE");
-        if(env_value == nullptr)
-        {
-            return false;
-        }
-
-        const std::string_view flag(env_value);
-        return !(flag.empty() ||
-            flag == "0" ||
-            flag == "false" ||
-            flag == "FALSE" ||
-            flag == "off" ||
-            flag == "OFF");
-    }
 }

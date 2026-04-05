@@ -228,10 +228,10 @@ namespace dcn::chain
         }
         
         // TODO we want to get multiple chains possible, so Sepolia and Mainnet for example ect.
-        std::filesystem::path _stateFilePath(const IngestionConfig & cfg)
-        {
-            return cfg.storage_path / "chain" / "cursor.json";
-        }
+        // std::filesystem::path _stateFilePath(const IngestionConfig & cfg)
+        // {
+        //     return cfg.storage_path / "chain" / "cursor.json";
+        // }
 
         std::optional<std::uint64_t> _loadNextBlock(const std::filesystem::path & state_path)
         {

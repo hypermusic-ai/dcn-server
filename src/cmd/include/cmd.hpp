@@ -3,6 +3,8 @@
 #include <string>
 #include <format>
 #include <vector>
+#include <optional>
+#include <filesystem>
 
 #include <absl/container/flat_hash_map.h>
 #include <spdlog/spdlog.h>
@@ -22,6 +24,7 @@ namespace dcn::cmd
         {
             Unknown = 0,
             Int,
+            Uint,
             String,
             Bool,
             Float,
@@ -41,15 +44,23 @@ namespace dcn::cmd
         public:
             std::string constructHelpMessage() const;
 
-            void addArg(std::string name, CommandLineArgDef::NArgs nargs, CommandLineArgDef::Type type, std::string desc);
+            template<class T>
+            void addArg(std::string name, std::string desc);
+
+            template<class T>
+            void addArg(std::string name, std::string desc, T default_value)
+            {
+                addArg<T>(std::move(name), std::move(desc));
+                _values[name] = std::move(default_value);
+            }
 
             void parse(int argc, char** argv);
 
             template<class T>
             std::optional<T> getArg(std::string_view name)
             {
-                const auto it = _parse_result.find(name);
-                if(it == _parse_result.end())
+                const auto it = _values.find(name);
+                if(it == _values.end())
                 {
                     return std::nullopt;
                 }
@@ -65,13 +76,62 @@ namespace dcn::cmd
 
 
         private:
+            void _addArgDef(std::string name, CommandLineArgDef::NArgs nargs, CommandLineArgDef::Type type, std::string desc);
+
+
+
             std::vector<CommandLineArgDef> _args;
 
             absl::flat_hash_map<std::string, std::variant<
-                std::vector<int>,
-                std::vector<std::string>,
                 bool,
+
+                int,
+                std::vector<int>,
+
+                unsigned int,
+                std::vector<unsigned int>,
+
+                std::string,
+                std::vector<std::string>,
+
+                float,
                 std::vector<float>,
-                std::vector<std::filesystem::path>>> _parse_result;
+
+                std::filesystem::path,
+                std::vector<std::filesystem::path>>> _values;
     };
+
+    template<>
+    void ArgParser::addArg<bool>(std::string name, std::string desc);
+
+    template<>
+    void ArgParser::addArg<int>(std::string name, std::string desc);
+
+    template<>
+    void ArgParser::addArg<std::vector<int>>(std::string name, std::string desc);
+
+    template<>
+    void ArgParser::addArg<unsigned int>(std::string name, std::string desc);
+
+    template<>
+    void ArgParser::addArg<std::vector<unsigned int>>(std::string name, std::string desc);
+
+    template<>
+    void ArgParser::addArg<std::string>(std::string name, std::string desc);
+
+    template<>
+    void ArgParser::addArg<std::vector<std::string>>(std::string name, std::string desc);
+
+    template<>
+    void ArgParser::addArg<float>(std::string name, std::string desc);
+
+    template<>
+    void ArgParser::addArg<std::vector<float>>(std::string name, std::string desc);
+
+    template<>
+    void ArgParser::addArg<std::filesystem::path>(std::string name, std::string desc);
+
+    template<>
+    void ArgParser::addArg<std::vector<std::filesystem::path>>(std::string name, std::string desc);
+
 }
