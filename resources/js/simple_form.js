@@ -1249,6 +1249,17 @@ function resolveNextAccountCursor(currentCursor, nextAfter, entries) {
     return normalizeCursorToken(currentCursor);
 }
 
+function normalizeCursorObject(cursor) {
+    if (!cursor || typeof cursor !== 'object') {
+        return { hasMore: false, nextAfter: null };
+    }
+
+    return {
+        hasMore: Boolean(cursor.has_more),
+        nextAfter: normalizeCursorToken(cursor.next_after)
+    };
+}
+
 function resetAccountPaginationState() {
     currentAccountPage = 0;
     accountCursorState = {
@@ -1519,28 +1530,28 @@ async function fetchAccountResourcesPage(resetPagination) {
         conditionsDiv.innerHTML = renderOwnedResourceEntries(data.owned_conditions);
         connectorsDiv.innerHTML = renderOwnedResourceEntries(data.owned_connectors);
 
-        const connectorsHasMore = Boolean(data.connectors_has_more);
-        const transformationsHasMore = Boolean(data.transformations_has_more);
-        const conditionsHasMore = Boolean(data.conditions_has_more);
+        const connectorsCursor = normalizeCursorObject(data.cursor_connectors);
+        const transformationsCursor = normalizeCursorObject(data.cursor_transformations);
+        const conditionsCursor = normalizeCursorObject(data.cursor_conditions);
 
         accountNextCursorState = {
             connectors: resolveNextAccountCursor(
                 accountCursorState.connectors,
-                data.next_after_connectors,
+                connectorsCursor.nextAfter,
                 data.owned_connectors
             ),
             transformations: resolveNextAccountCursor(
                 accountCursorState.transformations,
-                data.next_after_transformations,
+                transformationsCursor.nextAfter,
                 data.owned_transformations
             ),
             conditions: resolveNextAccountCursor(
                 accountCursorState.conditions,
-                data.next_after_conditions,
+                conditionsCursor.nextAfter,
                 data.owned_conditions
             )
         };
-        accountHasMore = connectorsHasMore || transformationsHasMore || conditionsHasMore;
+        accountHasMore = connectorsCursor.hasMore || transformationsCursor.hasMore || conditionsCursor.hasMore;
 
         updateAccountPaginationControls();
 
@@ -1627,13 +1638,10 @@ async function fetchFormatResourcesPage(resetPagination) {
             }).join('')
             : '(none)';
 
-        const hasMore = Boolean(data.has_more);
-        const responseNextAfter = typeof data.next_after === 'string' && data.next_after.trim().length > 0
-            ? data.next_after.trim()
-            : null;
+        const formatCursor = normalizeCursorObject(data.cursor);
 
-        formatHasMore = hasMore;
-        formatNextAfterCursor = responseNextAfter;
+        formatHasMore = formatCursor.hasMore;
+        formatNextAfterCursor = formatCursor.nextAfter;
 
         updateFormatPaginationControls();
 

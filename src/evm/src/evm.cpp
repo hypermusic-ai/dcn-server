@@ -1,7 +1,9 @@
-#include "evm.hpp"
 #include <exception>
 #include <limits>
 #include <string_view>
+
+#include "evm.hpp"
+#include "utils.hpp"
 
 namespace dcn::evm
 {
@@ -15,27 +17,6 @@ namespace dcn::evm
             }
 
             return std::vector<std::uint8_t>(result.output_data, result.output_data + result.output_size);
-        }
-
-        void logUnhandledCoroutineException(const std::exception_ptr & exception_ptr, const std::string_view context)
-        {
-            if(!exception_ptr)
-            {
-                return;
-            }
-
-            try
-            {
-                std::rethrow_exception(exception_ptr);
-            }
-            catch(const std::exception & e)
-            {
-                spdlog::critical("{}: {}", context, e.what());
-            }
-            catch(...)
-            {
-                spdlog::critical("{}: unknown exception", context);
-            }
         }
     }
 
@@ -192,7 +173,7 @@ namespace dcn::evm
             {
                 if(exception_ptr)
                 {
-                    logUnhandledCoroutineException(exception_ptr, "PT loader coroutine failed");
+                    utils::logException(exception_ptr, "PT loader coroutine failed");
                     spdlog::critical("Stopping io_context because PT failed to load");
                     io_context.stop();
                     return;

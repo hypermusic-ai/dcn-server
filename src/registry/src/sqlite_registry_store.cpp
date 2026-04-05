@@ -1,6 +1,3 @@
-
-#include "sqlite_registry_store.hpp"
-
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -17,6 +14,9 @@
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 
+#include "utils.hpp"
+#include "sqlite_registry_store.hpp"
+
 namespace dcn::storage
 {
     namespace
@@ -26,23 +26,6 @@ namespace dcn::storage
         constexpr int MAX_RECORD_BLOB_BYTES = 16 * 1024 * 1024;
         constexpr int SQLITE_DEFAULT_BUSY_TIMEOUT_MS = 5000;
         constexpr int SQLITE_CHECKPOINT_BUSY_TIMEOUT_MS = 250;
-
-        static bool isImportTraceEnabled()
-        {
-            const char * env_value = std::getenv("DECENTRALISED_ART_IMPORT_TRACE");
-            if(env_value == nullptr)
-            {
-                return false;
-            }
-
-            const std::string_view flag(env_value);
-            return !(flag.empty() ||
-                flag == "0" ||
-                flag == "false" ||
-                flag == "FALSE" ||
-                flag == "off" ||
-                flag == "OFF");
-        }
 
         class Statement
         {
@@ -324,7 +307,7 @@ namespace dcn::storage
 
     bool SQLiteRegistryStore::hasConnector(const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
             if(_db == nullptr)
@@ -363,7 +346,7 @@ namespace dcn::storage
 
     std::optional<ConnectorRecordHandle> SQLiteRegistryStore::getConnectorRecordHandle(const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
             if(trace_enabled)
@@ -863,7 +846,7 @@ namespace dcn::storage
 
     bool SQLiteRegistryStore::hasTransformation(const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
             if(_db == nullptr)
@@ -902,7 +885,7 @@ namespace dcn::storage
 
     std::optional<TransformationRecordHandle> SQLiteRegistryStore::getTransformationRecordHandle(const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
             if(trace_enabled)
@@ -1178,7 +1161,7 @@ namespace dcn::storage
 
     bool SQLiteRegistryStore::hasCondition(const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
             if(_db == nullptr)
@@ -1217,7 +1200,7 @@ namespace dcn::storage
 
     std::optional<ConditionRecordHandle> SQLiteRegistryStore::getConditionRecordHandle(const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
             if(trace_enabled)

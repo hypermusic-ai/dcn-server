@@ -185,14 +185,20 @@ namespace dcn
 
         json_output["address"] = evmc::hex(address);
         json_output["limit"] = limit;
-        json_output["connectors_has_more"] = connectors_page.has_more;
-        json_output["transformations_has_more"] = transformations_page.has_more;
-        json_output["conditions_has_more"] = conditions_page.has_more;
-        json_output["next_after_connectors"] =
+
+        json_output["cursor_connectors"] = json::object();
+        json_output["cursor_connectors"]["has_more"] = connectors_page.has_more;
+        json_output["cursor_connectors"]["next_after"] =
             connectors_page.next_after.has_value() ? json(serializeNameCursor(*connectors_page.next_after)) : json(nullptr);
-        json_output["next_after_transformations"] =
+
+        json_output["cursor_transformations"] = json::object();
+        json_output["cursor_transformations"]["has_more"] = transformations_page.has_more;
+        json_output["cursor_transformations"]["next_after"] =
             transformations_page.next_after.has_value() ? json(serializeNameCursor(*transformations_page.next_after)) : json(nullptr);
-        json_output["next_after_conditions"] =
+
+        json_output["cursor_conditions"] = json::object();
+        json_output["cursor_conditions"]["has_more"] = conditions_page.has_more;
+        json_output["cursor_conditions"]["next_after"] =
             conditions_page.next_after.has_value() ? json(serializeNameCursor(*conditions_page.next_after)) : json(nullptr);
 
         response.setCode(http::Code::OK)

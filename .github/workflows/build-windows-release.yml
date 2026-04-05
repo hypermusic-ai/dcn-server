@@ -17,10 +17,10 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Configure and build (Release)
+    - name: Configure and build (RelWithDebInfo)
       run: |
-        cmake -S . -B build-windows-release -A x64 -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release
-        cmake --build build-windows-release --config Release --target install -j 4
+        cmake -S . -B build-windows-release -A x64 -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        cmake --build build-windows-release --config RelWithDebInfo --target install -j 4
 
     - name: Pack install directory into tarball
       run: |

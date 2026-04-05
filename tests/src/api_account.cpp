@@ -296,7 +296,8 @@ TEST_F(UnitTest, API_Account_Get_AfterConnectorsCursorIsTrimmed)
     ASSERT_TRUE(body["owned_connectors"].is_array());
     ASSERT_EQ(body["owned_connectors"].size(), 1);
     EXPECT_EQ(body["owned_connectors"][0], "BETA");
-    EXPECT_EQ(body["next_after_connectors"], nullptr);
+    ASSERT_TRUE(body["cursor_connectors"].is_object());
+    EXPECT_EQ(body["cursor_connectors"]["next_after"], nullptr);
 }
 
 TEST_F(UnitTest, API_Account_Get_NameCursorPaginationIsStableAcrossInsert)
@@ -339,8 +340,9 @@ TEST_F(UnitTest, API_Account_Get_NameCursorPaginationIsStableAcrossInsert)
         ASSERT_TRUE(body["owned_connectors"].is_array());
         ASSERT_EQ(body["owned_connectors"].size(), 1);
         EXPECT_EQ(body["owned_connectors"][0], "ALPHA");
-        EXPECT_EQ(body["connectors_has_more"], true);
-        EXPECT_EQ(body["next_after_connectors"], "ALPHA");
+        ASSERT_TRUE(body["cursor_connectors"].is_object());
+        EXPECT_EQ(body["cursor_connectors"]["has_more"], true);
+        EXPECT_EQ(body["cursor_connectors"]["next_after"], "ALPHA");
     }
 
     {
@@ -368,7 +370,8 @@ TEST_F(UnitTest, API_Account_Get_NameCursorPaginationIsStableAcrossInsert)
         ASSERT_TRUE(body["owned_connectors"].is_array());
         ASSERT_EQ(body["owned_connectors"].size(), 1);
         EXPECT_EQ(body["owned_connectors"][0], "BETA");
-        EXPECT_EQ(body["connectors_has_more"], false);
-        EXPECT_EQ(body["next_after_connectors"], nullptr);
+        ASSERT_TRUE(body["cursor_connectors"].is_object());
+        EXPECT_EQ(body["cursor_connectors"]["has_more"], false);
+        EXPECT_EQ(body["cursor_connectors"]["next_after"], nullptr);
     }
 }

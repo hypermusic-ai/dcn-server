@@ -90,8 +90,9 @@ TEST_F(UnitTest, API_Format_Get_ReturnsPaginatedConnectorsForGivenHash)
         EXPECT_EQ(body["format_hash"], format_hash_hex);
         EXPECT_EQ(body["limit"], 2);
         EXPECT_EQ(body["total_connectors"], 3);
-        EXPECT_EQ(body["has_more"], true);
-        EXPECT_EQ(body["next_after"], "FMT_B");
+        ASSERT_TRUE(body["cursor"].is_object());
+        EXPECT_EQ(body["cursor"]["has_more"], true);
+        EXPECT_EQ(body["cursor"]["next_after"], "FMT_B");
         ASSERT_TRUE(body["scalars"].is_array());
         ASSERT_EQ(body["scalars"].size(), 2);
         EXPECT_EQ(body["scalars"][0], "PITCH:0");
@@ -120,8 +121,9 @@ TEST_F(UnitTest, API_Format_Get_ReturnsPaginatedConnectorsForGivenHash)
 
         const auto body = nlohmann::json::parse(response.getBody());
         EXPECT_EQ(body["total_connectors"], 3);
-        EXPECT_EQ(body["has_more"], false);
-        EXPECT_EQ(body["next_after"], nullptr);
+        ASSERT_TRUE(body["cursor"].is_object());
+        EXPECT_EQ(body["cursor"]["has_more"], false);
+        EXPECT_EQ(body["cursor"]["next_after"], nullptr);
         ASSERT_EQ(body["connectors"].size(), 1);
         EXPECT_EQ(body["connectors"][0], "FMT_C");
     }
@@ -142,8 +144,9 @@ TEST_F(UnitTest, API_Format_Get_ReturnsPaginatedConnectorsForGivenHash)
 
         const auto body = nlohmann::json::parse(response.getBody());
         EXPECT_EQ(body["total_connectors"], 3);
-        EXPECT_EQ(body["has_more"], false);
-        EXPECT_EQ(body["next_after"], nullptr);
+        ASSERT_TRUE(body["cursor"].is_object());
+        EXPECT_EQ(body["cursor"]["has_more"], false);
+        EXPECT_EQ(body["cursor"]["next_after"], nullptr);
         ASSERT_EQ(body["connectors"].size(), 1);
         EXPECT_EQ(body["connectors"][0], "FMT_C");
     }
@@ -173,8 +176,9 @@ TEST_F(UnitTest, API_Format_Get_UnknownHashReturnsEmptyConnectorsList)
     EXPECT_EQ(body["format_hash"], format_hash_hex);
     EXPECT_EQ(body["limit"], 10);
     EXPECT_EQ(body["total_connectors"], 0);
-    EXPECT_EQ(body["has_more"], false);
-    EXPECT_EQ(body["next_after"], nullptr);
+    ASSERT_TRUE(body["cursor"].is_object());
+    EXPECT_EQ(body["cursor"]["has_more"], false);
+    EXPECT_EQ(body["cursor"]["next_after"], nullptr);
     ASSERT_TRUE(body["scalars"].is_array());
     EXPECT_TRUE(body["scalars"].empty());
     EXPECT_FALSE(body.contains("scalar_labels"));
@@ -297,8 +301,9 @@ TEST_F(UnitTest, API_Format_Get_ZeroLimitReturnsEmptyPage)
     EXPECT_EQ(body["format_hash"], format_hash_hex);
     EXPECT_EQ(body["limit"], 0);
     EXPECT_EQ(body["total_connectors"], 0);
-    EXPECT_EQ(body["has_more"], false);
-    EXPECT_EQ(body["next_after"], nullptr);
+    ASSERT_TRUE(body["cursor"].is_object());
+    EXPECT_EQ(body["cursor"]["has_more"], false);
+    EXPECT_EQ(body["cursor"]["next_after"], nullptr);
     ASSERT_TRUE(body["connectors"].is_array());
     EXPECT_TRUE(body["connectors"].empty());
 }

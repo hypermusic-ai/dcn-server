@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: sudo apt update && sudo apt install -y cmake build-essential libssl-dev npm
 
-    - name: Configure and build (Release)
+    - name: Configure and build (RelWithDebInfo)
       run: |
         cmake -S . -B build-linux-release -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=RelWithDebInfo 
         cmake --build build-linux-release --config RelWithDebInfo --target install -j 4

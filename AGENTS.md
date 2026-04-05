@@ -43,3 +43,26 @@ Use build configuration Debug or RelWithDebInfo.
 The unit test build target is:
 
 - `DecentralisedArtServerTests`
+
+## Test Rebuild Policy
+
+Do **not** rebuild tests by default for every change.
+
+Rebuild `DecentralisedArtServerTests` when at least one of these is true:
+
+- Any file under `src/`, `include/`, or `tests/` changes (`.cpp`, `.hpp`, etc.)
+- CMake/test wiring changes (`CMakeLists.txt`, `tests/CMakeLists.txt`, `cmake/*.cmake`)
+- Generated/build inputs for tests changed (protobufs, linked dependency config, compile options)
+- `submodule/pt` changes affect server behavior or test expectations
+
+Skip test rebuild when changes are non-compiled only, for example:
+
+- Documentation (`README.md`, `AGENTS.md`, docs)
+- Static resources/UI assets only (`resources/html`, `resources/js`, `resources/styles`, images), unless tests explicitly depend on them
+- Pure formatting/comment-only edits in files that do not alter compiled/tested behavior
+
+When rebuild is needed, prefer incremental verification:
+
+- Build `DecentralisedArtServerTests`
+- Run only relevant test cases first (targeted filter)
+- Run broader/full test pass only when the scope of changes justifies it

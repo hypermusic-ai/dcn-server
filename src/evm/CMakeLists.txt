@@ -4,6 +4,7 @@ add_module(NAME "EVM"
         "${PROJECT_PREFIX}::Async"
         "${PROJECT_PREFIX}::Crypto"
         "${PROJECT_PREFIX}::Chain"
+        "${PROJECT_PREFIX}::Utils"
 
         absl::hash
         absl::flat_hash_map

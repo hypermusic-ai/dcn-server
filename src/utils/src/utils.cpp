@@ -44,4 +44,43 @@ namespace dcn::utils
            });
     }
 
+
+    void logException(const std::exception_ptr & exception_ptr, const std::string_view context)
+    {
+        if(!exception_ptr)
+        {
+            return;
+        }
+
+        try
+        {
+            std::rethrow_exception(exception_ptr);
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("{}: {}", context, e.what());
+        }
+        catch(...)
+        {
+            spdlog::error("{}: unknown exception", context);
+        }
+    }
+
+
+    bool isImportTraceEnabled()
+    {
+        const char * env_value = std::getenv("DECENTRALISED_ART_IMPORT_TRACE");
+        if(env_value == nullptr)
+        {
+            return false;
+        }
+
+        const std::string_view flag(env_value);
+        return !(flag.empty() ||
+            flag == "0" ||
+            flag == "false" ||
+            flag == "FALSE" ||
+            flag == "off" ||
+            flag == "OFF");
+    }
 }

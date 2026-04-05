@@ -104,23 +104,6 @@ namespace dcn::loader
             return (batch_size == 0) ? 1 : batch_size;
         }
 
-        static bool isImportTraceEnabled()
-        {
-            const char * env_value = std::getenv("DECENTRALISED_ART_IMPORT_TRACE");
-            if(env_value == nullptr)
-            {
-                return false;
-            }
-
-            const std::string_view flag(env_value);
-            return !(flag.empty() ||
-                flag == "0" ||
-                flag == "false" ||
-                flag == "FALSE" ||
-                flag == "off" ||
-                flag == "OFF");
-        }
-
         static asio::awaitable<bool> flushPendingTransformations(
             storage::Registry & registry,
             JsonImportContext & context,
@@ -326,7 +309,7 @@ namespace dcn::loader
     {
         absl::flat_hash_map<std::string, T> loaded_data;
         parse::Result<T> loaded_result;
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         std::size_t json_files_seen = 0;
         std::size_t loaded_records = 0;
         std::size_t open_failures = 0;
@@ -900,7 +883,7 @@ namespace dcn::loader
         bool persist_json)
     {
         ConnectorEnsureContext ensure_context;
-        ensure_context.trace_enabled = isImportTraceEnabled();
+        ensure_context.trace_enabled = utils::isImportTraceEnabled();
         ensure_context.connector_deploy_stack.reserve(64);
         co_return co_await deployConnectorWithContext(
             evm,
@@ -1306,7 +1289,7 @@ namespace dcn::loader
         const std::filesystem::path & storage_path)
     {
         ConnectorEnsureContext context;
-        context.trace_enabled = isImportTraceEnabled();
+        context.trace_enabled = utils::isImportTraceEnabled();
         context.connector_deploy_stack.reserve(64);
         co_return co_await ensureConnectorDeployedImpl(evm, registry, name, storage_path, context);
     }
@@ -1318,7 +1301,7 @@ namespace dcn::loader
         LoaderBatchConfig batch_config)
     {
         JsonImportContext context;
-        context.trace_enabled = isImportTraceEnabled();
+        context.trace_enabled = utils::isImportTraceEnabled();
         context.connector_import_stack.reserve(64);
         context.batch_config.connectors = normalizeBatchSize(batch_config.connectors);
         context.batch_config.transformations = normalizeBatchSize(batch_config.transformations);

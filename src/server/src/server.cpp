@@ -1,30 +1,8 @@
-#include "server.hpp"
 #include <exception>
 #include <string_view>
 
-namespace
-{
-    void logUnhandledCoroutineException(const std::exception_ptr & exception_ptr, const std::string_view context)
-    {
-        if(!exception_ptr)
-        {
-            return;
-        }
-
-        try
-        {
-            std::rethrow_exception(exception_ptr);
-        }
-        catch(const std::exception & e)
-        {
-            spdlog::error("{}: {}", context, e.what());
-        }
-        catch(...)
-        {
-            spdlog::error("{}: unknown exception", context);
-        }
-    }
-}
+#include "server.hpp"
+#include "utils.hpp"
 
 namespace dcn::server
 {
@@ -63,7 +41,7 @@ namespace dcn::server
                     handleConnection(std::move(std::get<asio::ip::tcp::socket>(socket_result))),
                     [](std::exception_ptr exception_ptr)
                     {
-                        logUnhandledCoroutineException(exception_ptr, "Connection coroutine failed");
+                        utils::logException(exception_ptr, "Connection coroutine failed");
                     });
             }
         }

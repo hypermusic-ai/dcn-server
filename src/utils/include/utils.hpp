@@ -80,4 +80,8 @@ namespace dcn::utils
     }
 
     bool equalsIgnoreCase(const std::string& a, const std::string& b);
+
+    void logException(const std::exception_ptr & exception_ptr, const std::string_view context);
+
+    bool isImportTraceEnabled();
 }

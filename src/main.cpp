@@ -47,27 +47,6 @@ static std::vector<int> _configureShutdownSignals()
     return shutdown_signal_ids;
 }
 
-static void _logUnhandledException(const std::exception_ptr & exception_ptr, const std::string_view context)
-{
-    if(!exception_ptr)
-    {
-        return;
-    }
-
-    try
-    {
-        std::rethrow_exception(exception_ptr);
-    }
-    catch(const std::exception & e)
-    {
-        spdlog::critical("{}: {}", context, e.what());
-    }
-    catch(...)
-    {
-        spdlog::critical("{}: unknown exception", context);
-    }
-}
-
 static asio::awaitable<void> _runStartupAndListen(
     dcn::storage::Registry & registry,
     dcn::evm::EVM & evm,
@@ -110,7 +89,7 @@ static asio::awaitable<void> _runStartupAndListen(
     co_return;
 }
 
-[[maybe_unused]] static asio::awaitable<void> _runGracefulShutdown(
+static asio::awaitable<void> _runGracefulShutdown(
     dcn::server::Server & server,
     std::optional<dcn::storage::RegistryWalSyncWorker> & wal_sync_worker,
     std::atomic<bool> & wal_sync_worker_stopped,
@@ -165,7 +144,7 @@ static asio::awaitable<void> _runStartupAndListen(
     co_return;
 }
 
-[[maybe_unused]] static void _runImmediateShutdown(std::optional<dcn::storage::RegistryWalSyncWorker> & wal_sync_worker)
+static void _runImmediateShutdown(std::optional<dcn::storage::RegistryWalSyncWorker> & wal_sync_worker)
 {
     if(wal_sync_worker)
     {
@@ -497,10 +476,7 @@ int main(int argc, char* argv[])
     {
         // create wal sync worker
         wal_sync_worker_stopped.store(false, std::memory_order_release);
-        wal_sync_worker.emplace(
-            io_context,
-            registry,
-            registry_wal_sync_interval);
+        wal_sync_worker.emplace(io_context, registry,  registry_wal_sync_interval);
         
         // start wal sync worker
         asio::co_spawn(
@@ -509,22 +485,9 @@ int main(int argc, char* argv[])
             [&wal_sync_worker_stopped](std::exception_ptr exception_ptr)
             {
                 wal_sync_worker_stopped.store(true, std::memory_order_release);
-                if(exception_ptr)
-                {
-                    try
-                    {
-                        std::rethrow_exception(exception_ptr);
-                    }
-                    catch(const std::exception & e)
-                    {
-                        spdlog::error("Registry WAL sync worker failed: {}", e.what());
-                    }
-                    catch(...)
-                    {
-                        spdlog::error("Registry WAL sync worker failed with unknown error");
-                    }
-                }
-            });
+                dcn::utils::logException(exception_ptr, "Registry WAL sync worker failed");
+            }
+        );
         spdlog::info("Registry WAL sync worker enabled with interval {}ms", registry_wal_sync_interval.count());
     }
     else
@@ -578,7 +541,7 @@ int main(int argc, char* argv[])
                 return;
             }
 
-            _logUnhandledException(exception_ptr, "Startup/listen coroutine failed");
+            dcn::utils::logException(exception_ptr, "Startup/listen coroutine failed");
             spdlog::critical("Stopping io_context due to startup/listen failure");
             io_context.stop();
         });

@@ -131,14 +131,16 @@ namespace dcn
         json_output["format_hash"] = evmc::hex(*format_hash_res);
         json_output["limit"] = limit;
         json_output["total_connectors"] = total_connectors;
-        json_output["has_more"] = page.has_more;
+
+        json_output["cursor"] = json::object();
+        json_output["cursor"]["has_more"] = page.has_more;
         if(page.next_after.has_value())
         {
-            json_output["next_after"] = *page.next_after;
+            json_output["cursor"]["next_after"] = *page.next_after;
         }
         else
         {
-            json_output["next_after"] = nullptr;
+            json_output["cursor"]["next_after"] = nullptr;
         }
         json_output["scalars"] = json::array();
         const auto scalar_labels_res = co_await registry.getScalarLabelsByFormatHash(*format_hash_res);

@@ -1,5 +1,3 @@
-#include "registry.hpp"
-
 #include <cstdint>
 #include <cstdlib>
 #include <limits>
@@ -11,29 +9,14 @@
 
 #include <evmc/hex.hpp>
 
+#include "registry.hpp"
 #include "sqlite_registry_store.hpp"
+#include "utils.hpp"
 
 namespace dcn::storage
 {
     namespace
     {
-        static bool isImportTraceEnabled()
-        {
-            const char * env_value = std::getenv("DECENTRALISED_ART_IMPORT_TRACE");
-            if(env_value == nullptr)
-            {
-                return false;
-            }
-
-            const std::string_view flag(env_value);
-            return !(flag.empty() ||
-                flag == "0" ||
-                flag == "false" ||
-                flag == "FALSE" ||
-                flag == "off" ||
-                flag == "OFF");
-        }
-
         enum class VisitState : std::uint8_t
         {
             VISITING,
@@ -1113,7 +1096,7 @@ namespace dcn::storage
     asio::awaitable<std::optional<ConnectorRecordHandle>> Registry::getConnectorRecordHandle(
         const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         if(trace_enabled)
         {
             spdlog::info("Registry::getConnectorRecordHandle('{}'): enter", name);
@@ -1153,7 +1136,7 @@ namespace dcn::storage
 
     asio::awaitable<bool> Registry::hasConnector(const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         if(trace_enabled)
         {
             spdlog::info("Registry::hasConnector('{}'): enter", name);
@@ -1361,7 +1344,7 @@ namespace dcn::storage
     asio::awaitable<std::optional<TransformationRecordHandle>> Registry::getTransformationRecordHandle(
         const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         if(trace_enabled)
         {
             spdlog::info("Registry::getTransformationRecordHandle('{}'): enter", name);
@@ -1404,7 +1387,7 @@ namespace dcn::storage
 
     asio::awaitable<bool> Registry::hasTransformation(const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         if(trace_enabled)
         {
             spdlog::info("Registry::hasTransformation('{}'): enter", name);
@@ -1576,7 +1559,7 @@ namespace dcn::storage
     asio::awaitable<std::optional<ConditionRecordHandle>> Registry::getConditionRecordHandle(
         const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         if(trace_enabled)
         {
             spdlog::info("Registry::getConditionRecordHandle('{}'): enter", name);
@@ -1616,7 +1599,7 @@ namespace dcn::storage
 
     asio::awaitable<bool> Registry::hasCondition(const std::string & name) const
     {
-        const bool trace_enabled = isImportTraceEnabled();
+        const bool trace_enabled = utils::isImportTraceEnabled();
         if(trace_enabled)
         {
             spdlog::info("Registry::hasCondition('{}'): enter", name);
