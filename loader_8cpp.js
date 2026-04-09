@@ -31,7 +31,6 @@ var loader_8cpp =
     [ "pending_connectors", "loader_8cpp.html#a0f32c3aae90da9d385a0776aec49943e", null ],
     [ "pending_transformations", "loader_8cpp.html#a8d9d46185770e2b3757b921838d1eb5d", null ],
     [ "stack_ref", "loader_8cpp.html#aa61eb555e4ca945ff45f1a8bf5111c9a", null ],
-    [ "trace_enabled", "loader_8cpp.html#af2337e1b3ddf34962096358e9f0fbf5a", null ],
     [ "transformations", "loader_8cpp.html#adfe41b262f3aecd33b25e2dbc68bcbfd", null ],
     [ "visiting", "loader_8cpp.html#a1833574ecd6e4d2cfbda0298917ad6ef", null ]
 ];

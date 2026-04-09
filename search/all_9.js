@@ -10,7 +10,7 @@ var searchData=
   ['importjsonstoragetodatabase_7',['importJsonStorageToDatabase',['../namespacedcn_1_1loader.html#adc1a0d3d782638f0514ecd2d4c393409',1,'dcn::loader']]],
   ['ingestion_2ecpp_8',['ingestion.cpp',['../ingestion_8cpp.html',1,'']]],
   ['ingestion_2ehpp_9',['ingestion.hpp',['../ingestion_8hpp.html',1,'']]],
-  ['ingestionconfig_10',['IngestionConfig',['../structdcn_1_1chain_1_1IngestionConfig.html',1,'dcn::chain']]],
+  ['ingestionconfig_10',['IngestionConfig',['../structdcn_1_1config_1_1IngestionConfig.html',1,'dcn::config']]],
   ['ingestionruntimeoptions_11',['IngestionRuntimeOptions',['../structdcn_1_1chain_1_1IngestionRuntimeOptions.html',1,'dcn::chain']]],
   ['int_12',['Int',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053ba1686a6c336b71b36d77354cea19a8b52',1,'dcn::cmd::CommandLineArgDef']]],
   ['interface_13',['interface',['../address_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a',1,'interface:&#160;address.hpp'],['../deploy_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a',1,'interface:&#160;deploy.hpp'],['../chain_2include_2execute_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a',1,'interface:&#160;execute.hpp'],['../format__hash_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a',1,'interface:&#160;format_hash.hpp'],['../evm_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a',1,'interface:&#160;evm.hpp'],['../evm__formatter_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a',1,'interface:&#160;evm_formatter.hpp'],['../evm__storage_8hpp.html#a8f8bdbe5685d2ab60ca313c61017b92a',1,'interface:&#160;evm_storage.hpp']]],
@@ -24,6 +24,5 @@ var searchData=
   ['invalid_5fvalue_21',['INVALID_VALUE',['../structdcn_1_1parse_1_1ParseError.html#a9fb4a2f5bf03bf464a0ba3b62c1857bead8f24f388e990b9ccf8905b7993b99ae',1,'dcn::parse::ParseError']]],
   ['invalidateaccesstoken_22',['invalidateAccessToken',['../classdcn_1_1auth_1_1AuthManager.html#a84ede0a39c6ca519a16921d6bce0b86f',1,'dcn::auth::AuthManager']]],
   ['iregistrystore_23',['IRegistryStore',['../classdcn_1_1storage_1_1IRegistryStore.html',1,'dcn::storage']]],
-  ['isimporttraceenabled_24',['isImportTraceEnabled',['../namespacedcn_1_1utils.html#a878c4b3b07d030945a20c8876e5db658',1,'dcn::utils']]],
-  ['isvalidsolidityidentifier_25',['isValidSolidityIdentifier',['../namespacedcn_1_1pt.html#aa4251e4ac308073e4be8e830c15ff5a5',1,'dcn::pt']]]
+  ['isvalidsolidityidentifier_24',['isValidSolidityIdentifier',['../namespacedcn_1_1pt.html#aa4251e4ac308073e4be8e830c15ff5a5',1,'dcn::pt']]]
 ];

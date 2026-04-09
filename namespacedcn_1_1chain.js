@@ -5,7 +5,6 @@ var namespacedcn_1_1chain =
     [ "ExecuteError", "structdcn_1_1chain_1_1ExecuteError.html", "structdcn_1_1chain_1_1ExecuteError" ],
     [ "ExecuteReceipt", "structdcn_1_1chain_1_1ExecuteReceipt.html", null ],
     [ "IChain", "classdcn_1_1chain_1_1IChain.html", "classdcn_1_1chain_1_1IChain" ],
-    [ "IngestionConfig", "structdcn_1_1chain_1_1IngestionConfig.html", "structdcn_1_1chain_1_1IngestionConfig" ],
     [ "IngestionRuntimeOptions", "structdcn_1_1chain_1_1IngestionRuntimeOptions.html", "structdcn_1_1chain_1_1IngestionRuntimeOptions" ],
     [ "ResolvedScalarEntries", "structdcn_1_1chain_1_1ResolvedScalarEntries.html", "structdcn_1_1chain_1_1ResolvedScalarEntries" ],
     [ "ScalarHashEntry", "structdcn_1_1chain_1_1ScalarHashEntry.html", "structdcn_1_1chain_1_1ScalarHashEntry" ],

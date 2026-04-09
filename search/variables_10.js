@@ -6,8 +6,7 @@ var searchData=
   ['skip_5fsleep_3',['skip_sleep',['../structdcn_1_1chain_1_1IngestionRuntimeOptions.html#a387495a9c4b768f3db287d29f57062c2',1,'dcn::chain::IngestionRuntimeOptions']]],
   ['stack_5fref_4',['stack_ref',['../loader_8cpp.html#aa61eb555e4ca945ff45f1a8bf5111c9a',1,'loader.cpp']]],
   ['staged_5fconnectors_5',['staged_connectors',['../registry_8cpp.html#a79ae241da3f72d47d26aba6710f6d4d3',1,'registry.cpp']]],
-  ['start_5fblock_6',['start_block',['../structdcn_1_1chain_1_1IngestionConfig.html#a8cf9cb33456a147cc2b11e1c9ad4e656',1,'dcn::chain::IngestionConfig']]],
-  ['storage_7',['storage',['../structdcn_1_1evm_1_1EVMStorage_1_1Account.html#aeb805928d10d7344c967c76554a20527',1,'dcn::evm::EVMStorage::Account']]],
-  ['storage_5fpath_8',['storage_path',['../structdcn_1_1chain_1_1IngestionConfig.html#a9158aae0b8578642ae921320b2993173',1,'dcn::chain::IngestionConfig::storage_path'],['../structdcn_1_1config_1_1Config.html#a490dc8f75e6aa7fd976fc74a6c05f5be',1,'dcn::config::Config::storage_path']]],
-  ['store_9',['store',['../registry_8cpp.html#a5d8b59dc54b5778394b05e932e064aab',1,'registry.cpp']]]
+  ['storage_6',['storage',['../structdcn_1_1evm_1_1EVMStorage_1_1Account.html#aeb805928d10d7344c967c76554a20527',1,'dcn::evm::EVMStorage::Account']]],
+  ['storage_5fpath_7',['storage_path',['../structdcn_1_1config_1_1Config.html#a490dc8f75e6aa7fd976fc74a6c05f5be',1,'dcn::config::Config']]],
+  ['store_8',['store',['../registry_8cpp.html#a5d8b59dc54b5778394b05e932e064aab',1,'registry.cpp']]]
 ];

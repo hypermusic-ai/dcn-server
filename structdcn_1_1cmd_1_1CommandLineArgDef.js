@@ -8,6 +8,7 @@ var structdcn_1_1cmd_1_1CommandLineArgDef =
     [ "Type", "structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053b", [
       [ "Unknown", "structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053ba88183b946cc5f0e8c96b2e66e1c74a7e", null ],
       [ "Int", "structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053ba1686a6c336b71b36d77354cea19a8b52", null ],
+      [ "Uint", "structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053bafa28cf323a8d44edbf80f68165f4f75b", null ],
       [ "String", "structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053ba27118326006d3829667a400ad23d5d98", null ],
       [ "Bool", "structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053bac26f15e86e3de4c398a8273272aba034", null ],
       [ "Float", "structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053ba22ae0e2b89e5e3d477f988cc36d3272b", null ],

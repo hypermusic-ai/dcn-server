@@ -14,7 +14,6 @@ var annotated_dup =
         [ "ExecuteError", "structdcn_1_1chain_1_1ExecuteError.html", "structdcn_1_1chain_1_1ExecuteError" ],
         [ "ExecuteReceipt", "structdcn_1_1chain_1_1ExecuteReceipt.html", null ],
         [ "IChain", "classdcn_1_1chain_1_1IChain.html", "classdcn_1_1chain_1_1IChain" ],
-        [ "IngestionConfig", "structdcn_1_1chain_1_1IngestionConfig.html", "structdcn_1_1chain_1_1IngestionConfig" ],
         [ "IngestionRuntimeOptions", "structdcn_1_1chain_1_1IngestionRuntimeOptions.html", "structdcn_1_1chain_1_1IngestionRuntimeOptions" ],
         [ "ResolvedScalarEntries", "structdcn_1_1chain_1_1ResolvedScalarEntries.html", "structdcn_1_1chain_1_1ResolvedScalarEntries" ],
         [ "ScalarHashEntry", "structdcn_1_1chain_1_1ScalarHashEntry.html", "structdcn_1_1chain_1_1ScalarHashEntry" ],
@@ -25,7 +24,8 @@ var annotated_dup =
         [ "CommandLineArgDef", "structdcn_1_1cmd_1_1CommandLineArgDef.html", "structdcn_1_1cmd_1_1CommandLineArgDef" ]
       ] ],
       [ "config", "namespacedcn_1_1config.html", [
-        [ "Config", "structdcn_1_1config_1_1Config.html", "structdcn_1_1config_1_1Config" ]
+        [ "Config", "structdcn_1_1config_1_1Config.html", "structdcn_1_1config_1_1Config" ],
+        [ "IngestionConfig", "structdcn_1_1config_1_1IngestionConfig.html", "structdcn_1_1config_1_1IngestionConfig" ]
       ] ],
       [ "crypto", "namespacedcn_1_1crypto.html", [
         [ "Keccak256", "classdcn_1_1crypto_1_1Keccak256.html", null ]

@@ -7,7 +7,7 @@ var searchData=
   ['batch_5fconfig_4',['batch_config',['../loader_8cpp.html#a22bb218a9611071931aced8c04e8b75a',1,'loader.cpp']]],
   ['bin_5fpath_5',['bin_path',['../structdcn_1_1config_1_1Config.html#a0e78cdefbc941ced66d4571024abfe84',1,'dcn::config::Config']]],
   ['bindings_6',['bindings',['../structdcn_1_1pt_1_1ConnectorAddedEvent.html#a60881203337d728dd9403a501a17dc70',1,'dcn::pt::ConnectorAddedEvent']]],
-  ['block_5fbatch_5fsize_7',['block_batch_size',['../structdcn_1_1chain_1_1IngestionConfig.html#a125658a8116a46aa24e53ad3c4a7edc2',1,'dcn::chain::IngestionConfig']]],
+  ['block_5fbatch_5fsize_7',['block_batch_size',['../structdcn_1_1config_1_1IngestionConfig.html#a83da505bc208c23cb3cd95effb435f04',1,'dcn::config::IngestionConfig']]],
   ['block_5fnumber_5fhex_8',['block_number_hex',['../structdcn_1_1chain_1_1DeployReceipt.html#acf30eea38bfb6e1b52f4f493245b98f1',1,'dcn::chain::DeployReceipt']]],
   ['bool_9',['Bool',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053bac26f15e86e3de4c398a8273272aba034',1,'dcn::cmd::CommandLineArgDef']]],
   ['byte_5forder_2ehpp_10',['byte_order.hpp',['../byte__order_8hpp.html',1,'']]]

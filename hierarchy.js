@@ -47,7 +47,7 @@ var hierarchy =
     [ "dcn::chain::IChain", "classdcn_1_1chain_1_1IChain.html", [
       [ "dcn::sepolia::SepoliaBackend", "classdcn_1_1sepolia_1_1SepoliaBackend.html", null ]
     ] ],
-    [ "dcn::chain::IngestionConfig", "structdcn_1_1chain_1_1IngestionConfig.html", null ],
+    [ "dcn::config::IngestionConfig", "structdcn_1_1config_1_1IngestionConfig.html", null ],
     [ "dcn::chain::IngestionRuntimeOptions", "structdcn_1_1chain_1_1IngestionRuntimeOptions.html", null ],
     [ "dcn::storage::IRegistryStore", "classdcn_1_1storage_1_1IRegistryStore.html", [
       [ "dcn::storage::SQLiteRegistryStore", "classdcn_1_1storage_1_1SQLiteRegistryStore.html", null ]
