@@ -5,10 +5,21 @@ on:
     workflows: ["Build (linux-x64 Release)"]
     types: [completed]
     branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+    
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
