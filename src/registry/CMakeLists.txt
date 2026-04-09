@@ -9,7 +9,6 @@ add_module(NAME "Storage"
         "${PROJECT_PREFIX}::Parser"
         "${PROJECT_PREFIX}::Crypto"
         "${PROJECT_PREFIX}::Chain"
-        "${PROJECT_PREFIX}::Utils"
 
         spdlog::spdlog
         asio

@@ -14,7 +14,6 @@
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 
-#include "utils.hpp"
 #include "sqlite_registry_store.hpp"
 
 namespace dcn::storage
@@ -307,7 +306,6 @@ namespace dcn::storage
 
     bool SQLiteRegistryStore::hasConnector(const std::string & name) const
     {
-        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
             if(_db == nullptr)
@@ -315,26 +313,23 @@ namespace dcn::storage
                 spdlog::error("SQLite hasConnector called with null DB handle for name={}", name);
                 return false;
             }
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::hasConnector('{}'): prepare (db={})", name, static_cast<const void *>(_db));
-            }
+            
+            spdlog::debug("SQLite::hasConnector('{}'): prepare (db={})", name, static_cast<const void *>(_db));
+            
             Statement stmt(_db, "SELECT 1 FROM connectors WHERE name = ?1 LIMIT 1;");
             const int bind_rc = sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::hasConnector('{}'): bind rc={}", name, bind_rc);
-            }
+            
+            spdlog::debug("SQLite::hasConnector('{}'): bind rc={}", name, bind_rc);
+            
             if(bind_rc != SQLITE_OK)
             {
                 spdlog::error("SQLite::hasConnector('{}'): bind failed rc={} err={}", name, bind_rc, sqlite3_errmsg(_db));
                 return false;
             }
             const int rc = stmt.step();
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::hasConnector('{}'): step rc={}", name, rc);
-            }
+            
+            spdlog::debug("SQLite::hasConnector('{}'): step rc={}", name, rc);
+            
             return rc == SQLITE_ROW;
         }
         catch(const std::exception & e)
@@ -346,50 +341,38 @@ namespace dcn::storage
 
     std::optional<ConnectorRecordHandle> SQLiteRegistryStore::getConnectorRecordHandle(const std::string & name) const
     {
-        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getConnectorRecordHandle('{}'): prepare", name);
-            }
+            
+            spdlog::debug("SQLite::getConnectorRecordHandle('{}'): prepare", name);
+            
             Statement stmt(_db, "SELECT payload_blob FROM connectors WHERE name = ?1 LIMIT 1;");
             sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getConnectorRecordHandle('{}'): bound name", name);
-            }
+            
+            spdlog::debug("SQLite::getConnectorRecordHandle('{}'): bound name", name);
 
             const int rc = stmt.step();
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getConnectorRecordHandle('{}'): step rc={}", name, rc);
-            }
+            
+            spdlog::debug("SQLite::getConnectorRecordHandle('{}'): step rc={}", name, rc);
+            
             if(rc != SQLITE_ROW)
             {
                 return std::nullopt;
             }
 
-            if(trace_enabled)
-            {
-                const int blob_size = sqlite3_column_bytes(stmt.get(), 0);
-                spdlog::info("SQLite::getConnectorRecordHandle('{}'): row found blob_size={}", name, blob_size);
-            }
+            const int blob_size = sqlite3_column_bytes(stmt.get(), 0);
+            spdlog::debug("SQLite::getConnectorRecordHandle('{}'): row found blob_size={}", name, blob_size);
 
             auto record_opt = parseRecordBlob<ConnectorRecord>(stmt.get(), 0);
             if(!record_opt.has_value())
             {
-                if(trace_enabled)
-                {
-                    spdlog::info("SQLite::getConnectorRecordHandle('{}'): protobuf decode failed", name);
-                }
+                
+                spdlog::debug("SQLite::getConnectorRecordHandle('{}'): protobuf decode failed", name);
                 return std::nullopt;
             }
 
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getConnectorRecordHandle('{}'): decoded record", name);
-            }
+            
+            spdlog::debug("SQLite::getConnectorRecordHandle('{}'): decoded record", name);
             return std::make_shared<ConnectorRecord>(std::move(*record_opt));
         }
         catch(const std::exception & e)
@@ -846,7 +829,6 @@ namespace dcn::storage
 
     bool SQLiteRegistryStore::hasTransformation(const std::string & name) const
     {
-        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
             if(_db == nullptr)
@@ -854,26 +836,23 @@ namespace dcn::storage
                 spdlog::error("SQLite hasTransformation called with null DB handle for name={}", name);
                 return false;
             }
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::hasTransformation('{}'): prepare (db={})", name, static_cast<const void *>(_db));
-            }
+            
+            spdlog::debug("SQLite::hasTransformation('{}'): prepare (db={})", name, static_cast<const void *>(_db));
+            
             Statement stmt(_db, "SELECT 1 FROM transformations WHERE name = ?1 LIMIT 1;");
             const int bind_rc = sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::hasTransformation('{}'): bind rc={}", name, bind_rc);
-            }
+            
+            spdlog::debug("SQLite::hasTransformation('{}'): bind rc={}", name, bind_rc);
+
             if(bind_rc != SQLITE_OK)
             {
                 spdlog::error("SQLite::hasTransformation('{}'): bind failed rc={} err={}", name, bind_rc, sqlite3_errmsg(_db));
                 return false;
             }
             const int rc = stmt.step();
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::hasTransformation('{}'): step rc={}", name, rc);
-            }
+            
+            spdlog::debug("SQLite::hasTransformation('{}'): step rc={}", name, rc);
+            
             return rc == SQLITE_ROW;
         }
         catch(const std::exception & e)
@@ -885,49 +864,38 @@ namespace dcn::storage
 
     std::optional<TransformationRecordHandle> SQLiteRegistryStore::getTransformationRecordHandle(const std::string & name) const
     {
-        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getTransformationRecordHandle('{}'): prepare", name);
-            }
+            
+            spdlog::debug("SQLite::getTransformationRecordHandle('{}'): prepare", name);
+            
             Statement stmt(_db, "SELECT payload_blob FROM transformations WHERE name = ?1 LIMIT 1;");
             sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getTransformationRecordHandle('{}'): bound name", name);
-            }
+            
+            spdlog::debug("SQLite::getTransformationRecordHandle('{}'): bound name", name);
+            
             const int rc = stmt.step();
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getTransformationRecordHandle('{}'): step rc={}", name, rc);
-            }
+            
+            spdlog::debug("SQLite::getTransformationRecordHandle('{}'): step rc={}", name, rc);
+            
             if(rc != SQLITE_ROW)
             {
                 return std::nullopt;
             }
 
-            if(trace_enabled)
-            {
-                const int blob_size = sqlite3_column_bytes(stmt.get(), 0);
-                spdlog::info("SQLite::getTransformationRecordHandle('{}'): row found blob_size={}", name, blob_size);
-            }
+            
+            const int blob_size = sqlite3_column_bytes(stmt.get(), 0);
+            spdlog::debug("SQLite::getTransformationRecordHandle('{}'): row found blob_size={}", name, blob_size);
 
             auto record_opt = parseRecordBlob<TransformationRecord>(stmt.get(), 0);
             if(!record_opt.has_value())
             {
-                if(trace_enabled)
-                {
-                    spdlog::info("SQLite::getTransformationRecordHandle('{}'): protobuf decode failed", name);
-                }
+                
+                spdlog::debug("SQLite::getTransformationRecordHandle('{}'): protobuf decode failed", name);
                 return std::nullopt;
             }
 
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getTransformationRecordHandle('{}'): decoded record", name);
-            }
+            spdlog::debug("SQLite::getTransformationRecordHandle('{}'): decoded record", name);
             return std::make_shared<TransformationRecord>(std::move(*record_opt));
         }
         catch(const std::exception & e)
@@ -1161,7 +1129,6 @@ namespace dcn::storage
 
     bool SQLiteRegistryStore::hasCondition(const std::string & name) const
     {
-        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
             if(_db == nullptr)
@@ -1169,26 +1136,23 @@ namespace dcn::storage
                 spdlog::error("SQLite hasCondition called with null DB handle for name={}", name);
                 return false;
             }
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::hasCondition('{}'): prepare (db={})", name, static_cast<const void *>(_db));
-            }
+            
+            spdlog::debug("SQLite::hasCondition('{}'): prepare (db={})", name, static_cast<const void *>(_db));
+            
             Statement stmt(_db, "SELECT 1 FROM conditions WHERE name = ?1 LIMIT 1;");
             const int bind_rc = sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::hasCondition('{}'): bind rc={}", name, bind_rc);
-            }
+            
+            spdlog::debug("SQLite::hasCondition('{}'): bind rc={}", name, bind_rc);
+            
             if(bind_rc != SQLITE_OK)
             {
                 spdlog::error("SQLite::hasCondition('{}'): bind failed rc={} err={}", name, bind_rc, sqlite3_errmsg(_db));
                 return false;
             }
             const int rc = stmt.step();
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::hasCondition('{}'): step rc={}", name, rc);
-            }
+            
+            spdlog::debug("SQLite::hasCondition('{}'): step rc={}", name, rc);
+            
             return rc == SQLITE_ROW;
         }
         catch(const std::exception & e)
@@ -1200,50 +1164,38 @@ namespace dcn::storage
 
     std::optional<ConditionRecordHandle> SQLiteRegistryStore::getConditionRecordHandle(const std::string & name) const
     {
-        const bool trace_enabled = utils::isImportTraceEnabled();
         try
         {
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getConditionRecordHandle('{}'): prepare", name);
-            }
+            
+            spdlog::debug("SQLite::getConditionRecordHandle('{}'): prepare", name);
+            
             Statement stmt(_db, "SELECT payload_blob FROM conditions WHERE name = ?1 LIMIT 1;");
             sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getConditionRecordHandle('{}'): bound name", name);
-            }
+            
+            spdlog::debug("SQLite::getConditionRecordHandle('{}'): bound name", name);
 
             const int rc = stmt.step();
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getConditionRecordHandle('{}'): step rc={}", name, rc);
-            }
+            
+            spdlog::debug("SQLite::getConditionRecordHandle('{}'): step rc={}", name, rc);
+
             if(rc != SQLITE_ROW)
             {
                 return std::nullopt;
             }
 
-            if(trace_enabled)
-            {
-                const int blob_size = sqlite3_column_bytes(stmt.get(), 0);
-                spdlog::info("SQLite::getConditionRecordHandle('{}'): row found blob_size={}", name, blob_size);
-            }
+            const int blob_size = sqlite3_column_bytes(stmt.get(), 0);
+            spdlog::debug("SQLite::getConditionRecordHandle('{}'): row found blob_size={}", name, blob_size);
 
             auto record_opt = parseRecordBlob<ConditionRecord>(stmt.get(), 0);
             if(!record_opt.has_value())
             {
-                if(trace_enabled)
-                {
-                    spdlog::info("SQLite::getConditionRecordHandle('{}'): protobuf decode failed", name);
-                }
+                
+                spdlog::debug("SQLite::getConditionRecordHandle('{}'): protobuf decode failed", name);
                 return std::nullopt;
             }
 
-            if(trace_enabled)
-            {
-                spdlog::info("SQLite::getConditionRecordHandle('{}'): decoded record", name);
-            }
+            
+            spdlog::debug("SQLite::getConditionRecordHandle('{}'): decoded record", name);
             return std::make_shared<ConditionRecord>(std::move(*record_opt));
         }
         catch(const std::exception & e)

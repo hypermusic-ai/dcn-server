@@ -83,5 +83,4 @@ namespace dcn::utils
 
     void logException(const std::exception_ptr & exception_ptr, const std::string_view context);
 
-    bool isImportTraceEnabled();
 }

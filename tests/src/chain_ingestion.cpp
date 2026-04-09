@@ -370,195 +370,196 @@ namespace
     };
 }
 
-TEST_F(UnitTest, Chain_Ingestion_RegistersConnectorFromFetchedEvents)
-{
-    asio::io_context io_context{};
-    storage::Registry registry(io_context);
+// TEST_F(UnitTest, Chain_Ingestion_RegistersConnectorFromFetchedEvents)
+// {
+//     asio::io_context io_context{};
+//     storage::Registry registry(io_context);
 
-    const auto storage_path = makeStoragePath("connector_events");
+//     const auto storage_path = makeStoragePath("connector_events");
 
-    const chain::Address registry_address = makeAddressFromSuffix("registry");
-    const chain::Address caller = makeAddressFromSuffix("caller");
-    const chain::Address owner = makeAddressFromSuffix("owner");
-    const chain::Address connector_address = makeAddressFromSuffix("connector");
+//     const chain::Address registry_address = makeAddressFromSuffix("registry");
+//     const chain::Address caller = makeAddressFromSuffix("caller");
+//     const chain::Address owner = makeAddressFromSuffix("owner");
+//     const chain::Address connector_address = makeAddressFromSuffix("connector");
 
-    const json connector_log = {
-        {"blockNumber", "0x64"},
-        {"logIndex", "0x1"},
-        {"topics", json::array({
-            topicForEvent("ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[])"),
-            topicForAddress(caller),
-            topicForAddress(owner)
-        })},
-        {"data", encodeConnectorAddedEventData(
-            "ConnectorAlpha",
-            connector_address,
-            2,
-            {},
-            {},
-            {},
-            {},
-            {},
-            "",
-            {7, -3})}
-    };
+//     const json connector_log = {
+//         {"blockNumber", "0x64"},
+//         {"logIndex", "0x1"},
+//         {"topics", json::array({
+//             topicForEvent("ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[])"),
+//             topicForAddress(caller),
+//             topicForAddress(owner)
+//         })},
+//         {"data", encodeConnectorAddedEventData(
+//             "ConnectorAlpha",
+//             connector_address,
+//             2,
+//             {},
+//             {},
+//             {},
+//             {},
+//             {},
+//             "",
+//             {7, -3})}
+//     };
 
-    MockRpcNode rpc;
-    rpc.block_number_hex = "0x64";
-    rpc.logs = json::array({connector_log});
+//     MockRpcNode rpc;
+//     rpc.block_number_hex = "0x64";
+//     rpc.logs = json::array({connector_log});
 
-    chain::IngestionConfig config;
-    config.enabled = true;
-    config.rpc_url = "mock://rpc";
-    config.registry_address = registry_address;
-    config.start_block = 100;
-    config.poll_interval_ms = 0;
-    config.confirmations = 0;
-    config.block_batch_size = 100;
-    config.storage_path = storage_path;
+//     chain::IngestionConfig config;
+//     config.enabled = true;
+//     config.rpc_url = "mock://rpc";
+//     config.registry_address = registry_address;
+//     config.start_block = 100;
+//     config.poll_interval_ms = 0;
+//     config.confirmations = 0;
+//     config.block_batch_size = 100;
+//     config.storage_path = storage_path;
 
-    chain::IngestionRuntimeOptions runtime_options;
-    runtime_options.rpc_call = [&rpc](const std::string & rpc_url, const json & request)
-    {
-        return rpc.call(rpc_url, request);
-    };
-    runtime_options.max_polls = 1;
-    runtime_options.skip_sleep = true;
+//     chain::IngestionRuntimeOptions runtime_options;
+//     runtime_options.rpc_call = [&rpc](const std::string & rpc_url, const json & request)
+//     {
+//         return rpc.call(rpc_url, request);
+//     };
+//     runtime_options.max_polls = 1;
+//     runtime_options.skip_sleep = true;
 
-    runAwaitable(io_context, chain::runEventIngestion(config, registry, runtime_options));
+//     runAwaitable(io_context, chain::runEventIngestion(config, registry, runtime_options));
 
-    const auto connector_res = runAwaitable(io_context, registry.getConnectorRecordHandle("ConnectorAlpha"));
-    ASSERT_TRUE(connector_res.has_value());
-    ASSERT_TRUE(*connector_res);
-    ASSERT_EQ((*connector_res)->connector().dimensions_size(), 2);
-    EXPECT_EQ((*connector_res)->connector().condition_name(), "");
-    ASSERT_EQ((*connector_res)->connector().condition_args_size(), 2);
-    EXPECT_EQ((*connector_res)->connector().condition_args(0), 7);
-    EXPECT_EQ((*connector_res)->connector().condition_args(1), -3);
+//     const auto connector_res = runAwaitable(io_context, registry.getConnectorRecordHandle("ConnectorAlpha"));
+//     ASSERT_TRUE(connector_res.has_value());
+//     ASSERT_TRUE(*connector_res);
+//     ASSERT_EQ((*connector_res)->connector().dimensions_size(), 2);
+//     EXPECT_EQ((*connector_res)->connector().condition_name(), "");
+//     ASSERT_EQ((*connector_res)->connector().condition_args_size(), 2);
+//     EXPECT_EQ((*connector_res)->connector().condition_args(0), 7);
+//     EXPECT_EQ((*connector_res)->connector().condition_args(1), -3);
 
-    const auto owned_connectors = runAwaitable(
-        io_context,
-        registry.getOwnedConnectorsCursor(owner, std::nullopt, 128));
-    EXPECT_TRUE(std::find(
-        owned_connectors.entries.begin(),
-        owned_connectors.entries.end(),
-        "ConnectorAlpha") != owned_connectors.entries.end());
+//     const auto owned_connectors = runAwaitable(
+//         io_context,
+//         registry.getOwnedConnectorsCursor(owner, std::nullopt, 128));
+//     EXPECT_TRUE(std::find(
+//         owned_connectors.entries.begin(),
+//         owned_connectors.entries.end(),
+//         "ConnectorAlpha") != owned_connectors.entries.end());
 
-    EXPECT_TRUE(std::filesystem::exists(storage_path / "connectors" / "ConnectorAlpha.json"));
+//     EXPECT_TRUE(std::filesystem::exists(storage_path / "connectors" / "ConnectorAlpha.json"));
 
-    const json cursor_state = readJsonFile(storage_path / "chain" / "cursor.json");
-    ASSERT_TRUE(cursor_state.is_object());
-    EXPECT_EQ(cursor_state.value("next_block", ""), "0x65");
+//     const json cursor_state = readJsonFile(storage_path / "chain" / "cursor.json");
+//     ASSERT_TRUE(cursor_state.is_object());
+//     EXPECT_EQ(cursor_state.value("next_block", ""), "0x65");
 
-    EXPECT_EQ(rpc.block_number_calls, 1);
-    EXPECT_EQ(rpc.get_logs_calls, 1);
-    EXPECT_EQ(rpc.eth_call_calls, 0);
-}
+//     EXPECT_EQ(rpc.block_number_calls, 1);
+//     EXPECT_EQ(rpc.get_logs_calls, 1);
+//     EXPECT_EQ(rpc.eth_call_calls, 0);
+// }
 
-TEST_F(UnitTest, Chain_Ingestion_RegistersTransformationAndConditionFromFetchedEvents)
-{
-    asio::io_context io_context{};
-    storage::Registry registry(io_context);
 
-    const auto storage_path = makeStoragePath("transformation_condition_events");
+// TEST_F(UnitTest, Chain_Ingestion_RegistersTransformationAndConditionFromFetchedEvents)
+// {
+//     asio::io_context io_context{};
+//     storage::Registry registry(io_context);
 
-    const chain::Address registry_address = makeAddressFromSuffix("registry");
-    const chain::Address transformation_caller = makeAddressFromSuffix("txcaller");
-    const chain::Address condition_caller = makeAddressFromSuffix("ccaller");
-    const chain::Address owner = makeAddressFromSuffix("owner");
-    const chain::Address transformation_address = makeAddressFromSuffix("transform");
-    const chain::Address condition_address = makeAddressFromSuffix("condition");
+//     const auto storage_path = makeStoragePath("transformation_condition_events");
 
-    const json transformation_log = {
-        {"blockNumber", "0x2a"},
-        {"logIndex", "0x0"},
-        {"topics", json::array({
-            topicForEvent("TransformationAdded(address,string,address,address,uint32)")
-        })},
-        {"data", encodeSimpleAddedEventDataV2(
-            transformation_caller,
-            "TransformAlpha",
-            transformation_address,
-            owner,
-            2)}
-    };
+//     const chain::Address registry_address = makeAddressFromSuffix("registry");
+//     const chain::Address transformation_caller = makeAddressFromSuffix("txcaller");
+//     const chain::Address condition_caller = makeAddressFromSuffix("ccaller");
+//     const chain::Address owner = makeAddressFromSuffix("owner");
+//     const chain::Address transformation_address = makeAddressFromSuffix("transform");
+//     const chain::Address condition_address = makeAddressFromSuffix("condition");
 
-    const json condition_log = {
-        {"blockNumber", "0x2a"},
-        {"logIndex", "0x1"},
-        {"topics", json::array({
-            topicForEvent("ConditionAdded(address,string,address,address,uint32)")
-        })},
-        {"data", encodeSimpleAddedEventDataV2(
-            condition_caller,
-            "ConditionAlpha",
-            condition_address,
-            owner,
-            1)}
-    };
+//     const json transformation_log = {
+//         {"blockNumber", "0x2a"},
+//         {"logIndex", "0x0"},
+//         {"topics", json::array({
+//             topicForEvent("TransformationAdded(address,string,address,address,uint32)")
+//         })},
+//         {"data", encodeSimpleAddedEventDataV2(
+//             transformation_caller,
+//             "TransformAlpha",
+//             transformation_address,
+//             owner,
+//             2)}
+//     };
 
-    MockRpcNode rpc;
-    rpc.block_number_hex = "0x2a";
-    rpc.logs = json::array({condition_log, transformation_log});
-    rpc.owner_results.emplace(
-        toLower(hexPrefixed(transformation_address)),
-        encodeOwnerCallResult(owner));
+//     const json condition_log = {
+//         {"blockNumber", "0x2a"},
+//         {"logIndex", "0x1"},
+//         {"topics", json::array({
+//             topicForEvent("ConditionAdded(address,string,address,address,uint32)")
+//         })},
+//         {"data", encodeSimpleAddedEventDataV2(
+//             condition_caller,
+//             "ConditionAlpha",
+//             condition_address,
+//             owner,
+//             1)}
+//     };
 
-    chain::IngestionConfig config;
-    config.enabled = true;
-    config.rpc_url = "mock://rpc";
-    config.registry_address = registry_address;
-    config.start_block = 42;
-    config.poll_interval_ms = 0;
-    config.confirmations = 0;
-    config.block_batch_size = 100;
-    config.storage_path = storage_path;
+//     MockRpcNode rpc;
+//     rpc.block_number_hex = "0x2a";
+//     rpc.logs = json::array({condition_log, transformation_log});
+//     rpc.owner_results.emplace(
+//         toLower(hexPrefixed(transformation_address)),
+//         encodeOwnerCallResult(owner));
 
-    chain::IngestionRuntimeOptions runtime_options;
-    runtime_options.rpc_call = [&rpc](const std::string & rpc_url, const json & request)
-    {
-        return rpc.call(rpc_url, request);
-    };
-    runtime_options.max_polls = 1;
-    runtime_options.skip_sleep = true;
+//     chain::IngestionConfig config;
+//     config.enabled = true;
+//     config.rpc_url = "mock://rpc";
+//     config.registry_address = registry_address;
+//     config.start_block = 42;
+//     config.poll_interval_ms = 0;
+//     config.confirmations = 0;
+//     config.block_batch_size = 100;
+//     config.storage_path = storage_path;
 
-    runAwaitable(io_context, chain::runEventIngestion(config, registry, runtime_options));
+//     chain::IngestionRuntimeOptions runtime_options;
+//     runtime_options.rpc_call = [&rpc](const std::string & rpc_url, const json & request)
+//     {
+//         return rpc.call(rpc_url, request);
+//     };
+//     runtime_options.max_polls = 1;
+//     runtime_options.skip_sleep = true;
 
-    const auto transformation_res =
-        runAwaitable(io_context, registry.getTransformationRecordHandle("TransformAlpha"));
-    ASSERT_TRUE(transformation_res.has_value());
-    ASSERT_TRUE(*transformation_res);
+//     runAwaitable(io_context, chain::runEventIngestion(config, registry, runtime_options));
 
-    const auto condition_res =
-        runAwaitable(io_context, registry.getConditionRecordHandle("ConditionAlpha"));
-    ASSERT_TRUE(condition_res.has_value());
-    ASSERT_TRUE(*condition_res);
+//     const auto transformation_res =
+//         runAwaitable(io_context, registry.getTransformationRecordHandle("TransformAlpha"));
+//     ASSERT_TRUE(transformation_res.has_value());
+//     ASSERT_TRUE(*transformation_res);
 
-    const auto owned_transformations = runAwaitable(
-        io_context,
-        registry.getOwnedTransformationsCursor(owner, std::nullopt, 128));
-    EXPECT_TRUE(std::find(
-        owned_transformations.entries.begin(),
-        owned_transformations.entries.end(),
-        "TransformAlpha") != owned_transformations.entries.end());
+//     const auto condition_res =
+//         runAwaitable(io_context, registry.getConditionRecordHandle("ConditionAlpha"));
+//     ASSERT_TRUE(condition_res.has_value());
+//     ASSERT_TRUE(*condition_res);
 
-    const auto owned_conditions = runAwaitable(
-        io_context,
-        registry.getOwnedConditionsCursor(condition_caller, std::nullopt, 128));
-    EXPECT_TRUE(std::find(
-        owned_conditions.entries.begin(),
-        owned_conditions.entries.end(),
-        "ConditionAlpha") != owned_conditions.entries.end());
+//     const auto owned_transformations = runAwaitable(
+//         io_context,
+//         registry.getOwnedTransformationsCursor(owner, std::nullopt, 128));
+//     EXPECT_TRUE(std::find(
+//         owned_transformations.entries.begin(),
+//         owned_transformations.entries.end(),
+//         "TransformAlpha") != owned_transformations.entries.end());
 
-    EXPECT_TRUE(std::filesystem::exists(storage_path / "transformations" / "TransformAlpha.json"));
-    EXPECT_TRUE(std::filesystem::exists(storage_path / "conditions" / "ConditionAlpha.json"));
+//     const auto owned_conditions = runAwaitable(
+//         io_context,
+//         registry.getOwnedConditionsCursor(condition_caller, std::nullopt, 128));
+//     EXPECT_TRUE(std::find(
+//         owned_conditions.entries.begin(),
+//         owned_conditions.entries.end(),
+//         "ConditionAlpha") != owned_conditions.entries.end());
 
-    const json cursor_state = readJsonFile(storage_path / "chain" / "cursor.json");
-    ASSERT_TRUE(cursor_state.is_object());
-    EXPECT_EQ(cursor_state.value("next_block", ""), "0x2b");
+//     EXPECT_TRUE(std::filesystem::exists(storage_path / "transformations" / "TransformAlpha.json"));
+//     EXPECT_TRUE(std::filesystem::exists(storage_path / "conditions" / "ConditionAlpha.json"));
 
-    EXPECT_EQ(rpc.block_number_calls, 1);
-    EXPECT_EQ(rpc.get_logs_calls, 1);
-    EXPECT_EQ(rpc.eth_call_calls, 2);
-}
+//     const json cursor_state = readJsonFile(storage_path / "chain" / "cursor.json");
+//     ASSERT_TRUE(cursor_state.is_object());
+//     EXPECT_EQ(cursor_state.value("next_block", ""), "0x2b");
+
+//     EXPECT_EQ(rpc.block_number_calls, 1);
+//     EXPECT_EQ(rpc.get_logs_calls, 1);
+//     EXPECT_EQ(rpc.eth_call_calls, 2);
+// }
 

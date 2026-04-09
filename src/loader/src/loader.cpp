@@ -42,7 +42,6 @@ namespace dcn::loader
             std::vector<std::pair<chain::Address, ConditionRecord>> pending_conditions;
             std::vector<std::pair<chain::Address, ConnectorRecord>> pending_connectors;
 
-            bool trace_enabled = false;
             std::vector<std::string> connector_import_stack;
         };
 
@@ -51,7 +50,6 @@ namespace dcn::loader
             absl::flat_hash_set<std::string> done;
             absl::flat_hash_set<std::string> visiting;
 
-            bool trace_enabled = false;
             std::vector<std::string> connector_deploy_stack;
         };
 
@@ -112,23 +110,22 @@ namespace dcn::loader
             const std::size_t batch_size = normalizeBatchSize(context.batch_config.transformations);
             if(context.pending_transformations.empty() || (!force && context.pending_transformations.size() < batch_size))
             {
-                if(context.trace_enabled && force)
+                if(force)
                 {
-                    spdlog::info("JSON import flush transformations skipped: no pending records");
+                    spdlog::debug("JSON import flush transformations skipped: no pending records");
                 }
                 co_return true;
             }
 
             std::vector<std::pair<chain::Address, TransformationRecord>> batch;
             batch.swap(context.pending_transformations);
-            if(context.trace_enabled)
-            {
-                spdlog::info(
-                    "JSON import flushing {} transformation(s), force={}, threshold={}",
-                    batch.size(),
-                    force,
-                    batch_size);
-            }
+
+            spdlog::debug(
+                "JSON import flushing {} transformation(s), force={}, threshold={}",
+                batch.size(),
+                force,
+                batch_size);
+            
             if(!co_await registry.addTransformationsBatch(std::move(batch), false))
             {
                 spdlog::error("Failed to batch-register imported transformations");
@@ -146,23 +143,19 @@ namespace dcn::loader
             const std::size_t batch_size = normalizeBatchSize(context.batch_config.conditions);
             if(context.pending_conditions.empty() || (!force && context.pending_conditions.size() < batch_size))
             {
-                if(context.trace_enabled && force)
-                {
-                    spdlog::info("JSON import flush conditions skipped: no pending records");
-                }
+                spdlog::debug("JSON import flush conditions skipped: no pending records");
                 co_return true;
             }
 
             std::vector<std::pair<chain::Address, ConditionRecord>> batch;
             batch.swap(context.pending_conditions);
-            if(context.trace_enabled)
-            {
-                spdlog::info(
-                    "JSON import flushing {} condition(s), force={}, threshold={}",
-                    batch.size(),
-                    force,
-                    batch_size);
-            }
+
+            spdlog::debug(
+                "JSON import flushing {} condition(s), force={}, threshold={}",
+                batch.size(),
+                force,
+                batch_size);
+            
             if(!co_await registry.addConditionsBatch(std::move(batch), false))
             {
                 spdlog::error("Failed to batch-register imported conditions");
@@ -180,23 +173,22 @@ namespace dcn::loader
             const std::size_t batch_size = normalizeBatchSize(context.batch_config.connectors);
             if(context.pending_connectors.empty() || (!force && context.pending_connectors.size() < batch_size))
             {
-                if(context.trace_enabled && force)
+                if(force)
                 {
-                    spdlog::info("JSON import flush connectors skipped: no pending records");
+                    spdlog::debug("JSON import flush connectors skipped: no pending records");
                 }
                 co_return true;
             }
 
             std::vector<std::pair<chain::Address, ConnectorRecord>> batch;
             batch.swap(context.pending_connectors);
-            if(context.trace_enabled)
-            {
-                spdlog::info(
-                    "JSON import flushing {} connector(s), force={}, threshold={}",
-                    batch.size(),
-                    force,
-                    batch_size);
-            }
+
+            spdlog::debug(
+                "JSON import flushing {} connector(s), force={}, threshold={}",
+                batch.size(),
+                force,
+                batch_size);
+
             if(!co_await registry.addConnectorsBatch(std::move(batch), false))
             {
                 spdlog::error("Failed to batch-register imported connectors");
@@ -309,7 +301,7 @@ namespace dcn::loader
     {
         absl::flat_hash_map<std::string, T> loaded_data;
         parse::Result<T> loaded_result;
-        const bool trace_enabled = utils::isImportTraceEnabled();
+
         std::size_t json_files_seen = 0;
         std::size_t loaded_records = 0;
         std::size_t open_failures = 0;
@@ -327,11 +319,7 @@ namespace dcn::loader
 
                 ++json_files_seen;
                 
-                spdlog::debug(std::format("Found JSON file: {}", entry.path().string()));
-                if(trace_enabled)
-                {
-                    spdlog::info("JSON import scanning file '{}'", entry.path().string());
-                }
+                spdlog::debug("JSON import scanning file '{}'", entry.path().string());
 
                 std::ifstream file(entry.path());
 
@@ -373,7 +361,7 @@ namespace dcn::loader
             return {};
         }
 
-        spdlog::info(
+        spdlog::debug(
             "JSON import scan finished for '{}': files={}, loaded={}, open_failures={}, parse_failures={}",
             dir.string(),
             json_files_seen,
@@ -783,12 +771,10 @@ namespace dcn::loader
         ConnectorEnsureContext & ensure_context)
     {
         const Connector & connector = connector_record.connector();
-        if(ensure_context.trace_enabled)
-        {
-            spdlog::info(
-                "JSON import deploy connector '{}': validating dependencies before deploy",
-                connector.name());
-        }
+        
+        spdlog::debug(
+            "JSON import deploy connector '{}': validating dependencies before deploy",
+            connector.name());
 
         for(const auto & dimension : connector.dimensions())
         {
@@ -883,7 +869,6 @@ namespace dcn::loader
         bool persist_json)
     {
         ConnectorEnsureContext ensure_context;
-        ensure_context.trace_enabled = utils::isImportTraceEnabled();
         ensure_context.connector_deploy_stack.reserve(64);
         co_return co_await deployConnectorWithContext(
             evm,
@@ -1289,7 +1274,6 @@ namespace dcn::loader
         const std::filesystem::path & storage_path)
     {
         ConnectorEnsureContext context;
-        context.trace_enabled = utils::isImportTraceEnabled();
         context.connector_deploy_stack.reserve(64);
         co_return co_await ensureConnectorDeployedImpl(evm, registry, name, storage_path, context);
     }
@@ -1301,13 +1285,12 @@ namespace dcn::loader
         LoaderBatchConfig batch_config)
     {
         JsonImportContext context;
-        context.trace_enabled = utils::isImportTraceEnabled();
         context.connector_import_stack.reserve(64);
         context.batch_config.connectors = normalizeBatchSize(batch_config.connectors);
         context.batch_config.transformations = normalizeBatchSize(batch_config.transformations);
         context.batch_config.conditions = normalizeBatchSize(batch_config.conditions);
 
-        spdlog::info(
+        spdlog::debug(
             "JSON storage import start: storage_path='{}', batch(connectors={}, transformations={}, conditions={})",
             storage_path.string(),
             context.batch_config.connectors,
@@ -1346,29 +1329,25 @@ namespace dcn::loader
         }
         std::ranges::sort(connector_names);
 
-        spdlog::info(
+        spdlog::debug(
             "JSON storage import inventory: transformations={}, conditions={}, connectors={}",
             transformation_names.size(),
             condition_names.size(),
             connector_names.size());
-        if(context.trace_enabled)
-        {
-            spdlog::info("JSON storage import trace enabled (DECENTRALISED_ART_IMPORT_TRACE)");
-        }
+        
+        spdlog::debug("JSON storage import trace logging active (debug level)");
 
         bool success = true;
 
         for(std::size_t i = 0; i < transformation_names.size(); ++i)
         {
             const auto & name = transformation_names[i];
-            if(context.trace_enabled)
-            {
-                spdlog::info(
-                    "JSON storage import transformation {}/{}: '{}'",
-                    i + 1,
-                    transformation_names.size(),
-                    name);
-            }
+            
+            spdlog::debug(
+                "JSON storage import transformation {}/{}: '{}'",
+                i + 1,
+                transformation_names.size(),
+                name);
 
             try
             {
@@ -1396,14 +1375,12 @@ namespace dcn::loader
         for(std::size_t i = 0; i < condition_names.size(); ++i)
         {
             const auto & name = condition_names[i];
-            if(context.trace_enabled)
-            {
-                spdlog::info(
-                    "JSON storage import condition {}/{}: '{}'",
-                    i + 1,
-                    condition_names.size(),
-                    name);
-            }
+            
+            spdlog::debug(
+                "JSON storage import condition {}/{}: '{}'",
+                i + 1,
+                condition_names.size(),
+                name);
 
             try
             {
@@ -1431,15 +1408,13 @@ namespace dcn::loader
         for(std::size_t i = 0; i < connector_names.size(); ++i)
         {
             const auto & name = connector_names[i];
-            if(context.trace_enabled)
-            {
-                spdlog::info(
-                    "JSON storage import connector {}/{}: '{}'",
-                    i + 1,
-                    connector_names.size(),
-                    name);
-            }
 
+            spdlog::debug(
+                "JSON storage import connector {}/{}: '{}'",
+                i + 1,
+                connector_names.size(),
+                name);
+            
             try
             {
                 if(!co_await ensureConnectorImported(evm, registry, name, storage_path, context))
@@ -1472,7 +1447,7 @@ namespace dcn::loader
             success = false;
         }
 
-        spdlog::info("JSON storage import finished with status={}", success ? "success" : "failure");
+        spdlog::debug("JSON storage import finished with status={}", success ? "success" : "failure");
         co_return success;
     }
 
@@ -1483,17 +1458,11 @@ namespace dcn::loader
         const std::filesystem::path & storage_path,
         JsonImportContext & context)
     {
-        if(context.trace_enabled)
-        {
-            spdlog::info("JSON import ensure transformation '{}': begin", name);
-        }
+        spdlog::debug("JSON import ensure transformation '{}': begin", name);
 
         if(context.imported_transformations.contains(name))
         {
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import ensure transformation '{}': already imported in current session", name);
-            }
+            spdlog::debug("JSON import ensure transformation '{}': already imported in current session", name);
             co_return true;
         }
 
@@ -1507,10 +1476,7 @@ namespace dcn::loader
         if(exists_in_db)
         {
             context.imported_transformations.insert(name);
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import ensure transformation '{}': found in DB, skipping JSON deploy", name);
-            }
+            spdlog::debug("JSON import ensure transformation '{}': found in DB, skipping JSON deploy", name);
             co_return true;
         }
 
@@ -1542,10 +1508,7 @@ namespace dcn::loader
             co_return false;
         }
 
-        if(context.trace_enabled)
-        {
-            spdlog::info("JSON import ensure transformation '{}': deployed at {}", name, evmc::hex(deploy_result.value()));
-        }
+        spdlog::debug("JSON import ensure transformation '{}': deployed at {}", name, evmc::hex(deploy_result.value()));
 
         context.pending_transformations.emplace_back(deploy_result.value(), json_it->second);
         if(!co_await flushPendingTransformations(registry, context, false))
@@ -1554,10 +1517,7 @@ namespace dcn::loader
         }
 
         context.imported_transformations.insert(name);
-        if(context.trace_enabled)
-        {
-            spdlog::info("JSON import ensure transformation '{}': complete", name);
-        }
+        spdlog::debug("JSON import ensure transformation '{}': complete", name);
         co_return true;
     }
 
@@ -1573,17 +1533,11 @@ namespace dcn::loader
             co_return true;
         }
 
-        if(context.trace_enabled)
-        {
-            spdlog::info("JSON import ensure condition '{}': begin", name);
-        }
+        spdlog::debug("JSON import ensure condition '{}': begin", name);
 
         if(context.imported_conditions.contains(name))
         {
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import ensure condition '{}': already imported in current session", name);
-            }
+            spdlog::debug("JSON import ensure condition '{}': already imported in current session", name);
             co_return true;
         }
 
@@ -1597,10 +1551,7 @@ namespace dcn::loader
         if(exists_in_db)
         {
             context.imported_conditions.insert(name);
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import ensure condition '{}': found in DB, skipping JSON deploy", name);
-            }
+            spdlog::debug("JSON import ensure condition '{}': found in DB, skipping JSON deploy", name);
             co_return true;
         }
 
@@ -1632,10 +1583,7 @@ namespace dcn::loader
             co_return false;
         }
 
-        if(context.trace_enabled)
-        {
-            spdlog::info("JSON import ensure condition '{}': deployed at {}", name, evmc::hex(deploy_result.value()));
-        }
+        spdlog::debug("JSON import ensure condition '{}': deployed at {}", name, evmc::hex(deploy_result.value()));
 
         context.pending_conditions.emplace_back(deploy_result.value(), json_it->second);
         if(!co_await flushPendingConditions(registry, context, false))
@@ -1644,10 +1592,7 @@ namespace dcn::loader
         }
 
         context.imported_conditions.insert(name);
-        if(context.trace_enabled)
-        {
-            spdlog::info("JSON import ensure condition '{}': complete", name);
-        }
+        spdlog::debug("JSON import ensure condition '{}': complete", name);
         co_return true;
     }
 
@@ -1671,21 +1616,15 @@ namespace dcn::loader
             co_return false;
         }
 
-        if(context.trace_enabled)
-        {
-            spdlog::info(
-                "JSON import ensure connector '{}': begin (depth={}, path={})",
-                name,
-                depth,
-                formatDependencyStack(context.connector_import_stack));
-        }
+        spdlog::debug(
+            "JSON import ensure connector '{}': begin (depth={}, path={})",
+            name,
+            depth,
+            formatDependencyStack(context.connector_import_stack));
 
         if(context.imported_connectors.contains(name))
         {
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import ensure connector '{}': already imported in current session", name);
-            }
+            spdlog::debug("JSON import ensure connector '{}': already imported in current session", name);
             co_return true;
         }
 
@@ -1702,10 +1641,7 @@ namespace dcn::loader
         if(exists_in_db)
         {
             context.imported_connectors.insert(name);
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import ensure connector '{}': found in DB, skipping JSON deploy", name);
-            }
+            spdlog::debug("JSON import ensure connector '{}': found in DB, skipping JSON deploy", name);
             co_return true;
         }
 
@@ -1732,13 +1668,10 @@ namespace dcn::loader
                     continue;
                 }
 
-                if(context.trace_enabled)
-                {
-                    spdlog::info(
-                        "JSON import connector '{}' requires transformation '{}'",
-                        name,
-                        transformation_name);
-                }
+                spdlog::debug(
+                    "JSON import connector '{}' requires transformation '{}'",
+                    name,
+                    transformation_name);
 
                 if(!co_await ensureTransformationImported(
                     evm,
@@ -1769,13 +1702,10 @@ namespace dcn::loader
 
             if(!dimension.composite().empty())
             {
-                if(context.trace_enabled)
-                {
-                    spdlog::info(
-                        "JSON import connector '{}' requires composite connector '{}'",
-                        name,
-                        dimension.composite());
-                }
+                spdlog::debug(
+                    "JSON import connector '{}' requires composite connector '{}'",
+                    name,
+                    dimension.composite());
 
                 if(!co_await ensureConnectorImported(
                     evm,
@@ -1806,13 +1736,10 @@ namespace dcn::loader
                     continue;
                 }
 
-                if(context.trace_enabled)
-                {
-                    spdlog::info(
-                        "JSON import connector '{}' requires binding target connector '{}'",
-                        name,
-                        binding_target);
-                }
+                spdlog::debug(
+                    "JSON import connector '{}' requires binding target connector '{}'",
+                    name,
+                    binding_target);
 
                 if(!co_await ensureConnectorImported(
                     evm,
@@ -1844,13 +1771,10 @@ namespace dcn::loader
 
         if(ok && !connector.condition_name().empty())
         {
-            if(context.trace_enabled)
-            {
-                spdlog::info(
-                    "JSON import connector '{}' requires condition '{}'",
-                    name,
-                    connector.condition_name());
-            }
+            spdlog::debug(
+                "JSON import connector '{}' requires condition '{}'",
+                name,
+                connector.condition_name());
 
             if(!co_await ensureConditionImported(
                 evm,
@@ -1873,10 +1797,8 @@ namespace dcn::loader
 
         if(ok)
         {
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import connector '{}': deploying from JSON", name);
-            }
+            spdlog::debug("JSON import connector '{}': deploying from JSON", name);
+
             const auto deploy_result = co_await deployConnector(
                 evm,
                 registry,
@@ -1894,10 +1816,8 @@ namespace dcn::loader
             }
             else
             {
-                if(context.trace_enabled)
-                {
-                    spdlog::info("JSON import connector '{}': deployed at {}", name, evmc::hex(deploy_result.value()));
-                }
+                spdlog::debug("JSON import connector '{}': deployed at {}", name, evmc::hex(deploy_result.value()));
+                
                 context.pending_connectors.emplace_back(deploy_result.value(), connector_record);
                 if(!co_await flushPendingConnectors(registry, context, false))
                 {
@@ -1910,18 +1830,13 @@ namespace dcn::loader
 
         if(!ok)
         {
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import ensure connector '{}': failed", name);
-            }
+            spdlog::debug("JSON import ensure connector '{}': failed", name);
             co_return false;
         }
 
         context.imported_connectors.insert(name);
-        if(context.trace_enabled)
-        {
-            spdlog::info("JSON import ensure connector '{}': complete", name);
-        }
+        spdlog::debug("JSON import ensure connector '{}': complete", name);
+
         co_return true;
     }
 
@@ -1945,14 +1860,11 @@ namespace dcn::loader
             co_return false;
         }
 
-        if(context.trace_enabled)
-        {
-            spdlog::info(
-                "JSON import ensure deployed connector '{}': begin (depth={}, path={})",
-                name,
-                depth,
-                formatDependencyStack(context.connector_deploy_stack));
-        }
+        spdlog::debug(
+            "JSON import ensure deployed connector '{}': begin (depth={}, path={})",
+            name,
+            depth,
+            formatDependencyStack(context.connector_deploy_stack));
 
         if(name.empty())
         {
@@ -1962,10 +1874,7 @@ namespace dcn::loader
 
         if(context.done.contains(name))
         {
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import ensure deployed connector '{}': already deployed in current walk", name);
-            }
+            spdlog::debug("JSON import ensure deployed connector '{}': already deployed in current walk", name);
             co_return true;
         }
 
@@ -1986,10 +1895,7 @@ namespace dcn::loader
         if(*contains_res)
         {
             context.done.insert(name);
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import ensure deployed connector '{}': already present on-chain", name);
-            }
+            spdlog::debug("JSON import ensure deployed connector '{}': already present on-chain", name);
             co_return true;
         }
 
@@ -2015,13 +1921,10 @@ namespace dcn::loader
                     continue;
                 }
 
-                if(context.trace_enabled)
-                {
-                    spdlog::info(
-                        "JSON import deploy connector '{}' requires deployed transformation '{}'",
-                        name,
-                        transformation_name);
-                }
+                spdlog::debug(
+                    "JSON import deploy connector '{}' requires deployed transformation '{}'",
+                    name,
+                    transformation_name);
 
                 if(!co_await ensureTransformationDeployed(
                     evm,
@@ -2041,13 +1944,10 @@ namespace dcn::loader
 
             if(!dimension.composite().empty())
             {
-                if(context.trace_enabled)
-                {
-                    spdlog::info(
-                        "JSON import deploy connector '{}' requires deployed composite '{}'",
-                        name,
-                        dimension.composite());
-                }
+                spdlog::debug(
+                    "JSON import deploy connector '{}' requires deployed composite '{}'",
+                    name,
+                    dimension.composite());
 
                 if(!co_await ensureConnectorDeployedImpl(
                     evm,
@@ -2068,13 +1968,10 @@ namespace dcn::loader
                     continue;
                 }
 
-                if(context.trace_enabled)
-                {
-                    spdlog::info(
-                        "JSON import deploy connector '{}' requires deployed binding target '{}'",
-                        name,
-                        binding_target);
-                }
+                spdlog::debug(
+                    "JSON import deploy connector '{}' requires deployed binding target '{}'",
+                    name,
+                    binding_target);
 
                 if(!co_await ensureConnectorDeployedImpl(
                     evm,
@@ -2096,13 +1993,10 @@ namespace dcn::loader
 
         if(ok && !connector.condition_name().empty())
         {
-            if(context.trace_enabled)
-            {
-                spdlog::info(
-                    "JSON import deploy connector '{}' requires deployed condition '{}'",
-                    name,
-                    connector.condition_name());
-            }
+            spdlog::debug(
+                "JSON import deploy connector '{}' requires deployed condition '{}'",
+                name,
+                connector.condition_name());
 
             if(!co_await ensureConditionDeployed(
                 evm,
@@ -2116,10 +2010,8 @@ namespace dcn::loader
 
         if(ok)
         {
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import deploy connector '{}': deploying from DB record", name);
-            }
+            spdlog::debug("JSON import deploy connector '{}': deploying from DB record", name);
+
             const auto deploy_result = co_await deployConnectorWithContext(
                 evm,
                 registry,
@@ -2137,27 +2029,21 @@ namespace dcn::loader
                     static_cast<int>(deploy_result.error().kind));
                 ok = false;
             }
-            else if(context.trace_enabled)
+            else
             {
-                spdlog::info("JSON import deploy connector '{}': deployed at {}", name, evmc::hex(deploy_result.value()));
+                spdlog::debug("JSON import deploy connector '{}': deployed at {}", name, evmc::hex(deploy_result.value()));
             }
         }
 
         context.visiting.erase(name);
         if(!ok)
         {
-            if(context.trace_enabled)
-            {
-                spdlog::info("JSON import ensure deployed connector '{}': failed", name);
-            }
+            spdlog::debug("JSON import ensure deployed connector '{}': failed", name);
             co_return false;
         }
 
         context.done.insert(name);
-        if(context.trace_enabled)
-        {
-            spdlog::info("JSON import ensure deployed connector '{}': complete", name);
-        }
+        spdlog::debug("JSON import ensure deployed connector '{}': complete", name);
         co_return true;
     }
 
