@@ -30,8 +30,9 @@ using namespace dcn::tests;
 namespace
 {
     constexpr const char * kIdentityTransformationName = "IdentityTx";
-    // Bump cache key whenever generated constructor/registry ABI expectations change.
-    constexpr const char * kBindingBuildCacheVersion = "constructors-v2-format-hash";
+    constexpr const char * kIncrementTransformationName = "IncrementTx";
+    // Bump cache key whenever generated Solidity or imported PT runtime contracts change.
+    constexpr const char * kBindingBuildCacheVersion = "constructors-v3-static-ri-scope";
 
     const std::array<std::filesystem::path, 3> kBindingBuildDirs{
         std::filesystem::path("connectors") / "build",
@@ -287,13 +288,21 @@ namespace
         return true;
     }
 
-    TransformationRecord makeIdentityTransformationRecord(const std::string & owner_hex)
+    TransformationRecord makeTransformationRecord(
+        const std::string & name,
+        const std::string & sol_src,
+        const std::string & owner_hex)
     {
         TransformationRecord record;
-        record.mutable_transformation()->set_name(kIdentityTransformationName);
-        record.mutable_transformation()->set_sol_src("return x;");
+        record.mutable_transformation()->set_name(name);
+        record.mutable_transformation()->set_sol_src(sol_src);
         record.set_owner(owner_hex);
         return record;
+    }
+
+    TransformationRecord makeIdentityTransformationRecord(const std::string & owner_hex)
+    {
+        return makeTransformationRecord(kIdentityTransformationName, "return x;", owner_hex);
     }
 
     ConnectorRecord makeConnectorRecord(const std::string & name, const std::string & owner_hex)
@@ -304,21 +313,30 @@ namespace
         return record;
     }
 
-    void addDimension(
+    void addDimensionWithTransformation(
         ConnectorRecord & record,
         const std::string & composite,
+        const std::string & transformation_name,
         std::initializer_list<std::pair<std::string, std::string>> bindings = {})
     {
         auto * dimension = record.mutable_connector()->add_dimensions();
         dimension->set_composite(composite);
 
         auto * transformation = dimension->add_transformations();
-        transformation->set_name(kIdentityTransformationName);
+        transformation->set_name(transformation_name);
 
         for(const auto & [slot, binding_target] : bindings)
         {
             (*dimension->mutable_bindings())[slot] = binding_target;
         }
+    }
+
+    void addDimension(
+        ConnectorRecord & record,
+        const std::string & composite,
+        std::initializer_list<std::pair<std::string, std::string>> bindings = {})
+    {
+        addDimensionWithTransformation(record, composite, kIdentityTransformationName, bindings);
     }
 
     bool addIdentityTransformation(
@@ -362,14 +380,14 @@ namespace
         return addConnectorRecord(io_context, registry, address_byte, std::move(record));
     }
 
-    std::expected<chain::Address, std::string> deployIdentityTransformation(
+    std::expected<chain::Address, std::string> deployTransformationRecord(
         asio::io_context & io_context,
         evm::EVM & evm_instance,
         storage::Registry & registry,
-        const std::string & owner_hex,
+        TransformationRecord record,
         const std::filesystem::path & storage_path)
     {
-        auto record = makeIdentityTransformationRecord(owner_hex);
+        const std::string transformation_name = record.transformation().name();
         const auto cache_key = makeTransformationBuildCacheKey(record.transformation());
         if(cache_key)
         {
@@ -391,9 +409,24 @@ namespace
 
         if(cache_key)
         {
-            storeCachedBuildArtifacts(storage_path, "transformations", kIdentityTransformationName, *cache_key);
+            storeCachedBuildArtifacts(storage_path, "transformations", transformation_name, *cache_key);
         }
         return deploy_result.value();
+    }
+
+    std::expected<chain::Address, std::string> deployIdentityTransformation(
+        asio::io_context & io_context,
+        evm::EVM & evm_instance,
+        storage::Registry & registry,
+        const std::string & owner_hex,
+        const std::filesystem::path & storage_path)
+    {
+        return deployTransformationRecord(
+            io_context,
+            evm_instance,
+            registry,
+            makeIdentityTransformationRecord(owner_hex),
+            storage_path);
     }
 
     std::expected<chain::Address, std::string> deployConnectorRecord(
@@ -434,11 +467,11 @@ namespace
     std::vector<std::uint8_t> makeRunnerGenInput(
         const std::string & connector_name,
         std::uint32_t particles_count,
-        const std::vector<std::tuple<std::uint32_t, std::uint32_t>> & running_instances)
+        const std::vector<std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>> & dynamic_ri)
     {
         std::vector<std::uint8_t> input_data;
 
-        const auto selector = chain::constructSelector("gen(string,uint32,(uint32,uint32)[])");
+        const auto selector = chain::constructSelector("gen(string,uint32,(uint32,uint32,uint32)[])");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         std::vector<std::uint8_t> offset_to_string(32, 0);
@@ -460,8 +493,8 @@ namespace
 
         input_data.insert(input_data.end(), connector_name_arg.begin(), connector_name_arg.end());
 
-        const auto running_instances_arg = evm::encodeAsArg(running_instances);
-        input_data.insert(input_data.end(), running_instances_arg.begin(), running_instances_arg.end());
+        const auto dynamic_ri_arg = evm::encodeAsArg(dynamic_ri);
+        input_data.insert(input_data.end(), dynamic_ri_arg.begin(), dynamic_ri_arg.end());
 
         return input_data;
     }
@@ -495,6 +528,45 @@ namespace
         }
 
         return particles_result.value();
+    }
+
+    std::expected<pt::PTExecuteError::Kind, std::string> runGenerationExpectRevert(
+        asio::io_context & io_context,
+        evm::EVM & evm_instance,
+        const chain::Address & owner,
+        const std::string & connector_name,
+        std::uint32_t particles_count,
+        const std::vector<std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>> & dynamic_ri)
+    {
+        const auto input_data = makeRunnerGenInput(connector_name, particles_count, dynamic_ri);
+        auto execute_result = runAwaitable(
+            io_context,
+            evm_instance.execute(
+                owner,
+                evm_instance.getRunnerAddress(),
+                input_data,
+                evm::DEFAULT_GAS_LIMIT,
+                0));
+
+        if(execute_result)
+        {
+            return std::unexpected("runner.gen unexpectedly succeeded");
+        }
+
+        if(execute_result.error().kind != chain::ExecuteError::Kind::TRANSACTION_REVERTED)
+        {
+            return std::unexpected(std::format(
+                "runner.gen failed with non-revert status: {}",
+                execute_result.error().kind));
+        }
+
+        const auto decoded_error = parse::decodeBytes<pt::PTExecuteError>(execute_result.error().result_bytes);
+        if(!decoded_error)
+        {
+            return std::unexpected(std::format("failed to decode PT error: {}", decoded_error.error().kind));
+        }
+
+        return decoded_error->kind;
     }
 
     void expectIdentityData(const Particles & particles, std::uint32_t particles_count, std::uint32_t expected_value = 0)
@@ -1617,6 +1689,276 @@ TEST_F(UnitTest, PT_Bindings_RunnerSupportsReusingBoundCompositeAcrossParentDime
     expectIdentityData(particles[1], 4);
     expectIdentityData(particles[2], 4);
     expectIdentityData(particles[3], 4);
+}
+
+TEST_F(UnitTest, PT_Bindings_RunnerRejectsUnsortedAndDuplicateDynamicRunningInstances)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const BindingStorageScope storage_scope(makeBindingStoragePath());
+    const std::filesystem::path & storage_path = storage_scope.storage_path;
+    ASSERT_TRUE(prepareBindingStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    storage::Registry registry(io_context);
+    const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
+    const std::string owner_hex = evmc::hex(owner);
+
+    runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
+    runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
+
+    const auto tx_deploy = deployIdentityTransformation(io_context, evm_instance, registry, owner_hex, storage_path);
+    ASSERT_TRUE(tx_deploy.has_value()) << tx_deploy.error();
+
+    ConnectorRecord time = makeConnectorRecord("TIME", owner_hex);
+    addDimension(time, "");
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(time), storage_path).has_value());
+
+    const auto unsorted_result = runGenerationExpectRevert(
+        io_context,
+        evm_instance,
+        owner,
+        "TIME",
+        4,
+        {{2u, 0u, 0u}, {1u, 0u, 0u}});
+    ASSERT_TRUE(unsorted_result.has_value()) << unsorted_result.error();
+    EXPECT_EQ(*unsorted_result, pt::PTExecuteError::Kind::RUNNING_INSTANCE_NOT_SORTED);
+
+    const auto duplicate_result = runGenerationExpectRevert(
+        io_context,
+        evm_instance,
+        owner,
+        "TIME",
+        4,
+        {{1u, 0u, 0u}, {1u, 2u, 0u}});
+    ASSERT_TRUE(duplicate_result.has_value()) << duplicate_result.error();
+    EXPECT_EQ(*duplicate_result, pt::PTExecuteError::Kind::RUNNING_INSTANCE_DUPLICATE);
+}
+
+TEST_F(UnitTest, PT_Bindings_RunnerUsesBoundCompositeRootStaticRiForScalarSlotReplacement)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const BindingStorageScope storage_scope(makeBindingStoragePath());
+    const std::filesystem::path & storage_path = storage_scope.storage_path;
+    ASSERT_TRUE(prepareBindingStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    storage::Registry registry(io_context);
+    const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
+    const std::string owner_hex = evmc::hex(owner);
+
+    runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
+    runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
+
+    const auto increment_deploy = deployTransformationRecord(
+        io_context,
+        evm_instance,
+        registry,
+        makeTransformationRecord(kIncrementTransformationName, "return x + 1;", owner_hex),
+        storage_path);
+    ASSERT_TRUE(increment_deploy.has_value()) << increment_deploy.error();
+
+    ConnectorRecord bound_target = makeConnectorRecord("BOUND_TARGET", owner_hex);
+    addDimensionWithTransformation(bound_target, "", kIncrementTransformationName);
+    (*bound_target.mutable_connector()->mutable_static_ri())[0].set_start_point(5);
+    (*bound_target.mutable_connector()->mutable_static_ri())[0].set_transformation_shift(0);
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(bound_target), storage_path).has_value());
+
+    ConnectorRecord base_slot = makeConnectorRecord("BASE_SLOT", owner_hex);
+    addDimensionWithTransformation(base_slot, "", kIncrementTransformationName);
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(base_slot), storage_path).has_value());
+
+    ConnectorRecord host_bind = makeConnectorRecord("HOST_BIND", owner_hex);
+    addDimensionWithTransformation(host_bind, "BASE_SLOT", kIncrementTransformationName, {{"0", "BOUND_TARGET"}});
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(host_bind), storage_path).has_value());
+
+    ConnectorRecord root_bind = makeConnectorRecord("ROOT_BIND", owner_hex);
+    addDimensionWithTransformation(root_bind, "HOST_BIND", kIncrementTransformationName);
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(root_bind), storage_path).has_value());
+
+    const auto particles_result = runGeneration(io_context, evm_instance, owner, "ROOT_BIND", 4);
+    ASSERT_TRUE(particles_result.has_value()) << particles_result.error();
+
+    const auto & particles = particles_result.value();
+    ASSERT_EQ(particles.size(), 1u);
+
+    EXPECT_EQ(particles[0].path(), "/ROOT_BIND:0/HOST_BIND:0/BASE_SLOT:0/BOUND_TARGET:0");
+    ASSERT_EQ(particles[0].data_size(), 4);
+    EXPECT_EQ(particles[0].data(0), 5);
+    EXPECT_EQ(particles[0].data(1), 6);
+    EXPECT_EQ(particles[0].data(2), 7);
+    EXPECT_EQ(particles[0].data(3), 8);
+}
+
+TEST_F(UnitTest, PT_Bindings_RunnerAppliesHostStaticRiToBindingExpandedDescendantPositions)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const BindingStorageScope storage_scope(makeBindingStoragePath());
+    const std::filesystem::path & storage_path = storage_scope.storage_path;
+    ASSERT_TRUE(prepareBindingStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    storage::Registry registry(io_context);
+    const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
+    const std::string owner_hex = evmc::hex(owner);
+
+    runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
+    runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
+
+    const auto increment_deploy = deployTransformationRecord(
+        io_context,
+        evm_instance,
+        registry,
+        makeTransformationRecord(kIncrementTransformationName, "return x + 1;", owner_hex),
+        storage_path);
+    ASSERT_TRUE(increment_deploy.has_value()) << increment_deploy.error();
+
+    ConnectorRecord target = makeConnectorRecord("TARGET", owner_hex);
+    addDimensionWithTransformation(target, "", kIncrementTransformationName);
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(target), storage_path).has_value());
+
+    ConnectorRecord leaf = makeConnectorRecord("LEAF", owner_hex);
+    addDimensionWithTransformation(leaf, "", kIncrementTransformationName);
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(leaf), storage_path).has_value());
+
+    ConnectorRecord child = makeConnectorRecord("CHILD", owner_hex);
+    addDimensionWithTransformation(child, "LEAF", kIncrementTransformationName, {{"0", "TARGET"}});
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(child), storage_path).has_value());
+
+    ConnectorRecord host = makeConnectorRecord("HOST", owner_hex);
+    addDimensionWithTransformation(host, "CHILD", kIncrementTransformationName);
+    (*host.mutable_connector()->mutable_static_ri())[4].set_start_point(7);
+    (*host.mutable_connector()->mutable_static_ri())[4].set_transformation_shift(0);
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(host), storage_path).has_value());
+
+    const auto particles_result = runGeneration(io_context, evm_instance, owner, "HOST", 4);
+    ASSERT_TRUE(particles_result.has_value()) << particles_result.error();
+
+    const auto & particles = particles_result.value();
+    ASSERT_EQ(particles.size(), 1u);
+    EXPECT_EQ(particles[0].path(), "/HOST:0/CHILD:0/LEAF:0/TARGET:0");
+    ASSERT_EQ(particles[0].data_size(), 4);
+    EXPECT_EQ(particles[0].data(0), 7);
+    EXPECT_EQ(particles[0].data(1), 8);
+    EXPECT_EQ(particles[0].data(2), 9);
+    EXPECT_EQ(particles[0].data(3), 10);
+}
+
+TEST_F(UnitTest, PT_Bindings_RunnerSupportsNestedBindingDescendantStaticRiOverride)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const BindingStorageScope storage_scope(makeBindingStoragePath());
+    const std::filesystem::path & storage_path = storage_scope.storage_path;
+    ASSERT_TRUE(prepareBindingStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    storage::Registry registry(io_context);
+    const chain::Address owner = makeAddressFromSuffix("binding_runtime_owner");
+    const std::string owner_hex = evmc::hex(owner);
+
+    runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
+    runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
+
+    const auto add1_deploy = deployTransformationRecord(
+        io_context,
+        evm_instance,
+        registry,
+        makeTransformationRecord("Add1Tx", "return x + 1;", owner_hex),
+        storage_path);
+    ASSERT_TRUE(add1_deploy.has_value()) << add1_deploy.error();
+
+    const auto add2_deploy = deployTransformationRecord(
+        io_context,
+        evm_instance,
+        registry,
+        makeTransformationRecord("Add2Tx", "return x + 2;", owner_hex),
+        storage_path);
+    ASSERT_TRUE(add2_deploy.has_value()) << add2_deploy.error();
+
+    const auto add3_deploy = deployTransformationRecord(
+        io_context,
+        evm_instance,
+        registry,
+        makeTransformationRecord("Add3Tx", "return x + 3;", owner_hex),
+        storage_path);
+    ASSERT_TRUE(add3_deploy.has_value()) << add3_deploy.error();
+
+    const auto add10_deploy = deployTransformationRecord(
+        io_context,
+        evm_instance,
+        registry,
+        makeTransformationRecord("Add10Tx", "return x + 10;", owner_hex),
+        storage_path);
+    ASSERT_TRUE(add10_deploy.has_value()) << add10_deploy.error();
+
+    ConnectorRecord pitch = makeConnectorRecord("PITCH", owner_hex);
+    addDimensionWithTransformation(pitch, "", "Add1Tx");
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(pitch), storage_path).has_value());
+
+    ConnectorRecord time = makeConnectorRecord("TIME", owner_hex);
+    addDimensionWithTransformation(time, "", "Add1Tx");
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(time), storage_path).has_value());
+
+    ConnectorRecord t0 = makeConnectorRecord("T0", owner_hex);
+    addDimensionWithTransformation(t0, "PITCH", "Add2Tx");
+    addDimensionWithTransformation(t0, "TIME", "Add10Tx");
+    (*t0.mutable_connector()->mutable_static_ri())[1].set_start_point(10);
+    (*t0.mutable_connector()->mutable_static_ri())[1].set_transformation_shift(0);
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(t0), storage_path).has_value());
+
+    ConnectorRecord t1 = makeConnectorRecord("T1", owner_hex);
+    addDimensionWithTransformation(t1, "PITCH", "Add3Tx");
+    addDimensionWithTransformation(t1, "T0", "Add2Tx", {{"0", "TIME"}});
+    // DFS position 6 in T1 points to /T1:1/T0:0/PITCH:0/TIME:0
+    (*t1.mutable_connector()->mutable_static_ri())[6].set_start_point(5);
+    (*t1.mutable_connector()->mutable_static_ri())[6].set_transformation_shift(0);
+    ASSERT_TRUE(deployConnectorRecord(io_context, evm_instance, registry, std::move(t1), storage_path).has_value());
+
+    const auto particles_result = runGeneration(io_context, evm_instance, owner, "T1", 4);
+    ASSERT_TRUE(particles_result.has_value()) << particles_result.error();
+
+    const auto & particles = particles_result.value();
+    ASSERT_EQ(particles.size(), 3u);
+
+    EXPECT_EQ(particles[0].path(), "/T1:0/PITCH:0");
+    ASSERT_EQ(particles[0].data_size(), 4);
+    EXPECT_EQ(particles[0].data(0), 0);
+    EXPECT_EQ(particles[0].data(1), 3);
+    EXPECT_EQ(particles[0].data(2), 6);
+    EXPECT_EQ(particles[0].data(3), 9);
+
+    EXPECT_EQ(particles[1].path(), "/T1:1/T0:0/PITCH:0/TIME:0");
+    ASSERT_EQ(particles[1].data_size(), 4);
+    EXPECT_EQ(particles[1].data(0), 15);
+    EXPECT_EQ(particles[1].data(1), 19);
+    EXPECT_EQ(particles[1].data(2), 23);
+    EXPECT_EQ(particles[1].data(3), 27);
+
+    EXPECT_EQ(particles[2].path(), "/T1:1/T0:1/TIME:0");
+    ASSERT_EQ(particles[2].data_size(), 4);
+    EXPECT_EQ(particles[2].data(0), 0);
+    EXPECT_EQ(particles[2].data(1), 20);
+    EXPECT_EQ(particles[2].data(2), 40);
+    EXPECT_EQ(particles[2].data(3), 60);
 }
 
 TEST_F(UnitTest, PT_Bindings_RunnerAllowsBindingToSealedCompositeTarget)

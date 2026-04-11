@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "error.hpp"
 
 #include <spdlog/spdlog.h>
@@ -18,6 +20,24 @@ namespace dcn::parse
         if (std::equal(selector.begin(), selector.end(), r.data()))
         {
             return pt::PTExecuteError{pt::PTExecuteError::Kind::CONDITION_NOT_MET};
+        }
+
+        selector = chain::constructSelector("RunningInstanceDuplicate(uint32)");
+        if (std::equal(selector.begin(), selector.end(), r.data()))
+        {
+            return pt::PTExecuteError{pt::PTExecuteError::Kind::RUNNING_INSTANCE_DUPLICATE};
+        }
+
+        selector = chain::constructSelector("RunningInstanceNotSorted(uint32,uint32)");
+        if (std::equal(selector.begin(), selector.end(), r.data()))
+        {
+            return pt::PTExecuteError{pt::PTExecuteError::Kind::RUNNING_INSTANCE_NOT_SORTED};
+        }
+
+        selector = chain::constructSelector("RunningInstanceStaticOverride(uint32)");
+        if (std::equal(selector.begin(), selector.end(), r.data()))
+        {
+            return pt::PTExecuteError{pt::PTExecuteError::Kind::RUNNING_INSTANCE_STATIC_OVERRIDE};
         }
 
         return std::unexpected(ParseError{ParseError::Kind::UNKNOWN, "unknown error"});

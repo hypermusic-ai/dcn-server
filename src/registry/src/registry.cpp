@@ -631,6 +631,24 @@ namespace dcn::storage
         template<typename RecordT>
         static bool recordsEqual(const RecordT & lhs, const RecordT & rhs)
         {
+            if constexpr(std::is_same_v<RecordT, ConnectorRecord>)
+            {
+                ConnectorRecord lhs_normalized = lhs;
+                ConnectorRecord rhs_normalized = rhs;
+
+                lhs_normalized.mutable_connector()->clear_static_ri();
+                rhs_normalized.mutable_connector()->clear_static_ri();
+
+                std::string lhs_bytes;
+                std::string rhs_bytes;
+                if(!lhs_normalized.SerializeToString(&lhs_bytes) || !rhs_normalized.SerializeToString(&rhs_bytes))
+                {
+                    return false;
+                }
+
+                return lhs_bytes == rhs_bytes;
+            }
+
             std::string lhs_bytes;
             std::string rhs_bytes;
             if(!lhs.SerializeToString(&lhs_bytes) || !rhs.SerializeToString(&rhs_bytes))

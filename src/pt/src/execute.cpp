@@ -1,5 +1,8 @@
 #include "execute.hpp"
 
+#include <algorithm>
+#include <vector>
+
 namespace dcn::parse
 {
     template<>
@@ -59,12 +62,24 @@ namespace dcn::parse
         json json_obj = json::object();
         json_obj["connector_name"] = execute_request.connector_name();
         json_obj["particles_count"] = execute_request.particles_count();
+        json_obj["dynamic_ri"] = json::object();
 
-        for(const auto & running_instance : execute_request.running_instances()) 
+        std::vector<std::pair<std::uint32_t, RunningInstance>> sorted_dynamic_ri;
+        sorted_dynamic_ri.reserve(static_cast<std::size_t>(execute_request.dynamic_ri_size()));
+        for(const auto & [position, running_instance] : execute_request.dynamic_ri())
+        {
+            sorted_dynamic_ri.emplace_back(position, running_instance);
+        }
+        std::ranges::sort(sorted_dynamic_ri, [](const auto & lhs, const auto & rhs)
+        {
+            return lhs.first < rhs.first;
+        });
+
+        for(const auto & [position, running_instance] : sorted_dynamic_ri)
         {
             auto running_instance_result = parseToJson(running_instance, use_json);
             if(!running_instance_result) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid running_instance"});
-            json_obj["running_instances"].push_back(std::move(*running_instance_result));
+            json_obj["dynamic_ri"][std::to_string(position)] = std::move(*running_instance_result);
         }
 
         return json_obj;
@@ -77,13 +92,29 @@ namespace dcn::parse
         execute_request.set_connector_name(json["connector_name"].get<std::string>()); 
         execute_request.set_particles_count(json["particles_count"].get<std::uint32_t>()); 
 
-        for(const auto & running_instance : json["running_instances"]) 
+        if(json.contains("dynamic_ri") && !json["dynamic_ri"].is_object())
         {
+            return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid dynamic_ri"});
+        }
+        
+        // Empty dynamic_ri
+        if(!json.contains("dynamic_ri"))
+        {
+            json["dynamic_ri"] = json::object();
+        }
+
+        for(const auto & [position_key, running_instance] : json["dynamic_ri"].items())
+        {
+            const auto position_opt = parse::parseUint32Decimal(position_key);
+            if(!position_opt || position_key != std::to_string(*position_opt))
+            {
+                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid dynamic_ri key"});
+            }
+
             auto running_instance_result = parseFromJson<RunningInstance>(running_instance, use_json);
             if(!running_instance_result) return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid running_instance"});
-            
-            execute_request.add_running_instances();
-            *execute_request.mutable_running_instances(execute_request.running_instances_size() - 1) = *running_instance_result;
+
+            (*execute_request.mutable_dynamic_ri())[*position_opt] = *running_instance_result;
         }
 
         return execute_request;

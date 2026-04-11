@@ -14,5 +14,5 @@ message ExecuteRequest
 {
   string connector_name = 1;
   uint32 particles_count = 2;
-  repeated RunningInstance running_instances = 3;
+  map<uint32, RunningInstance> dynamic_ri = 3;
 }

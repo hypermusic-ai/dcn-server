@@ -21,13 +21,210 @@ function normalizeConnectorName(rawName) {
 // --------------------------------------------------------------------------
 let runningInstanceData = [];
 let currentNodeEditing = null;
+let executeTreeData = [];
+let executeNodesDataSet = null;
+let executeNetwork = null;
+
+function parseRunningInstanceObject(value) {
+    if (!value || typeof value !== 'object') {
+        return null;
+    }
+
+    const startPoint = value.start_point;
+    const transformShift = value.transformation_shift;
+    if (
+        !Number.isInteger(startPoint) || startPoint < 0 ||
+        !Number.isInteger(transformShift) || transformShift < 0
+    ) {
+        return null;
+    }
+
+    return {
+        start_point: startPoint,
+        transformation_shift: transformShift
+    };
+}
+
+function getConnectorStaticRiMap(connector) {
+    const staticRiMap = new Map();
+    if (!connector || typeof connector !== 'object') {
+        return staticRiMap;
+    }
+
+    const staticRi = connector.static_ri;
+    if (!staticRi || typeof staticRi !== 'object' || Array.isArray(staticRi)) {
+        return staticRiMap;
+    }
+
+    Object.entries(staticRi).forEach(([positionKey, runningInstance]) => {
+        if (!/^\d+$/.test(positionKey)) {
+            return;
+        }
+
+        const position = Number.parseInt(positionKey, 10);
+        if (!Number.isSafeInteger(position) || position < 0 || position > 0xFFFFFFFF) {
+            return;
+        }
+
+        const parsedRunningInstance = parseRunningInstanceObject(runningInstance);
+        if (!parsedRunningInstance) {
+            return;
+        }
+
+        staticRiMap.set(position, parsedRunningInstance);
+    });
+
+    return staticRiMap;
+}
+
+function getDynamicRunningInstanceForNode(nodeId) {
+    const entry = runningInstanceData[nodeId];
+    if (!Array.isArray(entry) || entry.length < 2) {
+        return null;
+    }
+
+    const [start_point, transformation_shift] = entry;
+    if (
+        !Number.isInteger(start_point) || start_point < 0 ||
+        !Number.isInteger(transformation_shift) || transformation_shift < 0
+    ) {
+        return null;
+    }
+
+    return { start_point, transformation_shift };
+}
+
+function buildExecuteNodeVisual(item) {
+    const isScalar = item.scalar === true;
+    const isBoundConnector = item.bound === true && !isScalar;
+    const nodeSegment = item.name.split('/').pop();
+    const nodeType = isScalar
+        ? 'Scalar'
+        : (isBoundConnector ? `Bound connector (${item.boundKind || 'binding'})` : 'Connector');
+    const titleSuffix = item.boundSlotLabel ? `\n${item.boundSlotLabel}` : '';
+
+    const dynamicRunningInstance = getDynamicRunningInstanceForNode(item.id);
+    const hasDynamicRi = dynamicRunningInstance !== null;
+    const staticRunningInstance = parseRunningInstanceObject(item.staticRi);
+    const hasStaticRi = staticRunningInstance !== null;
+    const fallbackRunningInstance = parseRunningInstanceObject(item.fallbackStaticRi);
+    const hasFallbackRi = fallbackRunningInstance !== null;
+
+    const nodeColor = isScalar
+        ? {
+            background: '#fafcff',
+            border: '#cdd7e3',
+            highlight: { background: '#f4f8fd', border: '#b9c6d5' }
+        }
+        : (isBoundConnector
+            ? {
+                background: '#fff4d6',
+                border: '#c97500',
+                highlight: { background: '#ffe9b3', border: '#a85f00' }
+            }
+            : {
+                background: '#ffffff',
+                border: '#444444',
+                highlight: { background: '#ffffff', border: '#111111' }
+            });
+
+    if (hasStaticRi) {
+        nodeColor.border = '#2563eb';
+        nodeColor.highlight = {
+            ...nodeColor.highlight,
+            border: '#1d4ed8'
+        };
+    } else if (hasDynamicRi) {
+        nodeColor.border = '#15803d';
+        nodeColor.highlight = {
+            ...nodeColor.highlight,
+            border: '#166534'
+        };
+    } else if (hasFallbackRi) {
+        const fallbackBorder = isBoundConnector ? '#2563eb' : '#0284c7';
+        const fallbackHighlightBorder = isBoundConnector ? '#1d4ed8' : '#0369a1';
+        nodeColor.border = fallbackBorder;
+        nodeColor.highlight = {
+            ...nodeColor.highlight,
+            border: fallbackHighlightBorder
+        };
+    }
+
+    if (hasDynamicRi) {
+        if (isScalar) {
+            nodeColor.background = '#dcfce7';
+            nodeColor.highlight = {
+                ...nodeColor.highlight,
+                background: '#bbf7d0'
+            };
+        } else if (!isBoundConnector) {
+            nodeColor.background = '#ecfdf5';
+            nodeColor.highlight = {
+                ...nodeColor.highlight,
+                background: '#dcfce7'
+            };
+        }
+    }
+
+    const riTitleLines = [];
+    if (hasStaticRi) {
+        riTitleLines.push(
+            `Static RI (locked): (${staticRunningInstance.start_point}, ${staticRunningInstance.transformation_shift})`
+        );
+    }
+    if (hasFallbackRi) {
+        riTitleLines.push(
+            `Fallback RI (overrideable): (${fallbackRunningInstance.start_point}, ${fallbackRunningInstance.transformation_shift})`
+        );
+    }
+    if (hasDynamicRi) {
+        riTitleLines.push(
+            `Dynamic RI: (${dynamicRunningInstance.start_point}, ${dynamicRunningInstance.transformation_shift})`
+        );
+    }
+
+    const baseBorderWidth = isScalar ? 1 : (isBoundConnector ? 2 : 1);
+    const borderWidth = hasStaticRi
+        ? Math.max(baseBorderWidth, 3)
+        : (hasDynamicRi
+            ? Math.max(baseBorderWidth, 2)
+            : (hasFallbackRi ? Math.max(baseBorderWidth, 2) : baseBorderWidth));
+
+    return {
+        id: item.id,
+        label: isScalar ? '' : nodeSegment,
+        title: `${item.name}\n${nodeType}${titleSuffix}${riTitleLines.length ? `\n${riTitleLines.join('\n')}` : ''}`,
+        color: nodeColor,
+        borderWidth,
+        shapeProperties: { borderDashes: isScalar ? [3, 5] : false },
+        size: isScalar ? 14 : undefined,
+        font: isScalar ? { size: 1, color: 'rgba(0,0,0,0)' } : { color: '#000' },
+        shape: isScalar ? 'circle' : 'box',
+        shadow: hasDynamicRi
+            ? { enabled: true, color: 'rgba(22, 163, 74, 0.45)', size: isScalar ? 10 : 14, x: 0, y: 0 }
+            : false
+    };
+}
+
+function refreshExecuteNodeIndicators() {
+    if (!executeNodesDataSet || !Array.isArray(executeTreeData) || executeTreeData.length === 0) {
+        return;
+    }
+
+    executeNodesDataSet.update(executeTreeData.map((item) => buildExecuteNodeVisual(item)));
+}
 
 function openRIPopup(nodeId, nodeData) {
+    if (parseRunningInstanceObject(nodeData?.staticRi)) {
+        return;
+    }
+
     currentNodeEditing = nodeId;
     document.getElementById("popupRunningInstanceLabel").textContent = nodeData.name;
-    const existing = runningInstanceData[nodeId] || [0, 0];
-    document.getElementById("popupStartPoint").value = existing[0];
-    document.getElementById("popupTransformShift").value = existing[1];
+    const existing = runningInstanceData[nodeId];
+    const hasExisting = Array.isArray(existing) && existing.length >= 2;
+    document.getElementById("popupStartPoint").value = hasExisting ? existing[0] : '';
+    document.getElementById("popupTransformShift").value = hasExisting ? existing[1] : '';
     document.getElementById("popupInstanceEditor").style.display = 'block';
 }
 
@@ -37,21 +234,62 @@ export function closePopup() {
 }
 
 export function saveInstanceEdit() {
-    const a = parseInt(document.getElementById("popupStartPoint").value);
-    const b = parseInt(document.getElementById("popupTransformShift").value);
-    if (!isNaN(a) && !isNaN(b)) {
-        runningInstanceData[currentNodeEditing] = [a, b];
-        updateRunningInstanceList();
+    if (currentNodeEditing === null) {
+        closePopup();
+        return;
     }
+
+    const startPointRaw = document.getElementById("popupStartPoint").value.trim();
+    const transformShiftRaw = document.getElementById("popupTransformShift").value.trim();
+
+    if (!startPointRaw || !transformShiftRaw) {
+        alert("Fill both Start Point and Transform Shift, or use Remove RI.");
+        return;
+    }
+
+    const a = Number.parseInt(startPointRaw, 10);
+    const b = Number.parseInt(transformShiftRaw, 10);
+    if (Number.isNaN(a) || Number.isNaN(b) || a < 0 || b < 0) {
+        alert("Running instance values must be non-negative integers.");
+        return;
+    }
+
+    runningInstanceData[currentNodeEditing] = [a, b];
+    updateRunningInstanceList();
     closePopup();
+}
+
+export function removeInstanceEdit() {
+    if (currentNodeEditing === null) {
+        closePopup();
+        return;
+    }
+
+    delete runningInstanceData[currentNodeEditing];
+    updateRunningInstanceList();
+    closePopup();
+}
+
+function buildDynamicRiPayload() {
+    const dynamic_ri = {};
+    runningInstanceData.forEach((_, position) => {
+        const runningInstance = getDynamicRunningInstanceForNode(position);
+        if (!runningInstance) {
+            return;
+        }
+
+        dynamic_ri[position.toString()] = runningInstance;
+    });
+    return dynamic_ri;
 }
 
 function updateRunningInstanceList() {
     const jsonString = JSON.stringify({
-        running_instances: runningInstanceData.map(([s, t]) => ({ start_point: s, transformation_shift: t }))
+        dynamic_ri: buildDynamicRiPayload()
     }, null, 2);
 
     document.getElementById('executeRunningInstances').textContent = jsonString;
+    refreshExecuteNodeIndicators();
 }
 
 function clearRunningInstances() {
@@ -63,45 +301,16 @@ function clearRunningInstances() {
 // Execute
 // --------------------------------------------------------------------------
 function drawExecuteTree(treeData) {
+    executeTreeData = Array.isArray(treeData) ? treeData : [];
     const nodes = [];
     const edges = [];
 
-    treeData.forEach((item) => {
+    executeTreeData.forEach((item) => {
         const isScalar = item.scalar === true;
         const isBoundConnector = item.bound === true && !isScalar;
         const nodeSegment = item.name.split('/').pop();
-        const nodeType = isScalar
-            ? 'Scalar'
-            : (isBoundConnector ? `Bound connector (${item.boundKind || 'binding'})` : 'Connector');
-        const titleSuffix = item.boundSlotLabel ? `\n${item.boundSlotLabel}` : '';
 
-        nodes.push({
-            id: item.id,
-            label: isScalar ? '' : nodeSegment,
-            title: `${item.name}\n${nodeType}${titleSuffix}`,
-            color: isScalar
-                ? {
-                    background: '#fafcff',
-                    border: '#cdd7e3',
-                    highlight: { background: '#f4f8fd', border: '#b9c6d5' }
-                }
-                : (isBoundConnector
-                    ? {
-                        background: '#fff4d6',
-                        border: '#c97500',
-                        highlight: { background: '#ffe9b3', border: '#a85f00' }
-                    }
-                    : {
-                        background: '#ffffff',
-                        border: '#444444',
-                        highlight: { background: '#ffffff', border: '#111111' }
-                    }),
-            borderWidth: isScalar ? 1 : (isBoundConnector ? 2 : 1),
-            shapeProperties: { borderDashes: isScalar ? [3, 5] : false },
-            size: isScalar ? 14 : undefined,
-            font: isScalar ? { size: 1, color: 'rgba(0,0,0,0)' } : { color: '#000' },
-            shape: isScalar ? 'circle' : 'box'
-        });
+        nodes.push(buildExecuteNodeVisual(item));
 
         if (item.parent !== -1) {
             const isBindingEdge = isBoundConnector;
@@ -131,20 +340,25 @@ function drawExecuteTree(treeData) {
         interaction: { hover: true }
     };
 
-    const network = new vis.Network(container, data, options);
+    if (executeNetwork) {
+        executeNetwork.destroy();
+    }
 
-    network.on("click", function (params) {
+    executeNodesDataSet = data.nodes;
+    executeNetwork = new vis.Network(container, data, options);
+
+    executeNetwork.on("click", function (params) {
         if (params.nodes.length > 0) {
             const nodeId = params.nodes[0];
-            const nodeData = treeData.find(n => n.id === nodeId);
-            if (nodeData) {
+            const nodeData = executeTreeData.find(n => n.id === nodeId);
+            if (nodeData && !parseRunningInstanceObject(nodeData.staticRi)) {
                 openRIPopup(nodeId, nodeData);
             }
         }
     });
 
     container.style.display = 'block';
-    network.fit();
+    executeNetwork.fit();
 }
 
 async function fetchConnectorDepthFirst(rootName) {
@@ -154,6 +368,7 @@ async function fetchConnectorDepthFirst(rootName) {
     const childList = [];
     const connectorCache = new Map();
     const openSlotsCache = new Map();
+    let rootConnectorStaticRiMap = new Map();
 
     async function fetchConnectorByName(name) {
         if (connectorCache.has(name)) {
@@ -315,14 +530,22 @@ async function fetchConnectorDepthFirst(rootName) {
         parentId,
         path,
         incomingBindings,
-        boundDescriptor
+        boundDescriptor,
+        inheritedRootStaticRi = null
     }) {
         const connector = await fetchConnectorByName(connectorName);
         const resolvedName = typeof connector.name === 'string' && connector.name.trim()
             ? connector.name.trim()
             : connectorName;
+        const connectorStaticRi = getConnectorStaticRiMap(connector);
+        const isTopLevelConnector = parentId === -1;
+        const localRootStaticRi = connectorStaticRi.get(0) || null;
         const fullPath = `${path}/${resolvedName}`;
         const id = nodeIdCounter++;
+        const scopeRootStaticRi = rootConnectorStaticRiMap.get(id) || null;
+        const localLockedRootStaticRi = isTopLevelConnector ? localRootStaticRi : (inheritedRootStaticRi || null);
+        const lockedRootStaticRi = localLockedRootStaticRi || scopeRootStaticRi;
+        const fallbackRootStaticRi = (!isTopLevelConnector && !lockedRootStaticRi) ? localRootStaticRi : null;
 
         childList.push({
             parent: parentId,
@@ -331,15 +554,17 @@ async function fetchConnectorDepthFirst(rootName) {
             scalar: false,
             bound: Boolean(boundDescriptor),
             boundKind: boundDescriptor ? boundDescriptor.kind : '',
-            boundSlotLabel: boundDescriptor ? boundDescriptor.slotLabel : ''
+            boundSlotLabel: boundDescriptor ? boundDescriptor.slotLabel : '',
+            staticRi: lockedRootStaticRi,
+            fallbackStaticRi: fallbackRootStaticRi
         });
-        runningInstanceData[id] = [0, 0];
 
         const dimensions = parseConnectorDimensions(connector);
         let openSlotId = 0;
 
         for (let dimId = 0; dimId < dimensions.length; dimId++) {
             const dimension = dimensions[dimId];
+            const dimensionStaticRi = connectorStaticRi.get(dimId + 1) || null;
 
             if (!dimension.composite) {
                 const replacement = incomingBindings.get(openSlotId);
@@ -353,6 +578,7 @@ async function fetchConnectorDepthFirst(rootName) {
                         parentId: id,
                         path: `${fullPath}:${dimId}`,
                         incomingBindings: cloneBindingMap(replacement.forwarded),
+                        inheritedRootStaticRi: dimensionStaticRi,
                         boundDescriptor: {
                             kind: replacement.kind,
                             slotLabel
@@ -361,13 +587,14 @@ async function fetchConnectorDepthFirst(rootName) {
                 }
                 else {
                     const scalarId = nodeIdCounter++;
+                    const scopeScalarStaticRi = rootConnectorStaticRiMap.get(scalarId) || null;
                     childList.push({
                         parent: id,
                         id: scalarId,
                         name: `${fullPath}:${dimId}`,
-                        scalar: true
+                        scalar: true,
+                        staticRi: dimensionStaticRi || scopeScalarStaticRi
                     });
-                    runningInstanceData[scalarId] = [0, 0];
                 }
 
                 openSlotId += 1;
@@ -490,6 +717,7 @@ async function fetchConnectorDepthFirst(rootName) {
                 parentId: id,
                 path: `${fullPath}:${dimId}`,
                 incomingBindings: childBindings,
+                inheritedRootStaticRi: dimensionStaticRi,
                 boundDescriptor: null
             });
 
@@ -497,11 +725,15 @@ async function fetchConnectorDepthFirst(rootName) {
         }
     }
 
+    const rootConnector = await fetchConnectorByName(rootName);
+    rootConnectorStaticRiMap = getConnectorStaticRiMap(rootConnector);
+
     await expandConnector({
         connectorName: rootName,
         parentId: -1,
         path: '',
         incomingBindings: new Map(),
+        inheritedRootStaticRi: null,
         boundDescriptor: null
     });
 
@@ -534,7 +766,7 @@ export async function fetchBeforeExecute() {
 export async function execute() {
     const connector_name = normalizeConnectorName(document.getElementById('executeName').value);
     const particles_count = document.getElementById('executeN').value.trim();
-    const running_instances = runningInstanceData.map(([start_point, transformation_shift]) => ({ start_point, transformation_shift }));
+    const dynamic_ri = buildDynamicRiPayload();
 
     const codeDiv = document.getElementById('executeCode');
     const bodyDiv = document.getElementById('executeBody');
@@ -549,7 +781,7 @@ export async function execute() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ connector_name, particles_count, running_instances }),
+                body: JSON.stringify({ connector_name, particles_count, dynamic_ri }),
             }
         );
         const text = await res.text();

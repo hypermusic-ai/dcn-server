@@ -1,5 +1,7 @@
 #include "api.hpp"
 
+#include <algorithm>
+
 // TODO
 // ABI offset encoding (correctness)
 // Add size limits (DoS protection)
@@ -113,7 +115,7 @@ namespace dcn
 
         std::vector<uint8_t> input_data;
         // runner function selector
-        const auto selector = chain::constructSelector("gen(string,uint32,(uint32,uint32)[])");
+        const auto selector = chain::constructSelector("gen(string,uint32,(uint32,uint32,uint32)[])");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         // 1. Offset to start of string data
@@ -140,15 +142,22 @@ namespace dcn
         // 4. Append the string bytes (dynamic)
         input_data.insert(input_data.end(), name_bytes.begin(), name_bytes.end());
         
-        // convert google::protobuf::RepeatedPtrField<dcn::RunningInstance> into vector<tuple<uint32_t, uint32_t>>
-        std::vector<std::tuple<std::uint32_t, std::uint32_t>> running_instance;
-        for (const auto& running_instance_item : execute_request.running_instances())
+        std::vector<std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>> dynamic_running_instances;
+        dynamic_running_instances.reserve(static_cast<std::size_t>(execute_request.dynamic_ri_size()));
+        for(const auto & [position, running_instance_item] : execute_request.dynamic_ri())
         {
-            running_instance.push_back(std::make_tuple(running_instance_item.start_point(), running_instance_item.transformation_shift()));
+            dynamic_running_instances.emplace_back(
+                position,
+                running_instance_item.start_point(),
+                running_instance_item.transformation_shift());
         }
+        std::ranges::sort(dynamic_running_instances, [](const auto & lhs, const auto & rhs)
+        {
+            return std::get<0>(lhs) < std::get<0>(rhs);
+        });
 
-        // 5. Append vector<tuple<uint32_t, uint32_t>> bytes (dynamic)
-        const std::vector<uint8_t> tuple_vec_bytes = evm::encodeAsArg(running_instance);
+        // 5. Append vector<tuple<uint32_t, uint32_t, uint32_t>> bytes (dynamic)
+        const std::vector<uint8_t> tuple_vec_bytes = evm::encodeAsArg(dynamic_running_instances);
         input_data.insert(input_data.end(), tuple_vec_bytes.begin(), tuple_vec_bytes.end());
 
         // execute call to runner
@@ -159,6 +168,20 @@ namespace dcn
         // check execution status
         if(!exec_result)
         {
+            if(exec_result.error().kind == chain::ExecuteError::Kind::TRANSACTION_REVERTED)
+            {
+                const auto pt_error = parse::decodeBytes<pt::PTExecuteError>(exec_result.error().result_bytes);
+                if(pt_error)
+                {
+                    response.setCode(http::Code::BadRequest)
+                        .setBodyWithContentLength(json {
+                            {"message", std::format("Execution rejected: {}", pt_error->kind)}
+                        }.dump());
+
+                    co_return response;
+                }
+            }
+
             response.setCode(http::Code::InternalServerError)          
                 .setBodyWithContentLength(json {
                     {"message", std::format("Failed to execute code : {}", exec_result.error().kind)}

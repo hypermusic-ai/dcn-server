@@ -513,6 +513,21 @@ button:disabled {
     background: #912018;
 }
 
+#btn_removeInstanceEdit {
+    border-color: #b42318;
+    background: #d92d20;
+}
+
+#btn_removeInstanceEdit:hover {
+    border-color: #b42318;
+    background: #b42318;
+}
+
+#btn_removeInstanceEdit:active {
+    border-color: #912018;
+    background: #912018;
+}
+
 .response-row {
     display: flex;
     gap: 0.7rem;
@@ -813,6 +828,98 @@ pre.request-body {
     margin-bottom: 0.7rem;
 }
 
+#connectorStaticRiContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-bottom: 0.7rem;
+}
+
+.connector-static-ri-tree-status {
+    margin-bottom: 0.55rem;
+}
+
+#connectorStaticRiValidationStatus {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.connector-static-ri-tree-status.is-error {
+    color: #b42318;
+}
+
+.connector-static-ri-summary-line,
+.connector-static-ri-summary-link {
+    font: inherit;
+    line-height: 1.35;
+}
+
+.connector-static-ri-summary-line {
+    margin: 0;
+}
+
+.connector-static-ri-summary-link {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.connector-static-ri-summary-link:hover {
+    text-decoration-thickness: 2px;
+}
+
+.connector-static-ri-summary-link:focus-visible {
+    outline: 2px solid rgba(180, 35, 24, 0.45);
+    outline-offset: 2px;
+}
+
+.connector-static-ri {
+    border: 1px solid var(--line);
+    border-radius: 0.45rem;
+    padding: 0.5rem;
+    background: #fcfcfc;
+}
+
+@keyframes connector-static-ri-highlight-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.16);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    }
+}
+
+.connector-static-ri.is-focus-highlight {
+    animation: connector-static-ri-highlight-pulse 1.5s ease-out;
+}
+
+.connector-static-ri.has-error {
+    border-color: #b42318;
+    background: #fff7f6;
+}
+
+.connector-static-ri-error {
+    min-height: 1rem;
+    margin-top: 0.35rem;
+}
+
+.connector-static-ri-error.is-error {
+    color: #b42318;
+}
+
 .connector-transformations {
     margin: 0.35rem 0 0.72rem;
     padding-top: 0.62rem;
@@ -849,7 +956,8 @@ pre.request-body {
 }
 
 .connector-binding-remove,
-.connector-transformation-remove {
+.connector-transformation-remove,
+.connector-static-ri-remove {
     flex: 0 0 auto;
     border-color: #b42318;
     background: #d92d20;
@@ -864,14 +972,21 @@ pre.request-body {
     align-self: flex-end;
 }
 
+.connector-static-ri-remove {
+    margin: 0 0 0.74rem;
+    align-self: flex-end;
+}
+
 .connector-binding-remove:hover,
-.connector-transformation-remove:hover {
+.connector-transformation-remove:hover,
+.connector-static-ri-remove:hover {
     border-color: #b42318;
     background: #b42318;
 }
 
 .connector-binding-remove:active,
-.connector-transformation-remove:active {
+.connector-transformation-remove:active,
+.connector-static-ri-remove:active {
     border-color: #912018;
     background: #912018;
 }
