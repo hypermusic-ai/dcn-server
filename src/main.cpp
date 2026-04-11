@@ -6,6 +6,124 @@
     #error "Solidity_SOLC_EXECUTABLE is not defined"
 #endif
 
+static bool _createDirectories(const dcn::config::Config & cfg)
+{
+    std::error_code creation_dir_ec;
+
+    // Create storage directory if it doesn't exist
+    if(std::filesystem::exists(cfg.storage_path) == false)
+    {
+        std::filesystem::create_directory(cfg.storage_path, creation_dir_ec);
+        if(creation_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create storage directory '{}': {}",
+                cfg.storage_path.string(),
+                creation_dir_ec.message());
+            return false;
+        }
+    }
+
+    // Create connectors directory if it doesn't exist
+    if(std::filesystem::exists(cfg.storage_path / "connectors") == false)
+    {
+        std::filesystem::create_directory(cfg.storage_path / "connectors", creation_dir_ec);
+        if(creation_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create connectors directory '{}': {}",
+                (cfg.storage_path / "connectors").string(),
+                creation_dir_ec.message());
+            return false;
+        }
+    }
+
+    // Create connectors build directory if it doesn't exist
+    if(std::filesystem::exists(cfg.storage_path / "transformations") == false)
+    {
+        std::filesystem::create_directory(cfg.storage_path / "connectors" / "build", creation_dir_ec);
+        if(creation_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create connectors build directory '{}': {}",
+                (cfg.storage_path / "connectors" / "build").string(),
+                creation_dir_ec.message());
+            return false;
+        }
+    }
+
+    // Create transformations directory if it doesn't exist
+    if(std::filesystem::exists(cfg.storage_path / "transformations") == false)
+    {
+        std::filesystem::create_directory(cfg.storage_path / "transformations", creation_dir_ec);
+        if(creation_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create transformations directory '{}': {}",
+                (cfg.storage_path / "transformations").string(),
+                creation_dir_ec.message());
+            return false;
+        }
+    }
+
+    // Create transformations build directory if it doesn't exist
+    if(std::filesystem::exists(cfg.storage_path / "transformations" / "build") == false)
+    {
+        std::filesystem::create_directory(cfg.storage_path / "transformations" / "build", creation_dir_ec);
+        if(creation_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create transformations build directory '{}': {}",
+                (cfg.storage_path / "transformations" / "build").string(),
+                creation_dir_ec.message());
+            return false;
+        }
+    }
+
+    // Create conditions directory if it doesn't exist
+    if(std::filesystem::exists(cfg.storage_path / "conditions") == false)
+    {
+        std::filesystem::create_directory(cfg.storage_path / "conditions", creation_dir_ec);
+        if(creation_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create conditions directory '{}': {}",
+                (cfg.storage_path / "conditions").string(),
+                creation_dir_ec.message());
+            return false;
+        }
+    }
+
+    // Create conditions build directory if it doesn't exist
+    if(std::filesystem::exists(cfg.storage_path / "conditions" / "build") == false){
+        std::filesystem::create_directory(cfg.storage_path / "conditions" / "build", creation_dir_ec);
+        if(creation_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create conditions build directory '{}': {}",
+                (cfg.storage_path / "conditions" / "build").string(),
+                creation_dir_ec.message());
+            return false;
+        }
+    }
+
+    // Create registry DB directory if it doesn't exist
+    if(!cfg.registry_db.parent_path().empty() && std::filesystem::exists(cfg.registry_db.parent_path()) == false)
+    {
+        std::filesystem::create_directories(cfg.registry_db.parent_path(), creation_dir_ec);
+        if(creation_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create registry DB directory '{}': {}",
+                cfg.registry_db.parent_path().string(),
+                creation_dir_ec.message());
+            return false;
+        }
+    }
+
+    return true;
+}
+
 static void _configureLogger(const std::filesystem::path& logs_path)
 {
     std::filesystem::create_directories(logs_path);
@@ -286,6 +404,9 @@ int main(int argc, char* argv[])
 
     const bool registry_db_in_memory = cfg.registry_db.empty() || cfg.registry_db == ":memory:";
 
+    // create directories
+    _createDirectories(cfg);
+
     asio::io_context io_context;
 
     dcn::storage::Registry registry(io_context, cfg.registry_db.string());
@@ -393,35 +514,11 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::OPTIONS, "/execute"},   dcn::OPTIONS_execute);
     server.addRoute({dcn::http::Method::POST, "/execute"},      dcn::POST_execute, std::cref(auth_manager), std::ref(registry), std::ref(evm), std::cref(cfg));
 
-    // create directories
-    std::filesystem::create_directory(cfg.storage_path);
-    std::filesystem::create_directory(cfg.storage_path / "connectors");
-    std::filesystem::create_directory(cfg.storage_path / "connectors" / "build");
-    std::filesystem::create_directory(cfg.storage_path / "transformations");
-    std::filesystem::create_directory(cfg.storage_path / "transformations" / "build");
-    std::filesystem::create_directory(cfg.storage_path / "conditions");
-    std::filesystem::create_directory(cfg.storage_path / "conditions" / "build");
-
-    if(!cfg.registry_db.parent_path().empty())
-    {
-        std::error_code registry_dir_ec;
-        std::filesystem::create_directories(cfg.registry_db.parent_path(), registry_dir_ec);
-        if(registry_dir_ec)
-        {
-            spdlog::error(
-                "Failed to create registry DB directory '{}': {}",
-                cfg.registry_db.parent_path().string(),
-                registry_dir_ec.message());
-            return 1;
-        }
-    }
-
     if(!dcn::loader::ensurePTBuildVersion(cfg.storage_path))
     {
         spdlog::error("Failed to prepare PT Solidity build cache");
         return 1;
     }
-
 
     const bool wal_enabled = !registry_db_in_memory;
     std::atomic<bool> wal_sync_worker_stopped = true;
