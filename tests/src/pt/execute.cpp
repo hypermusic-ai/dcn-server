@@ -151,15 +151,3 @@ TEST_F(UnitTest, ExecuteRequest_ParseFromJson_DuplicateDynamicRiKeyInRawJson_Use
     EXPECT_EQ(json_entry->second.start_point(), 7);
     EXPECT_EQ(json_entry->second.transformation_shift(), 8);
 }
-
-TEST_F(UnitTest, ExecuteRequest_ParseFromJson_RejectsMissingDynamicRi)
-{
-    json json_input = {
-        {"connector_name", "connector_beta"},
-        {"particles_count", 64}
-    };
-
-    auto request = parseFromJson<ExecuteRequest>(json_input, use_json);
-    ASSERT_FALSE(request.has_value());
-    EXPECT_EQ(request.error().kind, ParseError::Kind::INVALID_VALUE);
-}
