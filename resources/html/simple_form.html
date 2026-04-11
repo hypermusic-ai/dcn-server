@@ -21,6 +21,7 @@
         import {
             fetchBeforeExecute,
             saveInstanceEdit,
+            removeInstanceEdit,
             closePopup,
             execute
         } from './js/execute';
@@ -40,6 +41,8 @@
             updateConnectorPreview,
             addConnectorDimension,
             clearConnectorDimensions,
+            addConnectorStaticRi,
+            clearConnectorStaticRi,
             sendStructuredConnector,
             getConnector,
 
@@ -60,6 +63,7 @@
 
         document.getElementById('btn_fetchBeforeExecute').addEventListener('click', fetchBeforeExecute);
         document.getElementById('btn_saveInstanceEdit').addEventListener('click', saveInstanceEdit);
+        document.getElementById('btn_removeInstanceEdit').addEventListener('click', removeInstanceEdit);
         document.getElementById('btn_closePopup').addEventListener('click', closePopup);
         document.getElementById('btn_execute').addEventListener('click', execute);
         document.getElementById('executeName').addEventListener('input', updateExecuteActionAvailability);
@@ -82,6 +86,8 @@
         document.getElementById('in_connectorName').addEventListener('input', updateConnectorPreview);
         document.getElementById('btn_addConnectorDimension').addEventListener('click', addConnectorDimension);
         document.getElementById('btn_clearConnectorDimensions').addEventListener('click', clearConnectorDimensions);
+        document.getElementById('btn_addConnectorStaticRi').addEventListener('click', addConnectorStaticRi);
+        document.getElementById('btn_clearConnectorStaticRi').addEventListener('click', clearConnectorStaticRi);
         document.getElementById('in_connectorConditionName').addEventListener('input', updateConnectorPreview);
         document.getElementById('in_connectorConditionArgs').addEventListener('input', updateConnectorPreview);
         document.getElementById('btn_sendStructuredConnector').addEventListener('click', sendStructuredConnector);
@@ -219,7 +225,10 @@
                                 <button id="btn_execute" class="action-button">🔒 Execute</button>
                             </div>
 
-                            <p class="tab-hint">Click any node in the dependency graph to edit running instance values.</p>
+                            <p class="tab-hint">Click any node in the dependency graph (including scalar dots) to edit running instance values.</p>
+                            <p class="tab-hint">Only explicitly saved RI values are sent in execute request.</p>
+                            <p class="tab-hint">Blue border means static RI is present. "Static RI (locked)" nodes block popup edits; "Fallback RI (overrideable)" nodes can still be edited.</p>
+                            <p class="tab-hint">Green glow means dynamic RI is set in popup.</p>
                             <p class="tab-hint">Dotted circles are scalar outputs. Amber boxes with dashed links are connectors introduced by bindings.</p>
 
                             <label>Execute response</label>
@@ -270,6 +279,16 @@
                                 <button id="btn_clearConnectorDimensions" type="button">Clear dimensions</button>
                             </div>
                             <div id="connectorDimensionsContainer"></div>
+
+                            <label>Static running instances</label>
+                            <p class="helper-text">Static RI uses DFS connector-tree positions: <code>0</code> is root, then composites/bindings descendants in traversal order.</p>
+                            <div class="button-row">
+                                <button id="btn_addConnectorStaticRi" type="button">Add static RI</button>
+                                <button id="btn_clearConnectorStaticRi" type="button">Clear static RI</button>
+                            </div>
+                            <p id="connectorStaticRiTreeStatus" class="helper-text connector-static-ri-tree-status">Loading static RI positions...</p>
+                            <p id="connectorStaticRiValidationStatus" class="helper-text connector-static-ri-tree-status"></p>
+                            <div id="connectorStaticRiContainer"></div>
 
                             <div class="button-row">
                                 <button id="btn_sendStructuredConnector" class="action-button">🔒 Send</button>
@@ -477,6 +496,7 @@
         <input type="number" id="popupTransformShift">
         <div class="button-row">
             <button id="btn_saveInstanceEdit">Save</button>
+            <button id="btn_removeInstanceEdit">Remove RI</button>
             <button id="btn_closePopup">Cancel</button>
         </div>
     </div>

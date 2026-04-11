@@ -90,11 +90,15 @@ namespace dcn
         std::string binding_dim_ids_code;
         std::string binding_slot_ids_code;
         std::string binding_names_code;
+        std::string static_ri_positions_code;
+        std::string static_ri_start_points_code;
+        std::string static_ri_transform_shifts_code;
         std::string condition_args_code;
         std::string transform_def_code;
 
         std::vector<std::pair<std::uint32_t, std::string>> sorted_composites;
         std::vector<std::tuple<std::uint32_t, std::uint32_t, std::string>> sorted_bindings;
+        std::vector<std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>> sorted_static_ri;
         std::set<std::pair<std::uint32_t, std::uint32_t>> canonical_binding_slots;
         const std::string escaped_connector_name = _escapeSolidityStringLiteral(connector.name());
         const std::string escaped_condition_name = _escapeSolidityStringLiteral(connector.condition_name());
@@ -234,6 +238,19 @@ namespace dcn
             return std::get<2>(lhs) < std::get<2>(rhs);
         });
 
+        sorted_static_ri.reserve(static_cast<std::size_t>(connector.static_ri_size()));
+        for(const auto & [position, running_instance] : connector.static_ri())
+        {
+            sorted_static_ri.emplace_back(
+                position,
+                running_instance.start_point(),
+                running_instance.transformation_shift());
+        }
+        std::ranges::sort(sorted_static_ri, [](const auto & lhs, const auto & rhs)
+        {
+            return std::get<0>(lhs) < std::get<0>(rhs);
+        });
+
         for(unsigned int i = 0; i < connector.condition_args_size(); ++i)
         {
             condition_args_code += std::format(
@@ -259,6 +276,22 @@ namespace dcn
                 "bindingNames[{}] = \"{}\";\n",
                 i,
                 _escapeSolidityStringLiteral(std::get<2>(sorted_bindings[i])));
+        }
+
+        for(std::size_t i = 0; i < sorted_static_ri.size(); ++i)
+        {
+            static_ri_positions_code += std::format(
+                "staticRiPositions[{}] = uint32({});\n",
+                i,
+                std::get<0>(sorted_static_ri[i]));
+            static_ri_start_points_code += std::format(
+                "staticRiStartPoints[{}] = uint32({});\n",
+                i,
+                std::get<1>(sorted_static_ri[i]));
+            static_ri_transform_shifts_code += std::format(
+                "staticRiTransformShifts[{}] = uint32({});\n",
+                i,
+                std::get<2>(sorted_static_ri[i]));
         }
 
         for(int i = 0; i < connector.dimensions_size(); ++i)
@@ -318,13 +351,25 @@ namespace dcn
             "bindingNames = new string[]({4});"
             "{7}"
             "}}\n"
-            "function _conditionArgs() internal pure returns (int32[] memory conditionArgs) {{"
-            "conditionArgs = new int32[]({8});"
+            "function _staticRiPositions() internal pure returns (uint32[] memory staticRiPositions) {{"
+            "staticRiPositions = new uint32[]({8});"
             "{9}"
             "}}\n"
-            "constructor(address registryAddr) ConnectorBase(registryAddr, \"{13}\", {10}) {{\n"
+            "function _staticRiStartPoints() internal pure returns (uint32[] memory staticRiStartPoints) {{"
+            "staticRiStartPoints = new uint32[]({8});"
+            "{10}"
+            "}}\n"
+            "function _staticRiTransformShifts() internal pure returns (uint32[] memory staticRiTransformShifts) {{"
+            "staticRiTransformShifts = new uint32[]({8});"
             "{11}"
-            "__ConnectorBase_finalizeInit(_compositeDimIds(), _compositeNames(), _bindingDimIds(), _bindingSlotIds(), _bindingNames(), \"{12}\", _conditionArgs());\n"
+            "}}\n"
+            "function _conditionArgs() internal pure returns (int32[] memory conditionArgs) {{"
+            "conditionArgs = new int32[]({12});"
+            "{13}"
+            "}}\n"
+            "constructor(address registryAddr) ConnectorBase(registryAddr, \"{17}\", {14}) {{\n"
+            "{15}"
+            "__ConnectorBase_finalizeInit(_compositeDimIds(), _compositeNames(), _bindingDimIds(), _bindingSlotIds(), _bindingNames(), _staticRiPositions(), _staticRiStartPoints(), _staticRiTransformShifts(), \"{16}\", _conditionArgs());\n"
             "}}\n"
             "}}",
 
@@ -336,12 +381,16 @@ namespace dcn
             std::move(binding_dim_ids_code),          // 5
             std::move(binding_slot_ids_code),         // 6
             std::move(binding_names_code),            // 7
-            connector.condition_args_size(),          // 8
-            std::move(condition_args_code),           // 9
-            connector.dimensions_size(),              // 10
-            std::move(transform_def_code),            // 11
-            escaped_condition_name,                   // 12
-            escaped_connector_name                   // 13
+            sorted_static_ri.size(),                  // 8
+            std::move(static_ri_positions_code),      // 9
+            std::move(static_ri_start_points_code),   // 10
+            std::move(static_ri_transform_shifts_code), // 11
+            connector.condition_args_size(),          // 12
+            std::move(condition_args_code),           // 13
+            connector.dimensions_size(),              // 14
+            std::move(transform_def_code),            // 15
+            escaped_condition_name,                   // 16
+            escaped_connector_name                    // 17
         );
     }
 }
@@ -763,6 +812,29 @@ namespace dcn::parse
             json_obj["condition_args"].emplace_back(condition_arg);
         }
 
+        json_obj["static_ri"] = json::object();
+        std::vector<std::pair<std::uint32_t, RunningInstance>> sorted_static_ri;
+        sorted_static_ri.reserve(static_cast<std::size_t>(connector.static_ri_size()));
+        for(const auto & [position, running_instance] : connector.static_ri())
+        {
+            sorted_static_ri.emplace_back(position, running_instance);
+        }
+        std::ranges::sort(sorted_static_ri, [](const auto & lhs, const auto & rhs)
+        {
+            return lhs.first < rhs.first;
+        });
+
+        for(const auto & [position, running_instance] : sorted_static_ri)
+        {
+            auto running_instance_res = parseToJson(running_instance, use_json);
+            if(!running_instance_res)
+            {
+                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid static_ri value"});
+            }
+
+            json_obj["static_ri"][std::to_string(position)] = std::move(*running_instance_res);
+        }
+
         return json_obj;
     }
 
@@ -834,6 +906,31 @@ namespace dcn::parse
             }
 
             connector.add_condition_args(*parsed_arg);
+        }
+
+        if(json_obj.contains("static_ri"))
+        {
+            if(!json_obj["static_ri"].is_object())
+            {
+                return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid static_ri"});
+            }
+
+            for(const auto & [position_key, running_instance_json] : json_obj["static_ri"].items())
+            {
+                const auto position_opt = parse::parseUint32Decimal(position_key);
+                if(!position_opt || position_key != std::to_string(*position_opt))
+                {
+                    return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid static_ri key"});
+                }
+
+                auto running_instance_res = parseFromJson<RunningInstance>(running_instance_json, use_json);
+                if(!running_instance_res)
+                {
+                    return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid static_ri value"});
+                }
+
+                (*connector.mutable_static_ri())[*position_opt] = *running_instance_res;
+            }
         }
 
         if(const auto connector_error = _validateConnectorSemantics(connector); connector_error)

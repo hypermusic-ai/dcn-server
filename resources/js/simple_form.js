@@ -185,10 +185,37 @@ function parseIntList(value) {
         .filter(item => !Number.isNaN(item));
 }
 
+function parseUint32Input(value) {
+    if (typeof value !== 'string') {
+        return null;
+    }
+
+    const trimmed = value.trim();
+    if (!/^\d+$/.test(trimmed)) {
+        return null;
+    }
+
+    const parsed = Number.parseInt(trimmed, 10);
+    if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 0xFFFFFFFF) {
+        return null;
+    }
+
+    return parsed;
+}
+
 const connectorDefinitionCache = new Map();
 const connectorBindingPointCache = new Map();
 const connectorBindingRefreshTimers = new WeakMap();
 const connectorBindingRefreshTokens = new WeakMap();
+const connectorStaticRiTreeRefreshDelayMs = 250;
+let connectorStaticRiTreeRefreshTimer = null;
+let connectorStaticRiTreeRefreshToken = 0;
+let connectorStaticRiPositionOptions = [];
+let connectorStaticRiValidationErrors = [];
+const connectorStaticRiOptionLabelMaxLength = 120;
+const connectorStaticRiValidationSummaryMaxItems = 10;
+const connectorStaticRiFocusHighlightDurationMs = 1500;
+const connectorStaticRiFocusHighlightTimers = new WeakMap();
 let disabledFieldTooltipElement = null;
 let disabledFieldTooltipInitialized = false;
 let disabledFieldTooltipTarget = null;
@@ -379,6 +406,274 @@ function updateClearConnectorDimensionsAvailability() {
     setControlAvailability(clearButton, hasDimensions, 'Add at least one dimension first.');
 }
 
+function updateClearConnectorStaticRiAvailability() {
+    const clearButton = document.getElementById('btn_clearConnectorStaticRi');
+    const staticRiContainer = document.getElementById('connectorStaticRiContainer');
+    if (!clearButton || !staticRiContainer) {
+        return;
+    }
+
+    const hasStaticRiEntries = staticRiContainer.querySelector('.connector-static-ri') !== null;
+    setControlAvailability(clearButton, hasStaticRiEntries, 'Add at least one static RI first.');
+}
+
+function updateAddConnectorStaticRiAvailability() {
+    const addButton = document.getElementById('btn_addConnectorStaticRi');
+    if (!addButton) {
+        return;
+    }
+
+    const usedPositions = getUsedConnectorStaticRiPositions();
+    const hasAvailablePosition = connectorStaticRiPositionOptions.some(({ position }) => !usedPositions.has(position));
+    setControlAvailability(
+        addButton,
+        hasAvailablePosition,
+        connectorStaticRiPositionOptions.length === 0
+            ? 'Static RI positions are unavailable.'
+            : 'All static RI positions are already used.'
+    );
+}
+
+function setConnectorStaticRiTreeStatus(message, isError = false) {
+    const statusElement = document.getElementById('connectorStaticRiTreeStatus');
+    if (!statusElement) {
+        return;
+    }
+
+    const normalizedMessage = typeof message === 'string' && message.trim().length > 0
+        ? message.trim()
+        : 'Static RI positions are unavailable.';
+    statusElement.textContent = normalizedMessage;
+    statusElement.classList.toggle('is-error', Boolean(isError));
+}
+
+function truncateConnectorStaticRiOptionLabel(label) {
+    const normalizedLabel = typeof label === 'string' ? label.trim() : String(label ?? '');
+    if (normalizedLabel.length <= connectorStaticRiOptionLabelMaxLength) {
+        return normalizedLabel;
+    }
+
+    const prefixLength = Math.max(0, connectorStaticRiOptionLabelMaxLength - 3);
+    return `${normalizedLabel.slice(0, prefixLength)}...`;
+}
+
+function focusConnectorStaticRiRow(rowIndex) {
+    if (!Number.isInteger(rowIndex) || rowIndex <= 0) {
+        return;
+    }
+
+    const rowElement = document.querySelector(`#connectorStaticRiContainer > .connector-static-ri:nth-of-type(${rowIndex})`);
+    if (!(rowElement instanceof HTMLElement)) {
+        return;
+    }
+
+    triggerConnectorStaticRiRowHighlight(rowElement);
+
+    rowElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest'
+    });
+
+    const focusTarget = rowElement.querySelector(
+        '.connector-static-ri-position, .connector-static-ri-start-point, .connector-static-ri-transform-shift'
+    );
+    if (focusTarget instanceof HTMLElement) {
+        focusTarget.focus({ preventScroll: true });
+    }
+}
+
+function triggerConnectorStaticRiRowHighlight(rowElement) {
+    if (!(rowElement instanceof HTMLElement)) {
+        return;
+    }
+
+    const existingTimeout = connectorStaticRiFocusHighlightTimers.get(rowElement);
+    if (existingTimeout) {
+        clearTimeout(existingTimeout);
+    }
+
+    rowElement.classList.remove('is-focus-highlight');
+    // Force reflow so the CSS animation restarts on repeated clicks.
+    void rowElement.offsetWidth;
+    rowElement.classList.add('is-focus-highlight');
+
+    const timeoutHandle = setTimeout(() => {
+        rowElement.classList.remove('is-focus-highlight');
+        connectorStaticRiFocusHighlightTimers.delete(rowElement);
+    }, connectorStaticRiFocusHighlightDurationMs);
+
+    connectorStaticRiFocusHighlightTimers.set(rowElement, timeoutHandle);
+}
+
+function setConnectorStaticRiValidationStatus(errors = []) {
+    const statusElement = document.getElementById('connectorStaticRiValidationStatus');
+    if (!statusElement) {
+        return;
+    }
+
+    if (!Array.isArray(errors) || errors.length === 0) {
+        statusElement.textContent = '';
+        statusElement.classList.remove('is-error');
+        return;
+    }
+
+    const normalizedErrors = errors
+        .filter((errorMessage) => typeof errorMessage === 'string' && errorMessage.trim().length > 0)
+        .map((errorMessage) => errorMessage.trim());
+    if (normalizedErrors.length === 0) {
+        statusElement.textContent = '';
+        statusElement.classList.remove('is-error');
+        return;
+    }
+
+    statusElement.textContent = '';
+
+    const visibleErrors = normalizedErrors.slice(0, connectorStaticRiValidationSummaryMaxItems);
+    for (const errorMessage of visibleErrors) {
+        const rowMatch = /^Row\s+(\d+):/.exec(errorMessage);
+        const rowIndex = rowMatch ? Number.parseInt(rowMatch[1], 10) : null;
+
+        if (rowIndex !== null && Number.isInteger(rowIndex) && rowIndex > 0) {
+            const linkButton = document.createElement('button');
+            linkButton.type = 'button';
+            linkButton.className = 'connector-static-ri-summary-link';
+            linkButton.textContent = `- ${errorMessage}`;
+            linkButton.title = `Go to row ${rowIndex}`;
+            linkButton.addEventListener('click', () => focusConnectorStaticRiRow(rowIndex));
+            statusElement.appendChild(linkButton);
+            continue;
+        }
+
+        const summaryLine = document.createElement('div');
+        summaryLine.className = 'connector-static-ri-summary-line';
+        summaryLine.textContent = `- ${errorMessage}`;
+        statusElement.appendChild(summaryLine);
+    }
+
+    const hiddenErrorsCount = normalizedErrors.length - visibleErrors.length;
+    if (hiddenErrorsCount > 0) {
+        const summaryLine = document.createElement('div');
+        summaryLine.className = 'connector-static-ri-summary-line';
+        summaryLine.textContent = `- ... and ${hiddenErrorsCount} more error(s).`;
+        statusElement.appendChild(summaryLine);
+    }
+
+    statusElement.classList.add('is-error');
+}
+
+function setConnectorStaticRiEntryValidation(entryElement, message = '') {
+    if (!entryElement) {
+        return;
+    }
+
+    const errorElement = entryElement.querySelector('.connector-static-ri-error');
+    const normalizedMessage = typeof message === 'string' ? message.trim() : '';
+    const hasError = normalizedMessage.length > 0;
+
+    entryElement.classList.toggle('has-error', hasError);
+    if (!errorElement) {
+        return;
+    }
+
+    errorElement.textContent = hasError ? normalizedMessage : '';
+    errorElement.classList.toggle('is-error', hasError);
+}
+
+function setConnectorStaticRiPositionSelectOptions(positionSelect, selectedPosition = '') {
+    if (!(positionSelect instanceof HTMLSelectElement)) {
+        return;
+    }
+
+    const normalizedSelectedPosition = typeof selectedPosition === 'string'
+        ? selectedPosition.trim()
+        : '';
+
+    positionSelect.innerHTML = '';
+
+    const placeholderOption = document.createElement('option');
+    placeholderOption.value = '';
+    placeholderOption.textContent = 'Select connector position';
+    positionSelect.appendChild(placeholderOption);
+
+    let hasSelectedOption = false;
+    connectorStaticRiPositionOptions.forEach(({ position, label }) => {
+        const option = document.createElement('option');
+        option.value = String(position);
+        const compactLabel = truncateConnectorStaticRiOptionLabel(label);
+        option.textContent = `${position} - ${compactLabel}`;
+        option.title = `${position} - ${label}`;
+        positionSelect.appendChild(option);
+
+        if (option.value === normalizedSelectedPosition) {
+            hasSelectedOption = true;
+        }
+    });
+
+    if (normalizedSelectedPosition && !hasSelectedOption) {
+        const unresolvedOption = document.createElement('option');
+        unresolvedOption.value = normalizedSelectedPosition;
+        unresolvedOption.textContent = `${normalizedSelectedPosition} - unresolved position`;
+        unresolvedOption.title = unresolvedOption.textContent;
+        positionSelect.appendChild(unresolvedOption);
+        hasSelectedOption = true;
+    }
+
+    positionSelect.value = hasSelectedOption ? normalizedSelectedPosition : '';
+    const hasAvailableOption = connectorStaticRiPositionOptions.length > 0 || hasSelectedOption;
+    setControlAvailability(
+        positionSelect,
+        hasAvailableOption,
+        'Static RI positions are unavailable.'
+    );
+
+    const selectedOption = positionSelect.selectedOptions.length > 0
+        ? positionSelect.selectedOptions[0]
+        : null;
+    positionSelect.title = selectedOption?.title || selectedOption?.textContent || '';
+}
+
+function refreshConnectorStaticRiPositionInputs() {
+    const positionSelects = document.querySelectorAll('.connector-static-ri-position');
+    positionSelects.forEach((positionSelect) => {
+        if (!(positionSelect instanceof HTMLSelectElement)) {
+            return;
+        }
+        setConnectorStaticRiPositionSelectOptions(positionSelect, positionSelect.value);
+    });
+}
+
+function getUsedConnectorStaticRiPositions() {
+    const usedPositions = new Set();
+    document.querySelectorAll('#connectorStaticRiContainer > .connector-static-ri .connector-static-ri-position').forEach((positionSelect) => {
+        if (!(positionSelect instanceof HTMLSelectElement)) {
+            return;
+        }
+
+        const parsedPosition = parseUint32Input(positionSelect.value);
+        if (parsedPosition === null) {
+            return;
+        }
+
+        usedPositions.add(parsedPosition);
+    });
+    return usedPositions;
+}
+
+function buildDefaultConnectorStaticRi() {
+    const usedPositions = getUsedConnectorStaticRiPositions();
+    const nextFreePosition = connectorStaticRiPositionOptions.find(({ position }) => !usedPositions.has(position));
+    if (!nextFreePosition) {
+        return null;
+    }
+
+    return {
+        position: nextFreePosition.position,
+        start_point: 0,
+        transformation_shift: 0
+    };
+}
+
 function updateConnectorConditionArgsAvailability() {
     const conditionNameInput = document.getElementById('in_connectorConditionName');
     const conditionArgsInput = document.getElementById('in_connectorConditionArgs');
@@ -423,12 +718,21 @@ function updateTransformationArgsAvailability(transformationElement) {
 function syncConnectorFormAvailability() {
     ensureDisabledFieldTooltip();
     updateClearConnectorDimensionsAvailability();
+    updateAddConnectorStaticRiAvailability();
+    updateClearConnectorStaticRiAvailability();
     updateConnectorConditionArgsAvailability();
     const connectorNameInput = document.getElementById('in_connectorName');
     const connectorSendButton = document.getElementById('btn_sendStructuredConnector');
     const connectorFetchButton = document.getElementById('btn_getConnector');
     const hasConnectorName = Boolean(connectorNameInput && connectorNameInput.value.trim().length > 0);
-    setControlAvailability(connectorSendButton, hasConnectorName, 'Fill connector name first.');
+    const hasStaticRiValidationErrors = connectorStaticRiValidationErrors.length > 0;
+    setControlAvailability(
+        connectorSendButton,
+        hasConnectorName && !hasStaticRiValidationErrors,
+        hasConnectorName
+            ? connectorStaticRiValidationErrors[0]
+            : 'Fill connector name first.'
+    );
     setControlAvailability(connectorFetchButton, hasConnectorName, 'Fill connector name first.');
 
     document
@@ -563,6 +867,475 @@ async function fetchBindingPointOptions(connectorName) {
         connectorBindingPointCache.delete(normalizedName);
         throw error;
     }
+}
+
+async function buildConnectorStaticRiPositionOptions() {
+    const connectorNameInput = document.getElementById('in_connectorName');
+    const draftConnectorLookupName = normalizeConnectorName(connectorNameInput ? connectorNameInput.value : '');
+    const draftConnectorDisplayName = draftConnectorLookupName || '(draft)';
+    const draftDimensions = parseConnectorDimensions({ dimensions: parseConnectorDimensionsFromForm() });
+    const staticRiPositionOptions = [];
+    const connectorContextDefinitionCache = new Map();
+    const connectorOpenSlotsCache = new Map();
+    let positionCounter = 0;
+
+    const draftConnectorDescriptor = {
+        resolvedName: draftConnectorDisplayName,
+        dimensions: draftDimensions,
+        resolved: true,
+        cacheKey: '__draft__'
+    };
+
+    function createUnresolvedDescriptor(name) {
+        const normalizedName = normalizeConnectorName(name);
+        return {
+            resolvedName: normalizedName || '(unknown)',
+            dimensions: [],
+            resolved: false,
+            cacheKey: `connector:${(normalizedName || '(unknown)').toLowerCase()}`
+        };
+    }
+
+    async function resolveConnectorDescriptor(connectorName) {
+        const normalizedConnectorName = normalizeConnectorName(connectorName);
+        if (!normalizedConnectorName) {
+            return createUnresolvedDescriptor(connectorName);
+        }
+
+        if (
+            draftConnectorLookupName &&
+            normalizedConnectorName.toLowerCase() === draftConnectorLookupName.toLowerCase()
+        ) {
+            return draftConnectorDescriptor;
+        }
+
+        const lookupKey = normalizedConnectorName.toLowerCase();
+        if (connectorContextDefinitionCache.has(lookupKey)) {
+            return connectorContextDefinitionCache.get(lookupKey);
+        }
+
+        try {
+            const connector = await fetchConnectorDefinition(normalizedConnectorName);
+            const resolvedName = normalizeConnectorName(connector?.name) || normalizedConnectorName;
+            const descriptor = {
+                resolvedName,
+                dimensions: parseConnectorDimensions(connector),
+                resolved: true,
+                cacheKey: `connector:${lookupKey}`
+            };
+            connectorContextDefinitionCache.set(lookupKey, descriptor);
+            return descriptor;
+        } catch {
+            const unresolvedDescriptor = createUnresolvedDescriptor(normalizedConnectorName);
+            connectorContextDefinitionCache.set(lookupKey, unresolvedDescriptor);
+            return unresolvedDescriptor;
+        }
+    }
+
+    async function computeOpenSlots(descriptor, visiting = new Set()) {
+        if (!descriptor || typeof descriptor !== 'object') {
+            return { openSlots: 1, fullyResolved: false };
+        }
+
+        if (connectorOpenSlotsCache.has(descriptor.cacheKey)) {
+            return connectorOpenSlotsCache.get(descriptor.cacheKey);
+        }
+
+        if (visiting.has(descriptor.cacheKey)) {
+            throw new Error(`Connector cycle detected at '${descriptor.resolvedName}'`);
+        }
+
+        if (!descriptor.resolved) {
+            const unresolvedResult = { openSlots: 1, fullyResolved: false };
+            connectorOpenSlotsCache.set(descriptor.cacheKey, unresolvedResult);
+            return unresolvedResult;
+        }
+
+        visiting.add(descriptor.cacheKey);
+        try {
+            let openSlots = 0;
+            let fullyResolved = true;
+
+            for (let dimId = 0; dimId < descriptor.dimensions.length; dimId++) {
+                const dimension = descriptor.dimensions[dimId];
+                if (!dimension.composite) {
+                    openSlots += 1;
+                    continue;
+                }
+
+                const childDescriptor = await resolveConnectorDescriptor(dimension.composite);
+                const childOpenSlotsInfo = await computeOpenSlots(childDescriptor, visiting);
+                openSlots += childOpenSlotsInfo.openSlots;
+                if (!childOpenSlotsInfo.fullyResolved) {
+                    fullyResolved = false;
+                }
+
+                const boundTargetsByChildSlot = new Map();
+                getSortedBindingEntries(dimension.bindings).forEach(({ slotId, targetName }) => {
+                    if (childOpenSlotsInfo.fullyResolved && slotId >= childOpenSlotsInfo.openSlots) {
+                        throw new Error(
+                            `Connector '${descriptor.resolvedName}' has out-of-range binding slot ${slotId} ` +
+                            `at dimension ${dimId} (child '${dimension.composite}' exports ${childOpenSlotsInfo.openSlots} slots)`
+                        );
+                    }
+
+                    if (boundTargetsByChildSlot.has(slotId)) {
+                        throw new Error(
+                            `Connector '${descriptor.resolvedName}' has duplicate canonical binding slot ${slotId} ` +
+                            `at dimension ${dimId}`
+                        );
+                    }
+
+                    boundTargetsByChildSlot.set(slotId, targetName);
+                });
+
+                for (const targetName of boundTargetsByChildSlot.values()) {
+                    const targetDescriptor = await resolveConnectorDescriptor(targetName);
+                    const targetOpenSlotsInfo = await computeOpenSlots(targetDescriptor, visiting);
+                    openSlots += targetOpenSlotsInfo.openSlots;
+                    if (!targetOpenSlotsInfo.fullyResolved) {
+                        fullyResolved = false;
+                    }
+                }
+
+                openSlots -= boundTargetsByChildSlot.size;
+            }
+
+            const result = { openSlots, fullyResolved };
+            connectorOpenSlotsCache.set(descriptor.cacheKey, result);
+            return result;
+        } finally {
+            visiting.delete(descriptor.cacheKey);
+        }
+    }
+
+    function getSortedIncomingBindingEntries(bindings) {
+        const entries = [];
+        for (const [slotId, binding] of bindings.entries()) {
+            if (!Number.isInteger(slotId) || slotId < 0) {
+                continue;
+            }
+
+            if (!binding || typeof binding !== 'object') {
+                continue;
+            }
+
+            const targetName = typeof binding.targetName === 'string' ? binding.targetName.trim() : '';
+            if (!targetName) {
+                continue;
+            }
+
+            const fromSlot = Number.isInteger(binding.fromSlot) ? binding.fromSlot : slotId;
+            const kind = binding.kind === 'static' ? 'static' : 'forwarded';
+            const forwarded = binding.forwarded instanceof Map ? binding.forwarded : new Map();
+            entries.push([slotId, { targetName, fromSlot, kind, forwarded }]);
+        }
+
+        entries.sort((lhs, rhs) => lhs[0] - rhs[0]);
+        return entries;
+    }
+
+    function cloneBindingMap(bindingMap) {
+        const cloned = new Map();
+        if (!(bindingMap instanceof Map)) {
+            return cloned;
+        }
+
+        for (const [slotId, binding] of bindingMap.entries()) {
+            if (!Number.isInteger(slotId) || slotId < 0) {
+                continue;
+            }
+
+            const clonedBinding = cloneBindingDescriptor(binding, slotId);
+            if (!clonedBinding) {
+                continue;
+            }
+
+            cloned.set(slotId, clonedBinding);
+        }
+
+        return cloned;
+    }
+
+    function cloneBindingDescriptor(binding, fallbackSlotId = 0) {
+        if (!binding || typeof binding !== 'object') {
+            return null;
+        }
+
+        const targetName = typeof binding.targetName === 'string' ? binding.targetName.trim() : '';
+        if (!targetName) {
+            return null;
+        }
+
+        const fromSlot = Number.isInteger(binding.fromSlot) ? binding.fromSlot : fallbackSlotId;
+        const kind = binding.kind === 'static' ? 'static' : 'forwarded';
+        return {
+            targetName,
+            kind,
+            fromSlot,
+            forwarded: cloneBindingMap(binding.forwarded)
+        };
+    }
+
+    function cloneBindingAsForwarded(binding, fallbackSlotId = 0) {
+        const cloned = cloneBindingDescriptor(binding, fallbackSlotId);
+        if (!cloned) {
+            return null;
+        }
+
+        cloned.kind = 'forwarded';
+        return cloned;
+    }
+
+    async function expandConnector({
+        descriptor,
+        parentPath,
+        incomingBindings,
+        boundDescriptor,
+        isRoot = false
+    }) {
+        const fullPath = `${parentPath}/${descriptor.resolvedName}`;
+        const positionId = positionCounter++;
+
+        if (isRoot) {
+            staticRiPositionOptions.push({
+                position: positionId,
+                label: `Root connector ${fullPath}`
+            });
+        } else if (boundDescriptor) {
+            staticRiPositionOptions.push({
+                position: positionId,
+                label: `Bound connector ${fullPath} (${boundDescriptor.slotLabel})${descriptor.resolved ? '' : ' (unresolved)'}`
+            });
+        } else {
+            staticRiPositionOptions.push({
+                position: positionId,
+                label: `Connector ${fullPath}${descriptor.resolved ? '' : ' (unresolved)'}`
+            });
+        }
+
+        if (!descriptor.resolved) {
+            return;
+        }
+
+        let openSlotId = 0;
+        for (let dimId = 0; dimId < descriptor.dimensions.length; dimId++) {
+            const dimension = descriptor.dimensions[dimId];
+            if (!dimension.composite) {
+                const replacement = incomingBindings.get(openSlotId);
+                if (replacement) {
+                    const replacementDescriptor = await resolveConnectorDescriptor(replacement.targetName);
+                    const slotLabel = replacement.kind === 'forwarded'
+                        ? `slot ${openSlotId} (forwarded from ${replacement.fromSlot})`
+                        : `slot ${openSlotId} (static)`;
+
+                    await expandConnector({
+                        descriptor: replacementDescriptor,
+                        parentPath: `${fullPath}:${dimId}`,
+                        incomingBindings: cloneBindingMap(replacement.forwarded),
+                        boundDescriptor: {
+                            kind: replacement.kind,
+                            slotLabel
+                        },
+                        isRoot: false
+                    });
+                } else {
+                    staticRiPositionOptions.push({
+                        position: positionCounter++,
+                        label: `Scalar ${fullPath}:${dimId}`
+                    });
+                }
+
+                openSlotId += 1;
+                continue;
+            }
+
+            const childDescriptor = await resolveConnectorDescriptor(dimension.composite);
+            const childOpenSlotsInfo = await computeOpenSlots(childDescriptor, new Set());
+            const childOpenSlots = childOpenSlotsInfo.openSlots;
+
+            const staticBindingMap = new Map();
+            getSortedBindingEntries(dimension.bindings).forEach(({ slotId, targetName }) => {
+                if (childOpenSlotsInfo.fullyResolved && slotId >= childOpenSlots) {
+                    throw new Error(
+                        `Connector '${descriptor.resolvedName}' has out-of-range binding slot ${slotId} ` +
+                        `at dimension ${dimId} (child '${dimension.composite}' exports ${childOpenSlots} slots)`
+                    );
+                }
+
+                if (staticBindingMap.has(slotId)) {
+                    throw new Error(
+                        `Connector '${descriptor.resolvedName}' has duplicate canonical binding slot ${slotId} ` +
+                        `at dimension ${dimId}`
+                    );
+                }
+
+                staticBindingMap.set(slotId, targetName);
+            });
+
+            const slotProjectedStarts = new Array(childOpenSlots).fill(0);
+            const slotProjectedWidths = new Array(childOpenSlots).fill(0);
+            const slotStaticTargets = new Array(childOpenSlots).fill('');
+            const slotSelectedBindings = new Array(childOpenSlots).fill(null);
+            const slotForwardedInternalBindings = Array.from({ length: childOpenSlots }, () => new Map());
+            let childOpenSlotsInParent = 0;
+
+            for (let childSlotId = 0; childSlotId < childOpenSlots; childSlotId++) {
+                slotProjectedStarts[childSlotId] = childOpenSlotsInParent;
+
+                const staticTargetName = staticBindingMap.get(childSlotId);
+                if (staticTargetName) {
+                    const staticTargetDescriptor = await resolveConnectorDescriptor(staticTargetName);
+                    const staticTargetOpenSlotsInfo = await computeOpenSlots(staticTargetDescriptor, new Set());
+
+                    slotStaticTargets[childSlotId] = staticTargetName;
+                    slotSelectedBindings[childSlotId] = {
+                        targetName: staticTargetName,
+                        kind: 'static',
+                        fromSlot: childSlotId,
+                        forwarded: new Map()
+                    };
+                    slotProjectedWidths[childSlotId] = staticTargetOpenSlotsInfo.openSlots;
+                    childOpenSlotsInParent += staticTargetOpenSlotsInfo.openSlots;
+                    continue;
+                }
+
+                slotProjectedWidths[childSlotId] = 1;
+                childOpenSlotsInParent += 1;
+            }
+
+            for (const [parentSlotId, parentBinding] of getSortedIncomingBindingEntries(incomingBindings)) {
+                if (parentSlotId < openSlotId) {
+                    continue;
+                }
+
+                const localSlotId = parentSlotId - openSlotId;
+                if (localSlotId >= childOpenSlotsInParent) {
+                    continue;
+                }
+
+                for (let childSlotId = 0; childSlotId < childOpenSlots; childSlotId++) {
+                    const rangeStart = slotProjectedStarts[childSlotId];
+                    const rangeWidth = slotProjectedWidths[childSlotId];
+                    if (!Number.isInteger(rangeWidth) || rangeWidth <= 0) {
+                        continue;
+                    }
+
+                    const rangeEndExclusive = rangeStart + rangeWidth;
+                    if (localSlotId < rangeStart || localSlotId >= rangeEndExclusive) {
+                        continue;
+                    }
+
+                    const staticTarget = slotStaticTargets[childSlotId];
+                    if (!staticTarget) {
+                        const forwardedBinding = cloneBindingAsForwarded(parentBinding, parentSlotId);
+                        if (forwardedBinding) {
+                            slotSelectedBindings[childSlotId] = forwardedBinding;
+                        }
+                        break;
+                    }
+
+                    const offset = localSlotId - rangeStart;
+                    const forwardedInternalBinding = cloneBindingAsForwarded(parentBinding, parentSlotId);
+                    if (forwardedInternalBinding) {
+                        slotForwardedInternalBindings[childSlotId].set(offset, forwardedInternalBinding);
+                    }
+                    break;
+                }
+            }
+
+            const childBindings = new Map();
+            for (let childSlotId = 0; childSlotId < childOpenSlots; childSlotId++) {
+                const selectedBinding = slotSelectedBindings[childSlotId];
+                if (!selectedBinding) {
+                    continue;
+                }
+
+                const finalizedBinding = cloneBindingDescriptor(selectedBinding, childSlotId);
+                if (!finalizedBinding) {
+                    continue;
+                }
+
+                if (slotStaticTargets[childSlotId]) {
+                    finalizedBinding.forwarded = cloneBindingMap(slotForwardedInternalBindings[childSlotId]);
+                }
+
+                childBindings.set(childSlotId, finalizedBinding);
+            }
+
+            await expandConnector({
+                descriptor: childDescriptor,
+                parentPath: `${fullPath}:${dimId}`,
+                incomingBindings: childBindings,
+                boundDescriptor: null,
+                isRoot: false
+            });
+
+            openSlotId += childOpenSlotsInParent;
+        }
+    }
+
+    await expandConnector({
+        descriptor: draftConnectorDescriptor,
+        parentPath: '',
+        incomingBindings: new Map(),
+        boundDescriptor: null,
+        isRoot: true
+    });
+
+    return staticRiPositionOptions;
+}
+
+function scheduleConnectorStaticRiTreeRefresh(immediate = false) {
+    if (connectorStaticRiTreeRefreshTimer) {
+        clearTimeout(connectorStaticRiTreeRefreshTimer);
+    }
+
+    const runRefresh = () => {
+        connectorStaticRiTreeRefreshTimer = null;
+        void refreshConnectorStaticRiTreePositions();
+    };
+
+    if (immediate) {
+        runRefresh();
+        return;
+    }
+
+    connectorStaticRiTreeRefreshTimer = setTimeout(runRefresh, connectorStaticRiTreeRefreshDelayMs);
+}
+
+async function refreshConnectorStaticRiTreePositions() {
+    const token = connectorStaticRiTreeRefreshToken + 1;
+    connectorStaticRiTreeRefreshToken = token;
+    setConnectorStaticRiTreeStatus('Loading static RI positions...', false);
+
+    try {
+        const options = await buildConnectorStaticRiPositionOptions();
+        if (connectorStaticRiTreeRefreshToken !== token) {
+            return;
+        }
+
+        connectorStaticRiPositionOptions = options;
+        refreshConnectorStaticRiPositionInputs();
+        setConnectorStaticRiTreeStatus(
+            `${connectorStaticRiPositionOptions.length} DFS position(s) available (0..${Math.max(0, connectorStaticRiPositionOptions.length - 1)}).`,
+            false
+        );
+    } catch (error) {
+        if (connectorStaticRiTreeRefreshToken !== token) {
+            return;
+        }
+
+        connectorStaticRiPositionOptions = [];
+        refreshConnectorStaticRiPositionInputs();
+        setConnectorStaticRiTreeStatus(
+            error?.message || 'Failed to resolve static RI positions.',
+            true
+        );
+    }
+
+    renderConnectorPreviewBody();
+    syncConnectorFormAvailability();
 }
 
 function setBindingPointStatus(dimensionElement, message) {
@@ -791,6 +1564,135 @@ function parseConnectorDimensionsFromForm() {
         });
     });
     return dimensions;
+}
+
+function parseConnectorStaticRiFromForm() {
+    const rowStates = [];
+    const positionsMap = new Map();
+    const allowedPositions = new Set();
+    let maxAllowedPosition = 0;
+
+    connectorStaticRiPositionOptions.forEach(({ position }) => {
+        if (!Number.isInteger(position) || position < 0) {
+            return;
+        }
+        allowedPositions.add(position);
+        if (position > maxAllowedPosition) {
+            maxAllowedPosition = position;
+        }
+    });
+
+    document.querySelectorAll('#connectorStaticRiContainer > .connector-static-ri').forEach((entryElement, index) => {
+        const rowIndex = index + 1;
+        const positionInput = entryElement.querySelector('.connector-static-ri-position');
+        const startPointInput = entryElement.querySelector('.connector-static-ri-start-point');
+        const transformShiftInput = entryElement.querySelector('.connector-static-ri-transform-shift');
+        setConnectorStaticRiEntryValidation(entryElement, '');
+
+        const positionRaw = typeof positionInput?.value === 'string' ? positionInput.value.trim() : '';
+        const startPointRaw = typeof startPointInput?.value === 'string' ? startPointInput.value.trim() : '';
+        const transformShiftRaw = typeof transformShiftInput?.value === 'string' ? transformShiftInput.value.trim() : '';
+        const hasAnyFieldValue = positionRaw.length > 0 || startPointRaw.length > 0 || transformShiftRaw.length > 0;
+
+        const position = parseUint32Input(positionRaw);
+        const startPoint = parseUint32Input(startPointRaw);
+        const transformShift = parseUint32Input(transformShiftRaw);
+
+        const rowIssues = [];
+        if (!hasAnyFieldValue) {
+            rowIssues.push('Empty static RI row. Fill all fields or remove the row.');
+        }
+
+        const missingFields = [];
+        if (positionRaw.length === 0) {
+            missingFields.push('position');
+        }
+        if (startPointRaw.length === 0) {
+            missingFields.push('start point');
+        }
+        if (transformShiftRaw.length === 0) {
+            missingFields.push('transform shift');
+        }
+        if (missingFields.length > 0 && hasAnyFieldValue) {
+            rowIssues.push(`Missing ${missingFields.join(', ')}.`);
+        }
+
+        const invalidFields = [];
+        if (positionRaw.length > 0 && position === null) {
+            invalidFields.push('position');
+        }
+        if (startPointRaw.length > 0 && startPoint === null) {
+            invalidFields.push('start point');
+        }
+        if (transformShiftRaw.length > 0 && transformShift === null) {
+            invalidFields.push('transform shift');
+        }
+        if (invalidFields.length > 0) {
+            rowIssues.push(`Invalid ${invalidFields.join(', ')} (must be uint32).`);
+        }
+
+        if (position !== null && allowedPositions.size > 0 && !allowedPositions.has(position)) {
+            rowIssues.push(
+                `Position ${position} is out of range for this connector (allowed 0..${maxAllowedPosition}).`
+            );
+        }
+
+        const rowState = {
+            entryElement,
+            rowIndex,
+            position,
+            startPoint,
+            transformShift,
+            rowIssues
+        };
+        rowStates.push(rowState);
+
+        if (position !== null) {
+            if (!positionsMap.has(position)) {
+                positionsMap.set(position, []);
+            }
+            positionsMap.get(position).push(rowState);
+        }
+    });
+
+    for (const [position, entries] of positionsMap.entries()) {
+        if (entries.length <= 1) {
+            continue;
+        }
+
+        const duplicateMessage = `Duplicate position ${position}. Keep only one entry per position.`;
+        entries.forEach((entry) => {
+            entry.rowIssues.push(duplicateMessage);
+        });
+    }
+
+    const staticRiEntries = [];
+    const validationErrors = [];
+    rowStates.forEach((rowState) => {
+        const rowMessage = rowState.rowIssues.join(' ');
+        setConnectorStaticRiEntryValidation(rowState.entryElement, rowMessage);
+        if (rowMessage.length > 0) {
+            validationErrors.push(`Row ${rowState.rowIndex}: ${rowMessage}`);
+            return;
+        }
+
+        staticRiEntries.push([rowState.position, {
+            start_point: rowState.startPoint,
+            transformation_shift: rowState.transformShift
+        }]);
+    });
+
+    connectorStaticRiValidationErrors = validationErrors;
+    setConnectorStaticRiValidationStatus(connectorStaticRiValidationErrors);
+
+    staticRiEntries.sort((lhs, rhs) => lhs[0] - rhs[0]);
+
+    const staticRi = {};
+    staticRiEntries.forEach(([position, runningInstance]) => {
+        staticRi[String(position)] = runningInstance;
+    });
+
+    return staticRi;
 }
 
 function renumberConnectorDimensions() {
@@ -1050,6 +1952,88 @@ function appendConnectorDimension(dimension = {}) {
     renumberConnectorDimensions();
 }
 
+function appendConnectorStaticRi(staticRi = {}) {
+    const container = document.getElementById('connectorStaticRiContainer');
+    if (!container) {
+        return;
+    }
+
+    const staticRiElement = document.createElement('div');
+    staticRiElement.className = 'connector-static-ri';
+
+    const row = document.createElement('div');
+    row.className = 'binding-row';
+
+    const positionColumn = document.createElement('div');
+    positionColumn.className = 'binding-col';
+    const positionLabel = document.createElement('label');
+    positionLabel.textContent = 'Connector position';
+    const positionInput = document.createElement('select');
+    positionInput.className = 'connector-static-ri-position';
+    const selectedPosition = staticRi.position !== undefined && staticRi.position !== null
+        ? String(staticRi.position)
+        : '';
+    setConnectorStaticRiPositionSelectOptions(positionInput, selectedPosition);
+    positionInput.addEventListener('change', updateConnectorPreview);
+    positionColumn.appendChild(positionLabel);
+    positionColumn.appendChild(positionInput);
+
+    const startPointColumn = document.createElement('div');
+    startPointColumn.className = 'binding-col';
+    const startPointLabel = document.createElement('label');
+    startPointLabel.textContent = 'Start point';
+    const startPointInput = document.createElement('input');
+    startPointInput.type = 'number';
+    startPointInput.min = '0';
+    startPointInput.step = '1';
+    startPointInput.className = 'connector-static-ri-start-point';
+    startPointInput.placeholder = '0';
+    if (staticRi.start_point !== undefined && staticRi.start_point !== null) {
+        startPointInput.value = String(staticRi.start_point);
+    }
+    startPointInput.addEventListener('input', updateConnectorPreview);
+    startPointColumn.appendChild(startPointLabel);
+    startPointColumn.appendChild(startPointInput);
+
+    const transformShiftColumn = document.createElement('div');
+    transformShiftColumn.className = 'binding-col';
+    const transformShiftLabel = document.createElement('label');
+    transformShiftLabel.textContent = 'Transform shift';
+    const transformShiftInput = document.createElement('input');
+    transformShiftInput.type = 'number';
+    transformShiftInput.min = '0';
+    transformShiftInput.step = '1';
+    transformShiftInput.className = 'connector-static-ri-transform-shift';
+    transformShiftInput.placeholder = '0';
+    if (staticRi.transformation_shift !== undefined && staticRi.transformation_shift !== null) {
+        transformShiftInput.value = String(staticRi.transformation_shift);
+    }
+    transformShiftInput.addEventListener('input', updateConnectorPreview);
+    transformShiftColumn.appendChild(transformShiftLabel);
+    transformShiftColumn.appendChild(transformShiftInput);
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'connector-static-ri-remove';
+    removeButton.textContent = 'Remove';
+    removeButton.addEventListener('click', () => {
+        staticRiElement.remove();
+        updateConnectorPreview();
+    });
+
+    row.appendChild(positionColumn);
+    row.appendChild(startPointColumn);
+    row.appendChild(transformShiftColumn);
+    row.appendChild(removeButton);
+
+    const errorElement = document.createElement('div');
+    errorElement.className = 'connector-static-ri-error helper-text';
+
+    staticRiElement.appendChild(row);
+    staticRiElement.appendChild(errorElement);
+    container.appendChild(staticRiElement);
+}
+
 export function addConnectorDimension() {
     appendConnectorDimension();
     updateConnectorPreview();
@@ -1064,6 +2048,27 @@ export function clearConnectorDimensions() {
     updateConnectorPreview();
 }
 
+export function addConnectorStaticRi() {
+    const defaultStaticRi = buildDefaultConnectorStaticRi();
+    if (!defaultStaticRi) {
+        updateConnectorPreview();
+        return;
+    }
+
+    appendConnectorStaticRi(defaultStaticRi);
+    updateConnectorPreview();
+}
+
+export function clearConnectorStaticRi() {
+    const container = document.getElementById('connectorStaticRiContainer');
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '';
+    updateConnectorPreview();
+}
+
 function constructStructuredConnector() {
     const name = document.getElementById('in_connectorName').value.trim();
     const dimensions = parseConnectorDimensionsFromForm();
@@ -1071,14 +2076,23 @@ function constructStructuredConnector() {
     const condition_args = condition_name
         ? parseIntList(document.getElementById('in_connectorConditionArgs').value)
         : [];
+    const static_ri = parseConnectorStaticRiFromForm();
 
-    return JSON.stringify({ name, dimensions, condition_name, condition_args }, null, 2);
+    return JSON.stringify({ name, dimensions, condition_name, condition_args, static_ri }, null, 2);
+}
+
+function renderConnectorPreviewBody() {
+    const json = constructStructuredConnector();
+    const requestBodyElement = document.getElementById('POST_connectorRequestBody');
+    if (requestBodyElement) {
+        requestBodyElement.textContent = json;
+    }
 }
 
 export function updateConnectorPreview() {
+    renderConnectorPreviewBody();
     syncConnectorFormAvailability();
-    const json = constructStructuredConnector();
-    document.getElementById('POST_connectorRequestBody').textContent = json;
+    scheduleConnectorStaticRiTreeRefresh();
 }
 
 export function populateStructuredConnector(jsonOrObject) {
@@ -1094,6 +2108,19 @@ export function populateStructuredConnector(jsonOrObject) {
     clearConnectorDimensions();
     const dimensions = Array.isArray(data.dimensions) ? data.dimensions : [];
     dimensions.forEach((dimension) => appendConnectorDimension(dimension));
+
+    clearConnectorStaticRi();
+    if (data.static_ri && typeof data.static_ri === 'object' && !Array.isArray(data.static_ri)) {
+        Object.entries(data.static_ri)
+            .sort((lhs, rhs) => Number.parseInt(lhs[0], 10) - Number.parseInt(rhs[0], 10))
+            .forEach(([position, runningInstance]) => {
+                appendConnectorStaticRi({
+                    position,
+                    start_point: runningInstance?.start_point,
+                    transformation_shift: runningInstance?.transformation_shift
+                });
+            });
+    }
 
     document.getElementById('in_connectorConditionName').value = data.condition_name || '';
     document.getElementById('in_connectorConditionArgs').value = Array.isArray(data.condition_args)
@@ -1121,6 +2148,7 @@ export async function sendStructuredConnector() {
         if (res.ok) {
             // Connector definitions can change, which may affect binding points.
             clearConnectorBindingCaches();
+            scheduleConnectorStaticRiTreeRefresh(true);
         }
     } catch (error) {
         responseCodeDiv.textContent = 'Error';

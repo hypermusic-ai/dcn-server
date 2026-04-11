@@ -288,11 +288,11 @@ namespace
         json request_json = {
             {"connector_name", connector_name},
             {"particles_count", 8},
-            {"running_instances", json::array({
-                json{
+            {"dynamic_ri", json::object({
+                {"0", json{
                     {"start_point", 0},
                     {"transformation_shift", 0}
-                }
+                }}
             })}
         };
 

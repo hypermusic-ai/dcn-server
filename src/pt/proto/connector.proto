@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package dcn;
 
+import "execute.proto";
+
 message TransformationDef
 {
     string name = 1;
@@ -22,6 +24,7 @@ message Connector
     repeated Dimension dimensions = 2;
     string condition_name = 4;
     repeated int32 condition_args = 5;
+    map<uint32, RunningInstance> static_ri = 6;
 }
 
 // Internal full record (used in storage, indexing, etc.)

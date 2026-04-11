@@ -125,5 +125,8 @@ namespace dcn::evm
     std::vector<std::uint8_t> encodeAsArg<std::vector<std::tuple<std::uint32_t, std::uint32_t>>>(const std::vector<std::tuple<std::uint32_t, std::uint32_t>>& vec);
 
     template<>
+    std::vector<std::uint8_t> encodeAsArg<std::vector<std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>>>(const std::vector<std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>>& vec);
+
+    template<>
     std::vector<std::uint8_t> encodeAsArg<std::string>(const std::string& str);
 }

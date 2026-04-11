@@ -256,6 +256,180 @@ TEST_F(UnitTest, Connector_ParseFromJson_RejectsConnectorWithoutDimensionsAtPars
     EXPECT_EQ(protobuf_connector.error().kind, ParseError::Kind::INVALID_VALUE);
 }
 
+TEST_F(UnitTest, Connector_ParseFromJson_AcceptsStaticRiAtRootAndLastLocalPosition)
+{
+    json json_input = {
+        {"name", "connector_static_ri_boundary_ok"},
+        {"dimensions", json::array({
+            json{
+                {"composite", ""},
+                {"transformations", json::array()}
+            },
+            json{
+                {"composite", ""},
+                {"transformations", json::array()}
+            }
+        })},
+        {"condition_name", ""},
+        {"condition_args", json::array()},
+        {"static_ri", json::object({
+            {"0", json{{"start_point", 3}, {"transformation_shift", 4}}},
+            {"2", json{{"start_point", 7}, {"transformation_shift", 8}}}
+        })}
+    };
+
+    auto json_connector = parseFromJson<Connector>(json_input, use_json);
+    auto protobuf_connector = parseFromJson<Connector>(json_input.dump(), use_protobuf);
+
+    ASSERT_TRUE(json_connector.has_value());
+    ASSERT_TRUE(protobuf_connector.has_value());
+    ASSERT_EQ(json_connector->static_ri_size(), 2);
+    ASSERT_EQ(protobuf_connector->static_ri_size(), 2);
+
+    const auto json_root = json_connector->static_ri().find(0);
+    const auto json_last = json_connector->static_ri().find(2);
+    ASSERT_NE(json_root, json_connector->static_ri().end());
+    ASSERT_NE(json_last, json_connector->static_ri().end());
+    EXPECT_EQ(json_root->second.start_point(), 3);
+    EXPECT_EQ(json_root->second.transformation_shift(), 4);
+    EXPECT_EQ(json_last->second.start_point(), 7);
+    EXPECT_EQ(json_last->second.transformation_shift(), 8);
+}
+
+TEST_F(UnitTest, Connector_ParseFromJson_AcceptsPartialStaticRiMap)
+{
+    json json_input = {
+        {"name", "connector_static_ri_partial_ok"},
+        {"dimensions", json::array({
+            json{
+                {"composite", ""},
+                {"transformations", json::array()}
+            },
+            json{
+                {"composite", ""},
+                {"transformations", json::array()}
+            },
+            json{
+                {"composite", ""},
+                {"transformations", json::array()}
+            }
+        })},
+        {"condition_name", ""},
+        {"condition_args", json::array()},
+        {"static_ri", json::object({
+            {"2", json{{"start_point", 11}, {"transformation_shift", 12}}}
+        })}
+    };
+
+    auto json_connector = parseFromJson<Connector>(json_input, use_json);
+    auto protobuf_connector = parseFromJson<Connector>(json_input.dump(), use_protobuf);
+
+    ASSERT_TRUE(json_connector.has_value());
+    ASSERT_TRUE(protobuf_connector.has_value());
+    ASSERT_EQ(json_connector->static_ri_size(), 1);
+    ASSERT_EQ(protobuf_connector->static_ri_size(), 1);
+
+    const auto json_entry = json_connector->static_ri().find(2);
+    const auto protobuf_entry = protobuf_connector->static_ri().find(2);
+    ASSERT_NE(json_entry, json_connector->static_ri().end());
+    ASSERT_NE(protobuf_entry, protobuf_connector->static_ri().end());
+    EXPECT_EQ(json_entry->second.start_point(), 11);
+    EXPECT_EQ(json_entry->second.transformation_shift(), 12);
+    EXPECT_EQ(protobuf_entry->second.start_point(), 11);
+    EXPECT_EQ(protobuf_entry->second.transformation_shift(), 12);
+}
+
+TEST_F(UnitTest, Connector_ParseFromJson_AcceptsStaticRiKeyBeyondLocalDimensionCount)
+{
+    json json_input = {
+        {"name", "connector_static_ri_oob"},
+        {"dimensions", json::array({
+            json{
+                {"composite", ""},
+                {"transformations", json::array()}
+            }
+        })},
+        {"condition_name", ""},
+        {"condition_args", json::array()},
+        {"static_ri", json::object({
+            {"2", json{{"start_point", 1}, {"transformation_shift", 2}}}
+        })}
+    };
+
+    auto json_connector = parseFromJson<Connector>(json_input, use_json);
+    ASSERT_TRUE(json_connector.has_value());
+    ASSERT_EQ(json_connector->static_ri_size(), 1);
+    const auto json_entry = json_connector->static_ri().find(2);
+    ASSERT_NE(json_entry, json_connector->static_ri().end());
+    EXPECT_EQ(json_entry->second.start_point(), 1);
+    EXPECT_EQ(json_entry->second.transformation_shift(), 2);
+
+    auto protobuf_connector = parseFromJson<Connector>(json_input.dump(), use_protobuf);
+    ASSERT_TRUE(protobuf_connector.has_value());
+    ASSERT_EQ(protobuf_connector->static_ri_size(), 1);
+    const auto protobuf_entry = protobuf_connector->static_ri().find(2);
+    ASSERT_NE(protobuf_entry, protobuf_connector->static_ri().end());
+    EXPECT_EQ(protobuf_entry->second.start_point(), 1);
+    EXPECT_EQ(protobuf_entry->second.transformation_shift(), 2);
+}
+
+TEST_F(UnitTest, Connector_ParseFromJson_RejectsNonCanonicalStaticRiKey)
+{
+    json json_input = {
+        {"name", "connector_static_ri_bad_key"},
+        {"dimensions", json::array({
+            json{
+                {"composite", ""},
+                {"transformations", json::array()}
+            }
+        })},
+        {"condition_name", ""},
+        {"condition_args", json::array()},
+        {"static_ri", json::object({
+            {"01", json{{"start_point", 1}, {"transformation_shift", 2}}}
+        })}
+    };
+
+    auto connector = parseFromJson<Connector>(json_input, use_json);
+    ASSERT_FALSE(connector.has_value());
+    EXPECT_EQ(connector.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+TEST_F(UnitTest, Connector_ParseFromJson_DuplicateStaticRiKeyInRawJson_UsesSingleMapEntry)
+{
+    const std::string raw_json_input = R"JSON(
+{
+  "name": "connector_static_ri_duplicate_key",
+  "dimensions": [
+    {
+      "composite": "",
+      "transformations": []
+    }
+  ],
+  "condition_name": "",
+  "condition_args": [],
+  "static_ri": {
+    "0": {"start_point": 1, "transformation_shift": 2},
+    "0": {"start_point": 9, "transformation_shift": 10}
+  }
+}
+)JSON";
+
+    auto json_connector = parseFromJson<Connector>(json::parse(raw_json_input), use_json);
+    auto protobuf_connector = parseFromJson<Connector>(raw_json_input, use_protobuf);
+
+    ASSERT_TRUE(json_connector.has_value());
+    ASSERT_FALSE(protobuf_connector.has_value());
+    EXPECT_EQ(protobuf_connector.error().kind, ParseError::Kind::INVALID_VALUE);
+    ASSERT_EQ(json_connector->static_ri_size(), 1);
+
+    const auto json_it = json_connector->static_ri().find(0);
+    ASSERT_NE(json_it, json_connector->static_ri().end());
+
+    EXPECT_EQ(json_it->second.start_point(), 9);
+    EXPECT_EQ(json_it->second.transformation_shift(), 10);
+}
+
 TEST_F(UnitTest, ConnectorRecord_ParseFromJson_JsonAndProtobufMatch)
 {
     json json_connector = {

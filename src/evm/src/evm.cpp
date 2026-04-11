@@ -112,6 +112,47 @@ namespace dcn::evm
     }
 
     template<>
+    std::vector<std::uint8_t> encodeAsArg<std::vector<std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>>>(const std::vector<std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>>& vec)
+    {
+        std::vector<std::uint8_t> encoded;
+
+        std::vector<std::uint8_t> length(32, 0);
+        uint64_t len = vec.size();
+        for(int i = 0; i < 8; ++i)
+        {
+            length[31 - i] = static_cast<std::uint8_t>(len >> (i * 8));
+        }
+        encoded.insert(encoded.end(), length.begin(), length.end());
+
+        for(const auto & [a, b, c] : vec)
+        {
+            std::vector<std::uint8_t> elem(32, 0);
+
+            for(int i = 0; i < 4; ++i)
+            {
+                elem[31 - i] = static_cast<std::uint8_t>(a >> (i * 8));
+            }
+            encoded.insert(encoded.end(), elem.begin(), elem.end());
+
+            std::fill(elem.begin(), elem.end(), 0);
+            for(int i = 0; i < 4; ++i)
+            {
+                elem[31 - i] = static_cast<std::uint8_t>(b >> (i * 8));
+            }
+            encoded.insert(encoded.end(), elem.begin(), elem.end());
+
+            std::fill(elem.begin(), elem.end(), 0);
+            for(int i = 0; i < 4; ++i)
+            {
+                elem[31 - i] = static_cast<std::uint8_t>(c >> (i * 8));
+            }
+            encoded.insert(encoded.end(), elem.begin(), elem.end());
+        }
+
+        return encoded;
+    }
+
+    template<>
     std::vector<std::uint8_t> encodeAsArg<std::string>(const std::string& str)
     {
         std::vector<std::uint8_t> encoded;

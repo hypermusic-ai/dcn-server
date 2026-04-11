@@ -100,11 +100,11 @@ namespace
     std::vector<std::uint8_t> makeRunnerGenInput(
         const std::string & connector_name,
         std::uint32_t particles_count,
-        const std::vector<std::tuple<std::uint32_t, std::uint32_t>> & running_instances)
+        const std::vector<std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>> & dynamic_ri)
     {
         std::vector<std::uint8_t> input_data;
 
-        const auto selector = chain::constructSelector("gen(string,uint32,(uint32,uint32)[])");
+        const auto selector = chain::constructSelector("gen(string,uint32,(uint32,uint32,uint32)[])");
         input_data.insert(input_data.end(), selector.begin(), selector.end());
 
         std::vector<std::uint8_t> offset_to_string(32, 0);
@@ -126,8 +126,8 @@ namespace
 
         input_data.insert(input_data.end(), connector_name_arg.begin(), connector_name_arg.end());
 
-        const auto running_instances_arg = evm::encodeAsArg(running_instances);
-        input_data.insert(input_data.end(), running_instances_arg.begin(), running_instances_arg.end());
+        const auto dynamic_ri_arg = evm::encodeAsArg(dynamic_ri);
+        input_data.insert(input_data.end(), dynamic_ri_arg.begin(), dynamic_ri_arg.end());
 
         return input_data;
     }
@@ -434,7 +434,7 @@ TEST_F(UnitTest, PT_ProxyUpgrade_RunnerUpgradePreservesGeneratedContext)
 
     runAwaitable(env.io_context, env.evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
 
-    const auto gen_input = makeRunnerGenInput("PersistConnector", 8, {{0u, 0u}});
+    const auto gen_input = makeRunnerGenInput("PersistConnector", 8, {{0u, 0u, 0u}});
     const auto generation_before_upgrade = runAwaitable(
         env.io_context,
         env.evm_instance.execute(

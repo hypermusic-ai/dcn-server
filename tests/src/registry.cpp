@@ -482,6 +482,26 @@ TEST_F(UnitTest, Registry_AddConnector_IsIdempotentForExactDuplicateAndRejectsPa
     EXPECT_FALSE(runAwaitable(io_context, registry.addConnector(connector_address, payload_mismatch)));
 }
 
+TEST_F(UnitTest, Registry_AddConnector_TreatsStaticRiDifferencesAsEquivalentPayload)
+{
+    asio::io_context io_context;
+    storage::Registry registry(io_context);
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0x7C));
+    const chain::Address connector_address = makeAddressFromByte(0x7D);
+
+    ConnectorRecord first = makeConnectorRecord("STATIC_RI_EQ", owner_hex);
+    addDimension(first, "");
+    (*first.mutable_connector()->mutable_static_ri())[0].set_start_point(1);
+    (*first.mutable_connector()->mutable_static_ri())[0].set_transformation_shift(2);
+    ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(connector_address, first)));
+
+    ConnectorRecord static_ri_variant = makeConnectorRecord("STATIC_RI_EQ", owner_hex);
+    addDimension(static_ri_variant, "");
+    (*static_ri_variant.mutable_connector()->mutable_static_ri())[0].set_start_point(101);
+    (*static_ri_variant.mutable_connector()->mutable_static_ri())[0].set_transformation_shift(202);
+    EXPECT_TRUE(runAwaitable(io_context, registry.addConnector(connector_address, static_ri_variant)));
+}
+
 TEST_F(UnitTest, Registry_AddConnector_AllowsAddressReuseAcrossNames)
 {
     asio::io_context io_context;

@@ -44,7 +44,10 @@ namespace dcn::pt
         enum class Kind : std::uint8_t
         {
             UNKNOWN = 0,
-            CONDITION_NOT_MET
+            CONDITION_NOT_MET,
+            RUNNING_INSTANCE_DUPLICATE,
+            RUNNING_INSTANCE_NOT_SORTED,
+            RUNNING_INSTANCE_STATIC_OVERRIDE
 
         } kind = Kind::UNKNOWN;
 
@@ -94,6 +97,9 @@ struct std::formatter<dcn::pt::PTExecuteError::Kind> : std::formatter<std::strin
         switch(err)
         {
             case dcn::pt::PTExecuteError::Kind::CONDITION_NOT_MET : return formatter<string>::format("Condition not met", ctx);
+            case dcn::pt::PTExecuteError::Kind::RUNNING_INSTANCE_DUPLICATE : return formatter<string>::format("Running instance duplicate", ctx);
+            case dcn::pt::PTExecuteError::Kind::RUNNING_INSTANCE_NOT_SORTED : return formatter<string>::format("Running instance not sorted", ctx);
+            case dcn::pt::PTExecuteError::Kind::RUNNING_INSTANCE_STATIC_OVERRIDE : return formatter<string>::format("Running instance static override", ctx);
 
             default:  return formatter<string>::format("Unknown", ctx);
         }
