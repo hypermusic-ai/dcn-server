@@ -216,17 +216,37 @@ Creates a new connector record.
 - **Response**: `201 Created` or `error`
 - **Authentication**: ✅ Required
 
-#### `GET /account/<address>?limit=<n>&page=<n>`
+#### `GET /formats?limit=<n>&after=<cursor?>`
 
-Returns paged ownership info.
+Returns a cursor-paginated list of all format hashes.
+
+- **Response fields**:
+  - `limit`
+  - `total_formats`
+  - `cursor` (`has_more`, `next_after`)
+  - `formats`
+
+#### `GET /accounts?limit=<n>&after=<cursor?>`
+
+Returns a cursor-paginated list of all unique owner accounts across connectors, transformations and conditions.
+
+- **Response fields**:
+  - `limit`
+  - `total_accounts`
+  - `cursor` (`has_more`, `next_after`)
+  - `accounts`
+
+#### `GET /account/<address>?limit=<n>&after_connectors=<cursor?>&after_transformations=<cursor?>&after_conditions=<cursor?>`
+
+Returns paged ownership info for a specific account.
 
 - **Response fields**:
   - `owned_connectors`
   - `owned_transformations`
   - `owned_conditions`
-  - `total_connectors`
-  - `total_transformations`
-  - `total_conditions`
+  - `cursor_connectors`
+  - `cursor_transformations`
+  - `cursor_conditions`
 
 ---
 

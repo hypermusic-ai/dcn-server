@@ -1,5 +1,8 @@
 #include "utils.hpp"
 
+#include <algorithm>
+#include <cctype>
+
 namespace dcn::utils
 {
     std::string loadBuildTimestamp(const std::filesystem::path & path) 
@@ -42,6 +45,32 @@ namespace dcn::utils
            std::equal(a.begin(), a.end(), b.begin(), [](char a, char b) {
                return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b));
            });
+    }
+
+    std::optional<std::string> trimAsciiWhitespace(const std::string_view value)
+    {
+        const auto first_non_space = std::find_if_not(
+            value.begin(),
+            value.end(),
+            [](const unsigned char ch)
+            {
+                return std::isspace(ch) != 0;
+            });
+
+        if(first_non_space == value.end())
+        {
+            return std::nullopt;
+        }
+
+        const auto last_non_space = std::find_if_not(
+            value.rbegin(),
+            value.rend(),
+            [](const unsigned char ch)
+            {
+                return std::isspace(ch) != 0;
+            }).base();
+
+        return std::string(first_non_space, last_non_space);
     }
 
 

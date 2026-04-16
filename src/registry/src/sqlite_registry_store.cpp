@@ -98,6 +98,20 @@ namespace dcn::storage
             return out;
         }
 
+        static std::optional<chain::Address> columnAddress(sqlite3_stmt * stmt, int index)
+        {
+            const void * blob = sqlite3_column_blob(stmt, index);
+            const int bytes = sqlite3_column_bytes(stmt, index);
+            if(blob == nullptr || bytes != static_cast<int>(ADDRESS_BYTES_SIZE))
+            {
+                return std::nullopt;
+            }
+
+            chain::Address out{};
+            std::memcpy(out.bytes, blob, ADDRESS_BYTES_SIZE);
+            return out;
+        }
+
         template <typename TRecord>
         static std::optional<TRecord> parseRecordBlob(sqlite3_stmt * stmt, int index)
         {
@@ -777,6 +791,94 @@ namespace dcn::storage
                 "SQLite getFormatConnectorNamesCursor query failed for format_hash={} after={} limit={}: {}",
                 evmc::hex(format_hash),
                 after.value_or("<none>"),
+                limit,
+                e.what());
+            return NameCursorPage{};
+        }
+
+        return page;
+    }
+
+    std::size_t SQLiteRegistryStore::getFormatsCount() const
+    {
+        try
+        {
+            Statement stmt(_db, "SELECT COUNT(DISTINCT format_hash) FROM format_members;");
+            if(stmt.step() != SQLITE_ROW)
+            {
+                return 0;
+            }
+            return static_cast<std::size_t>(sqlite3_column_int64(stmt.get(), 0));
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("SQLite getFormatsCount query failed: {}", e.what());
+            return 0;
+        }
+    }
+
+    NameCursorPage SQLiteRegistryStore::getFormatsCursor(
+        const std::optional<evmc::bytes32> & after,
+        std::size_t limit) const
+    {
+        NameCursorPage page;
+        if(limit == 0)
+        {
+            return page;
+        }
+
+        try
+        {
+            const std::size_t query_limit = limit + 1;
+            if(after.has_value())
+            {
+                Statement stmt(
+                    _db,
+                    "SELECT DISTINCT format_hash FROM format_members "
+                    "WHERE format_hash > ?1 ORDER BY format_hash ASC LIMIT ?2;");
+                bindBytes32(stmt.get(), 1, *after);
+                sqlite3_bind_int(stmt.get(), 2, toSqliteInt(query_limit));
+                for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
+                {
+                    const auto format_hash = columnBytes32(stmt.get(), 0);
+                    if(format_hash.has_value())
+                    {
+                        page.entries.emplace_back(evmc::hex(*format_hash));
+                    }
+                }
+            }
+            else
+            {
+                Statement stmt(
+                    _db,
+                    "SELECT DISTINCT format_hash FROM format_members "
+                    "ORDER BY format_hash ASC LIMIT ?1;");
+                sqlite3_bind_int(stmt.get(), 1, toSqliteInt(query_limit));
+                for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
+                {
+                    const auto format_hash = columnBytes32(stmt.get(), 0);
+                    if(format_hash.has_value())
+                    {
+                        page.entries.emplace_back(evmc::hex(*format_hash));
+                    }
+                }
+            }
+
+            if(page.entries.size() > limit)
+            {
+                page.has_more = true;
+                page.entries.resize(limit);
+            }
+            if(page.has_more && !page.entries.empty())
+            {
+                page.next_after = page.entries.back();
+            }
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error(
+                "SQLite getFormatsCursor query failed after={} limit={}: {}",
+                after.has_value() ? evmc::hex(*after) : std::string("<none>"),
                 limit,
                 e.what());
             return NameCursorPage{};
@@ -1520,6 +1622,114 @@ namespace dcn::storage
         return _getOwnedCursorFromTable("owned_conditions", owner, after, limit);
     }
 
+    std::size_t SQLiteRegistryStore::getAccountsCount() const
+    {
+        try
+        {
+            Statement stmt(
+                _db,
+                "SELECT COUNT(*) FROM ("
+                "SELECT owner FROM owned_connectors "
+                "UNION "
+                "SELECT owner FROM owned_transformations "
+                "UNION "
+                "SELECT owner FROM owned_conditions"
+                ") AS all_owners;");
+            if(stmt.step() != SQLITE_ROW)
+            {
+                return 0;
+            }
+            return static_cast<std::size_t>(sqlite3_column_int64(stmt.get(), 0));
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("SQLite getAccountsCount query failed: {}", e.what());
+            return 0;
+        }
+    }
+
+    NameCursorPage SQLiteRegistryStore::getAccountsCursor(
+        const std::optional<chain::Address> & after,
+        std::size_t limit) const
+    {
+        NameCursorPage page;
+        if(limit == 0)
+        {
+            return page;
+        }
+
+        try
+        {
+            const std::size_t query_limit = limit + 1;
+            if(after.has_value())
+            {
+                Statement stmt(
+                    _db,
+                    "SELECT owner FROM ("
+                    "SELECT owner FROM owned_connectors "
+                    "UNION "
+                    "SELECT owner FROM owned_transformations "
+                    "UNION "
+                    "SELECT owner FROM owned_conditions"
+                    ") AS all_owners "
+                    "WHERE owner > ?1 ORDER BY owner ASC LIMIT ?2;");
+                bindAddress(stmt.get(), 1, *after);
+                sqlite3_bind_int(stmt.get(), 2, toSqliteInt(query_limit));
+                for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
+                {
+                    const auto owner = columnAddress(stmt.get(), 0);
+                    if(owner.has_value())
+                    {
+                        page.entries.emplace_back(evmc::hex(*owner));
+                    }
+                }
+            }
+            else
+            {
+                Statement stmt(
+                    _db,
+                    "SELECT owner FROM ("
+                    "SELECT owner FROM owned_connectors "
+                    "UNION "
+                    "SELECT owner FROM owned_transformations "
+                    "UNION "
+                    "SELECT owner FROM owned_conditions"
+                    ") AS all_owners "
+                    "ORDER BY owner ASC LIMIT ?1;");
+                sqlite3_bind_int(stmt.get(), 1, toSqliteInt(query_limit));
+                for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
+                {
+                    const auto owner = columnAddress(stmt.get(), 0);
+                    if(owner.has_value())
+                    {
+                        page.entries.emplace_back(evmc::hex(*owner));
+                    }
+                }
+            }
+
+            if(page.entries.size() > limit)
+            {
+                page.has_more = true;
+                page.entries.resize(limit);
+            }
+            if(page.has_more && !page.entries.empty())
+            {
+                page.next_after = page.entries.back();
+            }
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error(
+                "SQLite getAccountsCursor query failed after={} limit={}: {}",
+                after.has_value() ? evmc::hex(*after) : std::string("<none>"),
+                limit,
+                e.what());
+            return NameCursorPage{};
+        }
+
+        return page;
+    }
+
     bool SQLiteRegistryStore::checkpointWal(const WalCheckpointMode mode) const
     {
         if(_db == nullptr)
@@ -1598,5 +1808,51 @@ namespace dcn::parse
             }).base();
         
         return std::string(first_non_space, last_non_space);
+    }
+
+    Result<evmc::bytes32> parseFormatCursorHex(const std::string & cursor_token)
+    {
+        auto normalized_res = parseNameCursor(cursor_token);
+        if(!normalized_res)
+        {
+            return std::unexpected(ParseError{
+                ParseError::Kind::INVALID_VALUE,
+                "Format cursor cannot be empty"});
+        }
+
+        std::string normalized = std::move(normalized_res.value());
+        if(normalized.size() >= 2 && normalized.at(0) == '0' &&
+           (normalized.at(1) == 'x' || normalized.at(1) == 'X'))
+        {
+            normalized.erase(0, 2);
+        }
+
+        if(normalized.size() != 64)
+        {
+            return std::unexpected(ParseError{
+                ParseError::Kind::INVALID_VALUE,
+                "Format cursor must be 32-byte hex"});
+        }
+
+        for(char & ch : normalized)
+        {
+            if(std::isxdigit(static_cast<unsigned char>(ch)) == 0)
+            {
+                return std::unexpected(ParseError{
+                    ParseError::Kind::INVALID_VALUE,
+                    "Format cursor must be hex"});
+            }
+            ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+        }
+
+        const auto cursor = evmc::from_hex<evmc::bytes32>(normalized);
+        if(!cursor.has_value())
+        {
+            return std::unexpected(ParseError{
+                ParseError::Kind::INVALID_VALUE,
+                "Format cursor parse failed"});
+        }
+
+        return *cursor;
     }
 }

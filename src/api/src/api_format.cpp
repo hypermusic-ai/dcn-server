@@ -1,15 +1,176 @@
 #include "api.hpp"
 
 #include <algorithm>
-#include <cctype>
-#include <vector>
 #include <format>
+#include <string>
+#include <vector>
 
 namespace dcn
 {
     namespace
     {
         constexpr std::size_t MAX_LIMIT = 256;
+    }
+
+    asio::awaitable<http::Response> OPTIONS_formats(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList)
+    {
+        http::Response response;
+        response.setCode(http::Code::NoContent)
+                .setVersion("HTTP/1.1")
+                .setHeader(http::Header::AccessControlAllowOrigin, "*")
+                .setHeader(http::Header::AccessControlAllowMethods, "HEAD, GET, OPTIONS")
+                .setHeader(http::Header::AccessControlAllowHeaders, "Content-Type")
+                .setHeader(http::Header::AccessControlMaxAge, "600")
+                .setHeader(http::Header::Connection, "close");
+
+        co_return response;
+    }
+
+    asio::awaitable<http::Response> HEAD_formats(
+        const http::Request &,
+        std::vector<server::RouteArg> args,
+        server::QueryArgsList query_args,
+        storage::Registry &)
+    {
+        http::Response response;
+        response.setCode(http::Code::Unknown)
+                .setVersion("HTTP/1.1")
+                .setHeader(http::Header::AccessControlAllowOrigin, "*")
+                .setHeader(http::Header::ContentLength, "0")
+                .setHeader(http::Header::Connection, "close");
+
+        if(!args.empty())
+        {
+            response.setCode(http::Code::BadRequest);
+            co_return response;
+        }
+
+        if(query_args.contains("limit") == false)
+        {
+            response.setCode(http::Code::BadRequest);
+            co_return response;
+        }
+
+        auto limit_res = parse::parseRouteArgAs<std::size_t>(query_args.at("limit"));
+        if(limit_res && limit_res.value() > MAX_LIMIT)
+        {
+            limit_res = std::unexpected(parse::ParseError{parse::ParseError::Kind::OUT_OF_RANGE});
+        }
+
+        if(!limit_res)
+        {
+            response.setCode(http::Code::BadRequest);
+            co_return response;
+        }
+
+        if(query_args.contains("after"))
+        {
+            const auto after_res = parse::parseRouteArgAs<std::string>(query_args.at("after"))
+                .and_then([&](const std::string & token)
+                {
+                    return parse::parseFormatCursorHex(token);
+                });
+
+            if(!after_res)
+            {
+                response.setCode(http::Code::BadRequest);
+                co_return response;
+            }
+        }
+
+        response.setCode(http::Code::OK);
+        co_return response;
+    }
+
+    asio::awaitable<http::Response> GET_formats(
+        const http::Request &,
+        std::vector<server::RouteArg> args,
+        server::QueryArgsList query_args,
+        storage::Registry & registry)
+    {
+        http::Response response;
+        response.setCode(http::Code::Unknown)
+                .setVersion("HTTP/1.1")
+                .setHeader(http::Header::AccessControlAllowOrigin, "*")
+                .setHeader(http::Header::Connection, "close")
+                .setHeader(http::Header::ContentType, "application/json");
+
+        if(!args.empty())
+        {
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json{
+                    {"message", "Invalid number of arguments"}
+                }.dump());
+            co_return response;
+        }
+
+        if(query_args.contains("limit") == false)
+        {
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json{
+                    {"message", "Missing argument limit"}
+                }.dump());
+            co_return response;
+        }
+
+        auto limit_res = parse::parseRouteArgAs<std::size_t>(query_args.at("limit"));
+        if(limit_res && limit_res.value() > MAX_LIMIT)
+        {
+            limit_res = std::unexpected(parse::ParseError{parse::ParseError::Kind::OUT_OF_RANGE});
+        }
+
+        if(!limit_res)
+        {
+            std::string msg_str = "Invalid argument limit.";
+            msg_str += std::format(" limit error: {}.", limit_res.error().kind);
+
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json{
+                    {"message", msg_str}
+                }.dump());
+            co_return response;
+        }
+
+        std::optional<evmc::bytes32> after_format;
+        if(query_args.contains("after"))
+        {
+            const auto after_res = parse::parseRouteArgAs<std::string>(query_args.at("after"))
+                .and_then([&](const std::string & token)
+                {
+                    return parse::parseFormatCursorHex(token);
+                });
+
+            if(!after_res)
+            {
+                response.setCode(http::Code::BadRequest)
+                    .setBodyWithContentLength(json{
+                        {"message", "Invalid after cursor"}
+                    }.dump());
+                co_return response;
+            }
+
+            after_format = *after_res;
+        }
+
+        const std::size_t limit = *limit_res;
+        const std::size_t total_formats = co_await registry.getFormatsCount();
+        const auto page = co_await registry.getFormatsCursor(after_format, limit);
+
+        json json_output;
+        json_output["limit"] = limit;
+        json_output["total_formats"] = total_formats;
+        json_output["cursor"] = json::object();
+        json_output["cursor"]["has_more"] = page.has_more;
+        json_output["cursor"]["next_after"] = page.next_after.has_value() ? json(*page.next_after) : json(nullptr);
+        json_output["formats"] = json::array();
+        for(const std::string & format_hash_hex : page.entries)
+        {
+            json_output["formats"].emplace_back(format_hash_hex);
+        }
+
+        response.setCode(http::Code::OK)
+            .setBodyWithContentLength(json_output.dump());
+        co_return response;
     }
 
     asio::awaitable<http::Response> OPTIONS_format(const http::Request &, std::vector<server::RouteArg>, server::QueryArgsList)
@@ -90,10 +251,10 @@ namespace dcn
         std::optional<storage::NameCursor> after_name;
         if(query_args.contains("after"))
         {
-            const auto after_res = 
+            const auto after_res =
                 parse::parseRouteArgAs<std::string>(query_args.at("after"))
-                .and_then([&](const std::string & s) { 
-                    return parse::parseNameCursor(s); 
+                .and_then([&](const std::string & s) {
+                    return parse::parseNameCursor(s);
                 });
 
             if(!after_res)

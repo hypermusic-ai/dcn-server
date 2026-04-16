@@ -64,6 +64,10 @@ namespace dcn::storage
                 const evmc::bytes32 & format_hash,
                 const std::optional<NameCursor> & after,
                 std::size_t limit) const;
+            asio::awaitable<std::size_t> getFormatsCount() const;
+            asio::awaitable<NameCursorPage> getFormatsCursor(
+                const std::optional<evmc::bytes32> & after,
+                std::size_t limit) const;
             asio::awaitable<std::optional<std::vector<ScalarLabel>>> getScalarLabelsByFormatHash(const evmc::bytes32 & format_hash) const;
 
             asio::awaitable<bool> addTransformation(chain::Address address, TransformationRecord transformation);
@@ -93,6 +97,10 @@ namespace dcn::storage
             asio::awaitable<NameCursorPage> getOwnedConditionsCursor(
                 const chain::Address & owner,
                 const std::optional<NameCursor> & after,
+                std::size_t limit) const;
+            asio::awaitable<std::size_t> getAccountsCount() const;
+            asio::awaitable<NameCursorPage> getAccountsCursor(
+                const std::optional<chain::Address> & after,
                 std::size_t limit) const;
 
             asio::awaitable<bool> checkpointWal(WalCheckpointMode mode) const;

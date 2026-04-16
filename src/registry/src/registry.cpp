@@ -1197,6 +1197,20 @@ namespace dcn::storage
         co_return _store->getFormatConnectorNamesCursor(format_hash, after, limit);
     }
 
+    asio::awaitable<std::size_t> Registry::getFormatsCount() const
+    {
+        co_await async::ensureOnStrand(_strand);
+        co_return _store->getFormatsCount();
+    }
+
+    asio::awaitable<NameCursorPage> Registry::getFormatsCursor(
+        const std::optional<evmc::bytes32> & after,
+        std::size_t limit) const
+    {
+        co_await async::ensureOnStrand(_strand);
+        co_return _store->getFormatsCursor(after, limit);
+    }
+
     asio::awaitable<std::optional<std::vector<ScalarLabel>>> Registry::getScalarLabelsByFormatHash(
         const evmc::bytes32 & format_hash) const
     {
@@ -1618,6 +1632,20 @@ namespace dcn::storage
     {
         co_await async::ensureOnStrand(_strand);
         co_return _store->getOwnedConditionsCursor(owner, after, limit);
+    }
+
+    asio::awaitable<std::size_t> Registry::getAccountsCount() const
+    {
+        co_await async::ensureOnStrand(_strand);
+        co_return _store->getAccountsCount();
+    }
+
+    asio::awaitable<NameCursorPage> Registry::getAccountsCursor(
+        const std::optional<chain::Address> & after,
+        std::size_t limit) const
+    {
+        co_await async::ensureOnStrand(_strand);
+        co_return _store->getAccountsCursor(after, limit);
     }
 
     asio::awaitable<bool> Registry::checkpointWal(const WalCheckpointMode mode) const

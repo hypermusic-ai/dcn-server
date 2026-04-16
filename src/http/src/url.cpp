@@ -41,12 +41,13 @@ namespace dcn::http
 
     std::string URL::getPathModule() const
     {
-        size_t start = _url.find('/');
-        size_t end = _url.find('/', start + 1);
+        const std::string full_path = getFullPath();
+        size_t start = full_path.find('/');
+        size_t end = full_path.find('/', start + 1);
 
         if(start == std::string::npos)return "";
 
-        return _url.substr(start, end - start);
+        return full_path.substr(start, end - start);
     }
 
     std::string URL::getPathInfo() const

@@ -135,7 +135,43 @@ namespace dcn
     asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
 
     /**
-     * @brief Handles a OPTIONS request to /format/<hash>?limit=<uint>&page=<uint>
+     * @brief Handles a OPTIONS request to /formats?limit=<uint>&after=<~string>
+     *
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @return An HTTP response
+     */
+    asio::awaitable<http::Response> OPTIONS_formats(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args);
+
+    /**
+     * @brief Handles a HEAD request to /formats?limit=<uint>&after=<~string>
+     *
+     * Mirrors GET /formats validation and returns status-only metadata.
+     *
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @param registry Registry instance
+     * @return An HTTP response
+     */
+    asio::awaitable<http::Response> HEAD_formats(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
+
+    /**
+     * @brief Handles a GET request to /formats?limit=<uint>&after=<~string>
+     *
+     * Returns a paginated list of all format hashes.
+     *
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @param registry Registry instance
+     * @return An HTTP response
+     */
+    asio::awaitable<http::Response> GET_formats(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
+
+    /**
+     * @brief Handles a OPTIONS request to /format/<hash>?limit=<uint>&after=<~string>
      *
      * @param request The incoming HTTP request
      * @param route_args Route arguments
@@ -145,7 +181,7 @@ namespace dcn
     asio::awaitable<http::Response> OPTIONS_format(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args);
 
     /**
-     * @brief Handles a GET request to /format/<hash>?limit=<uint>&page=<uint>
+     * @brief Handles a GET request to /format/<hash>?limit=<uint>&after=<~string>
      *
      * Returns a paginated list of connectors that belong to the given format hash.
      *
@@ -156,6 +192,42 @@ namespace dcn
      * @return An HTTP response
      */
     asio::awaitable<http::Response> GET_format(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
+
+    /**
+     * @brief Handles a OPTIONS request to /accounts?limit=<uint>&after=<~string>
+     *
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @return An HTTP response
+     */
+    asio::awaitable<http::Response> OPTIONS_accounts(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args);
+
+    /**
+     * @brief Handles a HEAD request to /accounts?limit=<uint>&after=<~string>
+     *
+     * Mirrors GET /accounts validation and returns status-only metadata.
+     *
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @param registry Registry instance
+     * @return An HTTP response
+     */
+    asio::awaitable<http::Response> HEAD_accounts(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
+
+    /**
+     * @brief Handles a GET request to /accounts?limit=<uint>&after=<~string>
+     *
+     * Returns a paginated list of all unique account owners.
+     *
+     * @param request The incoming HTTP request
+     * @param route_args Route arguments
+     * @param query_args Query arguments
+     * @param registry Registry instance
+     * @return An HTTP response
+     */
+    asio::awaitable<http::Response> GET_accounts(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
 
 
     /**
