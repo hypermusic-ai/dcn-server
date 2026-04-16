@@ -489,7 +489,13 @@ int main(int argc, char* argv[])
         {dcn::http::Method::GET, "/account/<string>?limit=<uint>&after_connectors=<~string>&after_transformations=<~string>&after_conditions=<~string>"},
         dcn::GET_accountInfo,
         std::ref(registry));
+    server.addRoute({dcn::http::Method::OPTIONS, "/accounts?limit=<uint>&after=<~string>"}, dcn::OPTIONS_accounts);
+    server.addRoute({dcn::http::Method::HEAD, "/accounts?limit=<uint>&after=<~string>"}, dcn::HEAD_accounts, std::ref(registry));
+    server.addRoute({dcn::http::Method::GET, "/accounts?limit=<uint>&after=<~string>"}, dcn::GET_accounts, std::ref(registry));
 
+    server.addRoute({dcn::http::Method::OPTIONS, "/formats?limit=<uint>&after=<~string>"}, dcn::OPTIONS_formats);
+    server.addRoute({dcn::http::Method::HEAD, "/formats?limit=<uint>&after=<~string>"}, dcn::HEAD_formats, std::ref(registry));
+    server.addRoute({dcn::http::Method::GET, "/formats?limit=<uint>&after=<~string>"}, dcn::GET_formats, std::ref(registry));
     server.addRoute({dcn::http::Method::OPTIONS, "/format/<string>?limit=<uint>&after=<~string>"}, dcn::OPTIONS_format);
     server.addRoute({dcn::http::Method::GET, "/format/<string>?limit=<uint>&after=<~string>"}, dcn::GET_format, std::ref(registry));
 

@@ -48,6 +48,18 @@ The unit test build target is:
 
 Do **not** rebuild tests by default for every change.
 
+## Build/Test Execution Gate
+
+Do **not** run build or test commands automatically after making changes.
+
+Only run build/test commands when the user gives an explicit command/request to do so.
+
+Examples of gated commands include:
+
+- `cmake --build ...`
+- `ctest ...`
+- running `DecentralisedArtServerTests` directly
+
 Rebuild `DecentralisedArtServerTests` when at least one of these is true:
 
 - Any file under `src/`, `include/`, or `tests/` changes (`.cpp`, `.hpp`, etc.)

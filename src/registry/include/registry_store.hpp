@@ -40,6 +40,11 @@ namespace dcn::storage
 
     using NameCursor = std::string;
 
+    inline std::string serializeNameCursor(const NameCursor & cursor)
+    {
+        return cursor;
+    }
+
     struct NameCursorPage
     {
         std::vector<std::string> entries;
@@ -74,6 +79,10 @@ namespace dcn::storage
             virtual NameCursorPage getFormatConnectorNamesCursor(
                 const evmc::bytes32 & format_hash,
                 const std::optional<NameCursor> & after,
+                std::size_t limit) const = 0;
+            virtual std::size_t getFormatsCount() const = 0;
+            virtual NameCursorPage getFormatsCursor(
+                const std::optional<evmc::bytes32> & after,
                 std::size_t limit) const = 0;
             virtual std::optional<std::vector<ScalarLabel>> getScalarLabelsByFormatHash(
                 const evmc::bytes32 & format_hash) const = 0;
@@ -110,6 +119,10 @@ namespace dcn::storage
                 const chain::Address & owner,
                 const std::optional<NameCursor> & after,
                 std::size_t limit) const = 0;
+            virtual std::size_t getAccountsCount() const = 0;
+            virtual NameCursorPage getAccountsCursor(
+                const std::optional<chain::Address> & after,
+                std::size_t limit) const = 0;
 
             virtual bool checkpointWal(WalCheckpointMode mode) const = 0;
     };
@@ -118,4 +131,5 @@ namespace dcn::storage
 namespace dcn::parse
 {
     Result<storage::NameCursor> parseNameCursor(const std::string & name_token);
+    Result<evmc::bytes32> parseFormatCursorHex(const std::string & cursor_token);
 }

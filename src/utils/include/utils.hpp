@@ -13,6 +13,8 @@
 #include <filesystem>
 #include <functional>
 #include <mutex>
+#include <optional>
+#include <string_view>
 
 #include "logo.hpp"
 
@@ -80,6 +82,8 @@ namespace dcn::utils
     }
 
     bool equalsIgnoreCase(const std::string& a, const std::string& b);
+
+    std::optional<std::string> trimAsciiWhitespace(std::string_view value);
 
     void logException(const std::exception_ptr & exception_ptr, const std::string_view context);
 

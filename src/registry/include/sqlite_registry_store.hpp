@@ -39,6 +39,10 @@ namespace dcn::storage
                 const evmc::bytes32 & format_hash,
                 const std::optional<NameCursor> & after,
                 std::size_t limit) const override;
+            std::size_t getFormatsCount() const override;
+            NameCursorPage getFormatsCursor(
+                const std::optional<evmc::bytes32> & after,
+                std::size_t limit) const override;
             std::optional<std::vector<ScalarLabel>> getScalarLabelsByFormatHash(
                 const evmc::bytes32 & format_hash) const override;
 
@@ -73,6 +77,10 @@ namespace dcn::storage
             NameCursorPage getOwnedConditionsCursor(
                 const chain::Address & owner,
                 const std::optional<NameCursor> & after,
+                std::size_t limit) const override;
+            std::size_t getAccountsCount() const override;
+            NameCursorPage getAccountsCursor(
+                const std::optional<chain::Address> & after,
                 std::size_t limit) const override;
 
             bool checkpointWal(WalCheckpointMode mode) const override;
