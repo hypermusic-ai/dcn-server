@@ -7,5 +7,6 @@ var utils_8hpp =
     [ "loadBuildTimestamp", "utils_8hpp.html#afe5529604b645836efa07f3d4d662540", null ],
     [ "logException", "utils_8hpp.html#a82319650a16ef5fc8b0e92c6a28bf9fe", null ],
     [ "topologicalSort", "utils_8hpp.html#a213229fb0c30f9ca92e2d1c60f550442", null ],
+    [ "trimAsciiWhitespace", "utils_8hpp.html#a93bc0c821fedf6721cde3c02b8b86ea3", null ],
     [ "always_false", "utils_8hpp.html#afc4bf0995d381a01e93043a56f6f9978", null ]
 ];

@@ -14,5 +14,7 @@ var registry__store_8hpp =
       [ "FULL", "registry__store_8hpp.html#a206ce14429e34d4b951fb2a6745c403faba7de5bc6888294e5884b024a4c894f1", null ],
       [ "TRUNCATE", "registry__store_8hpp.html#a206ce14429e34d4b951fb2a6745c403fa0a83d15fde12983f199bdeb76667660f", null ]
     ] ],
-    [ "parseNameCursor", "registry__store_8hpp.html#a759a1aa7170657ecddc4ca25334febfb", null ]
+    [ "parseFormatCursorHex", "registry__store_8hpp.html#a11d4101b517cd0e5cfdc91d3813544d0", null ],
+    [ "parseNameCursor", "registry__store_8hpp.html#a759a1aa7170657ecddc4ca25334febfb", null ],
+    [ "serializeNameCursor", "registry__store_8hpp.html#a8dbec7280a3920838860453c80267fe5", null ]
 ];

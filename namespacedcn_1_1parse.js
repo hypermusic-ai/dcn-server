@@ -14,6 +14,7 @@ var namespacedcn_1_1parse =
     [ "decodeBytes", "namespacedcn_1_1parse.html#a099e01b41b2ee816c860b1a7eeae0a20", null ],
     [ "decodeBytes", "namespacedcn_1_1parse.html#ab842ce842aa5ef5326b365830c24213c", null ],
     [ "decodeBytes", "namespacedcn_1_1parse.html#a7a6fb9bc564ee8a9be6c2217d2f18159", null ],
+    [ "parseFormatCursorHex", "namespacedcn_1_1parse.html#a11d4101b517cd0e5cfdc91d3813544d0", null ],
     [ "parseFromJson", "namespacedcn_1_1parse.html#a8590eca51c163e212a5f0a7450145aa5", null ],
     [ "parseFromJson", "namespacedcn_1_1parse.html#a1bb6275b096c55f4f778834250e84bb5", null ],
     [ "parseFromJson", "namespacedcn_1_1parse.html#ac545656916a1964225873682a6b6a781", null ],

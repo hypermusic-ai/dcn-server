@@ -9,5 +9,6 @@ var namespacedcn_1_1utils =
     [ "loadBuildTimestamp", "namespacedcn_1_1utils.html#afe5529604b645836efa07f3d4d662540", null ],
     [ "logException", "namespacedcn_1_1utils.html#a82319650a16ef5fc8b0e92c6a28bf9fe", null ],
     [ "topologicalSort", "namespacedcn_1_1utils.html#a213229fb0c30f9ca92e2d1c60f550442", null ],
+    [ "trimAsciiWhitespace", "namespacedcn_1_1utils.html#a93bc0c821fedf6721cde3c02b8b86ea3", null ],
     [ "always_false", "namespacedcn_1_1utils.html#afc4bf0995d381a01e93043a56f6f9978", null ]
 ];

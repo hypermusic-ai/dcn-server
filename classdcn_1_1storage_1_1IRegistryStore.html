@@ -132,6 +132,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a42210491fb70e2f750b10583fe022b8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a89694d751a10ce0364503af5c9e89e84" id="r_a89694d751a10ce0364503af5c9e89e84"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="structdcn_1_1storage_1_1NameCursorPage.html">NameCursorPage</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1storage_1_1IRegistryStore.html#a89694d751a10ce0364503af5c9e89e84">getFormatConnectorNamesCursor</a> (const evmc::bytes32 &amp;format_hash, const std::optional&lt; <a class="el" href="namespacedcn_1_1storage.html#ad056a19a83f3cb0a4b0404f8a5394c35">NameCursor</a> &gt; &amp;after, std::size_t limit) const =0</td></tr>
 <tr class="separator:a89694d751a10ce0364503af5c9e89e84"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ae275ea1d6558915bce003c63e81385" id="r_a1ae275ea1d6558915bce003c63e81385"><td class="memItemLeft" align="right" valign="top">virtual std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1storage_1_1IRegistryStore.html#a1ae275ea1d6558915bce003c63e81385">getFormatsCount</a> () const =0</td></tr>
+<tr class="separator:a1ae275ea1d6558915bce003c63e81385"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a67c73cd60441a2a5a995f9b25e1b9d32" id="r_a67c73cd60441a2a5a995f9b25e1b9d32"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="structdcn_1_1storage_1_1NameCursorPage.html">NameCursorPage</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1storage_1_1IRegistryStore.html#a67c73cd60441a2a5a995f9b25e1b9d32">getFormatsCursor</a> (const std::optional&lt; evmc::bytes32 &gt; &amp;after, std::size_t limit) const =0</td></tr>
+<tr class="separator:a67c73cd60441a2a5a995f9b25e1b9d32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70bba24373b0245bba20ea43777f177f" id="r_a70bba24373b0245bba20ea43777f177f"><td class="memItemLeft" align="right" valign="top">virtual std::optional&lt; std::vector&lt; <a class="el" href="namespacedcn_1_1storage.html#a62449d64d7c9a63d6ab1869e182ebc8a">ScalarLabel</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1storage_1_1IRegistryStore.html#a70bba24373b0245bba20ea43777f177f">getScalarLabelsByFormatHash</a> (const evmc::bytes32 &amp;format_hash) const =0</td></tr>
 <tr class="separator:a70bba24373b0245bba20ea43777f177f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a1a631a89d33214244201d1a94ed6bd" id="r_a9a1a631a89d33214244201d1a94ed6bd"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1storage_1_1IRegistryStore.html#a9a1a631a89d33214244201d1a94ed6bd">hasTransformation</a> (const std::string &amp;<a class="el" href="ingestion_8cpp.html#a9b45b3e13bd9167aab02e17e08916231">name</a>) const =0</td></tr>
@@ -156,6 +160,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aabc91a21a65a13c187f4ad8862e1141c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad03e580a58671f7aa3ff95e8908cb5c9" id="r_ad03e580a58671f7aa3ff95e8908cb5c9"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="structdcn_1_1storage_1_1NameCursorPage.html">NameCursorPage</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1storage_1_1IRegistryStore.html#ad03e580a58671f7aa3ff95e8908cb5c9">getOwnedConditionsCursor</a> (const <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &amp;owner, const std::optional&lt; <a class="el" href="namespacedcn_1_1storage.html#ad056a19a83f3cb0a4b0404f8a5394c35">NameCursor</a> &gt; &amp;after, std::size_t limit) const =0</td></tr>
 <tr class="separator:ad03e580a58671f7aa3ff95e8908cb5c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ba51b256e5daa2a348a745d9fc159f2" id="r_a5ba51b256e5daa2a348a745d9fc159f2"><td class="memItemLeft" align="right" valign="top">virtual std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1storage_1_1IRegistryStore.html#a5ba51b256e5daa2a348a745d9fc159f2">getAccountsCount</a> () const =0</td></tr>
+<tr class="separator:a5ba51b256e5daa2a348a745d9fc159f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18ee9aab651e051f3ab18306946f56cb" id="r_a18ee9aab651e051f3ab18306946f56cb"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="structdcn_1_1storage_1_1NameCursorPage.html">NameCursorPage</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1storage_1_1IRegistryStore.html#a18ee9aab651e051f3ab18306946f56cb">getAccountsCursor</a> (const std::optional&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &gt; &amp;after, std::size_t limit) const =0</td></tr>
+<tr class="separator:a18ee9aab651e051f3ab18306946f56cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a94ef79a87a267a9296c58d1ad8a0b4e3" id="r_a94ef79a87a267a9296c58d1ad8a0b4e3"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1storage_1_1IRegistryStore.html#a94ef79a87a267a9296c58d1ad8a0b4e3">checkpointWal</a> (<a class="el" href="namespacedcn_1_1storage.html#a206ce14429e34d4b951fb2a6745c403f">WalCheckpointMode</a> mode) const =0</td></tr>
 <tr class="separator:a94ef79a87a267a9296c58d1ad8a0b4e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -454,6 +462,71 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a5ba51b256e5daa2a348a745d9fc159f2" name="a5ba51b256e5daa2a348a745d9fc159f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5ba51b256e5daa2a348a745d9fc159f2">&#9670;&#160;</a></span>getAccountsCount()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual std::size_t dcn::storage::IRegistryStore::getAccountsCount </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implemented in <a class="el" href="classdcn_1_1storage_1_1SQLiteRegistryStore.html#a471d10ab80e8387f21ace4b2d8b0eb8d">dcn::storage::SQLiteRegistryStore</a>.</p>
+
+</div>
+</div>
+<a id="a18ee9aab651e051f3ab18306946f56cb" name="a18ee9aab651e051f3ab18306946f56cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18ee9aab651e051f3ab18306946f56cb">&#9670;&#160;</a></span>getAccountsCursor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="structdcn_1_1storage_1_1NameCursorPage.html">NameCursorPage</a> dcn::storage::IRegistryStore::getAccountsCursor </td>
+          <td>(</td>
+          <td class="paramtype">const std::optional&lt; <a class="el" href="namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb">chain::Address</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>after</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>limit</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implemented in <a class="el" href="classdcn_1_1storage_1_1SQLiteRegistryStore.html#a853afc7373cccdbc017a8ff3419f7adc">dcn::storage::SQLiteRegistryStore</a>.</p>
+
+</div>
+</div>
 <a id="a124c34fe96130c2132c9e144d4daa91d" name="a124c34fe96130c2132c9e144d4daa91d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a124c34fe96130c2132c9e144d4daa91d">&#9670;&#160;</a></span>getConditionRecordHandle()</h2>
 
@@ -607,6 +680,71 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implemented in <a class="el" href="classdcn_1_1storage_1_1SQLiteRegistryStore.html#ac722453f45271334693962742ad71306">dcn::storage::SQLiteRegistryStore</a>.</p>
+
+</div>
+</div>
+<a id="a1ae275ea1d6558915bce003c63e81385" name="a1ae275ea1d6558915bce003c63e81385"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ae275ea1d6558915bce003c63e81385">&#9670;&#160;</a></span>getFormatsCount()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual std::size_t dcn::storage::IRegistryStore::getFormatsCount </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implemented in <a class="el" href="classdcn_1_1storage_1_1SQLiteRegistryStore.html#a85512b56958e48541bb2c2013fe3deb6">dcn::storage::SQLiteRegistryStore</a>.</p>
+
+</div>
+</div>
+<a id="a67c73cd60441a2a5a995f9b25e1b9d32" name="a67c73cd60441a2a5a995f9b25e1b9d32"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a67c73cd60441a2a5a995f9b25e1b9d32">&#9670;&#160;</a></span>getFormatsCursor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="structdcn_1_1storage_1_1NameCursorPage.html">NameCursorPage</a> dcn::storage::IRegistryStore::getFormatsCursor </td>
+          <td>(</td>
+          <td class="paramtype">const std::optional&lt; evmc::bytes32 &gt; &amp;&#160;</td>
+          <td class="paramname"><em>after</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>limit</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implemented in <a class="el" href="classdcn_1_1storage_1_1SQLiteRegistryStore.html#ad23c25809507289d0f2119732e784a77">dcn::storage::SQLiteRegistryStore</a>.</p>
 
 </div>
 </div>

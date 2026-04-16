@@ -18,5 +18,6 @@ var namespacedcn_1_1storage =
       [ "PASSIVE", "namespacedcn_1_1storage.html#a206ce14429e34d4b951fb2a6745c403fade1c70a20d797811b2fd32facf64bbd4", null ],
       [ "FULL", "namespacedcn_1_1storage.html#a206ce14429e34d4b951fb2a6745c403faba7de5bc6888294e5884b024a4c894f1", null ],
       [ "TRUNCATE", "namespacedcn_1_1storage.html#a206ce14429e34d4b951fb2a6745c403fa0a83d15fde12983f199bdeb76667660f", null ]
-    ] ]
+    ] ],
+    [ "serializeNameCursor", "namespacedcn_1_1storage.html#a8dbec7280a3920838860453c80267fe5", null ]
 ];
