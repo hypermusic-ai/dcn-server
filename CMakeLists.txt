@@ -50,8 +50,9 @@ target_link_libraries("${PROJECT_NAME}Lib"
         evmc
         evmone
         nlohmann_json
+        sqlite3
 
-        proto_gen
+        pt_proto_gen
         
         "${PROJECT_PREFIX}::Native"
         "${PROJECT_PREFIX}::Async"
@@ -60,6 +61,7 @@ target_link_libraries("${PROJECT_NAME}Lib"
         "${PROJECT_PREFIX}::Version"
         "${PROJECT_PREFIX}::Utils"
         "${PROJECT_PREFIX}::Crypto"
+        "${PROJECT_PREFIX}::Events"
         "${PROJECT_PREFIX}::Server"
         "${PROJECT_PREFIX}::HTTP"
         "${PROJECT_PREFIX}::PT"

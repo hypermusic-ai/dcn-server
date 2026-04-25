@@ -39,7 +39,7 @@ static bool _createDirectories(const dcn::config::Config & cfg)
     }
 
     // Create connectors build directory if it doesn't exist
-    if(std::filesystem::exists(cfg.storage_path / "transformations") == false)
+    if(std::filesystem::exists(cfg.storage_path / "connectors" / "build") == false)
     {
         std::filesystem::create_directory(cfg.storage_path / "connectors" / "build", creation_dir_ec);
         if(creation_dir_ec)
@@ -95,7 +95,8 @@ static bool _createDirectories(const dcn::config::Config & cfg)
     }
 
     // Create conditions build directory if it doesn't exist
-    if(std::filesystem::exists(cfg.storage_path / "conditions" / "build") == false){
+    if(std::filesystem::exists(cfg.storage_path / "conditions" / "build") == false)
+    {
         std::filesystem::create_directory(cfg.storage_path / "conditions" / "build", creation_dir_ec);
         if(creation_dir_ec)
         {
@@ -116,6 +117,34 @@ static bool _createDirectories(const dcn::config::Config & cfg)
             spdlog::error(
                 "Failed to create registry DB directory '{}': {}",
                 cfg.registry_db.parent_path().string(),
+                creation_dir_ec.message());
+            return false;
+        }
+    }
+
+    // Create events DB directory if it doesn't exist
+    if(!cfg.events_db.parent_path().empty() && std::filesystem::exists(cfg.events_db.parent_path()) == false)
+    {
+        std::filesystem::create_directories(cfg.events_db.parent_path(), creation_dir_ec);
+        if(creation_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create events DB directory '{}': {}",
+                cfg.events_db.parent_path().string(),
+                creation_dir_ec.message());
+            return false;
+        }
+    }
+
+    // Create events archive directory if it doesn't exist
+    if(!cfg.events_archive_root.empty() && std::filesystem::exists(cfg.events_archive_root) == false)
+    {
+        std::filesystem::create_directories(cfg.events_archive_root, creation_dir_ec);
+        if(creation_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create events archive directory '{}': {}",
+                cfg.events_archive_root.string(),
                 creation_dir_ec.message());
             return false;
         }
@@ -208,9 +237,12 @@ static asio::awaitable<void> _runGracefulShutdown(
     std::optional<dcn::storage::RegistryWalSyncWorker> & wal_sync_worker,
     std::atomic<bool> & wal_sync_worker_stopped,
     dcn::storage::Registry & registry,
-    bool wal_enabled)
+    bool wal_enabled,
+    dcn::events::EventRuntime & events_runtime)
 {
     spdlog::info("Decentralised Art server stopping...");
+    events_runtime.requestStop();
+    spdlog::info("Events runtime stop requested");
     co_await server.close();
     spdlog::info("Decentralised Art server close requested");
 
@@ -258,8 +290,13 @@ static asio::awaitable<void> _runGracefulShutdown(
     co_return;
 }
 
-static void _runImmediateShutdown(std::optional<dcn::storage::RegistryWalSyncWorker> & wal_sync_worker)
+static void _runImmediateShutdown(
+    std::optional<dcn::storage::RegistryWalSyncWorker> & wal_sync_worker,
+    dcn::events::EventRuntime & events_runtime)
 {
+    events_runtime.requestStop();
+    spdlog::info("Events runtime stop requested");
+
     if(wal_sync_worker)
     {
         spdlog::info("Registry WAL sync worker stopping...");
@@ -315,8 +352,17 @@ int main(int argc, char* argv[])
     arg_parser.addArg<unsigned int>("--chain-poll-ms", "Chain poll interval in milliseconds");
     arg_parser.addArg<unsigned int>("--chain-confirmations", "Finality confirmation depth");
     arg_parser.addArg<unsigned int>("--chain-batch-size", "Max number of blocks fetched per eth_getLogs request");
+    arg_parser.addArg<bool>("--chain-local-source", "Use in-process EVM as chain event source (no RPC)");
     arg_parser.addArg<std::filesystem::path>("--registry-db", "SQLite path for registry storage");
     arg_parser.addArg<unsigned int>("--registry-wal-sync-ms", "Interval in milliseconds for periodic SQLite WAL passive checkpoints");
+    arg_parser.addArg<std::filesystem::path>("--events-db", "SQLite path for events hot storage");
+    arg_parser.addArg<std::filesystem::path>("--events-archive-root", "Directory for archived monthly events shards");
+    arg_parser.addArg<unsigned int>("--events-chain-id", "Chain id used for events ingestion and feed projection");
+    arg_parser.addArg<unsigned int>("--events-hot-window-days", "Retention window in days for hot events storage");
+    arg_parser.addArg<unsigned int>("--events-projector-ms", "Interval in milliseconds for projector loop when idle");
+    arg_parser.addArg<unsigned int>("--events-archive-ms", "Interval in milliseconds for archive maintenance loop");
+    arg_parser.addArg<unsigned int>("--events-reorg-window-blocks", "Rolling block window size for reorg reconciliation");
+    arg_parser.addArg<unsigned int>("--events-outbox-retention-days", "Retention window in days for replay outbox rows");
     arg_parser.addArg<unsigned int>("--loader-batch-connectors", "Batch size used while adding loaded connectors to registry");
     arg_parser.addArg<unsigned int>("--loader-batch-transformations", "Batch size used while adding loaded transformations to registry");
     arg_parser.addArg<unsigned int>("--loader-batch-conditions", "Batch size used while adding loaded conditions to registry");
@@ -343,39 +389,51 @@ int main(int argc, char* argv[])
     cfg.chain_ingestion.poll_interval_ms = arg_parser.getArg<unsigned int>("--chain-poll-ms").value_or(5000);
     cfg.chain_ingestion.confirmations = arg_parser.getArg<unsigned int>("--chain-confirmations").value_or(12);
     cfg.chain_ingestion.block_batch_size = arg_parser.getArg<unsigned int>("--chain-batch-size").value_or(500);
+    if(const auto start_block_arg = arg_parser.getArg<unsigned int>("--chain-start-block"))
+    {
+        cfg.chain_ingestion.start_block = static_cast<std::uint64_t>(*start_block_arg);
+    }
 
-    // cfg.chain_ingestion.start_block = arg_parser.getArg<unsigned int>("--chain-start-block").value_or(0);
     cfg.chain_ingestion.rpc_url = arg_parser.getArg<std::string>("--chain-rpc").value_or("");
     cfg.chain_ingestion.registry_address = arg_parser.getArg<std::string>("--chain-registry").value_or("");
+    cfg.chain_ingestion.use_local_evm_source = arg_parser.getArg<bool>("--chain-local-source").value_or(false);
 
+    const bool has_chain_rpc = !cfg.chain_ingestion.rpc_url.empty();
+    const bool has_chain_registry = !cfg.chain_ingestion.registry_address.empty();
+    if(cfg.chain_ingestion.use_local_evm_source && (has_chain_rpc || has_chain_registry))
+    {
+        spdlog::error("--chain-local-source cannot be combined with --chain-rpc/--chain-registry");
+        return 1;
+    }
 
-    // if((chain_rpc_arg.has_value() && !chain_registry_arg.has_value()) ||
-    //     (!chain_rpc_arg.has_value() && chain_registry_arg.has_value()))
-    // {
-    //     spdlog::error("Both --chain-rpc and --chain-registry must be provided together");
-    //     return 1;
-    // }
+    if(!cfg.chain_ingestion.use_local_evm_source && (has_chain_rpc != has_chain_registry))
+    {
+        spdlog::error("Both --chain-rpc and --chain-registry must be provided together");
+        return 1;
+    }
 
-    // if(chain_rpc_arg && chain_registry_arg)
-    // {
-    //     const auto registry_addr_res = evmc::from_hex<dcn::chain::Address>(chain_registry_arg->at(0));
-    //     if(!registry_addr_res)
-    //     {
-    //         spdlog::error("Invalid --chain-registry address");
-    //         return 1;
-    //     }
+    if(cfg.chain_ingestion.use_local_evm_source)
+    {
+        cfg.chain_ingestion.enabled = true;
+        cfg.chain_ingestion.rpc_url.clear();
+        cfg.chain_ingestion.registry_address.clear();
+    }
+    else if(has_chain_registry)
+    {
+        const auto registry_addr_res = evmc::from_hex<dcn::chain::Address>(cfg.chain_ingestion.registry_address);
+        if(!registry_addr_res)
+        {
+            spdlog::error("Invalid --chain-registry address");
+            return 1;
+        }
 
-    //     chain_ingestion_cfg.enabled = true;
-    //     chain_ingestion_cfg.rpc_url = chain_rpc_arg->at(0);
-    //     chain_ingestion_cfg.registry_address = *registry_addr_res;
-
-    //     spdlog::info(
-    //         "Chain sync enabled. Registry={}, poll={}ms, confirmations={}, batch={}",
-    //         chain_registry_arg->at(0),
-    //         chain_ingestion_cfg.poll_interval_ms,
-    //         chain_ingestion_cfg.confirmations,
-    //         chain_ingestion_cfg.block_batch_size);
-    // }
+        cfg.chain_ingestion.registry_address = evmc::hex(*registry_addr_res);
+        cfg.chain_ingestion.enabled = true;
+    }
+    else
+    {
+        cfg.chain_ingestion.enabled = false;
+    }
 
     cfg.loader_batch_connectors = arg_parser.getArg<unsigned int>("--loader-batch-connectors").value_or(1000);
     cfg.loader_batch_transformations = arg_parser.getArg<unsigned int>("--loader-batch-transformations").value_or(5000);
@@ -388,6 +446,19 @@ int main(int argc, char* argv[])
     cfg.registry_db = arg_parser.getArg<std::filesystem::path>("--registry-db").value_or(
         cfg.storage_path / "registry.sqlite"
     );
+
+    cfg.events_db = arg_parser.getArg<std::filesystem::path>("--events-db").value_or(
+        cfg.storage_path / "events" / "events_hot.sqlite"
+    );
+    cfg.events_archive_root = arg_parser.getArg<std::filesystem::path>("--events-archive-root").value_or(
+        cfg.storage_path / "events" / "archive"
+    );
+    cfg.events_chain_id = arg_parser.getArg<unsigned int>("--events-chain-id").value_or(1);
+    cfg.events_hot_window_days = arg_parser.getArg<unsigned int>("--events-hot-window-days").value_or(90);
+    cfg.events_projector_interval_ms = arg_parser.getArg<unsigned int>("--events-projector-ms").value_or(200);
+    cfg.events_archive_interval_ms = arg_parser.getArg<unsigned int>("--events-archive-ms").value_or(30000);
+    cfg.events_reorg_window_blocks = arg_parser.getArg<unsigned int>("--events-reorg-window-blocks").value_or(2048);
+    cfg.events_outbox_retention_days = arg_parser.getArg<unsigned int>("--events-outbox-retention-days").value_or(7);
 
     spdlog::info("Current working path: {}", std::filesystem::current_path().string());
 
@@ -405,7 +476,10 @@ int main(int argc, char* argv[])
     const bool registry_db_in_memory = cfg.registry_db.empty() || cfg.registry_db == ":memory:";
 
     // create directories
-    _createDirectories(cfg);
+    if(!_createDirectories(cfg))
+    {
+        return 1;
+    }
 
     asio::io_context io_context;
 
@@ -418,6 +492,30 @@ int main(int argc, char* argv[])
     dcn::server::Server server(io_context, {asio::ip::tcp::v4(), asio::ip::port_type(cfg.port)});
 
     server.setIdleInterval(5000ms);
+
+    dcn::events::EventRuntime events_runtime(
+        io_context,
+        dcn::events::EventRuntimeConfig{
+            .hot_db_path = cfg.events_db,
+            .archive_root = cfg.events_archive_root,
+            .chain_id = static_cast<int>(cfg.events_chain_id),
+            .ingestion_enabled = cfg.chain_ingestion.enabled,
+            .use_local_evm_source = cfg.chain_ingestion.use_local_evm_source,
+            .local_evm = cfg.chain_ingestion.use_local_evm_source ? &evm : nullptr,
+            .rpc_url = cfg.chain_ingestion.rpc_url,
+            .registry_address = cfg.chain_ingestion.registry_address,
+            .start_block = cfg.chain_ingestion.start_block.has_value()
+                ? std::optional<std::int64_t>(static_cast<std::int64_t>(*cfg.chain_ingestion.start_block))
+                : std::nullopt,
+            .poll_interval_ms = cfg.chain_ingestion.poll_interval_ms,
+            .confirmations = cfg.chain_ingestion.confirmations,
+            .block_batch_size = cfg.chain_ingestion.block_batch_size,
+            .hot_window_days = static_cast<std::size_t>(cfg.events_hot_window_days),
+            .reorg_window_blocks = static_cast<std::size_t>(cfg.events_reorg_window_blocks),
+            .outbox_retention_ms = static_cast<std::int64_t>(cfg.events_outbox_retention_days) * 24LL * 60LL * 60LL * 1000LL,
+            .projector_interval_ms = cfg.events_projector_interval_ms,
+            .archive_interval_ms = cfg.events_archive_interval_ms
+        });
     
     const auto favicon = dcn::file::loadBinaryFile(cfg.resources_path / "media" / "img" / "favicon.svg");
     
@@ -499,6 +597,11 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::OPTIONS, "/format/<string>?limit=<uint>&after=<~string>"}, dcn::OPTIONS_format);
     server.addRoute({dcn::http::Method::GET, "/format/<string>?limit=<uint>&after=<~string>"}, dcn::GET_format, std::ref(registry));
 
+    server.addRoute({dcn::http::Method::OPTIONS, "/feed?limit=<uint>&before=<~string>&type=<~string>&include_unfinalized=<~uint>"}, dcn::OPTIONS_feed);
+    server.addRoute({dcn::http::Method::GET, "/feed?limit=<uint>&before=<~string>&type=<~string>&include_unfinalized=<~uint>"}, dcn::GET_feed, std::ref(events_runtime));
+    server.addRoute({dcn::http::Method::OPTIONS, "/feed/stream?since_seq=<~uint>&limit=<~uint>"}, dcn::OPTIONS_feedStream);
+    server.addRoute({dcn::http::Method::GET, "/feed/stream?since_seq=<~uint>&limit=<~uint>"}, dcn::GET_feedStream, std::ref(events_runtime));
+
     server.addRoute({dcn::http::Method::HEAD, "/connector/<string>"},       dcn::HEAD_connector, std::ref(registry));
     server.addRoute({dcn::http::Method::OPTIONS, "/connector"},             dcn::OPTIONS_connector);
     server.addRoute({dcn::http::Method::OPTIONS, "/connector/<string>"},    dcn::OPTIONS_connector);
@@ -525,6 +628,14 @@ int main(int argc, char* argv[])
         spdlog::error("Failed to prepare PT Solidity build cache");
         return 1;
     }
+
+    events_runtime.start();
+    spdlog::info(
+        "Events runtime started (ingestion_enabled={}, local_source={}, chain_id={}, hot_db='{}')",
+        events_runtime.ingestionEnabled(),
+        cfg.chain_ingestion.use_local_evm_source,
+        cfg.events_chain_id,
+        cfg.events_db.string());
 
     const bool wal_enabled = !registry_db_in_memory;
     std::atomic<bool> wal_sync_worker_stopped = true;
@@ -561,6 +672,7 @@ int main(int argc, char* argv[])
          &wal_sync_worker,
          &wal_sync_worker_stopped,
          &registry,
+         &events_runtime,
          wal_enabled]() -> asio::awaitable<void>
         {
             return _runGracefulShutdown(
@@ -568,13 +680,14 @@ int main(int argc, char* argv[])
                 wal_sync_worker,
                 wal_sync_worker_stopped,
                 registry,
-                wal_enabled);
+                wal_enabled,
+                events_runtime);
         },
 
         // immediate shutdown
-        [&wal_sync_worker]()
+        [&wal_sync_worker, &events_runtime]()
         {
-            _runImmediateShutdown(wal_sync_worker);
+            _runImmediateShutdown(wal_sync_worker, events_runtime);
         }
     );
     

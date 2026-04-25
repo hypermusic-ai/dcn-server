@@ -34,6 +34,8 @@ namespace dcn::utils
     
     std::string currentTimestamp();
 
+    std::int64_t nowMs();
+
     template<class DataT, class ChildT, template<typename...> class ChildListT>
     std::vector<std::string> topologicalSort(   
         const absl::flat_hash_map<std::string, DataT> & data,
@@ -83,7 +85,11 @@ namespace dcn::utils
 
     bool equalsIgnoreCase(const std::string& a, const std::string& b);
 
+    std::string toLower(std::string value);
+
     std::optional<std::string> trimAsciiWhitespace(std::string_view value);
+
+    bool likelyNetworkPath(const std::filesystem::path & path);
 
     void logException(const std::exception_ptr & exception_ptr, const std::string_view context);
 

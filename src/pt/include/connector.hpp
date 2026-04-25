@@ -89,6 +89,7 @@ namespace dcn::pt
         std::map<std::pair<std::uint32_t, std::uint32_t>, std::string> bindings;
         std::string condition_name;
         std::vector<std::int32_t> condition_args;
+        evmc::bytes32 format_hash{};
     };
 
     std::optional<ConnectorAddedEvent> decodeConnectorAddedEvent(

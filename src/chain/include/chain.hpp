@@ -6,7 +6,7 @@
 #include "deploy.hpp"
 #include "execute.hpp"
 #include "format_hash.hpp"
-
+#include "hex.hpp"
 
 namespace dcn::chain
 {

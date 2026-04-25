@@ -14,6 +14,7 @@
 #include "evm.hpp"
 #include "version.hpp"
 #include "loader.hpp"
+#include "events.hpp"
 
 namespace dcn
 {
@@ -228,6 +229,34 @@ namespace dcn
      * @return An HTTP response
      */
     asio::awaitable<http::Response> GET_accounts(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args, storage::Registry & registry);
+
+    /**
+     * @brief Handles OPTIONS requests to /feed?limit=<uint>&before=<~string>&type=<~string>&include_unfinalized=<~uint>
+     */
+    asio::awaitable<http::Response> OPTIONS_feed(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args);
+
+    /**
+     * @brief Handles GET requests to /feed?limit=<uint>&before=<~string>&type=<~string>&include_unfinalized=<~uint>
+     */
+    asio::awaitable<http::Response> GET_feed(
+        const http::Request & request,
+        std::vector<server::RouteArg> route_args,
+        server::QueryArgsList query_args,
+        events::EventRuntime & events_runtime);
+
+    /**
+     * @brief Handles OPTIONS requests to /feed/stream?since_seq=<~uint>&limit=<~uint>
+     */
+    asio::awaitable<http::Response> OPTIONS_feedStream(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args);
+
+    /**
+     * @brief Handles GET requests to /feed/stream?since_seq=<~uint>&limit=<~uint>
+     */
+    asio::awaitable<http::Response> GET_feedStream(
+        const http::Request & request,
+        std::vector<server::RouteArg> route_args,
+        server::QueryArgsList query_args,
+        events::EventRuntime & events_runtime);
 
 
     /**

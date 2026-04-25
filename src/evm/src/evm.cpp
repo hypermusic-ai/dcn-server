@@ -507,6 +507,20 @@ namespace dcn::evm
         co_return copyResultBytes(result);
     }
 
+    asio::awaitable<std::vector<EVM::EmittedLogRecord>> EVM::getLogsSince(
+        const std::uint64_t after_seq,
+        const std::size_t limit) noexcept
+    {
+        co_await async::ensureOnStrand(_strand);
+        co_return _storage.get_logs_since(after_seq, limit);
+    }
+
+    asio::awaitable<std::int64_t> EVM::getHeadBlockNumber() noexcept
+    {
+        co_await async::ensureOnStrand(_strand);
+        co_return _storage.head_block_number();
+    }
+
     asio::awaitable<bool> EVM::loadPT()
     { 
         const auto  contracts_dir = _pt_path    / "contracts";

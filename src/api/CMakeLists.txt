@@ -3,6 +3,7 @@ add_module(NAME "API"
         "${PROJECT_PREFIX}::Utils"
         "${PROJECT_PREFIX}::Async"
         "${PROJECT_PREFIX}::Native"
+        "${PROJECT_PREFIX}::Events"
         "${PROJECT_PREFIX}::Version"
         "${PROJECT_PREFIX}::Config"
         "${PROJECT_PREFIX}::PT"
@@ -23,5 +24,6 @@ add_module(NAME "API"
         evmc
         evmone
         nlohmann_json
+        sqlite3
 )
 

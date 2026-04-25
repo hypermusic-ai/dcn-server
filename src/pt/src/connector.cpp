@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstring>
 #include <format>
 #include <limits>
 #include <ranges>
@@ -403,13 +404,13 @@ namespace dcn::pt
         const evmc::bytes32 topics[],
         std::size_t num_topics)
     {
-        if(data == nullptr || topics == nullptr || num_topics < 3 || data_size < 32 * 10)
+        if(data == nullptr || topics == nullptr || num_topics < 3 || data_size < 32 * 11)
         {
             return std::nullopt;
         }
 
         const evmc::bytes32 expected_topic = chain::constructEventTopic(
-            "ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[])");
+            "ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[],bytes32)");
 
         if(topics[0] != expected_topic)
         {
@@ -430,6 +431,12 @@ namespace dcn::pt
         const auto binding_names_offset = chain::readWordAsSizeT(data, data_size, 224);
         const auto condition_offset = chain::readWordAsSizeT(data, data_size, 256);
         const auto condition_args_offset = chain::readWordAsSizeT(data, data_size, 288);
+        evmc::bytes32 format_hash_word{};
+        if(320 + 32 > data_size)
+        {
+            return std::nullopt;
+        }
+        std::memcpy(format_hash_word.bytes, data + 320, 32);
 
         if(!name_offset || !connector_address || !dimensions_count || !composite_dim_ids_offset || !composite_names_offset || !binding_dim_ids_offset || !binding_slot_ids_offset || !binding_names_offset || !condition_offset || !condition_args_offset)
         {
@@ -470,6 +477,7 @@ namespace dcn::pt
         event.dimensions_count = *dimensions_count;
         event.condition_name = *condition_name;
         event.condition_args = *condition_args;
+        event.format_hash = format_hash_word;
 
         for(std::size_t i = 0; i < composite_dim_ids->size(); ++i)
         {

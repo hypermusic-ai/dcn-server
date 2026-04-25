@@ -4,5 +4,5 @@ add_module(NAME "Utils"
     DEPENDENCIES
         spdlog::spdlog
         absl::hash
-        absl::flat_hash_map 
+        absl::flat_hash_map
 )

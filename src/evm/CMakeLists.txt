@@ -4,6 +4,7 @@ add_module(NAME "EVM"
         "${PROJECT_PREFIX}::Async"
         "${PROJECT_PREFIX}::Crypto"
         "${PROJECT_PREFIX}::Chain"
+        "${PROJECT_PREFIX}::Parser"
         "${PROJECT_PREFIX}::Utils"
 
         absl::hash
@@ -13,6 +14,7 @@ add_module(NAME "EVM"
         evmc
         evmone
         nlohmann_json
+        protobuf::libprotobuf
 )
 
 add_dependencies("EVM" solc_imported evmone)

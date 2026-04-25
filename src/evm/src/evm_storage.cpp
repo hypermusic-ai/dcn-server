@@ -1,12 +1,34 @@
 #include "evm_storage.hpp"
 #include "evm.hpp"
 
+#include <array>
+#include <algorithm>
+#include <cstddef>
+#include <chrono>
+#include <ctime>
+#include <limits>
+
 namespace dcn::evm
 {
     EVMStorage::EVMStorage(evmc::VM & vm, evmc_revision rev)
         :   _vm(vm),
             _revision(rev)
     {
+    }
+
+    evmc::bytes32 EVMStorage::make_pseudo_hash(
+        const std::uint64_t value_a,
+        const std::uint64_t value_b,
+        const std::uint64_t value_c) const
+    {
+        std::array<std::uint8_t, sizeof(value_a) + sizeof(value_b) + sizeof(value_c)> payload{};
+        std::memcpy(payload.data(), &value_a, sizeof(value_a));
+        std::memcpy(payload.data() + sizeof(value_a), &value_b, sizeof(value_b));
+        std::memcpy(payload.data() + sizeof(value_a) + sizeof(value_b), &value_c, sizeof(value_c));
+
+        evmc::bytes32 hash{};
+        dcn::crypto::Keccak256::getHash(payload.data(), payload.size(), hash.bytes);
+        return hash;
     }
 
     bool EVMStorage::account_exists(const evmc::address& addr) const noexcept
@@ -92,6 +114,7 @@ namespace dcn::evm
 
     evmc::Result EVMStorage::call(const evmc_message& msg) noexcept
     {
+        const bool top_level_call = _sender_stack.empty();
         evmc::address actual_sender = msg.sender;
 
         // Patch: if sender is zero and we are in a nested context
@@ -112,6 +135,45 @@ namespace dcn::evm
             }
         };
         SenderStackScopeGuard sender_stack_scope_guard{_sender_stack};
+
+        if(top_level_call)
+        {
+            ActiveTxContext tx{};
+            tx.block_number = ++_head_block_number;
+            tx.block_time = static_cast<std::int64_t>(
+                std::chrono::duration_cast<std::chrono::seconds>(
+                    std::chrono::system_clock::now().time_since_epoch())
+                    .count());
+            tx.parent_hash = _head_block_hash;
+            tx.block_hash = make_pseudo_hash(
+                static_cast<std::uint64_t>(tx.block_number),
+                0,
+                0);
+            tx.tx_hash = make_pseudo_hash(
+                static_cast<std::uint64_t>(tx.block_number),
+                _next_tx_id,
+                1);
+            tx.tx_index = 0;
+            tx.next_log_index = 0;
+
+            _head_block_hash = tx.block_hash;
+            ++_next_tx_id;
+            _tx_context_stack.push_back(std::move(tx));
+        }
+
+        struct TxContextScopeGuard
+        {
+            std::vector<ActiveTxContext> & stack;
+            bool pop_on_exit = false;
+            ~TxContextScopeGuard()
+            {
+                if(pop_on_exit && !stack.empty())
+                {
+                    stack.pop_back();
+                }
+            }
+        };
+        TxContextScopeGuard tx_context_scope_guard{_tx_context_stack, top_level_call};
 
         if (msg.kind == EVMC_CALL || msg.kind == EVMC_DELEGATECALL || msg.kind == EVMC_CALLCODE) 
         {
@@ -233,12 +295,21 @@ namespace dcn::evm
 
         // Block metadata
         ctx.block_coinbase = {};                   // Miner address (can be zero)
-        ctx.block_number = 123456;                 // Arbitrary block height
-        ctx.block_timestamp = static_cast<int64_t>(
-            std::chrono::duration_cast<std::chrono::seconds>(
-                std::chrono::system_clock::now().time_since_epoch()
-            ).count()
-        );
+        if(!_tx_context_stack.empty())
+        {
+            const auto & tx = _tx_context_stack.back();
+            ctx.block_number = tx.block_number;
+            ctx.block_timestamp = tx.block_time;
+        }
+        else
+        {
+            ctx.block_number = _head_block_number;
+            ctx.block_timestamp = static_cast<int64_t>(
+                std::chrono::duration_cast<std::chrono::seconds>(
+                    std::chrono::system_clock::now().time_since_epoch()
+                ).count()
+            );
+        }
         ctx.block_gas_limit = DEFAULT_GAS_LIMIT;   // gas limit
         ctx.block_prev_randao = {};                // Randomness (EIP-4399)
         
@@ -261,9 +332,15 @@ namespace dcn::evm
 
     evmc::bytes32 EVMStorage::get_block_hash(int64_t block_number) const noexcept
     {
-        // implement
-        assert(false && "not implemented");
-        return {};
+        if(block_number <= 0 || block_number > _head_block_number)
+        {
+            return {};
+        }
+
+        return make_pseudo_hash(
+            static_cast<std::uint64_t>(block_number),
+            0,
+            0);
     }
 
     static bool _decodeAbiWordToSize(const std::uint8_t * word, std::size_t & out)
@@ -320,6 +397,35 @@ namespace dcn::evm
                               const evmc::bytes32 topics[],
                               size_t num_topics) noexcept
     {
+        if(!_tx_context_stack.empty())
+        {
+            auto & tx = _tx_context_stack.back();
+
+            EmittedLogRecord row{};
+            row.seq = _next_log_seq++;
+            row.block_number = tx.block_number;
+            row.block_hash = evmc::hex(tx.block_hash);
+            row.parent_hash = evmc::hex(tx.parent_hash);
+            row.tx_index = tx.tx_index;
+            row.tx_hash = evmc::hex(tx.tx_hash);
+            row.log_index = tx.next_log_index++;
+            row.address = evmc::hex(addr);
+            row.block_time = tx.block_time;
+            row.topics.reserve(num_topics);
+
+            for(std::size_t i = 0; i < num_topics; ++i)
+            {
+                row.topics.push_back(evmc::hex(topics[i]));
+            }
+
+            if(data != nullptr && data_size > 0)
+            {
+                row.data_hex = evmc::hex(evmc::bytes_view{data, data_size});
+            }
+
+            _emitted_logs.push_back(std::move(row));
+        }
+
         // const auto connector_added_event = decodeConnectorAddedEvent(data, data_size, topics, num_topics);
         // if(connector_added_event)
         // {
@@ -477,6 +583,44 @@ namespace dcn::evm
     {
         // implement
         assert(false && "not implemented");
+    }
+
+    std::vector<EVMStorage::EmittedLogRecord> EVMStorage::get_logs_since(
+        const std::uint64_t after_seq,
+        const std::size_t limit) const
+    {
+        std::vector<EmittedLogRecord> out;
+        if(limit == 0 || _emitted_logs.empty())
+        {
+            return out;
+        }
+        if(after_seq == std::numeric_limits<std::uint64_t>::max())
+        {
+            return out;
+        }
+
+        const auto it = std::lower_bound(
+            _emitted_logs.begin(),
+            _emitted_logs.end(),
+            after_seq + 1,
+            [](const EmittedLogRecord & row, const std::uint64_t seq)
+            {
+                return row.seq < seq;
+            });
+
+        const std::size_t available = static_cast<std::size_t>(_emitted_logs.end() - it);
+        const std::size_t count = std::min(limit, available);
+        out.reserve(count);
+        for(std::size_t i = 0; i < count; ++i)
+        {
+            out.push_back(*(it + static_cast<std::ptrdiff_t>(i)));
+        }
+        return out;
+    }
+
+    std::int64_t EVMStorage::head_block_number() const noexcept
+    {
+        return _head_block_number;
     }
 
 

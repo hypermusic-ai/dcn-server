@@ -18,6 +18,7 @@
 #include "evm.hpp"
 #include "pt.hpp"
 #include "file.hpp"
+#include "events.hpp"
 #include "api.hpp"
 #include "auth.hpp"
 #include "utils.hpp"
