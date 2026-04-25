@@ -74,4 +74,6 @@ namespace dcn::parse
 {
     Result<dcn::events::EventState> parseEventState(const std::string & value);
     Result<dcn::events::EventType> parseEventType(const std::string & value);
+
+    Result<dcn::events::RawChainLog> parseRawLog(const json & log_json, const std::int64_t seen_at_ms, int chain_id);
 }

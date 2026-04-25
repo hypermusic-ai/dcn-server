@@ -37,6 +37,7 @@ TEST_F(StressTest, Stress_Events_SustainedIngestProjectionEnvelope)
     const std::size_t batch_size = readEnvSizeOrDefault("DCN_EVENTS_STRESS_BATCH", 500);
 
     const auto paths = makeTempEventsPaths("stress_events_envelope");
+    asio::io_context store_io_context;
     events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 24LL * 60 * 60 * 1000, CHAIN_ID);
 
     std::int64_t next_block = 3'000;
@@ -77,12 +78,19 @@ TEST_F(StressTest, Stress_Events_SustainedIngestProjectionEnvelope)
                 event.raw.seen_at_ms));
         }
 
-        ASSERT_TRUE(store.ingestBatch(CHAIN_ID, events_batch, block_batch, next_block + static_cast<std::int64_t>(this_batch), 1'700'010'500'000 + emitted));
+        ASSERT_TRUE(awaitIngestBatch(
+            store_io_context,
+            store,
+            CHAIN_ID,
+            events_batch,
+            block_batch,
+            next_block + static_cast<std::int64_t>(this_batch),
+            1'700'010'500'000 + emitted));
         emitted += this_batch;
         next_block += static_cast<std::int64_t>(this_batch);
     }
 
-    const std::size_t projected = projectAll(store, 1'700'011'000'000);
+    const std::size_t projected = projectAll(store_io_context, store, 1'700'011'000'000);
     EXPECT_EQ(projected, event_count);
 
     const events::StreamPage replay = store.getStreamPage(events::StreamQuery{

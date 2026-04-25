@@ -10,6 +10,7 @@ add_module(NAME "Events"
         "${PROJECT_PREFIX}::EVM"
         "${PROJECT_PREFIX}::Crypto"
         "${PROJECT_PREFIX}::Parser"
+        "${PROJECT_PREFIX}::Storage"
 
         absl::hash
         absl::flat_hash_map

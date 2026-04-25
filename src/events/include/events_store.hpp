@@ -43,21 +43,24 @@ namespace dcn::events
             virtual ~IHotEventStore() = default;
 
             virtual std::optional<std::int64_t> loadNextFromBlock(int chain_id) = 0;
+
             virtual bool ingestBatch(
                 int chain_id,
-                const std::vector<DecodedEvent> & events,
+                const std::vector<RawChainLog> & raw_events,
+                const std::vector<DecodedEvent> & decoded_events,
                 const std::vector<ChainBlockInfo> & block_infos,
                 std::int64_t next_from_block,
-                std::int64_t now_ms) = 0;
+                std::int64_t now_ms,
+                std::optional<std::uint64_t> next_local_seq = std::nullopt) = 0;
+
             virtual bool applyFinality(
                 int chain_id,
                 const FinalityHeights & heights,
                 std::int64_t now_ms,
                 std::size_t reorg_window_blocks) = 0;
+
             virtual std::size_t projectBatch(std::size_t limit, std::int64_t now_ms) = 0;
-            virtual bool runArchiveCycle(
-                int chain_id,
-                std::size_t hot_window_days,
-                std::int64_t now_ms) = 0;
+
+            virtual bool runArchiveCycle(int chain_id, std::size_t hot_window_days, std::int64_t now_ms) = 0;
     };
 }

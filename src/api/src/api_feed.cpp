@@ -254,7 +254,11 @@ namespace dcn
 
         json meta{
             {"has_more", stream_page.has_more},
-            {"last_seq", stream_page.last_seq.has_value() ? json(*stream_page.last_seq) : json(nullptr)}
+            {"last_seq", stream_page.last_seq.has_value() ? json(*stream_page.last_seq) : json(nullptr)},
+            {"requested_since_seq", stream_query.since_seq},
+            {"min_available_seq", stream_page.min_available_seq},
+            {"replay_floor_seq", stream_page.replay_floor_seq},
+            {"stale_since_seq", stream_page.stale_since_seq}
         };
         sse_body += "event: stream_meta\n";
         sse_body += std::format("data: {}\n\n", meta.dump());

@@ -174,7 +174,7 @@ namespace
             evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solc_path, pt_path);
             io_context.run();
 
-            storage::Registry registry(io_context);
+            registry::Registry registry(io_context);
 
             snapshot.owner = makeAddressFromSuffix("pt_deploy_owner");
             runAwaitable(io_context, evm_instance.addAccount(snapshot.owner, evm::DEFAULT_GAS_LIMIT));
@@ -363,7 +363,7 @@ TEST_F(UnitTest, PT_Deploy_Connector_DuplicateName_ReturnsConnectorAlreadyRegist
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("pt_dup_owner");
     runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
     runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
@@ -421,7 +421,7 @@ TEST_F(UnitTest, PT_Deploy_Connector_InvalidInput_CleansTemporarySoliditySourceF
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
 
     ConnectorRecord connector_record;
     connector_record.mutable_connector()->set_name("CleanupInvalidConnector");
@@ -449,7 +449,7 @@ TEST_F(UnitTest, PT_Deploy_Transformation_InvalidInput_CleansTemporarySoliditySo
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
 
     TransformationRecord transformation_record;
     transformation_record.mutable_transformation()->set_name("bad-name");

@@ -165,6 +165,60 @@ namespace dcn::tests::events_harness
             sqlite3 * _db = nullptr;
     };
 
+    class SqliteWritable final
+    {
+        public:
+            explicit SqliteWritable(const std::filesystem::path & path)
+            {
+                const int open_rc = sqlite3_open_v2(
+                    path.string().c_str(),
+                    &_db,
+                    SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX,
+                    nullptr);
+                if(open_rc != SQLITE_OK)
+                {
+                    const std::string err = (_db == nullptr) ? "sqlite open failed" : sqlite3_errmsg(_db);
+                    if(_db != nullptr)
+                    {
+                        sqlite3_close(_db);
+                        _db = nullptr;
+                    }
+                    throw std::runtime_error(std::format("Failed to open sqlite db '{}': {}", path.string(), err));
+                }
+                sqlite3_busy_timeout(_db, 10'000);
+            }
+
+            ~SqliteWritable()
+            {
+                if(_db != nullptr)
+                {
+                    sqlite3_close(_db);
+                    _db = nullptr;
+                }
+            }
+
+            SqliteWritable(const SqliteWritable &) = delete;
+            SqliteWritable & operator=(const SqliteWritable &) = delete;
+
+            void exec(const std::string & sql) const
+            {
+                char * err = nullptr;
+                const int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &err);
+                if(rc != SQLITE_OK)
+                {
+                    const std::string err_msg = (err == nullptr) ? std::string(sqlite3_errmsg(_db)) : std::string(err);
+                    if(err != nullptr)
+                    {
+                        sqlite3_free(err);
+                    }
+                    throw std::runtime_error(std::format("SQLite exec failed: {}", err_msg));
+                }
+            }
+
+        private:
+            sqlite3 * _db = nullptr;
+    };
+
     inline std::int64_t rowCount(const std::filesystem::path & db_path, const std::string & table_name)
     {
         SqliteReadonly db(db_path);
@@ -344,12 +398,121 @@ namespace dcn::tests::events_harness
         return info;
     }
 
-    inline std::size_t projectAll(events::SQLiteHotStore & store, const std::int64_t now_ms)
+    inline bool awaitIngestBatch(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store,
+        const int chain_id,
+        const std::vector<events::DecodedEvent> & events,
+        const std::vector<events::ChainBlockInfo> & block_infos,
+        const std::int64_t next_from_block,
+        const std::int64_t now_ms)
+    {
+        (void)io_context;
+        return store.ingestBatch(chain_id, events, block_infos, next_from_block, now_ms);
+    }
+
+    inline bool awaitIngestBatch(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store,
+        const int chain_id,
+        const std::vector<events::RawChainLog> & raw_events,
+        const std::vector<events::DecodedEvent> & decoded_events,
+        const std::vector<events::ChainBlockInfo> & block_infos,
+        const std::int64_t next_from_block,
+        const std::int64_t now_ms,
+        const std::optional<std::uint64_t> next_local_seq = std::nullopt)
+    {
+        (void)io_context;
+        return store.ingestBatch(chain_id, raw_events, decoded_events, block_infos, next_from_block, now_ms, next_local_seq);
+    }
+
+    inline bool awaitApplyFinality(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store,
+        const int chain_id,
+        const events::FinalityHeights & heights,
+        const std::int64_t now_ms,
+        const std::size_t reorg_window_blocks)
+    {
+        (void)io_context;
+        return store.applyFinality(chain_id, heights, now_ms, reorg_window_blocks);
+    }
+
+    inline std::size_t awaitProjectBatch(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store,
+        const std::size_t limit,
+        const std::int64_t now_ms)
+    {
+        (void)io_context;
+        return store.projectBatch(limit, now_ms);
+    }
+
+    inline bool awaitRunArchiveCycle(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store,
+        const int chain_id,
+        const std::size_t hot_window_days,
+        const std::int64_t now_ms)
+    {
+        (void)io_context;
+        return store.runArchiveCycle(chain_id, hot_window_days, now_ms);
+    }
+
+    inline std::optional<std::int64_t> awaitLoadNextFromBlock(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store,
+        const int chain_id)
+    {
+        (void)io_context;
+        return store.loadNextFromBlock(chain_id);
+    }
+
+    inline std::optional<std::uint64_t> awaitLoadNextLocalSeq(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store,
+        const int chain_id)
+    {
+        (void)io_context;
+        return store.loadNextLocalSeq(chain_id);
+    }
+
+    inline bool awaitSaveNextLocalSeq(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store,
+        const int chain_id,
+        const std::uint64_t next_seq,
+        const std::int64_t now_ms)
+    {
+        (void)io_context;
+        return store.saveNextLocalSeq(chain_id, next_seq, now_ms);
+    }
+
+    inline storage::sqlite::WalCheckpointStats awaitCheckpointWalPassive(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store)
+    {
+        (void)io_context;
+        return store.checkpointWal(storage::sqlite::WalCheckpointMode::PASSIVE);
+    }
+
+    inline storage::sqlite::WalCheckpointStats awaitCheckpointWalTruncate(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store)
+    {
+        (void)io_context;
+        return store.checkpointWal(storage::sqlite::WalCheckpointMode::TRUNCATE);
+    }
+
+    inline std::size_t projectAll(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store,
+        const std::int64_t now_ms)
     {
         std::size_t total = 0;
         for(std::size_t i = 0; i < 1024; ++i)
         {
-            const std::size_t projected = store.projectBatch(512, now_ms);
+            const std::size_t projected = awaitProjectBatch(io_context, store, 512, now_ms);
             total += projected;
             if(projected == 0)
             {

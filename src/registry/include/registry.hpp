@@ -16,8 +16,10 @@
 #include "address.hpp"
 #include "format_hash.hpp"
 #include "registry_store.hpp"
+#include "sqlite_registry_store.hpp"
+#include "sqlite/wal_store.hpp"
 
-namespace dcn::storage
+namespace dcn::registry
 {
     using ScalarLabel = dcn::chain::ScalarLabel;
 
@@ -36,7 +38,7 @@ namespace dcn::storage
         absl::flat_hash_map<KeyT, Entry> entries;
     };
 
-    class Registry
+    class Registry : public storage::sqlite::IWalStore
     {
         public:
             Registry() = delete;
@@ -55,55 +57,72 @@ namespace dcn::storage
             asio::awaitable<bool> addConnectorsBatch(
                 std::vector<std::pair<chain::Address, ConnectorRecord>> connectors,
                 bool all_or_nothing = true);
+
             asio::awaitable<std::optional<ConnectorRecordHandle>> getConnectorRecordHandle(
                 const std::string & name) const;
+
             asio::awaitable<bool> hasConnector(const std::string & name) const;
+
             asio::awaitable<std::optional<evmc::bytes32>> getFormatHash(const std::string& name) const;
+
             asio::awaitable<std::size_t> getFormatConnectorNamesCount(const evmc::bytes32 & format_hash) const;
+
             asio::awaitable<NameCursorPage> getFormatConnectorNamesCursor(
                 const evmc::bytes32 & format_hash,
                 const std::optional<NameCursor> & after,
                 std::size_t limit) const;
+
             asio::awaitable<std::size_t> getFormatsCount() const;
+
             asio::awaitable<NameCursorPage> getFormatsCursor(
                 const std::optional<evmc::bytes32> & after,
                 std::size_t limit) const;
+
             asio::awaitable<std::optional<std::vector<ScalarLabel>>> getScalarLabelsByFormatHash(const evmc::bytes32 & format_hash) const;
 
             asio::awaitable<bool> addTransformation(chain::Address address, TransformationRecord transformation);
             asio::awaitable<bool> addTransformationsBatch(
                 std::vector<std::pair<chain::Address, TransformationRecord>> transformations,
                 bool all_or_nothing = true);
+
             asio::awaitable<std::optional<TransformationRecordHandle>> getTransformationRecordHandle(
                 const std::string & name) const;
+
             asio::awaitable<bool> hasTransformation(const std::string & name) const;
 
             asio::awaitable<bool> addCondition(chain::Address address, ConditionRecord condition);
+
             asio::awaitable<bool> addConditionsBatch(
                 std::vector<std::pair<chain::Address, ConditionRecord>> conditions,
                 bool all_or_nothing = true);
+
             asio::awaitable<std::optional<ConditionRecordHandle>> getConditionRecordHandle(
                 const std::string & name) const;
+
             asio::awaitable<bool> hasCondition(const std::string & name) const;
 
             asio::awaitable<NameCursorPage> getOwnedConnectorsCursor(
                 const chain::Address & owner,
                 const std::optional<NameCursor> & after,
                 std::size_t limit) const;
+
             asio::awaitable<NameCursorPage> getOwnedTransformationsCursor(
                 const chain::Address & owner,
                 const std::optional<NameCursor> & after,
                 std::size_t limit) const;
+
             asio::awaitable<NameCursorPage> getOwnedConditionsCursor(
                 const chain::Address & owner,
                 const std::optional<NameCursor> & after,
                 std::size_t limit) const;
+
             asio::awaitable<std::size_t> getAccountsCount() const;
+
             asio::awaitable<NameCursorPage> getAccountsCursor(
                 const std::optional<chain::Address> & after,
                 std::size_t limit) const;
 
-            asio::awaitable<bool> checkpointWal(WalCheckpointMode mode) const;
+            asio::awaitable<storage::sqlite::WalCheckpointStats> checkpointWal(storage::sqlite::WalCheckpointMode mode) const override;
 
         private:
             static constexpr std::size_t kHotCacheCapacity = 1024;

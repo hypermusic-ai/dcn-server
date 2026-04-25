@@ -195,7 +195,7 @@ static std::vector<int> _configureShutdownSignals()
 }
 
 static asio::awaitable<void> _runStartupAndListen(
-    dcn::storage::Registry & registry,
+    dcn::registry::Registry & registry,
     dcn::evm::EVM & evm,
     dcn::server::Server & server,
     const dcn::config::Config & cfg)
@@ -234,15 +234,15 @@ static asio::awaitable<void> _runStartupAndListen(
 
 static asio::awaitable<void> _runGracefulShutdown(
     dcn::server::Server & server,
-    std::optional<dcn::storage::RegistryWalSyncWorker> & wal_sync_worker,
+    std::optional<dcn::storage::sqlite::WalSyncWorker> & wal_sync_worker,
     std::atomic<bool> & wal_sync_worker_stopped,
-    dcn::storage::Registry & registry,
+    dcn::registry::Registry & registry,
     bool wal_enabled,
     dcn::events::EventRuntime & events_runtime)
 {
     spdlog::info("Decentralised Art server stopping...");
-    events_runtime.requestStop();
-    spdlog::info("Events runtime stop requested");
+    co_await events_runtime.stop();
+    spdlog::info("Events runtime stopped");
     co_await server.close();
     spdlog::info("Decentralised Art server close requested");
 
@@ -275,9 +275,8 @@ static asio::awaitable<void> _runGracefulShutdown(
     if(wal_enabled)
     {
         spdlog::info("Running final registry WAL truncate checkpoint...");
-        const bool checkpoint_ok =
-            co_await registry.checkpointWal(dcn::storage::WalCheckpointMode::TRUNCATE);
-        if(!checkpoint_ok)
+        const auto stats = co_await registry.checkpointWal(dcn::storage::sqlite::WalCheckpointMode::TRUNCATE);
+        if(!stats.ok)
         {
             spdlog::warn("Final registry WAL truncate checkpoint failed");
         }
@@ -291,7 +290,7 @@ static asio::awaitable<void> _runGracefulShutdown(
 }
 
 static void _runImmediateShutdown(
-    std::optional<dcn::storage::RegistryWalSyncWorker> & wal_sync_worker,
+    std::optional<dcn::storage::sqlite::WalSyncWorker> & wal_sync_worker,
     dcn::events::EventRuntime & events_runtime)
 {
     events_runtime.requestStop();
@@ -483,7 +482,7 @@ int main(int argc, char* argv[])
 
     asio::io_context io_context;
 
-    dcn::storage::Registry registry(io_context, cfg.registry_db.string());
+    dcn::registry::Registry registry(io_context, cfg.registry_db.string());
 
     dcn::auth::AuthManager auth_manager(io_context);
 
@@ -639,7 +638,7 @@ int main(int argc, char* argv[])
 
     const bool wal_enabled = !registry_db_in_memory;
     std::atomic<bool> wal_sync_worker_stopped = true;
-    std::optional<dcn::storage::RegistryWalSyncWorker> wal_sync_worker;
+    std::optional<dcn::storage::sqlite::WalSyncWorker> wal_sync_worker;
     if(wal_enabled)
     {
         // create wal sync worker

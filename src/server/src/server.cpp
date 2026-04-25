@@ -95,7 +95,7 @@ namespace dcn::server
             }
             catch(...)
             {
-                spdlog::debug("client disconected");
+                spdlog::debug("client disconnected");
                 co_return;
             }
 
@@ -136,7 +136,7 @@ namespace dcn::server
                     bytes_transferred = co_await sock.async_read_some(asio::buffer(read_buffer), asio::use_awaitable);
                     if (bytes_transferred == 0)
                     {
-                        spdlog::warn("client disconected while reading body");
+                        spdlog::warn("client disconnected while reading body");
                         co_return;
                     };
 
@@ -180,7 +180,7 @@ namespace dcn::server
 
             co_await writeData(sock, std::format("{}", response));
 
-            // conection should close
+            // connection should close
             const auto connection_header = response.getHeader(http::Header::Connection);
             if(std::ranges::find(connection_header, "close") != connection_header.end())co_return;
 

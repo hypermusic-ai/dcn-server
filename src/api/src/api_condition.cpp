@@ -8,7 +8,7 @@
 namespace dcn
 {
 
-    asio::awaitable<http::Response> HEAD_condition(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, storage::Registry & registry)
+    asio::awaitable<http::Response> HEAD_condition(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, registry::Registry & registry)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -33,7 +33,7 @@ namespace dcn
 
         const auto & condition_name = condition_name_result.value();
 
-        std::optional<storage::ConditionRecordHandle> condition_record_res =
+        std::optional<registry::ConditionRecordHandle> condition_record_res =
             co_await registry.getConditionRecordHandle(condition_name);
 
         if (!condition_record_res) {
@@ -65,7 +65,7 @@ namespace dcn
         const http::Request & request,
         std::vector<server::RouteArg> args,
         server::QueryArgsList,
-        storage::Registry & registry)
+        registry::Registry & registry)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -96,7 +96,7 @@ namespace dcn
 
             co_return response;
         }
-        std::optional<storage::ConditionRecordHandle> condition_record_res =
+        std::optional<registry::ConditionRecordHandle> condition_record_res =
             co_await registry.getConditionRecordHandle(condition_name_result.value());
 
         if(!condition_record_res)
@@ -131,7 +131,7 @@ namespace dcn
     }
 
     asio::awaitable<http::Response> POST_condition(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList, 
-        auth::AuthManager & auth_manager, storage::Registry & registry, evm::EVM & evm, const config::Config & config)
+        auth::AuthManager & auth_manager, registry::Registry & registry, evm::EVM & evm, const config::Config & config)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)

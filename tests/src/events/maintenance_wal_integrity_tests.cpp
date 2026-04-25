@@ -54,6 +54,7 @@ namespace
 TEST_F(UnitTest, Events_Maintenance_ConfiguresWalJournalMode)
 {
     const auto paths = makeTempEventsPaths("maintenance_wal_mode");
+    asio::io_context store_io_context;
     events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 60 * 60 * 1000, CHAIN_ID);
 
     const std::string journal_mode = sqlitePragmaText(paths.hot_db, "journal_mode");
@@ -67,7 +68,35 @@ TEST_F(UnitTest, Events_Maintenance_RejectsLikelyNetworkFilesystemPath)
 
     EXPECT_THROW(
         {
-            events::SQLiteHotStore store("//server/share/events_hot.sqlite", archive_root, 1000, CHAIN_ID);
+            asio::io_context store_io_context;
+            events::SQLiteHotStore store(
+                "//server/share/events_hot.sqlite",
+                archive_root,
+                1000,
+                CHAIN_ID);
         },
         std::runtime_error);
+}
+
+TEST_F(UnitTest, Events_Maintenance_WalCheckpointRunsAndReportsStats)
+{
+    const auto paths = makeTempEventsPaths("maintenance_wal_checkpoint");
+    asio::io_context store_io_context;
+    events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 60 * 60 * 1000, CHAIN_ID);
+
+    const events::DecodedEvent event =
+        makeDecodedEvent(201, 0, 1, 0xAA, 0xBA, events::EventType::CONNECTOR_ADDED, events::EventState::OBSERVED, 1'700'010'000);
+    const events::ChainBlockInfo block =
+        makeBlockInfo(201, event.raw.block_hash, hexBytes(0xA9, 32), 1'700'010'000, 1'700'010'000'100);
+    ASSERT_TRUE(awaitIngestBatch(store_io_context, store, CHAIN_ID, {event}, {block}, 202, 1'700'010'000'200));
+    EXPECT_EQ(projectAll(store_io_context, store, 1'700'010'000'300), 1u);
+
+    const storage::sqlite::WalCheckpointStats passive = awaitCheckpointWalPassive(store_io_context, store);
+    EXPECT_TRUE(passive.ok);
+    EXPECT_GE(passive.log_frames, 0);
+    EXPECT_GE(passive.checkpointed_frames, 0);
+
+    const storage::sqlite::WalCheckpointStats truncate = awaitCheckpointWalTruncate(store_io_context, store);
+    EXPECT_TRUE(truncate.ok);
+    EXPECT_GE(truncate.wal_bytes, 0u);
 }

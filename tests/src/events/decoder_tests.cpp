@@ -132,3 +132,49 @@ TEST_F(UnitTest, Events_Decoder_MissingTopic0_ReturnsNullopt)
     const auto decoded = decoder.decode(log);
     EXPECT_FALSE(decoded.has_value());
 }
+
+TEST_F(UnitTest, Events_ParseRawLog_RejectsLogMissingRequiredFields)
+{
+    json log_json = json::object();
+    log_json["blockNumber"] = "0x10";
+    // intentionally omit "blockHash" and other required fields
+    log_json["topics"] = json::array();
+
+    const auto parsed = parse::parseRawLog(log_json, 1'700'000'050'000, CHAIN_ID);
+    EXPECT_FALSE(parsed.has_value());
+}
+
+TEST_F(UnitTest, Events_ParseRawLog_RejectsLogWithMalformedHexQuantity)
+{
+    json log_json = json::object();
+    log_json["blockNumber"] = "0xZZZZ";
+    log_json["blockHash"] = hexBytes(0xA0, 32);
+    log_json["transactionHash"] = hexBytes(0xB0, 32);
+    log_json["transactionIndex"] = "0x0";
+    log_json["logIndex"] = "0x0";
+    log_json["address"] = hexAddress(0x11);
+    log_json["data"] = "0x";
+    log_json["topics"] = json::array({hexBytes(0xC0, 32)});
+
+    const auto parsed = parse::parseRawLog(log_json, 1'700'000'051'000, CHAIN_ID);
+    EXPECT_FALSE(parsed.has_value());
+}
+
+TEST_F(UnitTest, Events_ParseRawLog_AcceptsWellFormedLog)
+{
+    json log_json = json::object();
+    log_json["blockNumber"] = "0x10";
+    log_json["blockHash"] = hexBytes(0xA0, 32);
+    log_json["transactionHash"] = hexBytes(0xB0, 32);
+    log_json["transactionIndex"] = "0x1";
+    log_json["logIndex"] = "0x2";
+    log_json["address"] = hexAddress(0x11);
+    log_json["data"] = "0x";
+    log_json["topics"] = json::array({hexBytes(0xC0, 32)});
+
+    const auto parsed = parse::parseRawLog(log_json, 1'700'000'052'000, CHAIN_ID);
+    ASSERT_TRUE(parsed.has_value());
+    EXPECT_EQ(parsed->block_number, 0x10);
+    EXPECT_EQ(parsed->tx_index, 0x1);
+    EXPECT_EQ(parsed->log_index, 0x2);
+}

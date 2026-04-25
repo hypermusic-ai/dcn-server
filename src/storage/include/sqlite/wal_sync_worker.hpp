@@ -3,19 +3,18 @@
 #include <atomic>
 #include <chrono>
 
-#include "native.h"
-#include <asio.hpp>
+#include "async.hpp"
 
-namespace dcn::storage
+#include "wal_store.hpp"
+
+namespace dcn::storage::sqlite
 {
-    class Registry;
-
-    class RegistryWalSyncWorker
+    class WalSyncWorker
     {
         public:
-            RegistryWalSyncWorker(
+            WalSyncWorker(
                 asio::io_context & io_context,
-                Registry & registry,
+                IWalStore & store,
                 std::chrono::milliseconds interval);
 
             asio::awaitable<void> run();
@@ -23,7 +22,7 @@ namespace dcn::storage
 
         private:
             asio::steady_timer _timer;
-            Registry & _registry;
+            IWalStore & _store;
             std::chrono::milliseconds _interval;
             std::atomic<bool> _stop_requested = false;
     };

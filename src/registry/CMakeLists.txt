@@ -1,6 +1,6 @@
 include("${PROJECT_SOURCE_DIR}/cmake/add_module.cmake")
 
-add_module(NAME "Storage"
+add_module(NAME "Registry"
     DEPENDENCIES
         "${PROJECT_PREFIX}::Native"
         "${PROJECT_PREFIX}::Async"
@@ -8,7 +8,7 @@ add_module(NAME "Storage"
         "${PROJECT_PREFIX}::PT"
         "${PROJECT_PREFIX}::Parser"
         "${PROJECT_PREFIX}::Crypto"
-        "${PROJECT_PREFIX}::Chain"
+        "${PROJECT_PREFIX}::Storage"
 
         spdlog::spdlog
         asio

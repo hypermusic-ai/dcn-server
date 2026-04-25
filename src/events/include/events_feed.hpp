@@ -5,8 +5,11 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <format>
 
 #include <nlohmann/json.hpp>
+
+#include "parser.hpp"
 
 namespace dcn::events
 {
@@ -15,6 +18,15 @@ namespace dcn::events
     constexpr std::size_t DEFAULT_STREAM_LIMIT = 500;
     constexpr std::size_t MAX_STREAM_LIMIT = 2048;
     
+    struct CursorKey
+    {
+        int chain_id = 1;
+        std::int64_t block_number = 0;
+        std::int64_t tx_index = 0;
+        std::int64_t log_index = 0;
+        std::string feed_id;
+    };
+
     struct FeedItem
     {
         std::string feed_id;
@@ -69,6 +81,8 @@ namespace dcn::events
         std::vector<StreamDelta> deltas;
         std::optional<std::int64_t> last_seq = std::nullopt;
         std::int64_t min_available_seq = 0;
+        std::int64_t replay_floor_seq = 0;
+        bool stale_since_seq = false;
         bool has_more = false;
     };
 
@@ -82,3 +96,22 @@ namespace dcn::events
             virtual std::int64_t minAvailableStreamSeq() const = 0;
     };
 }
+
+namespace dcn::parse
+{    
+    Result<events::CursorKey> parseHistoryCursor(const std::string & cursor);
+}
+
+template <>
+struct std::formatter<dcn::events::CursorKey> : std::formatter<std::string> {
+    auto format(const dcn::events::CursorKey & cursor, format_context& ctx) const {
+        return std::formatter<std::string>::format(
+            std::format("{}:{}:{}:{}:{}", 
+                cursor.chain_id,
+                cursor.block_number,
+                cursor.tx_index,
+                cursor.log_index,
+                cursor.feed_id),
+        ctx);
+    }
+};

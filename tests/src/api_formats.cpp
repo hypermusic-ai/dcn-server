@@ -50,7 +50,7 @@ namespace
 TEST_F(UnitTest, API_Formats_Get_ReturnsPaginatedFormatHashes)
 {
     asio::io_context io_context;
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA1));
 
@@ -145,7 +145,7 @@ TEST_F(UnitTest, API_Formats_Get_ReturnsPaginatedFormatHashes)
 TEST_F(UnitTest, API_Formats_Get_AfterCursorAcceptsTrimmedPrefixedUppercaseHex)
 {
     asio::io_context io_context;
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xB1));
     ASSERT_TRUE(addScalarConnector(io_context, registry, "TIME", owner_hex, 0x31));
@@ -196,7 +196,7 @@ TEST_F(UnitTest, API_Formats_Get_AfterCursorAcceptsTrimmedPrefixedUppercaseHex)
 TEST_F(UnitTest, API_Formats_Get_MissingLimitReturnsBadRequest)
 {
     asio::io_context io_context;
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
 
     http::Request request;
     request.setMethod(http::Method::GET)
@@ -212,7 +212,7 @@ TEST_F(UnitTest, API_Formats_Get_MissingLimitReturnsBadRequest)
 TEST_F(UnitTest, API_Formats_Get_InvalidAfterCursorReturnsBadRequest)
 {
     asio::io_context io_context;
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
 
     http::Request request;
     request.setMethod(http::Method::GET)
@@ -232,7 +232,7 @@ TEST_F(UnitTest, API_Formats_Get_InvalidAfterCursorReturnsBadRequest)
 TEST_F(UnitTest, API_Formats_Get_ZeroLimitReturnsEmptyPageWithTotals)
 {
     asio::io_context io_context;
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
 
     const std::string owner_hex = evmc::hex(makeAddressFromByte(0xC1));
     ASSERT_TRUE(addScalarConnector(io_context, registry, "TIME", owner_hex, 0x51));
@@ -266,7 +266,7 @@ TEST_F(UnitTest, API_Formats_Get_ZeroLimitReturnsEmptyPageWithTotals)
 TEST_F(UnitTest, API_Formats_Head_MirrorsValidationAndReturnsNoBody)
 {
     asio::io_context io_context;
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
 
     {
         http::Request request;
