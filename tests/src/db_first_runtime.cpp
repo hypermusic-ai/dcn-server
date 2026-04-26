@@ -685,6 +685,312 @@ TEST_F(UnitTest, API_PostConnector_MissingTransformationDependencyReturnsBadRequ
     EXPECT_FALSE(connector_handle.has_value());
 }
 
+TEST_F(UnitTest, API_PostConnector_DuplicateAfterRestartReturnsAlreadyRegistered)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeTestPath("post_connector_duplicate_restart");
+    PathScope storage_scope(storage_path);
+    ASSERT_TRUE(prepareStorageLayout(storage_path));
+    const auto db_path = storage_path / "registry.sqlite";
+
+    const chain::Address caller = makeAddressFromByte(0x5A);
+    const std::string caller_hex = evmc::hex(caller);
+
+    config::Config cfg;
+    cfg.storage_path = storage_path;
+
+    Connector connector;
+    connector.set_name("connector_dup_restart");
+    connector.add_dimensions();
+    const auto connector_json_res = parse::parseToJson(connector, parse::use_protobuf);
+    ASSERT_TRUE(connector_json_res.has_value());
+
+    {
+        asio::io_context io_context;
+        registry::Registry registry(io_context, db_path.string());
+        auth::AuthManager auth_manager(io_context);
+        evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+        io_context.run();
+
+        (void)runAwaitable(io_context, evm_instance.addAccount(caller, evm::DEFAULT_GAS_LIMIT));
+        (void)runAwaitable(io_context, evm_instance.setGas(caller, evm::DEFAULT_GAS_LIMIT));
+        const std::string access_token = runAwaitable(io_context, auth_manager.generateAccessToken(caller));
+
+        http::Request request;
+        request.setMethod(http::Method::POST)
+               .setPath(http::URL("/connector"))
+               .setVersion("HTTP/1.1")
+               .setBody(*connector_json_res)
+               .setHeader(http::Header::Authorization, std::format("Bearer {}", access_token));
+
+        const auto response = runAwaitable(
+            io_context,
+            POST_connector(
+                request,
+                std::vector<server::RouteArg>{},
+                server::QueryArgsList{},
+                auth_manager,
+                registry,
+                evm_instance,
+                cfg));
+
+        ASSERT_EQ(response.getCode(), http::Code::Created);
+        const auto body = json::parse(response.getBody(), nullptr, false);
+        ASSERT_FALSE(body.is_discarded());
+        EXPECT_EQ(body["name"], "connector_dup_restart");
+        EXPECT_EQ(body["owner"], caller_hex);
+    }
+
+    {
+        asio::io_context io_context;
+        registry::Registry registry(io_context, db_path.string());
+        auth::AuthManager auth_manager(io_context);
+        evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+        io_context.run();
+
+        (void)runAwaitable(io_context, evm_instance.addAccount(caller, evm::DEFAULT_GAS_LIMIT));
+        (void)runAwaitable(io_context, evm_instance.setGas(caller, evm::DEFAULT_GAS_LIMIT));
+        const std::string access_token = runAwaitable(io_context, auth_manager.generateAccessToken(caller));
+
+        const auto contains_before = containsConnector(io_context, evm_instance, "connector_dup_restart");
+        ASSERT_TRUE(contains_before.has_value());
+        EXPECT_FALSE(*contains_before);
+
+        http::Request request;
+        request.setMethod(http::Method::POST)
+               .setPath(http::URL("/connector"))
+               .setVersion("HTTP/1.1")
+               .setBody(*connector_json_res)
+               .setHeader(http::Header::Authorization, std::format("Bearer {}", access_token));
+
+        const auto response = runAwaitable(
+            io_context,
+            POST_connector(
+                request,
+                std::vector<server::RouteArg>{},
+                server::QueryArgsList{},
+                auth_manager,
+                registry,
+                evm_instance,
+                cfg));
+
+        ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+        const auto body = json::parse(response.getBody(), nullptr, false);
+        ASSERT_FALSE(body.is_discarded());
+        EXPECT_EQ(body["message"], "Failed to deploy connector. Error: Connector already registered");
+
+        const auto contains_after = containsConnector(io_context, evm_instance, "connector_dup_restart");
+        ASSERT_TRUE(contains_after.has_value());
+        EXPECT_TRUE(*contains_after);
+    }
+}
+
+TEST_F(UnitTest, API_PostTransformation_DuplicateAfterRestartReturnsAlreadyRegistered)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeTestPath("post_transformation_duplicate_restart");
+    PathScope storage_scope(storage_path);
+    ASSERT_TRUE(prepareStorageLayout(storage_path));
+    const auto db_path = storage_path / "registry.sqlite";
+
+    const chain::Address caller = makeAddressFromByte(0x5B);
+    const std::string caller_hex = evmc::hex(caller);
+
+    config::Config cfg;
+    cfg.storage_path = storage_path;
+
+    Transformation transformation;
+    transformation.set_name("tx_dup_restart");
+    transformation.set_sol_src("return x + 1;");
+    const auto transformation_json_res = parse::parseToJson(transformation, parse::use_protobuf);
+    ASSERT_TRUE(transformation_json_res.has_value());
+
+    {
+        asio::io_context io_context;
+        registry::Registry registry(io_context, db_path.string());
+        auth::AuthManager auth_manager(io_context);
+        evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+        io_context.run();
+
+        (void)runAwaitable(io_context, evm_instance.addAccount(caller, evm::DEFAULT_GAS_LIMIT));
+        (void)runAwaitable(io_context, evm_instance.setGas(caller, evm::DEFAULT_GAS_LIMIT));
+        const std::string access_token = runAwaitable(io_context, auth_manager.generateAccessToken(caller));
+
+        http::Request request;
+        request.setMethod(http::Method::POST)
+               .setPath(http::URL("/transformation"))
+               .setVersion("HTTP/1.1")
+               .setBody(*transformation_json_res)
+               .setHeader(http::Header::Authorization, std::format("Bearer {}", access_token));
+
+        const auto response = runAwaitable(
+            io_context,
+            POST_transformation(
+                request,
+                std::vector<server::RouteArg>{},
+                server::QueryArgsList{},
+                auth_manager,
+                registry,
+                evm_instance,
+                cfg));
+
+        ASSERT_EQ(response.getCode(), http::Code::Created);
+        const auto body = json::parse(response.getBody(), nullptr, false);
+        ASSERT_FALSE(body.is_discarded());
+        EXPECT_EQ(body["name"], "tx_dup_restart");
+        EXPECT_EQ(body["owner"], caller_hex);
+    }
+
+    {
+        asio::io_context io_context;
+        registry::Registry registry(io_context, db_path.string());
+        auth::AuthManager auth_manager(io_context);
+        evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+        io_context.run();
+
+        (void)runAwaitable(io_context, evm_instance.addAccount(caller, evm::DEFAULT_GAS_LIMIT));
+        (void)runAwaitable(io_context, evm_instance.setGas(caller, evm::DEFAULT_GAS_LIMIT));
+        const std::string access_token = runAwaitable(io_context, auth_manager.generateAccessToken(caller));
+
+        const auto contains_before = containsTransformation(io_context, evm_instance, "tx_dup_restart");
+        ASSERT_TRUE(contains_before.has_value());
+        EXPECT_FALSE(*contains_before);
+
+        http::Request request;
+        request.setMethod(http::Method::POST)
+               .setPath(http::URL("/transformation"))
+               .setVersion("HTTP/1.1")
+               .setBody(*transformation_json_res)
+               .setHeader(http::Header::Authorization, std::format("Bearer {}", access_token));
+
+        const auto response = runAwaitable(
+            io_context,
+            POST_transformation(
+                request,
+                std::vector<server::RouteArg>{},
+                server::QueryArgsList{},
+                auth_manager,
+                registry,
+                evm_instance,
+                cfg));
+
+        ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+        const auto body = json::parse(response.getBody(), nullptr, false);
+        ASSERT_FALSE(body.is_discarded());
+        EXPECT_EQ(body["message"], "Failed to deploy transformation. Error: Transformation already registered");
+
+        const auto contains_after = containsTransformation(io_context, evm_instance, "tx_dup_restart");
+        ASSERT_TRUE(contains_after.has_value());
+        EXPECT_TRUE(*contains_after);
+    }
+}
+
+TEST_F(UnitTest, API_PostCondition_DuplicateAfterRestartReturnsAlreadyRegistered)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeTestPath("post_condition_duplicate_restart");
+    PathScope storage_scope(storage_path);
+    ASSERT_TRUE(prepareStorageLayout(storage_path));
+    const auto db_path = storage_path / "registry.sqlite";
+
+    const chain::Address caller = makeAddressFromByte(0x5C);
+    const std::string caller_hex = evmc::hex(caller);
+
+    config::Config cfg;
+    cfg.storage_path = storage_path;
+
+    Condition condition;
+    condition.set_name("cond_dup_restart");
+    condition.set_sol_src("return true;");
+    const auto condition_json_res = parse::parseToJson(condition, parse::use_protobuf);
+    ASSERT_TRUE(condition_json_res.has_value());
+
+    {
+        asio::io_context io_context;
+        registry::Registry registry(io_context, db_path.string());
+        auth::AuthManager auth_manager(io_context);
+        evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+        io_context.run();
+
+        (void)runAwaitable(io_context, evm_instance.addAccount(caller, evm::DEFAULT_GAS_LIMIT));
+        (void)runAwaitable(io_context, evm_instance.setGas(caller, evm::DEFAULT_GAS_LIMIT));
+        const std::string access_token = runAwaitable(io_context, auth_manager.generateAccessToken(caller));
+
+        http::Request request;
+        request.setMethod(http::Method::POST)
+               .setPath(http::URL("/condition"))
+               .setVersion("HTTP/1.1")
+               .setBody(*condition_json_res)
+               .setHeader(http::Header::Authorization, std::format("Bearer {}", access_token));
+
+        const auto response = runAwaitable(
+            io_context,
+            POST_condition(
+                request,
+                std::vector<server::RouteArg>{},
+                server::QueryArgsList{},
+                auth_manager,
+                registry,
+                evm_instance,
+                cfg));
+
+        ASSERT_EQ(response.getCode(), http::Code::Created);
+        const auto body = json::parse(response.getBody(), nullptr, false);
+        ASSERT_FALSE(body.is_discarded());
+        EXPECT_EQ(body["name"], "cond_dup_restart");
+        EXPECT_EQ(body["owner"], caller_hex);
+    }
+
+    {
+        asio::io_context io_context;
+        registry::Registry registry(io_context, db_path.string());
+        auth::AuthManager auth_manager(io_context);
+        evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+        io_context.run();
+
+        (void)runAwaitable(io_context, evm_instance.addAccount(caller, evm::DEFAULT_GAS_LIMIT));
+        (void)runAwaitable(io_context, evm_instance.setGas(caller, evm::DEFAULT_GAS_LIMIT));
+        const std::string access_token = runAwaitable(io_context, auth_manager.generateAccessToken(caller));
+
+        const auto contains_before = containsCondition(io_context, evm_instance, "cond_dup_restart");
+        ASSERT_TRUE(contains_before.has_value());
+        EXPECT_FALSE(*contains_before);
+
+        http::Request request;
+        request.setMethod(http::Method::POST)
+               .setPath(http::URL("/condition"))
+               .setVersion("HTTP/1.1")
+               .setBody(*condition_json_res)
+               .setHeader(http::Header::Authorization, std::format("Bearer {}", access_token));
+
+        const auto response = runAwaitable(
+            io_context,
+            POST_condition(
+                request,
+                std::vector<server::RouteArg>{},
+                server::QueryArgsList{},
+                auth_manager,
+                registry,
+                evm_instance,
+                cfg));
+
+        ASSERT_EQ(response.getCode(), http::Code::BadRequest);
+        const auto body = json::parse(response.getBody(), nullptr, false);
+        ASSERT_FALSE(body.is_discarded());
+        EXPECT_EQ(body["message"], "Failed to deploy condition. Error: Condition already registered");
+
+        const auto contains_after = containsCondition(io_context, evm_instance, "cond_dup_restart");
+        ASSERT_TRUE(contains_after.has_value());
+        EXPECT_TRUE(*contains_after);
+    }
+}
+
 TEST_F(UnitTest, API_Execute_LazilyDeploysConnectorClosureFromDb)
 {
     ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());

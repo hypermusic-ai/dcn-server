@@ -526,6 +526,31 @@ namespace dcn::loader
 
 
 
+    template<class RecordT>
+    static asio::awaitable<bool> registryHasRecord(
+        registry::Registry & registry,
+        const RecordT & record)
+    {
+        using RecordType = std::remove_cvref_t<RecordT>;
+
+        if constexpr(std::is_same_v<RecordType, ConnectorRecord>)
+        {
+            co_return co_await registry.hasConnector(record.connector().name());
+        }
+        else if constexpr(std::is_same_v<RecordType, TransformationRecord>)
+        {
+            co_return co_await registry.hasTransformation(record.transformation().name());
+        }
+        else if constexpr(std::is_same_v<RecordType, ConditionRecord>)
+        {
+            co_return co_await registry.hasCondition(record.condition().name());
+        }
+        else
+        {
+            static_assert(utils::always_false<RecordType>, "Unsupported registry record type");
+        }
+    }
+
     template<class T, class InternalGetter, class SolidityCodeCtor>
     static asio::awaitable<std::expected<chain::Address, pt::PTDeployError>> _deployObjectLocally(evm::EVM & evm, 
         registry::Registry & registry, T object, InternalGetter getter,
@@ -554,6 +579,9 @@ namespace dcn::loader
             co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
         const auto & address = *address_result;
+
+        const bool existed_in_registry_before =
+            register_in_registry ? co_await registryHasRecord(registry, object) : false;
 
         const std::filesystem::path bin_dir = out_dir / "build";
 
@@ -736,14 +764,41 @@ namespace dcn::loader
             co_return std::unexpected(pt::PTDeployError{pt::PTDeployError::Kind::INVALID_INPUT});
         }
 
-        if(register_in_registry && !co_await registry.add(object_address, object))
+        if(register_in_registry)
         {
-            spdlog::error("Failed to add object '{}'", name);
+            const bool added_to_registry = co_await registry.add(object_address, object);
+            if(!added_to_registry)
+            {
+                spdlog::error("Failed to add object '{}'", name);
 
-            // remove binary file
-            cleanup_new_build_artifacts();
+                const bool exists_after_failed_add = co_await registryHasRecord(registry, object);
+                if(existed_in_registry_before || exists_after_failed_add)
+                {
+                    spdlog::warn(
+                        "Object '{}' already exists in registry DB; treating deployment as duplicate",
+                        name);
+                    co_return std::unexpected(pt::PTDeployError{
+                        .kind = expected_conflict_error
+                    });
+                }
 
-            co_return std::unexpected(pt::PTDeployError{});
+                // remove binary file
+                cleanup_new_build_artifacts();
+
+                co_return std::unexpected(pt::PTDeployError{
+                    .kind = pt::PTDeployError::Kind::REGISTRY_ERROR
+                });
+            }
+
+            if(existed_in_registry_before)
+            {
+                spdlog::warn(
+                    "Object '{}' was already present in registry DB before deploy; reporting duplicate registration",
+                    name);
+                co_return std::unexpected(pt::PTDeployError{
+                    .kind = expected_conflict_error
+                });
+            }
         }
         
         if(persist_json && !co_await _saveJsonRecord(name, std::move(object), out_dir))
