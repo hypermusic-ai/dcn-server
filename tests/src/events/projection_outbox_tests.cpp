@@ -306,6 +306,81 @@ TEST_F(UnitTest, Events_Projector_StreamSeq_RemainsMonotonicAcrossPruneAndRestar
     EXPECT_EQ(db.scalarInt64("SELECT stream_seq FROM global_outbox LIMIT 1;"), 2);
 }
 
+TEST_F(UnitTest, Events_Projector_ReplayedLocalEmission_DeduplicatesByTypeNameOwner)
+{
+    const auto paths = makeTempEventsPaths("project_replayed_local_dedup");
+    asio::io_context store_io_context;
+    events::SQLiteHotStore store(
+        paths.hot_db,
+        paths.archive_root,
+        7LL * 24 * 60 * 60 * 1000,
+        CHAIN_ID);
+
+    events::DecodedEvent first = makeDecodedEvent(
+        300,
+        0,
+        1,
+        0xD1,
+        0xE1,
+        events::EventType::CONNECTOR_ADDED,
+        events::EventState::FINALIZED,
+        1'700'031'000);
+    first.name = "shared_entity";
+    first.owner = hexAddress(0x66);
+
+    const events::ChainBlockInfo first_block = makeBlockInfo(
+        300,
+        first.raw.block_hash,
+        hexBytes(0x20, 32),
+        1'700'031'000,
+        1'700'031'000'100);
+    ASSERT_TRUE(awaitIngestBatch(
+        store_io_context,
+        store,
+        CHAIN_ID,
+        {first},
+        {first_block},
+        301,
+        1'700'031'000'200));
+    EXPECT_EQ(projectAll(store_io_context, store, 1'700'031'000'300), 1u);
+
+    events::DecodedEvent replay = makeDecodedEvent(
+        301,
+        2,
+        7,
+        0xD2,
+        0xE2,
+        events::EventType::CONNECTOR_ADDED,
+        events::EventState::FINALIZED,
+        1'700'031'100);
+    replay.name = first.name;
+    replay.owner = first.owner;
+
+    const events::ChainBlockInfo replay_block = makeBlockInfo(
+        301,
+        replay.raw.block_hash,
+        hexBytes(0x21, 32),
+        1'700'031'100,
+        1'700'031'100'100);
+    ASSERT_TRUE(awaitIngestBatch(
+        store_io_context,
+        store,
+        CHAIN_ID,
+        {replay},
+        {replay_block},
+        302,
+        1'700'031'100'200));
+    EXPECT_EQ(projectAll(store_io_context, store, 1'700'031'100'300), 1u);
+
+    events_sql::expectRowCount(paths.hot_db, "feed_items_hot", 1);
+    events_sql::expectRowCount(paths.hot_db, "global_outbox", 1);
+
+    SqliteReadonly db(paths.hot_db);
+    EXPECT_EQ(db.scalarText("SELECT tx_hash FROM feed_items_hot LIMIT 1;"), replay.raw.tx_hash);
+    EXPECT_EQ(db.scalarInt64("SELECT log_index FROM feed_items_hot LIMIT 1;"), replay.raw.log_index);
+    EXPECT_EQ(db.scalarText("SELECT feed_id FROM feed_items_hot LIMIT 1;").rfind("1:entity:", 0), 0u);
+}
+
 TEST_F(UnitTest, Events_Projector_OrphanJobs_AreCleanedBeforeProjection)
 {
     const auto paths = makeTempEventsPaths("project_orphan_cleanup");

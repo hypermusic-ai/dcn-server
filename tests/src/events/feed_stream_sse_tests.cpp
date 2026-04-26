@@ -165,27 +165,21 @@ TEST_F(UnitTest, Events_API_FeedStream_EmitsSseFramesWithFloorAndMeta)
             .chain_id = CHAIN_ID
         });
 
-    http::Request request;
-    request.setMethod(http::Method::GET).setPath(http::URL("/feed/stream?since_seq=0&limit=10")).setVersion("HTTP/1.1");
+    const std::string body = buildFeedStreamSseReplay(runtime, events::StreamQuery{.since_seq = 0, .limit = 10});
 
-    server::QueryArgsList query_args;
-    query_args.emplace("since_seq", makeUintQueryArg(0));
-    query_args.emplace("limit", makeUintQueryArg(10));
-
-    const http::Response response = runAwaitable(io_context, GET_feedStream(request, {}, std::move(query_args), runtime));
-    ASSERT_EQ(response.getCode(), http::Code::OK);
-
-    const std::vector<SseFrame> frames = parseSseFrames(response.getBody());
+    const std::vector<SseFrame> frames = parseSseFrames(body);
     ASSERT_GE(frames.size(), 3u);
     EXPECT_TRUE(frames.front().is_comment);
     EXPECT_EQ(frames.front().comment, "min_available_seq=2");
 
     ASSERT_TRUE(frames.at(1).id.has_value());
     EXPECT_EQ(*frames.at(1).id, 2);
-    EXPECT_EQ(frames.at(1).event, "feed_delta");
+    EXPECT_EQ(frames.at(1).event, "connector_added");
     const auto first_data = json::parse(frames.at(1).data, nullptr, false);
     ASSERT_FALSE(first_data.is_discarded());
     EXPECT_EQ(first_data.value("stream_seq", 0), 2);
+    EXPECT_EQ(first_data.value("event_type", std::string{}), "connector_added");
+    EXPECT_FALSE(first_data.contains("op"));
 
     const SseFrame & meta_frame = frames.back();
     EXPECT_EQ(meta_frame.event, "stream_meta");
@@ -222,17 +216,9 @@ TEST_F(UnitTest, Events_API_FeedStream_AfterRestart_UsesDurableOutboxState)
             .chain_id = CHAIN_ID
         });
 
-    http::Request request;
-    request.setMethod(http::Method::GET).setPath(http::URL("/feed/stream?since_seq=1&limit=10")).setVersion("HTTP/1.1");
+    const std::string body = buildFeedStreamSseReplay(runtime, events::StreamQuery{.since_seq = 1, .limit = 10});
 
-    server::QueryArgsList query_args;
-    query_args.emplace("since_seq", makeUintQueryArg(1));
-    query_args.emplace("limit", makeUintQueryArg(10));
-
-    const http::Response response = runAwaitable(io_context, GET_feedStream(request, {}, std::move(query_args), runtime));
-    ASSERT_EQ(response.getCode(), http::Code::OK);
-
-    const std::vector<SseFrame> frames = parseSseFrames(response.getBody());
+    const std::vector<SseFrame> frames = parseSseFrames(body);
     ASSERT_GE(frames.size(), 2u);
 
     const auto delta_it = std::find_if(
@@ -240,7 +226,7 @@ TEST_F(UnitTest, Events_API_FeedStream_AfterRestart_UsesDurableOutboxState)
         frames.end(),
         [](const SseFrame & frame)
         {
-            return frame.event == "feed_delta";
+            return frame.event == "connector_added";
         });
     ASSERT_NE(delta_it, frames.end());
     ASSERT_TRUE(delta_it->id.has_value());
@@ -267,17 +253,9 @@ TEST_F(UnitTest, Events_API_FeedStream_StaleCursor_IsStructuredInMeta)
             .chain_id = CHAIN_ID
         });
 
-    http::Request request;
-    request.setMethod(http::Method::GET).setPath(http::URL("/feed/stream?since_seq=1&limit=10")).setVersion("HTTP/1.1");
+    const std::string body = buildFeedStreamSseReplay(runtime, events::StreamQuery{.since_seq = 1, .limit = 10});
 
-    server::QueryArgsList query_args;
-    query_args.emplace("since_seq", makeUintQueryArg(1));
-    query_args.emplace("limit", makeUintQueryArg(10));
-
-    const http::Response response = runAwaitable(io_context, GET_feedStream(request, {}, std::move(query_args), runtime));
-    ASSERT_EQ(response.getCode(), http::Code::OK);
-
-    const std::vector<SseFrame> frames = parseSseFrames(response.getBody());
+    const std::vector<SseFrame> frames = parseSseFrames(body);
     ASSERT_GE(frames.size(), 2u);
     const auto meta_frame_it = std::find_if(
         frames.begin(),

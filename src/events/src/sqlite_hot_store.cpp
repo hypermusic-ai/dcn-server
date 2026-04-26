@@ -17,6 +17,48 @@ namespace dcn::events
 {
     constexpr int CURRENT_PROJECTOR_VERSION = 1;
 
+    static bool _usesLogicalFeedIdentity(const std::string_view event_type)
+    {
+        return event_type == CONNECTOR_ADDED_TYPE
+            || event_type == TRANSFORMATION_ADDED_TYPE
+            || event_type == CONDITION_ADDED_TYPE;
+    }
+
+    static std::string _logicalFeedId(
+        const int chain_id,
+        const std::string & event_type,
+        const std::string & owner,
+        const std::string & name)
+    {
+        const std::string owner_key = utils::toLower(owner);
+
+        return std::format(
+            "{}:entity:{}:{}:{}:{}:{}:{}",
+            chain_id,
+            event_type.size(),
+            event_type,
+            owner_key.size(),
+            owner_key,
+            name.size(),
+            name);
+    }
+
+    static std::string _projectedFeedId(
+        const int chain_id,
+        const std::string & tx_hash,
+        const std::int64_t log_index,
+        const std::string & event_type,
+        const std::string & owner,
+        const std::string & name)
+    {
+        if(_usesLogicalFeedIdentity(event_type))
+        {
+            return _logicalFeedId(chain_id, event_type, owner, name);
+        }
+
+        return std::format("{}:{}:{}", chain_id, tx_hash, log_index);
+    }
+
     static std::string _compactFeedPayloadJson(
         const std::string& event_type,
         const std::string& name,
@@ -1462,7 +1504,8 @@ namespace dcn::events
                 const std::string& state = job.state;
                 const std::int64_t seen_at_ms = job.seen_at_ms;
 
-                const std::string feed_id = std::format("{}:{}:{}", chain_id, tx_hash, log_index);
+                const bool logical_feed_identity = _usesLogicalFeedIdentity(event_type);
+                const std::string feed_id = _projectedFeedId(chain_id, tx_hash, log_index, event_type, owner, name);
                 const std::string history_cursor = std::format("{}", CursorKey{
                     .chain_id = chain_id,
                     .block_number = block_number,
@@ -1514,7 +1557,7 @@ namespace dcn::events
                     !existed ||
                     existing_status != state ||
                     existing_visible != (visible ? 1 : 0) ||
-                    existing_history_cursor != history_cursor ||
+                    (!logical_feed_identity && existing_history_cursor != history_cursor) ||
                     existing_payload_json != payload_json;
 
                 sqlite3_bind_text(
@@ -2092,12 +2135,16 @@ namespace dcn::events
 
         page.stale_since_seq = query.since_seq > 0 && query.since_seq < page.min_available_seq;
 
-        storage::sqlite::Statement stream_stmt(_read_db,
-                              "SELECT stream_seq, op, status, feed_id, history_cursor, payload_json, created_at_ms "
-                              "FROM global_outbox "
-                              "WHERE stream_seq > ?1 AND feed_id LIKE ?2 "
-                              "ORDER BY stream_seq ASC "
-                              "LIMIT ?3;");
+        storage::sqlite::Statement stream_stmt(
+            _read_db,
+            "SELECT "
+            "o.stream_seq, o.status, o.feed_id, o.history_cursor, o.payload_json, o.created_at_ms, "
+            "COALESCE(f.event_type, '') AS event_type "
+            "FROM global_outbox o "
+            "LEFT JOIN feed_items_hot f ON f.feed_id=o.feed_id "
+            "WHERE o.stream_seq > ?1 AND o.feed_id LIKE ?2 "
+            "ORDER BY o.stream_seq ASC "
+            "LIMIT ?3;");
         sqlite3_bind_int64(stream_stmt.get(), 1, static_cast<sqlite3_int64>(query.since_seq));
         sqlite3_bind_text(
             stream_stmt.get(),
@@ -2112,16 +2159,36 @@ namespace dcn::events
         {
             StreamDelta delta {};
             delta.stream_seq = static_cast<std::int64_t>(sqlite3_column_int64(stream_stmt.get(), 0));
-            delta.op = reinterpret_cast<const char*>(sqlite3_column_text(stream_stmt.get(), 1));
-            delta.status = reinterpret_cast<const char*>(sqlite3_column_text(stream_stmt.get(), 2));
-            delta.feed_id = reinterpret_cast<const char*>(sqlite3_column_text(stream_stmt.get(), 3));
-            delta.history_cursor = reinterpret_cast<const char*>(sqlite3_column_text(stream_stmt.get(), 4));
-            const std::string payload_json = reinterpret_cast<const char*>(sqlite3_column_text(stream_stmt.get(), 5));
-            delta.created_at_ms = static_cast<std::int64_t>(sqlite3_column_int64(stream_stmt.get(), 6));
+            delta.status = reinterpret_cast<const char*>(sqlite3_column_text(stream_stmt.get(), 1));
+            delta.feed_id = reinterpret_cast<const char*>(sqlite3_column_text(stream_stmt.get(), 2));
+            delta.history_cursor = reinterpret_cast<const char*>(sqlite3_column_text(stream_stmt.get(), 3));
+            const std::string payload_json = reinterpret_cast<const char*>(sqlite3_column_text(stream_stmt.get(), 4));
+            delta.created_at_ms = static_cast<std::int64_t>(sqlite3_column_int64(stream_stmt.get(), 5));
+            const unsigned char * event_type_txt = sqlite3_column_text(stream_stmt.get(), 6);
+            delta.event_type = (event_type_txt == nullptr)
+                ? std::string{}
+                : std::string(reinterpret_cast<const char *>(event_type_txt));
             delta.payload = json::parse(payload_json, nullptr, false);
             if (delta.payload.is_discarded())
             {
                 delta.payload = json::object();
+            }
+            if (delta.event_type.empty() && delta.payload.is_object() && delta.payload.contains("type")
+                && delta.payload.at("type").is_string())
+            {
+                const std::string payload_type = delta.payload.at("type").get<std::string>();
+                if (payload_type == "connector")
+                {
+                    delta.event_type = std::string(CONNECTOR_ADDED_TYPE);
+                }
+                else if (payload_type == "transformation")
+                {
+                    delta.event_type = std::string(TRANSFORMATION_ADDED_TYPE);
+                }
+                else if (payload_type == "condition")
+                {
+                    delta.event_type = std::string(CONDITION_ADDED_TYPE);
+                }
             }
             page.deltas.push_back(std::move(delta));
         }

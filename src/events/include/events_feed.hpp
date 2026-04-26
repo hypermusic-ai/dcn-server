@@ -68,7 +68,7 @@ namespace dcn::events
     struct StreamDelta
     {
         std::int64_t stream_seq = 0;
-        std::string op;
+        std::string event_type;
         std::string status;
         std::string feed_id;
         std::string history_cursor;

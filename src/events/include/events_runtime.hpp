@@ -86,6 +86,7 @@ namespace dcn::events
 
             asio::awaitable<std::optional<std::int64_t>> _storeLoadNextFromBlock(int chain_id) const;
             asio::awaitable<std::optional<std::uint64_t>> _storeLoadNextLocalSeq(int chain_id) const;
+            asio::awaitable<bool> _storeSaveNextLocalSeq(int chain_id, std::uint64_t next_seq, std::int64_t now_ms) const;
             asio::awaitable<std::vector<std::int64_t>> _storeLoadReorgWindowBlocks(
                 int chain_id,
                 std::int64_t from_block,

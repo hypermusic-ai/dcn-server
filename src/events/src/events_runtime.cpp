@@ -293,6 +293,15 @@ namespace dcn::events
         co_return _store->loadNextLocalSeq(chain_id);
     }
 
+    asio::awaitable<bool> EventRuntime::_storeSaveNextLocalSeq(
+        const int chain_id,
+        const std::uint64_t next_seq,
+        const std::int64_t now_ms) const
+    {
+        co_await async::ensureOnStrand(_write_strand);
+        co_return _store->saveNextLocalSeq(chain_id, next_seq, now_ms);
+    }
+
     asio::awaitable<std::vector<std::int64_t>> EventRuntime::_storeLoadReorgWindowBlocks(
         const int chain_id,
         const std::int64_t from_block,
@@ -508,11 +517,13 @@ namespace dcn::events
 
         spdlog::info("Events ingestion loop (local EVM source) started for chain={}", _config.chain_id);
         std::uint64_t next_seq = 0;
+        std::optional<std::int64_t> next_from_block_hint = std::nullopt;
 
         if(const auto persisted = co_await _storeLoadNextLocalSeq(_config.chain_id); persisted.has_value())
         {
             next_seq = *persisted;
         }
+        next_from_block_hint = co_await _storeLoadNextFromBlock(_config.chain_id);
 
         const std::size_t poll_limit = std::max<std::size_t>(1, std::min<std::size_t>(MAX_STREAM_LIMIT, _config.block_batch_size * 8ULL));
         constexpr const char* EPHEMERAL_ENTITY_ADDRESS = "0x0";
@@ -521,6 +532,28 @@ namespace dcn::events
         {
             const std::vector<evm::EVM::EmittedLogRecord> emitted_logs = co_await _config.local_evm->getLogsSince(next_seq, poll_limit);
             const std::int64_t head_block = co_await _config.local_evm->getHeadBlockNumber();
+            const std::int64_t source_next_block = std::max<std::int64_t>(head_block, 0) + 1;
+            const bool source_regressed =
+                next_from_block_hint.has_value() && (source_next_block < *next_from_block_hint);
+            const bool missing_block_cursor_with_progress =
+                !next_from_block_hint.has_value() && emitted_logs.empty() && next_seq > 0;
+
+            if(source_regressed || missing_block_cursor_with_progress)
+            {
+                spdlog::warn(
+                    "Events local ingestion cursor rewind detected: source_next_block={} persisted_next_from_block={} "
+                    "persisted_next_local_seq={}; resetting local cursor to seq=0",
+                    source_next_block,
+                    next_from_block_hint.value_or(-1),
+                    next_seq);
+                const std::int64_t rewind_reset_ms = utils::nowMs();
+                next_seq = 0;
+                next_from_block_hint = source_next_block;
+                if(!co_await _storeSaveNextLocalSeq(_config.chain_id, 0, rewind_reset_ms))
+                {
+                    spdlog::warn("Failed to persist local ingestion cursor reset for chain={}", _config.chain_id);
+                }
+            }
 
             if(emitted_logs.empty())
             {
@@ -659,6 +692,7 @@ namespace dcn::events
             }
 
             next_seq = last_seq + 1;
+            next_from_block_hint = next_block;
 
             if(emitted_logs.size() < poll_limit)
             {
@@ -722,6 +756,26 @@ namespace dcn::events
 
                 if (*next_from_block > head)
                 {
+                    const std::int64_t cursor_gap = *next_from_block - head;
+                    const std::int64_t rewind_threshold =
+                        std::max<std::int64_t>(16, static_cast<std::int64_t>(_config.confirmations) * 2);
+                    if (cursor_gap > rewind_threshold)
+                    {
+                        const std::int64_t rewind_to = _config.start_block.has_value()
+                            ? std::max<std::int64_t>(0, *_config.start_block)
+                            : std::max<std::int64_t>(0, head);
+                        spdlog::warn(
+                            "Events ingestion cursor rewind detected: persisted_next_from_block={} head={} gap={} "
+                            "(threshold={}); rewinding to {}",
+                            *next_from_block,
+                            head,
+                            cursor_gap,
+                            rewind_threshold,
+                            rewind_to);
+                        next_from_block = rewind_to;
+                        continue;
+                    }
+
                     if (!co_await _storeApplyFinality(_config.chain_id, heights, utils::nowMs(), _config.reorg_window_blocks))
                     {
                         spdlog::error("Failed to apply finality while next_from_block is ahead of head");

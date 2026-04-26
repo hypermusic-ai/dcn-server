@@ -599,7 +599,7 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::OPTIONS, "/feed?limit=<uint>&before=<~string>&type=<~string>&include_unfinalized=<~uint>"}, dcn::OPTIONS_feed);
     server.addRoute({dcn::http::Method::GET, "/feed?limit=<uint>&before=<~string>&type=<~string>&include_unfinalized=<~uint>"}, dcn::GET_feed, std::ref(events_runtime));
     server.addRoute({dcn::http::Method::OPTIONS, "/feed/stream?since_seq=<~uint>&limit=<~uint>"}, dcn::OPTIONS_feedStream);
-    server.addRoute({dcn::http::Method::GET, "/feed/stream?since_seq=<~uint>&limit=<~uint>"}, dcn::GET_feedStream, std::ref(events_runtime));
+    server.addStreamingRoute({dcn::http::Method::GET, "/feed/stream?since_seq=<~uint>&limit=<~uint>"}, dcn::GET_feedStream, std::ref(events_runtime));
 
     server.addRoute({dcn::http::Method::HEAD, "/connector/<string>"},       dcn::HEAD_connector, std::ref(registry));
     server.addRoute({dcn::http::Method::OPTIONS, "/connector"},             dcn::OPTIONS_connector);

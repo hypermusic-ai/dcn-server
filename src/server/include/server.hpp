@@ -82,6 +82,38 @@ namespace dcn::server
                     )
                 ));
             }
+
+            /**
+             * @brief Adds a streaming route to the server.
+             *
+             * Streaming handlers receive the socket directly and are responsible for
+             * writing the full HTTP response themselves (status line + headers + body).
+             * They are intended for SSE/long-poll endpoints where the response is
+             * unbounded and stays open for the lifetime of the request.
+             *
+             * @param route The route key containing the HTTP method and path.
+             * @param handler Streaming handler matching StreamingHandlerDefinition.
+             */
+            template<class F>
+            void addStreamingRoute(RouteKey route, F && handler)
+            {
+                _router.addRoute(std::move(route), RouteHandlerFunc(
+                    StreamingHandlerDefinition(std::move(handler))
+                ));
+            }
+
+            /**
+             * @brief Adds a streaming route with extra bound arguments.
+             */
+            template<class F, class ... Args>
+            void addStreamingRoute(RouteKey route, F && handler, Args&&... binded_args)
+            {
+                _router.addRoute(std::move(route), RouteHandlerFunc(
+                    StreamingHandlerDefinition(
+                        std::bind(handler, _1, _2, _3, _4, _5, std::forward<Args>(binded_args)...)
+                    )
+                ));
+            }
             
             /**
              * @brief Set the idle interval after which the server will close the connection.

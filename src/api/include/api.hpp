@@ -250,12 +250,34 @@ namespace dcn
     asio::awaitable<http::Response> OPTIONS_feedStream(const http::Request & request, std::vector<server::RouteArg> route_args, server::QueryArgsList query_args);
 
     /**
-     * @brief Handles GET requests to /feed/stream?since_seq=<~uint>&limit=<~uint>
+     * @brief Builds the SSE replay body for /feed/stream.
+     *
+     * Returns the full SSE-framed string for the initial replay: a leading
+     * `min_available_seq` comment, one `data:` frame per delta, and a trailing
+     * `stream_meta` frame describing pagination state. Used both by the
+     * streaming handler (initial flush after headers) and by the unit tests
+     * (which want a deterministic snapshot they can parse offline).
      */
-    asio::awaitable<http::Response> GET_feedStream(
+    std::string buildFeedStreamSseReplay(
+        events::EventRuntime & events_runtime,
+        const events::StreamQuery & query);
+
+    /**
+     * @brief Handles GET requests to /feed/stream?since_seq=<~uint>&limit=<~uint>
+     *
+     * Streaming handler — owns the socket for the request lifetime. Writes the
+     * SSE response head, flushes an initial replay via buildFeedStreamSseReplay,
+     * then polls EventRuntime for new deltas and emits SSE frames until the
+     * client disconnects, sending periodic `:keepalive` comments to keep the
+     * connection (and the per-connection watchdog) alive when there are no new
+     * events.
+     */
+    asio::awaitable<void> GET_feedStream(
+        asio::ip::tcp::socket & sock,
         const http::Request & request,
         std::vector<server::RouteArg> route_args,
         server::QueryArgsList query_args,
+        std::chrono::steady_clock::time_point & deadline,
         events::EventRuntime & events_runtime);
 
 
