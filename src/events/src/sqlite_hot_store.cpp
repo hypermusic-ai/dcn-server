@@ -1375,7 +1375,7 @@ namespace dcn::events
                 _write_db,
                 "SELECT "
                 "n.chain_id, n.block_hash, n.log_index, n.tx_hash, n.block_number, n.tx_index, n.block_time, "
-                "n.event_type, n.name, n.owner, n.state, n.seen_at_ms "
+                "n.event_type, n.name, n.owner, n.state "
                 "FROM projection_jobs j "
                 "JOIN normalized_events_hot n "
                 "ON n.chain_id=j.chain_id AND n.block_hash=j.block_hash AND n.log_index=j.log_index "
@@ -1397,7 +1397,6 @@ namespace dcn::events
                 std::string name;
                 std::string owner;
                 std::string state;
-                std::int64_t seen_at_ms = 0;
             };
 
             std::vector<ProjectionJobRow> jobs;
@@ -1418,7 +1417,6 @@ namespace dcn::events
                 row.name = reinterpret_cast<const char*>(sqlite3_column_text(select_jobs.get(), 8));
                 row.owner = reinterpret_cast<const char*>(sqlite3_column_text(select_jobs.get(), 9));
                 row.state = reinterpret_cast<const char*>(sqlite3_column_text(select_jobs.get(), 10));
-                row.seen_at_ms = static_cast<std::int64_t>(sqlite3_column_int64(select_jobs.get(), 11));
                 jobs.push_back(std::move(row));
             }
             if (select_jobs_rc != SQLITE_DONE)
@@ -1497,7 +1495,6 @@ namespace dcn::events
                 const std::string& name = job.name;
                 const std::string& owner = job.owner;
                 const std::string& state = job.state;
-                const std::int64_t seen_at_ms = job.seen_at_ms;
 
                 const bool logical_feed_identity = _usesLogicalFeedIdentity(event_type);
                 const std::string feed_id = _projectedFeedId(
@@ -1512,7 +1509,7 @@ namespace dcn::events
                 bool existed = false;
                 bool stream_emitted = false;
 
-                std::int64_t created_at_ms = seen_at_ms;
+                std::int64_t created_at_ms = now_ms;
                 std::string existing_status;
                 int existing_visible = visible ? 1 : 0;
                 std::string existing_history_cursor;
@@ -1595,8 +1592,8 @@ namespace dcn::events
                 sqlite3_clear_bindings(upsert_feed_stmt.get());
 
                 const bool should_emit_outbox =
-                    (state == FINALIZED_STATE && (!stream_emitted || materially_changed)) ||
-                    (state == REMOVED_STATE && stream_emitted && materially_changed);
+                    (visible && materially_changed) ||
+                    (!visible && stream_emitted && materially_changed);
 
                 if (should_emit_outbox)
                 {

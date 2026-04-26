@@ -257,14 +257,14 @@ TEST_F(UnitTest, Events_Archive_FinalizationRejectsNormalizedRowsWithDivergedSna
 
     // Reset exported and capture the snapshot identity, then mutate the row mid-archive
     // by simulating a divergence: pre-image identity must not match post-mutation row.
-    const std::string staged_decoded_json = "{\"name\":\"staged-snapshot\"}";
+    const std::string staged_name = "staged-snapshot";
     const std::int64_t staged_updated_at_ms = 1'700'002'000'250;
     {
         SqliteWritable db(paths.hot_db);
         db.exec(std::format(
-            "UPDATE normalized_events_hot SET decoded_json='{}', updated_at_ms={} "
+            "UPDATE normalized_events_hot SET name='{}', updated_at_ms={} "
             "WHERE chain_id=1 AND block_hash='{}' AND log_index={};",
-            staged_decoded_json,
+            staged_name,
             staged_updated_at_ms,
             event.raw.block_hash,
             event.raw.log_index));
@@ -277,13 +277,13 @@ TEST_F(UnitTest, Events_Archive_FinalizationRejectsNormalizedRowsWithDivergedSna
         EXPECT_EQ(db.scalarInt64("SELECT exported FROM normalized_events_hot LIMIT 1;"), 1);
     }
 
-    // Now diverge AFTER the row is exported: reset exported and tamper decoded_json
+    // Now diverge AFTER the row is exported: reset exported and tamper name
     // such that the *next* archive cycle's selected snapshot would archive the new content
     // and only mark exported when the snapshot matches the current row.
     {
         SqliteWritable db(paths.hot_db);
         db.exec(std::format(
-            "UPDATE normalized_events_hot SET exported=0, decoded_json='{{\"name\":\"diverged\"}}', "
+            "UPDATE normalized_events_hot SET exported=0, name='diverged', "
             "updated_at_ms={} "
             "WHERE chain_id=1 AND block_hash='{}' AND log_index={};",
             staged_updated_at_ms + 1,
@@ -292,18 +292,18 @@ TEST_F(UnitTest, Events_Archive_FinalizationRejectsNormalizedRowsWithDivergedSna
     }
 
     // Issue the same UPDATE finalization would issue, but with a stale snapshot identity
-    // (the pre-divergence updated_at_ms / decoded_json). It must match zero rows.
+    // (the pre-divergence updated_at_ms / name). It must match zero rows.
     {
         SqliteWritable db(paths.hot_db);
         db.exec(std::format(
             "UPDATE normalized_events_hot SET exported=1, updated_at_ms=9999999999999 "
             "WHERE chain_id=1 AND block_hash='{}' AND log_index={} "
             "AND state='finalized' AND projected_version=1 "
-            "AND updated_at_ms={} AND decoded_json='{}' AND exported=0;",
+            "AND updated_at_ms={} AND name='{}' AND exported=0;",
             event.raw.block_hash,
             event.raw.log_index,
             staged_updated_at_ms,
-            staged_decoded_json));
+            staged_name));
     }
 
     {
