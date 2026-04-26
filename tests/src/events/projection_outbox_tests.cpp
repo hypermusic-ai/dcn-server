@@ -378,7 +378,7 @@ TEST_F(UnitTest, Events_Projector_ReplayedLocalEmission_DeduplicatesByTypeNameOw
     SqliteReadonly db(paths.hot_db);
     EXPECT_EQ(db.scalarText("SELECT tx_hash FROM feed_items_hot LIMIT 1;"), replay.raw.tx_hash);
     EXPECT_EQ(db.scalarInt64("SELECT log_index FROM feed_items_hot LIMIT 1;"), replay.raw.log_index);
-    EXPECT_EQ(db.scalarText("SELECT feed_id FROM feed_items_hot LIMIT 1;").rfind("1:entity:", 0), 0u);
+    EXPECT_EQ(db.scalarText("SELECT feed_id FROM feed_items_hot LIMIT 1;").rfind("eth:1:", 0), 0u);
 }
 
 TEST_F(UnitTest, Events_Projector_OrphanJobs_AreCleanedBeforeProjection)

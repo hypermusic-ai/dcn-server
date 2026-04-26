@@ -135,11 +135,11 @@ TEST_F(UnitTest, Events_History_HotFeedRead_FiltersByDefaultChainId)
     });
     ASSERT_EQ(page.items.size(), 1u);
     EXPECT_EQ(page.items.front().block_number, 100);
-    EXPECT_EQ(page.items.front().feed_id.rfind("1:", 0), 0u);
+    EXPECT_EQ(page.items.front().feed_id.rfind("eth:1:", 0), 0u);
 
     const events::FeedPage cross_chain_cursor_page = store.getFeedPage(events::FeedQuery{
         .limit = 10,
-        .before_cursor = std::string("2:999:0:0:2:deadbeef:1"),
+        .before_cursor = std::string("c999:0:0:eth:2:deadbeef:1"),
         .include_unfinalized = true
     });
     EXPECT_TRUE(cross_chain_cursor_page.items.empty());
@@ -200,4 +200,139 @@ TEST_F(UnitTest, Events_History_OrderingAcrossHotArchiveBoundary_IsCanonical)
     ASSERT_EQ(page.items.size(), 2u);
     EXPECT_EQ(page.items.at(0).block_number, 120);
     EXPECT_EQ(page.items.at(1).block_number, 93);
+}
+
+TEST_F(UnitTest, Events_History_OrderingUsesCreatedAtMsAndCursorPaginatesByIt)
+{
+    const auto paths = makeTempEventsPaths("history_updated_at_order");
+    asio::io_context store_io_context;
+    events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 60 * 60 * 1000, CHAIN_ID);
+
+    const events::DecodedEvent high_block_first = makeDecodedEvent(
+        200,
+        0,
+        1,
+        0xF0,
+        0x30,
+        events::EventType::CONNECTOR_ADDED,
+        events::EventState::OBSERVED,
+        1'700'300'000);
+    ASSERT_TRUE(awaitIngestBatch(
+        store_io_context,
+        store,
+        CHAIN_ID,
+        {high_block_first},
+        {makeBlockInfo(200, high_block_first.raw.block_hash, hexBytes(0x71, 32), 1'700'300'000, 1'700'300'000'100)},
+        201,
+        1'700'300'000'200));
+    EXPECT_EQ(projectAll(store_io_context, store, 1'700'300'000'300), 1u);
+
+    const events::DecodedEvent low_block_later = makeDecodedEvent(
+        100,
+        0,
+        1,
+        0xF1,
+        0x31,
+        events::EventType::TRANSFORMATION_ADDED,
+        events::EventState::OBSERVED,
+        1'700'300'100);
+    ASSERT_TRUE(awaitIngestBatch(
+        store_io_context,
+        store,
+        CHAIN_ID,
+        {low_block_later},
+        {makeBlockInfo(100, low_block_later.raw.block_hash, hexBytes(0x72, 32), 1'700'300'100, 1'700'300'100'100)},
+        201,
+        1'700'300'100'200));
+    EXPECT_EQ(projectAll(store_io_context, store, 1'700'300'100'300), 1u);
+
+    const events::FeedPage ordered_page = store.getFeedPage(events::FeedQuery{
+        .limit = 10,
+        .include_unfinalized = true
+    });
+    ASSERT_EQ(ordered_page.items.size(), 2u);
+    EXPECT_EQ(ordered_page.items.at(0).block_number, 100);
+    EXPECT_EQ(ordered_page.items.at(1).block_number, 200);
+    EXPECT_GT(ordered_page.items.at(0).created_at_ms, ordered_page.items.at(1).created_at_ms);
+
+    const parse::Result<events::CursorKey> parsed_cursor = parse::parseHistoryCursor(ordered_page.items.at(0).history_cursor);
+    ASSERT_TRUE(parsed_cursor.has_value());
+    EXPECT_EQ(parsed_cursor->chain_namespace, "eth");
+    EXPECT_EQ(parsed_cursor->created_at_ms, ordered_page.items.at(0).created_at_ms);
+
+    const events::FeedPage first_page = store.getFeedPage(events::FeedQuery{
+        .limit = 1,
+        .include_unfinalized = true
+    });
+    ASSERT_EQ(first_page.items.size(), 1u);
+    ASSERT_TRUE(first_page.next_before_cursor.has_value());
+    EXPECT_EQ(first_page.items.front().block_number, 100);
+
+    const events::FeedPage second_page = store.getFeedPage(events::FeedQuery{
+        .limit = 10,
+        .before_cursor = first_page.next_before_cursor,
+        .include_unfinalized = true
+    });
+    ASSERT_EQ(second_page.items.size(), 1u);
+    EXPECT_EQ(second_page.items.front().block_number, 200);
+}
+
+TEST_F(UnitTest, Events_History_OrderingReadsArchiveEvenWhenHotExceedsLimit)
+{
+    const auto paths = makeTempEventsPaths("history_archive_scan_with_hot_limit");
+    asio::io_context store_io_context;
+    events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 60 * 60 * 1000, CHAIN_ID);
+
+    const std::int64_t archived_projected_at_ms = 1'700'400'000'200;
+    const std::int64_t hot_projected_before_archive_ms = archived_projected_at_ms - 1000;
+
+    const events::DecodedEvent archived_top = makeDecodedEvent(
+        50,
+        0,
+        1,
+        0xF2,
+        0x32,
+        events::EventType::CONDITION_ADDED,
+        events::EventState::OBSERVED,
+        1'700'400'000);
+    ingestProjectFinalize(store_io_context, store, archived_top, archived_projected_at_ms);
+    ASSERT_TRUE(awaitRunArchiveCycle(store_io_context, store, CHAIN_ID, 0, 1'900'000'000'000));
+
+    const events::DecodedEvent hot_one = makeDecodedEvent(
+        300,
+        0,
+        1,
+        0xF3,
+        0x33,
+        events::EventType::CONNECTOR_ADDED,
+        events::EventState::OBSERVED,
+        1'700'500'000);
+    const events::DecodedEvent hot_two = makeDecodedEvent(
+        301,
+        0,
+        1,
+        0xF4,
+        0x34,
+        events::EventType::TRANSFORMATION_ADDED,
+        events::EventState::OBSERVED,
+        1'700'500'001);
+    ASSERT_TRUE(awaitIngestBatch(
+        store_io_context,
+        store,
+        CHAIN_ID,
+        {hot_one, hot_two},
+        {
+            makeBlockInfo(300, hot_one.raw.block_hash, hexBytes(0x73, 32), 1'700'500'000, 1'700'500'000'100),
+            makeBlockInfo(301, hot_two.raw.block_hash, hexBytes(0x74, 32), 1'700'500'001, 1'700'500'001'100)
+        },
+        302,
+        1'700'500'001'200));
+    EXPECT_EQ(projectAll(store_io_context, store, hot_projected_before_archive_ms), 2u);
+
+    const events::FeedPage page = store.getFeedPage(events::FeedQuery{
+        .limit = 1,
+        .include_unfinalized = true
+    });
+    ASSERT_EQ(page.items.size(), 1u);
+    EXPECT_EQ(page.items.front().block_number, 50);
 }

@@ -177,7 +177,6 @@ namespace dcn
     namespace
     {
         constexpr std::chrono::milliseconds STREAM_POLL_INTERVAL{1000};
-        constexpr std::chrono::seconds STREAM_HEARTBEAT_INTERVAL{15};
         constexpr std::chrono::seconds STREAM_DEADLINE_PER_WRITE{60};
         constexpr std::size_t STREAM_LIVE_LIMIT = 200;
 
@@ -356,11 +355,10 @@ namespace dcn
         std::int64_t last_seq = replay_page.last_seq.value_or(stream_query.since_seq);
         spdlog::info("SSE feed/stream: replay sent, tailing from stream_seq={}", last_seq);
 
-        // Live loop: poll EventRuntime for new deltas; if quiet for HEARTBEAT_INTERVAL,
-        // emit a `:keepalive` comment so proxies and the read watchdog stay happy and
-        // we promptly notice a dead client (the next write will fail).
+        // Live loop: poll EventRuntime for new deltas once per STREAM_POLL_INTERVAL.
+        // Always write to the socket each cycle (deltas or a keepalive comment) so
+        // a disconnected client is detected within one poll cycle via write failure.
         asio::steady_timer poll_timer(co_await asio::this_coro::executor);
-        auto last_activity = std::chrono::steady_clock::now();
 
         while(true)
         {
@@ -402,22 +400,17 @@ namespace dcn
                 {
                     co_return;
                 }
-                refreshDeadline();
-                last_activity = std::chrono::steady_clock::now();
             }
             else
             {
-                const auto now = std::chrono::steady_clock::now();
-                if(now - last_activity >= STREAM_HEARTBEAT_INTERVAL)
+                // Write a keepalive comment on every idle poll so a closed client
+                // connection is detected within one poll cycle via the write failure.
+                if(!co_await writeRaw(sock, ":keepalive\n\n"))
                 {
-                    if(!co_await writeRaw(sock, ":keepalive\n\n"))
-                    {
-                        co_return;
-                    }
-                    refreshDeadline();
-                    last_activity = now;
+                    co_return;
                 }
             }
+            refreshDeadline();
         }
     }
 }

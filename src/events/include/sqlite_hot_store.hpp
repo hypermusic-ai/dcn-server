@@ -4,8 +4,8 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
-#include <set>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include <sqlite3.h>
@@ -26,7 +26,8 @@ namespace dcn::events
                 const std::filesystem::path & hot_db_path,
                 const std::filesystem::path & archive_root,
                 const std::int64_t outbox_retention_ms,
-                const int default_chain_id);
+                const int default_chain_id,
+                std::string default_chain_namespace = "eth");
 
             ~SQLiteHotStore() override;
 
@@ -97,7 +98,7 @@ namespace dcn::events
                 const std::optional<CursorKey> & before_key,
                 const std::size_t limit,
                 std::vector<FeedItem> & out_items,
-                std::set<std::string> & seen_feed_ids) const;
+                std::unordered_set<std::string> & seen_feed_ids) const;
 
         private:
             std::filesystem::path _hot_db_path;
@@ -109,5 +110,6 @@ namespace dcn::events
             std::unique_ptr<IEventShardRouter> _shard_router;
 
             int _default_chain_id = 1;
+            std::string _default_chain_namespace = "eth";
     };
 }

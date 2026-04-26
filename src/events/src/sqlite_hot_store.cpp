@@ -25,38 +25,28 @@ namespace dcn::events
     }
 
     static std::string _logicalFeedId(
+        const std::string & chain_namespace,
         const int chain_id,
         const std::string & event_type,
-        const std::string & owner,
         const std::string & name)
     {
-        const std::string owner_key = utils::toLower(owner);
-
-        return std::format(
-            "{}:entity:{}:{}:{}:{}:{}:{}",
-            chain_id,
-            event_type.size(),
-            event_type,
-            owner_key.size(),
-            owner_key,
-            name.size(),
-            name);
+        return std::format("{}:{}:{}:{}", chain_namespace, chain_id, event_type, name);
     }
 
     static std::string _projectedFeedId(
+        const std::string & chain_namespace,
         const int chain_id,
         const std::string & tx_hash,
         const std::int64_t log_index,
         const std::string & event_type,
-        const std::string & owner,
         const std::string & name)
     {
         if(_usesLogicalFeedIdentity(event_type))
         {
-            return _logicalFeedId(chain_id, event_type, owner, name);
+            return _logicalFeedId(chain_namespace, chain_id, event_type, name);
         }
 
-        return std::format("{}:{}:{}", chain_id, tx_hash, log_index);
+        return std::format("{}:{}:{}:{}", chain_namespace, chain_id, tx_hash, log_index);
     }
 
     static std::string _compactFeedPayloadJson(
@@ -131,6 +121,10 @@ namespace dcn::events
 
     static bool _feedDescComparator(const FeedItem & lhs, const FeedItem & rhs)
     {
+        if(lhs.created_at_ms != rhs.created_at_ms)
+        {
+            return lhs.created_at_ms > rhs.created_at_ms;
+        }
         if(lhs.block_number != rhs.block_number)
         {
             return lhs.block_number > rhs.block_number;
@@ -139,15 +133,15 @@ namespace dcn::events
         {
             return lhs.tx_index > rhs.tx_index;
         }
-        if(lhs.log_index != rhs.log_index)
-        {
-            return lhs.log_index > rhs.log_index;
-        }
         return lhs.feed_id > rhs.feed_id;
     }
 
     static bool _cursorLessInDescOrder(const FeedItem & lhs, const CursorKey & rhs)
     {
+        if(lhs.created_at_ms != rhs.created_at_ms)
+        {
+            return lhs.created_at_ms < rhs.created_at_ms;
+        }
         if(lhs.block_number != rhs.block_number)
         {
             return lhs.block_number < rhs.block_number;
@@ -155,10 +149,6 @@ namespace dcn::events
         if(lhs.tx_index != rhs.tx_index)
         {
             return lhs.tx_index < rhs.tx_index;
-        }
-        if(lhs.log_index != rhs.log_index)
-        {
-            return lhs.log_index < rhs.log_index;
         }
         return lhs.feed_id < rhs.feed_id;
     }
@@ -293,11 +283,13 @@ namespace dcn::events
     SQLiteHotStore::SQLiteHotStore(const std::filesystem::path& hot_db_path,
                                    const std::filesystem::path& archive_root,
                                    const std::int64_t outbox_retention_ms,
-                                   const int default_chain_id)
+                                   const int default_chain_id,
+                                   std::string default_chain_namespace)
         : _hot_db_path(hot_db_path)
         , _archive_root(archive_root)
         , _outbox_retention_ms(outbox_retention_ms)
         , _default_chain_id(default_chain_id)
+        , _default_chain_namespace(default_chain_namespace.empty() ? "eth" : default_chain_namespace)
         , _shard_router(std::make_unique<MonthlyEventShardRouter>(_archive_root))
     {
         if (!_hot_db_path.parent_path().empty())
@@ -509,7 +501,7 @@ namespace dcn::events
         std::vector<std::int64_t> block_numbers;
 
         storage::sqlite::Statement stmt(
-            _write_db,
+            _read_db,
             "SELECT block_number "
             "FROM reorg_window "
             "WHERE chain_id=?1 AND block_number>=?2 AND block_number<=?3 "
@@ -526,7 +518,7 @@ namespace dcn::events
         }
         if (rc != SQLITE_DONE)
         {
-            throw std::runtime_error(sqlite3_errmsg(_write_db));
+            throw std::runtime_error(sqlite3_errmsg(_read_db));
         }
 
         return block_numbers;
@@ -827,7 +819,8 @@ namespace dcn::events
                 const std::optional<std::int64_t> removed_at =
                     incoming_removed ? std::optional<std::int64_t>(now_ms) : std::nullopt;
 
-                const std::optional<std::string> topic0 = raw_event.topics[0].value_or(std::string());
+                // topic0 is persisted in a NOT NULL column; missing topic0 is normalized to empty string.
+                const std::string topic0 = raw_event.topics[0].value_or(std::string());
                 const std::optional<std::string> topic1 = raw_event.topics[1];
                 const std::optional<std::string> topic2 = raw_event.topics[2];
                 const std::optional<std::string> topic3 = raw_event.topics[3];
@@ -855,7 +848,12 @@ namespace dcn::events
                     raw_event.address.c_str(),
                     static_cast<int>(raw_event.address.size()),
                     SQLITE_TRANSIENT);
-                _bindOptionalText(raw_stmt.get(), 9, topic0);
+                sqlite3_bind_text(
+                    raw_stmt.get(),
+                    9,
+                    topic0.c_str(),
+                    static_cast<int>(topic0.size()),
+                    SQLITE_TRANSIENT);
                 _bindOptionalText(raw_stmt.get(), 10, topic1);
                 _bindOptionalText(raw_stmt.get(), 11, topic2);
                 _bindOptionalText(raw_stmt.get(), 12, topic3);
@@ -1169,10 +1167,6 @@ namespace dcn::events
         const std::int64_t now_ms,
         const std::size_t reorg_window_blocks)
     {
-        
-
-        
-
         const std::int64_t clamped_head = std::max<std::int64_t>(0, heights.head);
         const std::int64_t clamped_safe = std::clamp<std::int64_t>(heights.safe, 0, clamped_head);
         const std::int64_t clamped_finalized = std::clamp<std::int64_t>(heights.finalized, 0, clamped_safe);
@@ -1462,8 +1456,9 @@ namespace dcn::events
 
             storage::sqlite::Statement insert_outbox_stmt(
                 _write_db,
-                "INSERT INTO global_outbox(stream_seq, feed_id, op, status, history_cursor, payload_json, created_at_ms) "
-                "VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7);");
+                "INSERT INTO global_outbox(stream_seq, feed_id, op, status, event_type, history_cursor, payload_json, "
+                "created_at_ms) "
+                "VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);");
 
             storage::sqlite::Statement mark_stream_emitted_stmt(
                 _write_db,
@@ -1505,15 +1500,13 @@ namespace dcn::events
                 const std::int64_t seen_at_ms = job.seen_at_ms;
 
                 const bool logical_feed_identity = _usesLogicalFeedIdentity(event_type);
-                const std::string feed_id = _projectedFeedId(chain_id, tx_hash, log_index, event_type, owner, name);
-                const std::string history_cursor = std::format("{}", CursorKey{
-                    .chain_id = chain_id,
-                    .block_number = block_number,
-                    .tx_index = tx_index,
-                    .log_index = log_index,
-                    .feed_id = feed_id
-                });
-
+                const std::string feed_id = _projectedFeedId(
+                    _default_chain_namespace,
+                    chain_id,
+                    tx_hash,
+                    log_index,
+                    event_type,
+                    name);
                 const bool visible = (state != REMOVED_STATE);
 
                 bool existed = false;
@@ -1550,6 +1543,17 @@ namespace dcn::events
 
                 sqlite3_reset(existing_feed_stmt.get());
                 sqlite3_clear_bindings(existing_feed_stmt.get());
+
+                const std::string history_cursor = existed
+                    ? existing_history_cursor
+                    : std::format("{}", CursorKey{
+                          .chain_id = chain_id,
+                          .chain_namespace = _default_chain_namespace,
+                          .created_at_ms = created_at_ms,
+                          .block_number = block_number,
+                          .tx_index = tx_index,
+                          .feed_id = feed_id
+                      });
 
                 const std::string payload_json = _compactFeedPayloadJson(event_type, name, owner);
 
@@ -1638,10 +1642,12 @@ namespace dcn::events
                     sqlite3_bind_text(
                         insert_outbox_stmt.get(), 4, state.c_str(), static_cast<int>(state.size()), SQLITE_TRANSIENT);
                     sqlite3_bind_text(
-                        insert_outbox_stmt.get(), 5, history_cursor.c_str(), static_cast<int>(history_cursor.size()), SQLITE_TRANSIENT);
+                        insert_outbox_stmt.get(), 5, event_type.c_str(), static_cast<int>(event_type.size()), SQLITE_TRANSIENT);
                     sqlite3_bind_text(
-                        insert_outbox_stmt.get(), 6, payload_json.c_str(), static_cast<int>(payload_json.size()), SQLITE_TRANSIENT);
-                    sqlite3_bind_int64(insert_outbox_stmt.get(), 7, static_cast<sqlite3_int64>(now_ms));
+                        insert_outbox_stmt.get(), 6, history_cursor.c_str(), static_cast<int>(history_cursor.size()), SQLITE_TRANSIENT);
+                    sqlite3_bind_text(
+                        insert_outbox_stmt.get(), 7, payload_json.c_str(), static_cast<int>(payload_json.size()), SQLITE_TRANSIENT);
+                    sqlite3_bind_int64(insert_outbox_stmt.get(), 8, static_cast<sqlite3_int64>(now_ms));
 
                     if (insert_outbox_stmt.step() != SQLITE_DONE)
                     {
@@ -1779,8 +1785,6 @@ namespace dcn::events
 
     bool SQLiteHotStore::runArchiveCycle(const int chain_id, const std::size_t hot_window_days, const std::int64_t now_ms)
     {
-        
-
         try
         {
             std::vector<std::string> months;
@@ -2008,11 +2012,13 @@ namespace dcn::events
             else
             {
                 before_key = before_key_res.value();
-                if (before_key->chain_id != _default_chain_id)
+                if (before_key->chain_id != _default_chain_id
+                    || before_key->chain_namespace != _default_chain_namespace)
                 {
                     spdlog::warn(
-                        "Ignoring feed cursor for chain_id={} on store default_chain_id={}",
-                        before_key->chain_id,
+                        "Ignoring feed cursor for chain={} on store default_chain={}:{}",
+                        std::format("{}:{}", before_key->chain_namespace, before_key->chain_id),
+                        _default_chain_namespace,
                         _default_chain_id);
                     return FeedPage {};
                 }
@@ -2022,51 +2028,43 @@ namespace dcn::events
         std::vector<FeedItem> all_items;
         all_items.reserve(limit + 16);
 
-        std::set<std::string> seen_feed_ids;
+        std::unordered_set<std::string> seen_feed_ids;
 
         _appendFeedRowsFromDatabase(_read_db, "feed_items_hot", query, before_key, limit + 1, all_items, seen_feed_ids);
 
-        if (all_items.size() <= limit)
+        const std::vector<std::filesystem::path> archive_paths = _candidateArchivePaths(before_key);
+
+        for (const auto& archive_path : archive_paths)
         {
-            const std::vector<std::filesystem::path> archive_paths = _candidateArchivePaths(before_key);
+            sqlite3* archive_db = nullptr;
+            const int open_rc = sqlite3_open_v2(
+                archive_path.string().c_str(),
+                &archive_db,
+                SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX,
+                nullptr);
 
-            for (const auto& archive_path : archive_paths)
+            if (open_rc != SQLITE_OK)
             {
-                sqlite3* archive_db = nullptr;
-                const int open_rc = sqlite3_open_v2(
-                    archive_path.string().c_str(), 
-                    &archive_db, 
-                    SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX, 
-                    nullptr);
-                
-                if (open_rc != SQLITE_OK)
+                if (archive_db != nullptr)
                 {
-                    if (archive_db != nullptr)
-                    {
-                        sqlite3_close(archive_db);
-                    }
-                    continue;
+                    sqlite3_close(archive_db);
                 }
-
-                sqlite3_busy_timeout(archive_db, 10'000);
-
-                _appendFeedRowsFromDatabase(
-                    archive_db, 
-                    "feed_items_archive", 
-                    query, 
-                    before_key, 
-                    limit + 1, 
-                    all_items, 
-                    seen_feed_ids);
-
-                sqlite3_close(archive_db);
-                archive_db = nullptr;
-
-                if (all_items.size() > limit)
-                {
-                    break;
-                }
+                continue;
             }
+
+            sqlite3_busy_timeout(archive_db, 10'000);
+
+            _appendFeedRowsFromDatabase(
+                archive_db,
+                "feed_items_archive",
+                query,
+                before_key,
+                limit + 1,
+                all_items,
+                seen_feed_ids);
+
+            sqlite3_close(archive_db);
+            archive_db = nullptr;
         }
 
         std::ranges::sort(all_items, _feedDescComparator);
@@ -2093,7 +2091,7 @@ namespace dcn::events
     {
         const std::size_t limit =
             std::clamp<std::size_t>((query.limit == 0) ? DEFAULT_STREAM_LIMIT : query.limit, 1, MAX_STREAM_LIMIT);
-        const std::string chain_prefix = std::format("{}:%", _default_chain_id);
+        const std::string chain_prefix = std::format("{}:{}:%", _default_chain_namespace, _default_chain_id);
 
         StreamPage page {};
 
@@ -2138,10 +2136,8 @@ namespace dcn::events
         storage::sqlite::Statement stream_stmt(
             _read_db,
             "SELECT "
-            "o.stream_seq, o.status, o.feed_id, o.history_cursor, o.payload_json, o.created_at_ms, "
-            "COALESCE(f.event_type, '') AS event_type "
+            "o.stream_seq, o.status, o.feed_id, o.history_cursor, o.payload_json, o.created_at_ms, o.event_type "
             "FROM global_outbox o "
-            "LEFT JOIN feed_items_hot f ON f.feed_id=o.feed_id "
             "WHERE o.stream_seq > ?1 AND o.feed_id LIKE ?2 "
             "ORDER BY o.stream_seq ASC "
             "LIMIT ?3;");
@@ -2173,23 +2169,6 @@ namespace dcn::events
             {
                 delta.payload = json::object();
             }
-            if (delta.event_type.empty() && delta.payload.is_object() && delta.payload.contains("type")
-                && delta.payload.at("type").is_string())
-            {
-                const std::string payload_type = delta.payload.at("type").get<std::string>();
-                if (payload_type == "connector")
-                {
-                    delta.event_type = std::string(CONNECTOR_ADDED_TYPE);
-                }
-                else if (payload_type == "transformation")
-                {
-                    delta.event_type = std::string(TRANSFORMATION_ADDED_TYPE);
-                }
-                else if (payload_type == "condition")
-                {
-                    delta.event_type = std::string(CONDITION_ADDED_TYPE);
-                }
-            }
             page.deltas.push_back(std::move(delta));
         }
         if (stream_rc != SQLITE_DONE)
@@ -2211,7 +2190,7 @@ namespace dcn::events
 
     std::int64_t SQLiteHotStore::minAvailableStreamSeq() const
     {
-        const std::string chain_prefix = std::format("{}:%", _default_chain_id);
+        const std::string chain_prefix = std::format("{}:{}:%", _default_chain_namespace, _default_chain_id);
         std::int64_t replay_floor_seq = 0;
         {
             storage::sqlite::Statement floor_stmt(_read_db, "SELECT replay_floor_seq FROM outbox_stream_state WHERE singleton=1;");
@@ -2343,6 +2322,7 @@ namespace dcn::events
                     "feed_id TEXT NOT NULL,"
                     "op TEXT NOT NULL,"
                     "status TEXT NOT NULL,"
+                    "event_type TEXT NOT NULL,"
                     "history_cursor TEXT NOT NULL,"
                     "payload_json TEXT NOT NULL,"
                     "created_at_ms INTEGER NOT NULL"
@@ -2436,6 +2416,18 @@ namespace dcn::events
                storage::sqlite::exec(_write_db,
                     "CREATE INDEX IF NOT EXISTS idx_feed_event_type_order ON feed_items_hot(event_type, block_number DESC, "
                     "tx_index DESC, log_index DESC, feed_id DESC);") &&
+                storage::sqlite::exec(_write_db,
+                    "CREATE INDEX IF NOT EXISTS idx_feed_visible_updated_order "
+                    "ON feed_items_hot(created_at_ms DESC, block_number DESC, tx_index DESC, feed_id DESC) "
+                    "WHERE visible=1;") &&
+                storage::sqlite::exec(_write_db,
+                    "CREATE INDEX IF NOT EXISTS idx_feed_chain_visible_updated_order "
+                    "ON feed_items_hot(chain_id, created_at_ms DESC, block_number DESC, tx_index DESC, "
+                    "feed_id DESC) WHERE visible=1;") &&
+                storage::sqlite::exec(_write_db,
+                    "CREATE INDEX IF NOT EXISTS idx_feed_event_type_updated_order "
+                    "ON feed_items_hot(event_type, created_at_ms DESC, block_number DESC, tx_index DESC, "
+                    "feed_id DESC);") &&
                storage::sqlite::exec(_write_db,
                     "CREATE INDEX IF NOT EXISTS idx_feed_chain_tx_log "
                     "ON feed_items_hot(chain_id, tx_hash, log_index);") &&
@@ -2445,6 +2437,7 @@ namespace dcn::events
                storage::sqlite::exec(_write_db,
                     "CREATE INDEX IF NOT EXISTS idx_feed_archive_ready "
                     "ON feed_items_hot(chain_id, status, exported, block_time);") &&
+               storage::sqlite::exec(_write_db, "CREATE INDEX IF NOT EXISTS idx_outbox_feed_id ON global_outbox(feed_id);") &&
                storage::sqlite::exec(_write_db, "CREATE INDEX IF NOT EXISTS idx_outbox_created_at ON global_outbox(created_at_ms);") &&
                storage::sqlite::exec(
                    _write_db,
@@ -2508,7 +2501,19 @@ namespace dcn::events
                     "WHERE visible=1;") &&
                storage::sqlite::exec(archive_db,
                     "CREATE INDEX IF NOT EXISTS idx_archive_feed_type_order ON feed_items_archive(event_type, block_number "
-                    "DESC, tx_index DESC, log_index DESC, feed_id DESC);");
+                    "DESC, tx_index DESC, log_index DESC, feed_id DESC);") &&
+               storage::sqlite::exec(archive_db,
+                    "CREATE INDEX IF NOT EXISTS idx_archive_feed_visible_updated_order "
+                    "ON feed_items_archive(created_at_ms DESC, block_number DESC, tx_index DESC, "
+                    "feed_id DESC) WHERE visible=1;") &&
+               storage::sqlite::exec(archive_db,
+                    "CREATE INDEX IF NOT EXISTS idx_archive_feed_chain_visible_updated_order "
+                    "ON feed_items_archive(chain_id, created_at_ms DESC, block_number DESC, tx_index DESC, "
+                    "feed_id DESC) WHERE visible=1;") &&
+               storage::sqlite::exec(archive_db,
+                    "CREATE INDEX IF NOT EXISTS idx_archive_feed_type_updated_order "
+                    "ON feed_items_archive(event_type, created_at_ms DESC, block_number DESC, tx_index DESC, "
+                    "feed_id DESC);");
     }
 
 
@@ -3081,7 +3086,7 @@ namespace dcn::events
                                                      const std::optional<CursorKey>& before_key,
                                                      const std::size_t limit,
                                                      std::vector<FeedItem>& out_items,
-                                                     std::set<std::string>& seen_feed_ids) const
+                                                     std::unordered_set<std::string>& seen_feed_ids) const
     {
         const int chain_id = before_key.has_value() ? before_key->chain_id : _default_chain_id;
 
@@ -3105,10 +3110,10 @@ namespace dcn::events
         if (before_key.has_value())
         {
             sql += std::format(" AND ("
-                               "block_number < ?{} "
-                               "OR (block_number = ?{} AND tx_index < ?{}) "
-                               "OR (block_number = ?{} AND tx_index = ?{} AND log_index < ?{}) "
-                               "OR (block_number = ?{} AND tx_index = ?{} AND log_index = ?{} AND feed_id < ?{})"
+                               "created_at_ms < ?{} "
+                               "OR (created_at_ms = ?{} AND block_number < ?{}) "
+                               "OR (created_at_ms = ?{} AND block_number = ?{} AND tx_index < ?{}) "
+                               "OR (created_at_ms = ?{} AND block_number = ?{} AND tx_index = ?{} AND feed_id < ?{})"
                                ")",
                                before_param_base,
                                before_param_base + 1,
@@ -3128,7 +3133,7 @@ namespace dcn::events
             limit_param += 10;
         }
         sql +=
-            std::format(" ORDER BY block_number DESC, tx_index DESC, log_index DESC, feed_id DESC LIMIT ?{};", limit_param);
+            std::format(" ORDER BY created_at_ms DESC, block_number DESC, tx_index DESC, feed_id DESC LIMIT ?{};", limit_param);
 
         storage::sqlite::Statement stmt(db, sql.c_str());
 
@@ -3146,15 +3151,19 @@ namespace dcn::events
 
         if (before_key.has_value())
         {
-            sqlite3_bind_int64(stmt.get(), param_index++, static_cast<sqlite3_int64>(before_key->block_number));
-            sqlite3_bind_int64(stmt.get(), param_index++, static_cast<sqlite3_int64>(before_key->block_number));
-            sqlite3_bind_int64(stmt.get(), param_index++, static_cast<sqlite3_int64>(before_key->tx_index));
-            sqlite3_bind_int64(stmt.get(), param_index++, static_cast<sqlite3_int64>(before_key->block_number));
-            sqlite3_bind_int64(stmt.get(), param_index++, static_cast<sqlite3_int64>(before_key->tx_index));
-            sqlite3_bind_int64(stmt.get(), param_index++, static_cast<sqlite3_int64>(before_key->log_index));
-            sqlite3_bind_int64(stmt.get(), param_index++, static_cast<sqlite3_int64>(before_key->block_number));
-            sqlite3_bind_int64(stmt.get(), param_index++, static_cast<sqlite3_int64>(before_key->tx_index));
-            sqlite3_bind_int64(stmt.get(), param_index++, static_cast<sqlite3_int64>(before_key->log_index));
+            const sqlite3_int64 before_created = static_cast<sqlite3_int64>(before_key->created_at_ms);
+            const sqlite3_int64 before_block = static_cast<sqlite3_int64>(before_key->block_number);
+            const sqlite3_int64 before_tx = static_cast<sqlite3_int64>(before_key->tx_index);
+
+            sqlite3_bind_int64(stmt.get(), param_index++, before_created);
+            sqlite3_bind_int64(stmt.get(), param_index++, before_created);
+            sqlite3_bind_int64(stmt.get(), param_index++, before_block);
+            sqlite3_bind_int64(stmt.get(), param_index++, before_created);
+            sqlite3_bind_int64(stmt.get(), param_index++, before_block);
+            sqlite3_bind_int64(stmt.get(), param_index++, before_tx);
+            sqlite3_bind_int64(stmt.get(), param_index++, before_created);
+            sqlite3_bind_int64(stmt.get(), param_index++, before_block);
+            sqlite3_bind_int64(stmt.get(), param_index++, before_tx);
             sqlite3_bind_text(stmt.get(),
                               param_index++,
                               before_key->feed_id.c_str(),
@@ -3183,10 +3192,10 @@ namespace dcn::events
             item.tx_index = static_cast<std::int64_t>(sqlite3_column_int64(stmt.get(), 6));
             item.log_index = static_cast<std::int64_t>(sqlite3_column_int64(stmt.get(), 7));
             item.history_cursor = reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 8));
+            const std::string payload_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 9));
             item.created_at_ms = static_cast<std::int64_t>(sqlite3_column_int64(stmt.get(), 10));
             item.updated_at_ms = static_cast<std::int64_t>(sqlite3_column_int64(stmt.get(), 11));
             item.projector_version = sqlite3_column_int(stmt.get(), 12);
-            const std::string payload_json = reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 9));
             item.payload = json::parse(payload_json, nullptr, false);
 
             if (item.payload.is_discarded())

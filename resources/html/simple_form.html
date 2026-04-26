@@ -53,6 +53,9 @@
             nextFormatPage,
             prevFormatPage,
 
+            connectEventsFeed,
+            disconnectEventsFeed,
+
             updateExecuteActionAvailability,
             copyTextFromElement
         } from './js/simple_form';
@@ -101,6 +104,9 @@
         document.getElementById('btn_fetchFormatData').addEventListener('click', fetchFormatResources);
         document.getElementById('btn_prevFormatPage').addEventListener('click', prevFormatPage);
         document.getElementById('btn_nextFormatPage').addEventListener('click', nextFormatPage);
+
+        document.getElementById('btn_connectEventsFeed').addEventListener('click', connectEventsFeed);
+        document.getElementById('btn_disconnectEventsFeed').addEventListener('click', disconnectEventsFeed);
 
         const nav = document.getElementById('siteNav');
         const navToggle = document.getElementById('siteNavToggle');
@@ -478,6 +484,38 @@
                                             <div id="formatConnectorsList" class="response-body">Waiting...</div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="explore-section">
+                            <div class="group-head">
+                                <h2>Events Feed</h2>
+                                <p>Live stream of recent events via SSE</p>
+                            </div>
+                            <div class="tab-grid">
+                                <div class="tab-column">
+                                    <label>Since sequence</label>
+                                    <input type="number" id="eventsSinceSeqInput" placeholder="(latest)" min="0">
+
+                                    <div class="events-feed-status">
+                                        <span id="eventsFeedStatusDot" class="status-dot status-dot--disconnected"></span>
+                                        <span id="eventsFeedStatusLabel">Disconnected</span>
+                                    </div>
+
+                                    <div class="button-row">
+                                        <button id="btn_connectEventsFeed" class="action-button">Connect</button>
+                                        <button id="btn_disconnectEventsFeed" class="action-button" disabled>Disconnect</button>
+                                    </div>
+
+                                    <div class="page-controls">
+                                        <span id="eventsFeedSeqLabel">seq: —</span>
+                                    </div>
+                                </div>
+
+                                <div class="tab-column">
+                                    <h3>Recent Events</h3>
+                                    <div id="eventsFeedList" class="events-feed-list response-body">Waiting for connection...</div>
                                 </div>
                             </div>
                         </section>

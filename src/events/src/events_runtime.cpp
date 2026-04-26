@@ -16,6 +16,16 @@
 
 namespace dcn::events
 {
+    static std::string _resolveChainNamespace(const EventRuntimeConfig & config)
+    {
+        if(!config.chain_namespace.empty())
+        {
+            return config.chain_namespace;
+        }
+
+        return config.use_local_evm_source ? "local" : "eth";
+    }
+
     static std::int64_t _reorgLookbackStart(const std::int64_t next_from_block, const std::size_t reorg_window_blocks)
     {
         const std::int64_t lookback_blocks = static_cast<std::int64_t>(reorg_window_blocks);
@@ -35,7 +45,8 @@ namespace dcn::events
             _config.hot_db_path,
             _config.archive_root,
             _config.outbox_retention_ms,
-            _config.chain_id))
+            _config.chain_id,
+            _resolveChainNamespace(_config)))
         , _decoder(std::make_unique<PTEventDecoder>())
     {
     }

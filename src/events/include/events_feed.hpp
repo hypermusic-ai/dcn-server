@@ -21,9 +21,10 @@ namespace dcn::events
     struct CursorKey
     {
         int chain_id = 1;
+        std::string chain_namespace = "eth";
+        std::int64_t created_at_ms = 0;
         std::int64_t block_number = 0;
         std::int64_t tx_index = 0;
-        std::int64_t log_index = 0;
         std::string feed_id;
     };
 
@@ -46,7 +47,7 @@ namespace dcn::events
 
     struct FeedQuery
     {
-        std::size_t limit = 50;
+        std::size_t limit = DEFAULT_FEED_LIMIT;
         std::optional<std::string> before_cursor = std::nullopt;
         std::optional<std::string> event_type = std::nullopt;
         bool include_unfinalized = true;
@@ -106,11 +107,10 @@ template <>
 struct std::formatter<dcn::events::CursorKey> : std::formatter<std::string> {
     auto format(const dcn::events::CursorKey & cursor, format_context& ctx) const {
         return std::formatter<std::string>::format(
-            std::format("{}:{}:{}:{}:{}", 
-                cursor.chain_id,
+            std::format("c{}:{}:{}:{}",
+                cursor.created_at_ms,
                 cursor.block_number,
                 cursor.tx_index,
-                cursor.log_index,
                 cursor.feed_id),
         ctx);
     }

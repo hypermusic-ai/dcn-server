@@ -120,7 +120,7 @@ TEST_F(UnitTest, Events_StreamPage_FiltersDeltasByDefaultChainId)
         .limit = 16
     });
     ASSERT_EQ(page.deltas.size(), 1u);
-    EXPECT_EQ(page.deltas.front().feed_id.rfind("1:", 0), 0u);
+    EXPECT_EQ(page.deltas.front().feed_id.rfind("eth:1:", 0), 0u);
 }
 
 TEST_F(UnitTest, Events_StreamPage_ReconnectWithLastSeq_DoesNotDuplicate)

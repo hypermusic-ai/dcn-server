@@ -52,6 +52,7 @@ namespace dcn::events
         unsigned int projector_interval_ms = 200;
         unsigned int archive_interval_ms = 30 * 1000;
         unsigned int wal_checkpoint_interval_ms = 15 * 1000;
+        std::string chain_namespace;
     };
 
     class EventRuntime final : public IFeedRepository, public storage::sqlite::IWalStore
