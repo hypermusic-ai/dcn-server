@@ -123,13 +123,19 @@ Functions</h2></td></tr>
 <tr class="separator:afe5529604b645836efa07f3d4d662540"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07545fa1ab2d1ccc349667eae8ba746f" id="r_a07545fa1ab2d1ccc349667eae8ba746f"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#a07545fa1ab2d1ccc349667eae8ba746f">currentTimestamp</a> ()</td></tr>
 <tr class="separator:a07545fa1ab2d1ccc349667eae8ba746f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad04f60552cf8aee214ece8e7c0959b0b" id="r_ad04f60552cf8aee214ece8e7c0959b0b"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#ad04f60552cf8aee214ece8e7c0959b0b">nowMs</a> ()</td></tr>
+<tr class="separator:ad04f60552cf8aee214ece8e7c0959b0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a213229fb0c30f9ca92e2d1c60f550442" id="r_a213229fb0c30f9ca92e2d1c60f550442"><td class="memTemplParams" colspan="2">template&lt;class DataT , class ChildT , template&lt; typename... &gt; class ChildListT&gt; </td></tr>
 <tr class="memitem:a213229fb0c30f9ca92e2d1c60f550442"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; std::string &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#a213229fb0c30f9ca92e2d1c60f550442">topologicalSort</a> (const absl::flat_hash_map&lt; std::string, DataT &gt; &amp;data, std::function&lt; ChildListT&lt; ChildT &gt;(const DataT &amp;)&gt; get_childreen, std::function&lt; std::string(const ChildT &amp;)&gt; get_child_name)</td></tr>
 <tr class="separator:a213229fb0c30f9ca92e2d1c60f550442"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac5be949d9e1bfe957e75587b3ef85c4e" id="r_ac5be949d9e1bfe957e75587b3ef85c4e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#ac5be949d9e1bfe957e75587b3ef85c4e">equalsIgnoreCase</a> (const std::string &amp;a, const std::string &amp;b)</td></tr>
 <tr class="separator:ac5be949d9e1bfe957e75587b3ef85c4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d2e4f82ecadca8918d772c3540338a4" id="r_a1d2e4f82ecadca8918d772c3540338a4"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#a1d2e4f82ecadca8918d772c3540338a4">toLower</a> (std::string value)</td></tr>
+<tr class="separator:a1d2e4f82ecadca8918d772c3540338a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93bc0c821fedf6721cde3c02b8b86ea3" id="r_a93bc0c821fedf6721cde3c02b8b86ea3"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#a93bc0c821fedf6721cde3c02b8b86ea3">trimAsciiWhitespace</a> (std::string_view value)</td></tr>
 <tr class="separator:a93bc0c821fedf6721cde3c02b8b86ea3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a246b8a015b0c0020b28f8682031df2" id="r_a8a246b8a015b0c0020b28f8682031df2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#a8a246b8a015b0c0020b28f8682031df2">likelyNetworkPath</a> (const std::filesystem::path &amp;path)</td></tr>
+<tr class="separator:a8a246b8a015b0c0020b28f8682031df2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82319650a16ef5fc8b0e92c6a28bf9fe" id="r_a82319650a16ef5fc8b0e92c6a28bf9fe"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1utils.html#a82319650a16ef5fc8b0e92c6a28bf9fe">logException</a> (const std::exception_ptr &amp;exception_ptr, const std::string_view context)</td></tr>
 <tr class="separator:a82319650a16ef5fc8b0e92c6a28bf9fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -227,6 +233,24 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a id="a8a246b8a015b0c0020b28f8682031df2" name="a8a246b8a015b0c0020b28f8682031df2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8a246b8a015b0c0020b28f8682031df2">&#9670;&#160;</a></span>likelyNetworkPath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool dcn::utils::likelyNetworkPath </td>
+          <td>(</td>
+          <td class="paramtype">const std::filesystem::path &amp;&#160;</td>
+          <td class="paramname"><em>path</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="afe5529604b645836efa07f3d4d662540" name="afe5529604b645836efa07f3d4d662540"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afe5529604b645836efa07f3d4d662540">&#9670;&#160;</a></span>loadBuildTimestamp()</h2>
 
@@ -267,6 +291,41 @@ Variables</h2></td></tr>
           <td></td>
           <td>)</td>
           <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad04f60552cf8aee214ece8e7c0959b0b" name="ad04f60552cf8aee214ece8e7c0959b0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad04f60552cf8aee214ece8e7c0959b0b">&#9670;&#160;</a></span>nowMs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::int64_t dcn::utils::nowMs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1d2e4f82ecadca8918d772c3540338a4" name="a1d2e4f82ecadca8918d772c3540338a4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d2e4f82ecadca8918d772c3540338a4">&#9670;&#160;</a></span>toLower()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string dcn::utils::toLower </td>
+          <td>(</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
         </tr>
       </table>
 </div><div class="memdoc">

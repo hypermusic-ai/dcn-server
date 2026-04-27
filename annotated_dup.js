@@ -30,6 +30,42 @@ var annotated_dup =
       [ "crypto", "namespacedcn_1_1crypto.html", [
         [ "Keccak256", "classdcn_1_1crypto_1_1Keccak256.html", null ]
       ] ],
+      [ "events", "namespacedcn_1_1events.html", [
+        [ "ChainBlockInfo", "structdcn_1_1events_1_1ChainBlockInfo.html", "structdcn_1_1events_1_1ChainBlockInfo" ],
+        [ "CursorKey", "structdcn_1_1events_1_1CursorKey.html", "structdcn_1_1events_1_1CursorKey" ],
+        [ "DecodedEvent", "structdcn_1_1events_1_1DecodedEvent.html", "structdcn_1_1events_1_1DecodedEvent" ],
+        [ "EventKey", "structdcn_1_1events_1_1EventKey.html", "structdcn_1_1events_1_1EventKey" ],
+        [ "EventKeyHash", "structdcn_1_1events_1_1EventKeyHash.html", "structdcn_1_1events_1_1EventKeyHash" ],
+        [ "EventRuntime", "classdcn_1_1events_1_1EventRuntime.html", "classdcn_1_1events_1_1EventRuntime" ],
+        [ "EventRuntimeConfig", "structdcn_1_1events_1_1EventRuntimeConfig.html", "structdcn_1_1events_1_1EventRuntimeConfig" ],
+        [ "EventShardId", "structdcn_1_1events_1_1EventShardId.html", "structdcn_1_1events_1_1EventShardId" ],
+        [ "FeedArchiveRow", "structdcn_1_1events_1_1FeedArchiveRow.html", "structdcn_1_1events_1_1FeedArchiveRow" ],
+        [ "FeedHotKey", "structdcn_1_1events_1_1FeedHotKey.html", "structdcn_1_1events_1_1FeedHotKey" ],
+        [ "FeedItem", "structdcn_1_1events_1_1FeedItem.html", "structdcn_1_1events_1_1FeedItem" ],
+        [ "FeedPage", "structdcn_1_1events_1_1FeedPage.html", "structdcn_1_1events_1_1FeedPage" ],
+        [ "FeedQuery", "structdcn_1_1events_1_1FeedQuery.html", "structdcn_1_1events_1_1FeedQuery" ],
+        [ "FinalityHeights", "structdcn_1_1events_1_1FinalityHeights.html", "structdcn_1_1events_1_1FinalityHeights" ],
+        [ "FinalityState", "structdcn_1_1events_1_1FinalityState.html", "structdcn_1_1events_1_1FinalityState" ],
+        [ "IArchiveManager", "classdcn_1_1events_1_1IArchiveManager.html", "classdcn_1_1events_1_1IArchiveManager" ],
+        [ "IChainEventSource", "classdcn_1_1events_1_1IChainEventSource.html", "classdcn_1_1events_1_1IChainEventSource" ],
+        [ "IEventDecoder", "classdcn_1_1events_1_1IEventDecoder.html", "classdcn_1_1events_1_1IEventDecoder" ],
+        [ "IEventShardRouter", "classdcn_1_1events_1_1IEventShardRouter.html", "classdcn_1_1events_1_1IEventShardRouter" ],
+        [ "IEventSink", "classdcn_1_1events_1_1IEventSink.html", "classdcn_1_1events_1_1IEventSink" ],
+        [ "IFeedRepository", "classdcn_1_1events_1_1IFeedRepository.html", "classdcn_1_1events_1_1IFeedRepository" ],
+        [ "IHotEventStore", "classdcn_1_1events_1_1IHotEventStore.html", "classdcn_1_1events_1_1IHotEventStore" ],
+        [ "IngestResumeState", "structdcn_1_1events_1_1IngestResumeState.html", "structdcn_1_1events_1_1IngestResumeState" ],
+        [ "MonthBounds", "structdcn_1_1events_1_1MonthBounds.html", "structdcn_1_1events_1_1MonthBounds" ],
+        [ "MonthlyEventShardRouter", "classdcn_1_1events_1_1MonthlyEventShardRouter.html", "classdcn_1_1events_1_1MonthlyEventShardRouter" ],
+        [ "NormalizedArchiveRow", "structdcn_1_1events_1_1NormalizedArchiveRow.html", "structdcn_1_1events_1_1NormalizedArchiveRow" ],
+        [ "NormalizedHotKey", "structdcn_1_1events_1_1NormalizedHotKey.html", "structdcn_1_1events_1_1NormalizedHotKey" ],
+        [ "PTEventDecoder", "classdcn_1_1events_1_1PTEventDecoder.html", "classdcn_1_1events_1_1PTEventDecoder" ],
+        [ "RawChainLog", "structdcn_1_1events_1_1RawChainLog.html", "structdcn_1_1events_1_1RawChainLog" ],
+        [ "RpcClient", "classdcn_1_1events_1_1RpcClient.html", "classdcn_1_1events_1_1RpcClient" ],
+        [ "SQLiteHotStore", "classdcn_1_1events_1_1SQLiteHotStore.html", "classdcn_1_1events_1_1SQLiteHotStore" ],
+        [ "StreamDelta", "structdcn_1_1events_1_1StreamDelta.html", "structdcn_1_1events_1_1StreamDelta" ],
+        [ "StreamPage", "structdcn_1_1events_1_1StreamPage.html", "structdcn_1_1events_1_1StreamPage" ],
+        [ "StreamQuery", "structdcn_1_1events_1_1StreamQuery.html", "structdcn_1_1events_1_1StreamQuery" ]
+      ] ],
       [ "evm", "namespacedcn_1_1evm.html", [
         [ "EVM", "classdcn_1_1evm_1_1EVM.html", "classdcn_1_1evm_1_1EVM" ],
         [ "EVMStorage", "classdcn_1_1evm_1_1EVMStorage.html", "classdcn_1_1evm_1_1EVMStorage" ]
@@ -55,6 +91,16 @@ var annotated_dup =
         [ "PTExecuteError", "structdcn_1_1pt_1_1PTExecuteError.html", "structdcn_1_1pt_1_1PTExecuteError" ],
         [ "TransformationAddedEvent", "structdcn_1_1pt_1_1TransformationAddedEvent.html", "structdcn_1_1pt_1_1TransformationAddedEvent" ]
       ] ],
+      [ "registry", "namespacedcn_1_1registry.html", [
+        [ "ConditionBatchItem", "structdcn_1_1registry_1_1ConditionBatchItem.html", "structdcn_1_1registry_1_1ConditionBatchItem" ],
+        [ "ConnectorBatchItem", "structdcn_1_1registry_1_1ConnectorBatchItem.html", "structdcn_1_1registry_1_1ConnectorBatchItem" ],
+        [ "IRegistryStore", "classdcn_1_1registry_1_1IRegistryStore.html", "classdcn_1_1registry_1_1IRegistryStore" ],
+        [ "LruCache", "structdcn_1_1registry_1_1LruCache.html", "structdcn_1_1registry_1_1LruCache" ],
+        [ "NameCursorPage", "structdcn_1_1registry_1_1NameCursorPage.html", "structdcn_1_1registry_1_1NameCursorPage" ],
+        [ "Registry", "classdcn_1_1registry_1_1Registry.html", "classdcn_1_1registry_1_1Registry" ],
+        [ "SQLiteRegistryStore", "classdcn_1_1registry_1_1SQLiteRegistryStore.html", "classdcn_1_1registry_1_1SQLiteRegistryStore" ],
+        [ "TransformationBatchItem", "structdcn_1_1registry_1_1TransformationBatchItem.html", "structdcn_1_1registry_1_1TransformationBatchItem" ]
+      ] ],
       [ "sepolia", "namespacedcn_1_1sepolia.html", [
         [ "BackendConfig", "structdcn_1_1sepolia_1_1BackendConfig.html", "structdcn_1_1sepolia_1_1BackendConfig" ],
         [ "SepoliaBackend", "classdcn_1_1sepolia_1_1SepoliaBackend.html", "classdcn_1_1sepolia_1_1SepoliaBackend" ]
@@ -68,15 +114,12 @@ var annotated_dup =
         [ "Server", "classdcn_1_1server_1_1Server.html", "classdcn_1_1server_1_1Server" ]
       ] ],
       [ "storage", "namespacedcn_1_1storage.html", [
-        [ "ConditionBatchItem", "structdcn_1_1storage_1_1ConditionBatchItem.html", "structdcn_1_1storage_1_1ConditionBatchItem" ],
-        [ "ConnectorBatchItem", "structdcn_1_1storage_1_1ConnectorBatchItem.html", "structdcn_1_1storage_1_1ConnectorBatchItem" ],
-        [ "IRegistryStore", "classdcn_1_1storage_1_1IRegistryStore.html", "classdcn_1_1storage_1_1IRegistryStore" ],
-        [ "LruCache", "structdcn_1_1storage_1_1LruCache.html", "structdcn_1_1storage_1_1LruCache" ],
-        [ "NameCursorPage", "structdcn_1_1storage_1_1NameCursorPage.html", "structdcn_1_1storage_1_1NameCursorPage" ],
-        [ "Registry", "classdcn_1_1storage_1_1Registry.html", "classdcn_1_1storage_1_1Registry" ],
-        [ "RegistryWalSyncWorker", "classdcn_1_1storage_1_1RegistryWalSyncWorker.html", "classdcn_1_1storage_1_1RegistryWalSyncWorker" ],
-        [ "SQLiteRegistryStore", "classdcn_1_1storage_1_1SQLiteRegistryStore.html", "classdcn_1_1storage_1_1SQLiteRegistryStore" ],
-        [ "TransformationBatchItem", "structdcn_1_1storage_1_1TransformationBatchItem.html", "structdcn_1_1storage_1_1TransformationBatchItem" ]
+        [ "sqlite", "namespacedcn_1_1storage_1_1sqlite.html", [
+          [ "IWalStore", "classdcn_1_1storage_1_1sqlite_1_1IWalStore.html", "classdcn_1_1storage_1_1sqlite_1_1IWalStore" ],
+          [ "Statement", "classdcn_1_1storage_1_1sqlite_1_1Statement.html", "classdcn_1_1storage_1_1sqlite_1_1Statement" ],
+          [ "WalCheckpointStats", "structdcn_1_1storage_1_1sqlite_1_1WalCheckpointStats.html", "structdcn_1_1storage_1_1sqlite_1_1WalCheckpointStats" ],
+          [ "WalSyncWorker", "classdcn_1_1storage_1_1sqlite_1_1WalSyncWorker.html", "classdcn_1_1storage_1_1sqlite_1_1WalSyncWorker" ]
+        ] ]
       ] ],
       [ "utils", "namespacedcn_1_1utils.html", [
         [ "LogoASCII_t", "structdcn_1_1utils_1_1LogoASCII__t.html", null ],
@@ -87,6 +130,7 @@ var annotated_dup =
       [ "formatter< dcn::auth::AuthError::Kind >", "structstd_1_1formatter_3_01dcn_1_1auth_1_1AuthError_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1auth_1_1AuthError_1_1Kind_01_4" ],
       [ "formatter< dcn::chain::DeployError::Kind >", "structstd_1_1formatter_3_01dcn_1_1chain_1_1DeployError_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1chain_1_1DeployError_1_1Kind_01_4" ],
       [ "formatter< dcn::chain::ExecuteError::Kind >", "structstd_1_1formatter_3_01dcn_1_1chain_1_1ExecuteError_1_1Kind_01_4.html", "structstd_1_1formatter_3_01dcn_1_1chain_1_1ExecuteError_1_1Kind_01_4" ],
+      [ "formatter< dcn::events::CursorKey >", "structstd_1_1formatter_3_01dcn_1_1events_1_1CursorKey_01_4.html", "structstd_1_1formatter_3_01dcn_1_1events_1_1CursorKey_01_4" ],
       [ "formatter< dcn::http::Code >", "structstd_1_1formatter_3_01dcn_1_1http_1_1Code_01_4.html", "structstd_1_1formatter_3_01dcn_1_1http_1_1Code_01_4" ],
       [ "formatter< dcn::http::Header >", "structstd_1_1formatter_3_01dcn_1_1http_1_1Header_01_4.html", "structstd_1_1formatter_3_01dcn_1_1http_1_1Header_01_4" ],
       [ "formatter< dcn::http::HeadersList >", "structstd_1_1formatter_3_01dcn_1_1http_1_1HeadersList_01_4.html", "structstd_1_1formatter_3_01dcn_1_1http_1_1HeadersList_01_4" ],

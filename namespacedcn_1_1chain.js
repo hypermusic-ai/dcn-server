@@ -12,6 +12,8 @@ var namespacedcn_1_1chain =
     [ "Address", "namespacedcn_1_1chain.html#ae8d0a9327d8b662620d649428105a5cb", null ],
     [ "json", "namespacedcn_1_1chain.html#a8fae9bdaf68ec05869093b0dcbfb2a6e", null ],
     [ "RpcCall", "namespacedcn_1_1chain.html#af32a722613800d708413e4c9fcc01faa", null ],
+    [ "addressToHex", "namespacedcn_1_1chain.html#a8624eab07fd74ba8fa1c4fc3205b95d6", null ],
+    [ "bytes32ToHex", "namespacedcn_1_1chain.html#af4fe2837f145e7be5533968dd3e6cab0", null ],
     [ "canonicalizeScalarLabels", "namespacedcn_1_1chain.html#a88cb16bb98c8b9691827db31e83a8c84", null ],
     [ "composeFormatHash", "namespacedcn_1_1chain.html#afff80c379072be67d2ba0e68b0e690e8", null ],
     [ "computeFormatHash", "namespacedcn_1_1chain.html#a352c10f5ccef138738524ef1df32c34b", null ],
@@ -31,6 +33,7 @@ var namespacedcn_1_1chain =
     [ "keccakString", "namespacedcn_1_1chain.html#a52dd5b59b28a67d1cce1300b80557863", null ],
     [ "labelHashToFormatHash", "namespacedcn_1_1chain.html#aa342fe66ed2e087f258c6d91f9a595bc", null ],
     [ "lessBytes32", "namespacedcn_1_1chain.html#a01aa0bdc8cabaf84a06184b41ec2a858", null ],
+    [ "normalizeHex", "namespacedcn_1_1chain.html#a771120452489a58bb6768aadbb2e00bf", null ],
     [ "readAddressWord", "namespacedcn_1_1chain.html#a125061b48c7531a204ad1f30fcf26f55", null ],
     [ "readAddressWord", "namespacedcn_1_1chain.html#af597ee2708e5bf39c9b1dc85860c9b7a", null ],
     [ "readOffset", "namespacedcn_1_1chain.html#ac1585ff4c679422096348cad4c601c94", null ],
@@ -41,5 +44,7 @@ var namespacedcn_1_1chain =
     [ "readWordAsSizeT", "namespacedcn_1_1chain.html#a09748629091c6f97b2166b04ae9a1c29", null ],
     [ "scalarLabelsEqual", "namespacedcn_1_1chain.html#a5c5a4047a6360db27ed4c30ba3155752", null ],
     [ "scalarPathLabelHash", "namespacedcn_1_1chain.html#a2202bba30e77e1dc828656cf9568b16c", null ],
-    [ "topicWordToAddress", "namespacedcn_1_1chain.html#a04330e216ba84dcfab89dbc0abfe0898", null ]
+    [ "toHexQuantity", "namespacedcn_1_1chain.html#aabb38da97e8261c77adf0cfce1bf06df", null ],
+    [ "topicWordToAddress", "namespacedcn_1_1chain.html#a04330e216ba84dcfab89dbc0abfe0898", null ],
+    [ "withHexPrefix", "namespacedcn_1_1chain.html#a2959b69002a6ddb05fa21df9b7ca0043", null ]
 ];

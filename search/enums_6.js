@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['type_0',['Type',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053b',1,'dcn::cmd::CommandLineArgDef']]]
+  ['routeargrequirement_0',['RouteArgRequirement',['../namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3e',1,'dcn::server']]],
+  ['routeargtype_1',['RouteArgType',['../namespacedcn_1_1server.html#aa0ab598ae418cd408597c83cff2534c3',1,'dcn::server']]]
 ];

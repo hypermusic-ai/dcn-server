@@ -105,6 +105,8 @@ $(document).ready(function(){initNavTree('route_8hpp.html',''); initResizable();
 <div class="contents">
 <div class="textblock"><code>#include &lt;string&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
+<code>#include &lt;chrono&gt;</code><br />
+<code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;utility&gt;</code><br />
 <code>#include &lt;regex&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
@@ -139,6 +141,9 @@ Namespaces</h2></td></tr>
 Typedefs</h2></td></tr>
 <tr class="memitem:a87e4cf0b25a5b64b428f5b13dfdb86c8" id="r_a87e4cf0b25a5b64b428f5b13dfdb86c8"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">dcn::server::QueryArgsList</a> = absl::flat_hash_map&lt; std::string, <a class="el" href="classdcn_1_1server_1_1RouteArg.html">RouteArg</a> &gt;</td></tr>
 <tr class="separator:a87e4cf0b25a5b64b428f5b13dfdb86c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44f203ebb7db74fe58cafae27255987a" id="r_a44f203ebb7db74fe58cafae27255987a"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1server.html#a44f203ebb7db74fe58cafae27255987a">dcn::server::StreamingHandlerDefinition</a> = std::function&lt; asio::awaitable&lt; void &gt;(asio::ip::tcp::socket &amp;, const <a class="el" href="classdcn_1_1http_1_1Request.html">dcn::http::Request</a> &amp;, std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">RouteArg</a> &gt;, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">QueryArgsList</a>, std::chrono::steady_clock::time_point &amp;)&gt;</td></tr>
+<tr class="memdesc:a44f203ebb7db74fe58cafae27255987a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Streaming handler signature.  <br /></td></tr>
+<tr class="separator:a44f203ebb7db74fe58cafae27255987a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->

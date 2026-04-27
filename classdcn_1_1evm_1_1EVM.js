@@ -1,5 +1,6 @@
 var classdcn_1_1evm_1_1EVM =
 [
+    [ "EmittedLogRecord", "classdcn_1_1evm_1_1EVM.html#a6704b1ea538e0def868da588bdcf5fe0", null ],
     [ "EVM", "classdcn_1_1evm_1_1EVM.html#a86f57fce8af76a0f9023b03c73de12d0", null ],
     [ "~EVM", "classdcn_1_1evm_1_1EVM.html#a9b0bf8cf567efcc4e7657887d6ec59bc", null ],
     [ "EVM", "classdcn_1_1evm_1_1EVM.html#ae6e14e66ea643ae3771d55ccfc63cfc0", null ],
@@ -9,6 +10,8 @@ var classdcn_1_1evm_1_1EVM =
     [ "deploy", "classdcn_1_1evm_1_1EVM.html#a4a6d726d4d75c87943f1683fed640b0c", null ],
     [ "deploy", "classdcn_1_1evm_1_1EVM.html#a96aeafc7999f5da5f2b10071bdf12451", null ],
     [ "execute", "classdcn_1_1evm_1_1EVM.html#aebfd4736a6c727054d4d0b6e66a77c59", null ],
+    [ "getHeadBlockNumber", "classdcn_1_1evm_1_1EVM.html#a316b5c0526a1196bfc52406ffb24c8d2", null ],
+    [ "getLogsSince", "classdcn_1_1evm_1_1EVM.html#a8df57d2491a202b9e13ec64d2d273e2f", null ],
     [ "getPTPath", "classdcn_1_1evm_1_1EVM.html#a61157c78a52097f25fc3d354e543be11", null ],
     [ "getRegistryAddress", "classdcn_1_1evm_1_1EVM.html#a6a2db05d4d11f5f60bcdf35c56033b54", null ],
     [ "getRunnerAddress", "classdcn_1_1evm_1_1EVM.html#a8be3f3430f73446a604b293a378ad2d0", null ],

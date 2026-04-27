@@ -1,10 +1,20 @@
 var searchData=
 [
-  ['walcheckpointmode_0',['WalCheckpointMode',['../namespacedcn_1_1storage.html#a206ce14429e34d4b951fb2a6745c403f',1,'dcn::storage']]],
-  ['watchdog_1',['watchdog',['../namespacedcn_1_1async.html#ab6a235c6b347fb3d4417069948c15181',1,'dcn::async']]],
-  ['windows_2ecpp_2',['windows.cpp',['../windows_8cpp.html',1,'']]],
-  ['windows_2eh_3',['windows.h',['../windows_8h.html',1,'']]],
-  ['writedata_4',['writeData',['../classdcn_1_1server_1_1Server.html#a5dcfb6303d33d953d6d8d8f73b1aa4e9',1,'dcn::server::Server']]],
-  ['writeuint32be_5',['writeUint32BE',['../namespacedcn_1_1crypto.html#a58f4c9ab73e68705a5daf8ca529df88a',1,'dcn::crypto']]],
-  ['writeuint64be_6',['writeUint64BE',['../namespacedcn_1_1crypto.html#a4ca665855fc2cacd0cba107df1053f85',1,'dcn::crypto']]]
+  ['wal_2ecpp_0',['wal.cpp',['../wal_8cpp.html',1,'']]],
+  ['wal_2ehpp_1',['wal.hpp',['../wal_8hpp.html',1,'']]],
+  ['wal_5fbytes_2',['wal_bytes',['../structdcn_1_1storage_1_1sqlite_1_1WalCheckpointStats.html#adce8277b6ad3c7c363a5f32e8c7ef5f8',1,'dcn::storage::sqlite::WalCheckpointStats']]],
+  ['wal_5fcheckpoint_5finterval_5fms_3',['wal_checkpoint_interval_ms',['../structdcn_1_1events_1_1EventRuntimeConfig.html#a191d7e3d93ce322a5e528a8d88d03347',1,'dcn::events::EventRuntimeConfig']]],
+  ['wal_5fstore_2ehpp_4',['wal_store.hpp',['../wal__store_8hpp.html',1,'']]],
+  ['wal_5fsync_5fworker_2ecpp_5',['wal_sync_worker.cpp',['../wal__sync__worker_8cpp.html',1,'']]],
+  ['wal_5fsync_5fworker_2ehpp_6',['wal_sync_worker.hpp',['../wal__sync__worker_8hpp.html',1,'']]],
+  ['walcheckpointmode_7',['WalCheckpointMode',['../namespacedcn_1_1storage_1_1sqlite.html#a558bcbfe67a85d3864ea9a3d9bf161a5',1,'dcn::storage::sqlite']]],
+  ['walcheckpointstats_8',['WalCheckpointStats',['../structdcn_1_1storage_1_1sqlite_1_1WalCheckpointStats.html',1,'dcn::storage::sqlite']]],
+  ['walsyncworker_9',['walsyncworker',['../classdcn_1_1storage_1_1sqlite_1_1WalSyncWorker.html',1,'dcn::storage::sqlite::WalSyncWorker'],['../classdcn_1_1storage_1_1sqlite_1_1WalSyncWorker.html#ab0fa5a1082982d18b7bb2ad77d48f615',1,'dcn::storage::sqlite::WalSyncWorker::WalSyncWorker()']]],
+  ['watchdog_10',['watchdog',['../namespacedcn_1_1async.html#ab6a235c6b347fb3d4417069948c15181',1,'dcn::async']]],
+  ['windows_2ecpp_11',['windows.cpp',['../windows_8cpp.html',1,'']]],
+  ['windows_2eh_12',['windows.h',['../windows_8h.html',1,'']]],
+  ['withhexprefix_13',['withHexPrefix',['../namespacedcn_1_1chain.html#a2959b69002a6ddb05fa21df9b7ca0043',1,'dcn::chain']]],
+  ['writedata_14',['writeData',['../classdcn_1_1server_1_1Server.html#a5dcfb6303d33d953d6d8d8f73b1aa4e9',1,'dcn::server::Server']]],
+  ['writeuint32be_15',['writeUint32BE',['../namespacedcn_1_1crypto.html#a58f4c9ab73e68705a5daf8ca529df88a',1,'dcn::crypto']]],
+  ['writeuint64be_16',['writeUint64BE',['../namespacedcn_1_1crypto.html#a4ca665855fc2cacd0cba107df1053f85',1,'dcn::crypto']]]
 ];

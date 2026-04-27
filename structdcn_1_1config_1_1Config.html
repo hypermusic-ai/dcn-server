@@ -131,6 +131,22 @@ Public Attributes</h2></td></tr>
 <tr class="separator:af9a724633b31923dbe12a73596f57b52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabf8a042f6aa424186e64893ffc7703f" id="r_aabf8a042f6aa424186e64893ffc7703f"><td class="memItemLeft" align="right" valign="top">std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1config_1_1Config.html#aabf8a042f6aa424186e64893ffc7703f">registry_db</a></td></tr>
 <tr class="separator:aabf8a042f6aa424186e64893ffc7703f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4931d517c00c98f822c665497015b88" id="r_ae4931d517c00c98f822c665497015b88"><td class="memItemLeft" align="right" valign="top">std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1config_1_1Config.html#ae4931d517c00c98f822c665497015b88">events_db</a></td></tr>
+<tr class="separator:ae4931d517c00c98f822c665497015b88"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef8dbde6d6fe78f9ad0d25022a2b49fd" id="r_aef8dbde6d6fe78f9ad0d25022a2b49fd"><td class="memItemLeft" align="right" valign="top">std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1config_1_1Config.html#aef8dbde6d6fe78f9ad0d25022a2b49fd">events_archive_root</a></td></tr>
+<tr class="separator:aef8dbde6d6fe78f9ad0d25022a2b49fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af211e1b21cbd6b3e195eec5e3d071a9a" id="r_af211e1b21cbd6b3e195eec5e3d071a9a"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1config_1_1Config.html#af211e1b21cbd6b3e195eec5e3d071a9a">events_chain_id</a> = 1</td></tr>
+<tr class="separator:af211e1b21cbd6b3e195eec5e3d071a9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a417c562d3f2f96dcb2c662ff1c962f2b" id="r_a417c562d3f2f96dcb2c662ff1c962f2b"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1config_1_1Config.html#a417c562d3f2f96dcb2c662ff1c962f2b">events_hot_window_days</a> = 90</td></tr>
+<tr class="separator:a417c562d3f2f96dcb2c662ff1c962f2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fc399ddfca29f5ab02f91f72eb2881d" id="r_a2fc399ddfca29f5ab02f91f72eb2881d"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1config_1_1Config.html#a2fc399ddfca29f5ab02f91f72eb2881d">events_projector_interval_ms</a> = 200</td></tr>
+<tr class="separator:a2fc399ddfca29f5ab02f91f72eb2881d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a606d8baa3137e1fe699669aa924ee2ef" id="r_a606d8baa3137e1fe699669aa924ee2ef"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1config_1_1Config.html#a606d8baa3137e1fe699669aa924ee2ef">events_archive_interval_ms</a> = 30000</td></tr>
+<tr class="separator:a606d8baa3137e1fe699669aa924ee2ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa89697e25a0101666fa97a228c4417f0" id="r_aa89697e25a0101666fa97a228c4417f0"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1config_1_1Config.html#aa89697e25a0101666fa97a228c4417f0">events_reorg_window_blocks</a> = 2048</td></tr>
+<tr class="separator:aa89697e25a0101666fa97a228c4417f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6813e8aa02eaea7b4593c42f9bb85bb4" id="r_a6813e8aa02eaea7b4593c42f9bb85bb4"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1config_1_1Config.html#a6813e8aa02eaea7b4593c42f9bb85bb4">events_outbox_retention_days</a> = 7</td></tr>
+<tr class="separator:a6813e8aa02eaea7b4593c42f9bb85bb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Data Documentation</h2>
 <a id="a0e78cdefbc941ced66d4571024abfe84" name="a0e78cdefbc941ced66d4571024abfe84"></a>
@@ -155,6 +171,118 @@ Public Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="structdcn_1_1config_1_1IngestionConfig.html">IngestionConfig</a> dcn::config::Config::chain_ingestion</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a606d8baa3137e1fe699669aa924ee2ef" name="a606d8baa3137e1fe699669aa924ee2ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a606d8baa3137e1fe699669aa924ee2ef">&#9670;&#160;</a></span>events_archive_interval_ms</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int dcn::config::Config::events_archive_interval_ms = 30000</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aef8dbde6d6fe78f9ad0d25022a2b49fd" name="aef8dbde6d6fe78f9ad0d25022a2b49fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef8dbde6d6fe78f9ad0d25022a2b49fd">&#9670;&#160;</a></span>events_archive_root</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::filesystem::path dcn::config::Config::events_archive_root</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af211e1b21cbd6b3e195eec5e3d071a9a" name="af211e1b21cbd6b3e195eec5e3d071a9a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af211e1b21cbd6b3e195eec5e3d071a9a">&#9670;&#160;</a></span>events_chain_id</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int dcn::config::Config::events_chain_id = 1</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae4931d517c00c98f822c665497015b88" name="ae4931d517c00c98f822c665497015b88"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4931d517c00c98f822c665497015b88">&#9670;&#160;</a></span>events_db</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::filesystem::path dcn::config::Config::events_db</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a417c562d3f2f96dcb2c662ff1c962f2b" name="a417c562d3f2f96dcb2c662ff1c962f2b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a417c562d3f2f96dcb2c662ff1c962f2b">&#9670;&#160;</a></span>events_hot_window_days</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int dcn::config::Config::events_hot_window_days = 90</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6813e8aa02eaea7b4593c42f9bb85bb4" name="a6813e8aa02eaea7b4593c42f9bb85bb4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6813e8aa02eaea7b4593c42f9bb85bb4">&#9670;&#160;</a></span>events_outbox_retention_days</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int dcn::config::Config::events_outbox_retention_days = 7</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2fc399ddfca29f5ab02f91f72eb2881d" name="a2fc399ddfca29f5ab02f91f72eb2881d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2fc399ddfca29f5ab02f91f72eb2881d">&#9670;&#160;</a></span>events_projector_interval_ms</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int dcn::config::Config::events_projector_interval_ms = 200</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa89697e25a0101666fa97a228c4417f0" name="aa89697e25a0101666fa97a228c4417f0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa89697e25a0101666fa97a228c4417f0">&#9670;&#160;</a></span>events_reorg_window_blocks</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int dcn::config::Config::events_reorg_window_blocks = 2048</td>
         </tr>
       </table>
 </div><div class="memdoc">

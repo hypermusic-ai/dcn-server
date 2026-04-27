@@ -1,0 +1,28 @@
+var classdcn_1_1registry_1_1IRegistryStore =
+[
+    [ "~IRegistryStore", "classdcn_1_1registry_1_1IRegistryStore.html#ab50c0a718c9e5ccb78ed7a8a362a30ad", null ],
+    [ "addCondition", "classdcn_1_1registry_1_1IRegistryStore.html#a07341ee73c080ac01b9eb363d154b7a1", null ],
+    [ "addConditionsBatch", "classdcn_1_1registry_1_1IRegistryStore.html#a99863fc137423db81d85e2888e2f8d4f", null ],
+    [ "addConnector", "classdcn_1_1registry_1_1IRegistryStore.html#a0307ed3d5602685c80392b28ab4fecbb", null ],
+    [ "addConnectorsBatch", "classdcn_1_1registry_1_1IRegistryStore.html#acbb7e2e596c9aca0a37d9a2182c81429", null ],
+    [ "addTransformation", "classdcn_1_1registry_1_1IRegistryStore.html#a747a8458c1743f1a47b6f50fe30155c2", null ],
+    [ "addTransformationsBatch", "classdcn_1_1registry_1_1IRegistryStore.html#a88e9e867c28ca24f44341ab618b559b0", null ],
+    [ "checkpointWal", "classdcn_1_1registry_1_1IRegistryStore.html#a1d2856ced736b2647839b8b06ca9f1ea", null ],
+    [ "getAccountsCount", "classdcn_1_1registry_1_1IRegistryStore.html#a102ed801dfd58e03086efb03a7bf57e9", null ],
+    [ "getAccountsCursor", "classdcn_1_1registry_1_1IRegistryStore.html#a8503717813fbe59cfd0094094a50ef83", null ],
+    [ "getConditionRecordHandle", "classdcn_1_1registry_1_1IRegistryStore.html#a65cc3be666712f108851d625d6d872f8", null ],
+    [ "getConnectorFormatHash", "classdcn_1_1registry_1_1IRegistryStore.html#ac8979532d00a5b2aad2d6a7cb9f1fec0", null ],
+    [ "getConnectorRecordHandle", "classdcn_1_1registry_1_1IRegistryStore.html#a569dce09d30647151a95c0b676ec66b7", null ],
+    [ "getFormatConnectorNamesCount", "classdcn_1_1registry_1_1IRegistryStore.html#a8d4fd40dcc99de34fe53ba12e2b9fe38", null ],
+    [ "getFormatConnectorNamesCursor", "classdcn_1_1registry_1_1IRegistryStore.html#a9b106b74c35d330fbd978310192fb07b", null ],
+    [ "getFormatsCount", "classdcn_1_1registry_1_1IRegistryStore.html#a33f86e4c1e9f39b4dff902c188977b59", null ],
+    [ "getFormatsCursor", "classdcn_1_1registry_1_1IRegistryStore.html#a7a7b1dbc9a1802613dcbe4147175af68", null ],
+    [ "getOwnedConditionsCursor", "classdcn_1_1registry_1_1IRegistryStore.html#a949bdc3cc5377a1ca5b6dbe9949aa453", null ],
+    [ "getOwnedConnectorsCursor", "classdcn_1_1registry_1_1IRegistryStore.html#a8ce5bd966bdcb9facd8acbd437559e2d", null ],
+    [ "getOwnedTransformationsCursor", "classdcn_1_1registry_1_1IRegistryStore.html#ace645d39cba5ba068d5fbaa107daf855", null ],
+    [ "getScalarLabelsByFormatHash", "classdcn_1_1registry_1_1IRegistryStore.html#ad04d653f84ba3a38f2467f64a96076b0", null ],
+    [ "getTransformationRecordHandle", "classdcn_1_1registry_1_1IRegistryStore.html#a568a8a6b1db288063a3adb84cd8a5640", null ],
+    [ "hasCondition", "classdcn_1_1registry_1_1IRegistryStore.html#ab6187d2d531bb815564dd219b5a76321", null ],
+    [ "hasConnector", "classdcn_1_1registry_1_1IRegistryStore.html#a748c5e376efa00f4089645cc8f407e9e", null ],
+    [ "hasTransformation", "classdcn_1_1registry_1_1IRegistryStore.html#a7ef00fce58a5ae4b34cdfa1e07d82638", null ]
+];

@@ -125,6 +125,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aaaf32d78ae3072fe426d94f9adf14592"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdcn_1_1server_1_1Server.html#aaaf32d78ae3072fe426d94f9adf14592">addRoute</a> (<a class="el" href="classdcn_1_1server_1_1RouteKey.html">RouteKey</a> route, F &amp;&amp;handler, Args &amp;&amp;... binded_args)</td></tr>
 <tr class="memdesc:aaaf32d78ae3072fe426d94f9adf14592"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a route to the server with a specified HTTP method and path.  <br /></td></tr>
 <tr class="separator:aaaf32d78ae3072fe426d94f9adf14592"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d263218b9d73b32c681a19584979048" id="r_a1d263218b9d73b32c681a19584979048"><td class="memTemplParams" colspan="2">template&lt;class F &gt; </td></tr>
+<tr class="memitem:a1d263218b9d73b32c681a19584979048"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdcn_1_1server_1_1Server.html#a1d263218b9d73b32c681a19584979048">addStreamingRoute</a> (<a class="el" href="classdcn_1_1server_1_1RouteKey.html">RouteKey</a> route, F &amp;&amp;handler)</td></tr>
+<tr class="memdesc:a1d263218b9d73b32c681a19584979048"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a streaming route to the server.  <br /></td></tr>
+<tr class="separator:a1d263218b9d73b32c681a19584979048"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af513e059fd78baee65769d9bf1955794" id="r_af513e059fd78baee65769d9bf1955794"><td class="memTemplParams" colspan="2">template&lt;class F , class ... Args&gt; </td></tr>
+<tr class="memitem:af513e059fd78baee65769d9bf1955794"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdcn_1_1server_1_1Server.html#af513e059fd78baee65769d9bf1955794">addStreamingRoute</a> (<a class="el" href="classdcn_1_1server_1_1RouteKey.html">RouteKey</a> route, F &amp;&amp;handler, Args &amp;&amp;... binded_args)</td></tr>
+<tr class="memdesc:af513e059fd78baee65769d9bf1955794"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a streaming route with extra bound arguments.  <br /></td></tr>
+<tr class="separator:af513e059fd78baee65769d9bf1955794"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc794d3d34b5aa4d779ec626b61276a8" id="r_afc794d3d34b5aa4d779ec626b61276a8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1server_1_1Server.html#afc794d3d34b5aa4d779ec626b61276a8">setIdleInterval</a> (std::chrono::milliseconds idle_interval)</td></tr>
 <tr class="memdesc:afc794d3d34b5aa4d779ec626b61276a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the idle interval after which the server will close the connection.  <br /></td></tr>
 <tr class="separator:afc794d3d34b5aa4d779ec626b61276a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -299,6 +307,100 @@ template&lt;class F , class ... Args&gt; </div>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a1d263218b9d73b32c681a19584979048" name="a1d263218b9d73b32c681a19584979048"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d263218b9d73b32c681a19584979048">&#9670;&#160;</a></span>addStreamingRoute() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class F &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void dcn::server::Server::addStreamingRoute </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1server_1_1RouteKey.html">RouteKey</a>&#160;</td>
+          <td class="paramname"><em>route</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">F &amp;&amp;&#160;</td>
+          <td class="paramname"><em>handler</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Adds a streaming route to the server. </p>
+<p>Streaming handlers receive the socket directly and are responsible for writing the full HTTP response themselves (status line + headers + body). They are intended for SSE/long-poll endpoints where the response is unbounded and stays open for the lifetime of the request.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">route</td><td>The route key containing the HTTP method and path. </td></tr>
+    <tr><td class="paramname">handler</td><td>Streaming handler matching StreamingHandlerDefinition. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="af513e059fd78baee65769d9bf1955794" name="af513e059fd78baee65769d9bf1955794"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af513e059fd78baee65769d9bf1955794">&#9670;&#160;</a></span>addStreamingRoute() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class F , class ... Args&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void dcn::server::Server::addStreamingRoute </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdcn_1_1server_1_1RouteKey.html">RouteKey</a>&#160;</td>
+          <td class="paramname"><em>route</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">F &amp;&amp;&#160;</td>
+          <td class="paramname"><em>handler</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Args &amp;&amp;...&#160;</td>
+          <td class="paramname"><em>binded_args</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Adds a streaming route with extra bound arguments. </p>
 
 </div>
 </div>

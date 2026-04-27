@@ -1,5 +1,9 @@
 var searchData=
 [
   ['fallback_5fmax_5fpriority_5ffee_5fwei_0',['fallback_max_priority_fee_wei',['../structdcn_1_1sepolia_1_1BackendConfig.html#a7a7c2ba4e099503520098c0807b6f666',1,'dcn::sepolia::BackendConfig']]],
-  ['format_5fhash_1',['format_hash',['../structdcn_1_1storage_1_1ConnectorBatchItem.html#ab7bd8a7d28c55a2e910dd2b9ac25e6c4',1,'dcn::storage::ConnectorBatchItem']]]
+  ['feed_5fid_1',['feed_id',['../structdcn_1_1events_1_1CursorKey.html#aeae8f6bc5304eacb00cba2a9b38850c2',1,'dcn::events::CursorKey::feed_id'],['../structdcn_1_1events_1_1FeedItem.html#a4e07fdeddcebd6de68d201e4e1bf1038',1,'dcn::events::FeedItem::feed_id'],['../structdcn_1_1events_1_1StreamDelta.html#aafc2f97cbfbef850a8f9c20e1f4c6eee',1,'dcn::events::StreamDelta::feed_id'],['../structdcn_1_1events_1_1FeedArchiveRow.html#aab0945d34c40b35997733aab129ed3fe',1,'dcn::events::FeedArchiveRow::feed_id'],['../structdcn_1_1events_1_1FeedHotKey.html#a0d277ce8a65394209d25c9bf22f80022',1,'dcn::events::FeedHotKey::feed_id']]],
+  ['finalized_2',['finalized',['../structdcn_1_1events_1_1FinalityHeights.html#a40a52d2f2fb83487c8579c93253db621',1,'dcn::events::FinalityHeights']]],
+  ['finalized_5fblock_3',['finalized_block',['../structdcn_1_1events_1_1FinalityState.html#ae0aebbded47ac8308b28113756a9a39f',1,'dcn::events::FinalityState']]],
+  ['finalized_5fstate_4',['FINALIZED_STATE',['../namespacedcn_1_1events.html#a7841d5ad5c6c4b55cfc5c520a2fd3fa4',1,'dcn::events']]],
+  ['format_5fhash_5',['format_hash',['../structdcn_1_1events_1_1DecodedEvent.html#a831ae66da469be02dd895ac578daaf69',1,'dcn::events::DecodedEvent::format_hash'],['../structdcn_1_1events_1_1NormalizedArchiveRow.html#a6bfc030f790b6b764c8e26cf25179027',1,'dcn::events::NormalizedArchiveRow::format_hash'],['../structdcn_1_1pt_1_1ConnectorAddedEvent.html#abc4b8f0182fd88376fb40397285135f0',1,'dcn::pt::ConnectorAddedEvent::format_hash'],['../structdcn_1_1registry_1_1ConnectorBatchItem.html#acf5da604683f908c265c470a0bb44ae8',1,'dcn::registry::ConnectorBatchItem::format_hash']]]
 ];

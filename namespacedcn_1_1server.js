@@ -8,6 +8,7 @@ var namespacedcn_1_1server =
     [ "Server", "classdcn_1_1server_1_1Server.html", "classdcn_1_1server_1_1Server" ],
     [ "HandlerDefinition", "namespacedcn_1_1server.html#ab1b911fe729d02d6eb0ad5460e3ee8ad", null ],
     [ "QueryArgsList", "namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8", null ],
+    [ "StreamingHandlerDefinition", "namespacedcn_1_1server.html#a44f203ebb7db74fe58cafae27255987a", null ],
     [ "RouteArgRequirement", "namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3e", [
       [ "Unknown", "namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ea88183b946cc5f0e8c96b2e66e1c74a7e", null ],
       [ "optional", "namespacedcn_1_1server.html#a8b2d2d41e833f9eac4898bd1bfa6ed3ead57c24f3fe52d16e7169b912dd647f0d", null ],

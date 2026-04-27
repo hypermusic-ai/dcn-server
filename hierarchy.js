@@ -5,22 +5,38 @@ var hierarchy =
     [ "dcn::auth::AuthError", "structdcn_1_1auth_1_1AuthError.html", null ],
     [ "dcn::auth::AuthManager", "classdcn_1_1auth_1_1AuthManager.html", null ],
     [ "dcn::sepolia::BackendConfig", "structdcn_1_1sepolia_1_1BackendConfig.html", null ],
+    [ "dcn::events::ChainBlockInfo", "structdcn_1_1events_1_1ChainBlockInfo.html", null ],
     [ "dcn::cmd::CommandLineArgDef", "structdcn_1_1cmd_1_1CommandLineArgDef.html", null ],
     [ "dcn::pt::ConditionAddedEvent", "structdcn_1_1pt_1_1ConditionAddedEvent.html", null ],
-    [ "dcn::storage::ConditionBatchItem", "structdcn_1_1storage_1_1ConditionBatchItem.html", null ],
+    [ "dcn::registry::ConditionBatchItem", "structdcn_1_1registry_1_1ConditionBatchItem.html", null ],
     [ "dcn::config::Config", "structdcn_1_1config_1_1Config.html", null ],
     [ "dcn::pt::ConnectorAddedEvent", "structdcn_1_1pt_1_1ConnectorAddedEvent.html", null ],
-    [ "dcn::storage::ConnectorBatchItem", "structdcn_1_1storage_1_1ConnectorBatchItem.html", null ],
+    [ "dcn::registry::ConnectorBatchItem", "structdcn_1_1registry_1_1ConnectorBatchItem.html", null ],
+    [ "dcn::events::CursorKey", "structdcn_1_1events_1_1CursorKey.html", null ],
+    [ "dcn::events::DecodedEvent", "structdcn_1_1events_1_1DecodedEvent.html", null ],
     [ "dcn::chain::DeployError", "structdcn_1_1chain_1_1DeployError.html", null ],
     [ "dcn::chain::DeployReceipt", "structdcn_1_1chain_1_1DeployReceipt.html", null ],
-    [ "dcn::storage::LruCache< KeyT, ValueT >::Entry", "structdcn_1_1storage_1_1LruCache_1_1Entry.html", null ],
+    [ "dcn::evm::EVMStorage::EmittedLogRecord", "structdcn_1_1evm_1_1EVMStorage_1_1EmittedLogRecord.html", null ],
+    [ "dcn::registry::LruCache< KeyT, ValueT >::Entry", "structdcn_1_1registry_1_1LruCache_1_1Entry.html", null ],
+    [ "dcn::events::EventKey", "structdcn_1_1events_1_1EventKey.html", null ],
+    [ "dcn::events::EventKeyHash", "structdcn_1_1events_1_1EventKeyHash.html", null ],
+    [ "dcn::events::EventRuntimeConfig", "structdcn_1_1events_1_1EventRuntimeConfig.html", null ],
+    [ "dcn::events::EventShardId", "structdcn_1_1events_1_1EventShardId.html", null ],
     [ "dcn::evm::EVM", "classdcn_1_1evm_1_1EVM.html", null ],
     [ "dcn::chain::ExecuteError", "structdcn_1_1chain_1_1ExecuteError.html", null ],
     [ "dcn::chain::ExecuteReceipt", "structdcn_1_1chain_1_1ExecuteReceipt.html", null ],
+    [ "dcn::events::FeedArchiveRow", "structdcn_1_1events_1_1FeedArchiveRow.html", null ],
+    [ "dcn::events::FeedHotKey", "structdcn_1_1events_1_1FeedHotKey.html", null ],
+    [ "dcn::events::FeedItem", "structdcn_1_1events_1_1FeedItem.html", null ],
+    [ "dcn::events::FeedPage", "structdcn_1_1events_1_1FeedPage.html", null ],
+    [ "dcn::events::FeedQuery", "structdcn_1_1events_1_1FeedQuery.html", null ],
+    [ "dcn::events::FinalityHeights", "structdcn_1_1events_1_1FinalityHeights.html", null ],
+    [ "dcn::events::FinalityState", "structdcn_1_1events_1_1FinalityState.html", null ],
     [ "std::formatter", null, [
       [ "std::formatter< dcn::auth::AuthError::Kind >", "structstd_1_1formatter_3_01dcn_1_1auth_1_1AuthError_1_1Kind_01_4.html", null ],
       [ "std::formatter< dcn::chain::DeployError::Kind >", "structstd_1_1formatter_3_01dcn_1_1chain_1_1DeployError_1_1Kind_01_4.html", null ],
       [ "std::formatter< dcn::chain::ExecuteError::Kind >", "structstd_1_1formatter_3_01dcn_1_1chain_1_1ExecuteError_1_1Kind_01_4.html", null ],
+      [ "std::formatter< dcn::events::CursorKey >", "structstd_1_1formatter_3_01dcn_1_1events_1_1CursorKey_01_4.html", null ],
       [ "std::formatter< dcn::http::Code >", "structstd_1_1formatter_3_01dcn_1_1http_1_1Code_01_4.html", null ],
       [ "std::formatter< dcn::http::Header >", "structstd_1_1formatter_3_01dcn_1_1http_1_1Header_01_4.html", null ],
       [ "std::formatter< dcn::http::HeadersList >", "structstd_1_1formatter_3_01dcn_1_1http_1_1HeadersList_01_4.html", null ],
@@ -44,46 +60,77 @@ var hierarchy =
     [ "evmc::Host", null, [
       [ "dcn::evm::EVMStorage", "classdcn_1_1evm_1_1EVMStorage.html", null ]
     ] ],
+    [ "dcn::events::IArchiveManager", "classdcn_1_1events_1_1IArchiveManager.html", [
+      [ "dcn::events::SQLiteHotStore", "classdcn_1_1events_1_1SQLiteHotStore.html", null ]
+    ] ],
     [ "dcn::chain::IChain", "classdcn_1_1chain_1_1IChain.html", [
       [ "dcn::sepolia::SepoliaBackend", "classdcn_1_1sepolia_1_1SepoliaBackend.html", null ]
     ] ],
+    [ "dcn::events::IChainEventSource", "classdcn_1_1events_1_1IChainEventSource.html", null ],
+    [ "dcn::events::IEventDecoder", "classdcn_1_1events_1_1IEventDecoder.html", [
+      [ "dcn::events::PTEventDecoder", "classdcn_1_1events_1_1PTEventDecoder.html", null ]
+    ] ],
+    [ "dcn::events::IEventShardRouter", "classdcn_1_1events_1_1IEventShardRouter.html", [
+      [ "dcn::events::MonthlyEventShardRouter", "classdcn_1_1events_1_1MonthlyEventShardRouter.html", null ]
+    ] ],
+    [ "dcn::events::IEventSink", "classdcn_1_1events_1_1IEventSink.html", null ],
+    [ "dcn::events::IFeedRepository", "classdcn_1_1events_1_1IFeedRepository.html", [
+      [ "dcn::events::EventRuntime", "classdcn_1_1events_1_1EventRuntime.html", null ]
+    ] ],
+    [ "dcn::events::IHotEventStore", "classdcn_1_1events_1_1IHotEventStore.html", [
+      [ "dcn::events::SQLiteHotStore", "classdcn_1_1events_1_1SQLiteHotStore.html", null ]
+    ] ],
     [ "dcn::config::IngestionConfig", "structdcn_1_1config_1_1IngestionConfig.html", null ],
     [ "dcn::chain::IngestionRuntimeOptions", "structdcn_1_1chain_1_1IngestionRuntimeOptions.html", null ],
-    [ "dcn::storage::IRegistryStore", "classdcn_1_1storage_1_1IRegistryStore.html", [
-      [ "dcn::storage::SQLiteRegistryStore", "classdcn_1_1storage_1_1SQLiteRegistryStore.html", null ]
+    [ "dcn::events::IngestResumeState", "structdcn_1_1events_1_1IngestResumeState.html", null ],
+    [ "dcn::registry::IRegistryStore", "classdcn_1_1registry_1_1IRegistryStore.html", [
+      [ "dcn::registry::SQLiteRegistryStore", "classdcn_1_1registry_1_1SQLiteRegistryStore.html", null ]
+    ] ],
+    [ "dcn::storage::sqlite::IWalStore", "classdcn_1_1storage_1_1sqlite_1_1IWalStore.html", [
+      [ "dcn::events::EventRuntime", "classdcn_1_1events_1_1EventRuntime.html", null ],
+      [ "dcn::registry::Registry", "classdcn_1_1registry_1_1Registry.html", null ]
     ] ],
     [ "dcn::crypto::Keccak256", "classdcn_1_1crypto_1_1Keccak256.html", null ],
     [ "dcn::loader::LoaderBatchConfig", "structdcn_1_1loader_1_1LoaderBatchConfig.html", null ],
     [ "dcn::utils::LogoASCII_t", "structdcn_1_1utils_1_1LogoASCII__t.html", null ],
     [ "dcn::utils::LogoUnicode_t", "structdcn_1_1utils_1_1LogoUnicode__t.html", null ],
-    [ "dcn::storage::LruCache< KeyT, ValueT >", "structdcn_1_1storage_1_1LruCache.html", null ],
-    [ "dcn::storage::LruCache< std::string, std::optional< ConditionRecordHandle > >", "structdcn_1_1storage_1_1LruCache.html", null ],
-    [ "dcn::storage::LruCache< std::string, std::optional< ConnectorRecordHandle > >", "structdcn_1_1storage_1_1LruCache.html", null ],
-    [ "dcn::storage::LruCache< std::string, std::optional< evmc::bytes32 > >", "structdcn_1_1storage_1_1LruCache.html", null ],
-    [ "dcn::storage::LruCache< std::string, std::optional< TransformationRecordHandle > >", "structdcn_1_1storage_1_1LruCache.html", null ],
+    [ "dcn::registry::LruCache< KeyT, ValueT >", "structdcn_1_1registry_1_1LruCache.html", null ],
+    [ "dcn::registry::LruCache< std::string, std::optional< ConditionRecordHandle > >", "structdcn_1_1registry_1_1LruCache.html", null ],
+    [ "dcn::registry::LruCache< std::string, std::optional< ConnectorRecordHandle > >", "structdcn_1_1registry_1_1LruCache.html", null ],
+    [ "dcn::registry::LruCache< std::string, std::optional< evmc::bytes32 > >", "structdcn_1_1registry_1_1LruCache.html", null ],
+    [ "dcn::registry::LruCache< std::string, std::optional< TransformationRecordHandle > >", "structdcn_1_1registry_1_1LruCache.html", null ],
     [ "dcn::http::MessageBase", "classdcn_1_1http_1_1MessageBase.html", [
       [ "dcn::http::Request", "classdcn_1_1http_1_1Request.html", null ],
       [ "dcn::http::Response", "classdcn_1_1http_1_1Response.html", null ]
     ] ],
-    [ "dcn::storage::NameCursorPage", "structdcn_1_1storage_1_1NameCursorPage.html", null ],
+    [ "dcn::events::MonthBounds", "structdcn_1_1events_1_1MonthBounds.html", null ],
+    [ "dcn::registry::NameCursorPage", "structdcn_1_1registry_1_1NameCursorPage.html", null ],
+    [ "dcn::events::NormalizedArchiveRow", "structdcn_1_1events_1_1NormalizedArchiveRow.html", null ],
+    [ "dcn::events::NormalizedHotKey", "structdcn_1_1events_1_1NormalizedHotKey.html", null ],
     [ "dcn::parse::ParseError", "structdcn_1_1parse_1_1ParseError.html", null ],
     [ "dcn::pt::PTDeployError", "structdcn_1_1pt_1_1PTDeployError.html", null ],
     [ "dcn::pt::PTExecuteError", "structdcn_1_1pt_1_1PTExecuteError.html", null ],
-    [ "dcn::storage::Registry", "classdcn_1_1storage_1_1Registry.html", null ],
-    [ "dcn::storage::RegistryWalSyncWorker", "classdcn_1_1storage_1_1RegistryWalSyncWorker.html", null ],
+    [ "dcn::events::RawChainLog", "structdcn_1_1events_1_1RawChainLog.html", null ],
     [ "dcn::chain::ResolvedScalarEntries", "structdcn_1_1chain_1_1ResolvedScalarEntries.html", null ],
     [ "dcn::server::RouteArg", "classdcn_1_1server_1_1RouteArg.html", null ],
     [ "dcn::server::RouteArgDef", "structdcn_1_1server_1_1RouteArgDef.html", null ],
     [ "dcn::server::RouteHandlerFunc", "classdcn_1_1server_1_1RouteHandlerFunc.html", null ],
     [ "dcn::server::RouteKey", "classdcn_1_1server_1_1RouteKey.html", null ],
     [ "dcn::server::Router", "classdcn_1_1server_1_1Router.html", null ],
+    [ "dcn::events::RpcClient", "classdcn_1_1events_1_1RpcClient.html", null ],
     [ "dcn::chain::ScalarHashEntry", "structdcn_1_1chain_1_1ScalarHashEntry.html", null ],
     [ "dcn::chain::ScalarLabel", "structdcn_1_1chain_1_1ScalarLabel.html", null ],
     [ "dcn::server::Server", "classdcn_1_1server_1_1Server.html", null ],
     [ "dcn::async::SignalWorker", "classdcn_1_1async_1_1SignalWorker.html", null ],
+    [ "dcn::storage::sqlite::Statement", "classdcn_1_1storage_1_1sqlite_1_1Statement.html", null ],
+    [ "dcn::events::StreamDelta", "structdcn_1_1events_1_1StreamDelta.html", null ],
+    [ "dcn::events::StreamPage", "structdcn_1_1events_1_1StreamPage.html", null ],
+    [ "dcn::events::StreamQuery", "structdcn_1_1events_1_1StreamQuery.html", null ],
     [ "dcn::pt::TransformationAddedEvent", "structdcn_1_1pt_1_1TransformationAddedEvent.html", null ],
-    [ "dcn::storage::TransformationBatchItem", "structdcn_1_1storage_1_1TransformationBatchItem.html", null ],
+    [ "dcn::registry::TransformationBatchItem", "structdcn_1_1registry_1_1TransformationBatchItem.html", null ],
     [ "dcn::http::URL", "classdcn_1_1http_1_1URL.html", null ],
     [ "dcn::parse::use_json_t", "structdcn_1_1parse_1_1use__json__t.html", null ],
-    [ "dcn::parse::use_protobuf_t", "structdcn_1_1parse_1_1use__protobuf__t.html", null ]
+    [ "dcn::parse::use_protobuf_t", "structdcn_1_1parse_1_1use__protobuf__t.html", null ],
+    [ "dcn::storage::sqlite::WalCheckpointStats", "structdcn_1_1storage_1_1sqlite_1_1WalCheckpointStats.html", null ],
+    [ "dcn::storage::sqlite::WalSyncWorker", "classdcn_1_1storage_1_1sqlite_1_1WalSyncWorker.html", null ]
 ];

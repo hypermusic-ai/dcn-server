@@ -8,7 +8,12 @@ var searchData=
   ['signal_5fworker_2ehpp_5',['signal_worker.hpp',['../signal__worker_8hpp.html',1,'']]],
   ['solidity_5fidentifier_2ecpp_6',['solidity_identifier.cpp',['../solidity__identifier_8cpp.html',1,'']]],
   ['solidity_5fidentifier_2ehpp_7',['solidity_identifier.hpp',['../solidity__identifier_8hpp.html',1,'']]],
-  ['sqlite_5fregistry_5fstore_2ecpp_8',['sqlite_registry_store.cpp',['../sqlite__registry__store_8cpp.html',1,'']]],
-  ['sqlite_5fregistry_5fstore_2ehpp_9',['sqlite_registry_store.hpp',['../sqlite__registry__store_8hpp.html',1,'']]],
-  ['storage_2ehpp_10',['storage.hpp',['../storage_8hpp.html',1,'']]]
+  ['sqlite_5fhot_5fstore_2ecpp_8',['sqlite_hot_store.cpp',['../sqlite__hot__store_8cpp.html',1,'']]],
+  ['sqlite_5fhot_5fstore_2ehpp_9',['sqlite_hot_store.hpp',['../sqlite__hot__store_8hpp.html',1,'']]],
+  ['sqlite_5fregistry_5fstore_2ecpp_10',['sqlite_registry_store.cpp',['../sqlite__registry__store_8cpp.html',1,'']]],
+  ['sqlite_5fregistry_5fstore_2ehpp_11',['sqlite_registry_store.hpp',['../sqlite__registry__store_8hpp.html',1,'']]],
+  ['statement_2ecpp_12',['statement.cpp',['../statement_8cpp.html',1,'']]],
+  ['statement_2ehpp_13',['statement.hpp',['../statement_8hpp.html',1,'']]],
+  ['storage_2ecpp_14',['storage.cpp',['../storage_8cpp.html',1,'']]],
+  ['storage_2ehpp_15',['storage.hpp',['../storage_8hpp.html',1,'']]]
 ];

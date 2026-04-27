@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['walcheckpointmode_0',['WalCheckpointMode',['../namespacedcn_1_1storage.html#a206ce14429e34d4b951fb2a6745c403f',1,'dcn::storage']]]
+  ['type_0',['Type',['../structdcn_1_1cmd_1_1CommandLineArgDef.html#a4ac5850eca382389832c61e50ae5053b',1,'dcn::cmd::CommandLineArgDef']]]
 ];

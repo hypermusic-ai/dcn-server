@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['queryargslist_0',['QueryArgsList',['../namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8',1,'dcn::server']]]
+  ['namecursor_0',['NameCursor',['../namespacedcn_1_1registry.html#a116334ca340dc20b747f8af3904967ab',1,'dcn::registry']]]
 ];

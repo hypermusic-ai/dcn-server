@@ -133,6 +133,16 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:ad11599a876bcfd4dc4a39dc47e3fbedc" id="r_ad11599a876bcfd4dc4a39dc47e3fbedc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::int64_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#ad11599a876bcfd4dc4a39dc47e3fbedc">parseHexQuantity</a> (const std::string &amp;value)</td></tr>
+<tr class="separator:ad11599a876bcfd4dc4a39dc47e3fbedc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95dc94fc85398415edc97e255192ee02" id="r_a95dc94fc85398415edc97e255192ee02"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="namespacedcn_1_1events.html#a365467bc65ab757b090a99d4f45a21ec">dcn::events::EventState</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a95dc94fc85398415edc97e255192ee02">parseEventState</a> (const std::string &amp;value)</td></tr>
+<tr class="separator:a95dc94fc85398415edc97e255192ee02"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19b952e38b2f845335fb15d8c8cf23a0" id="r_a19b952e38b2f845335fb15d8c8cf23a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="namespacedcn_1_1events.html#a1b3290c3986edfad7e94637c9ca26e0a">dcn::events::EventType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a19b952e38b2f845335fb15d8c8cf23a0">parseEventType</a> (const std::string &amp;value)</td></tr>
+<tr class="separator:a19b952e38b2f845335fb15d8c8cf23a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1d9a1bb7008bef23ee645f24b71d258" id="r_ad1d9a1bb7008bef23ee645f24b71d258"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1events_1_1RawChainLog.html">dcn::events::RawChainLog</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#ad1d9a1bb7008bef23ee645f24b71d258">parseRawLog</a> (const <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> &amp;log_json, const std::int64_t seen_at_ms, int chain_id)</td></tr>
+<tr class="separator:ad1d9a1bb7008bef23ee645f24b71d258"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b52fb4c38581925aac75888001384ca" id="r_a1b52fb4c38581925aac75888001384ca"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1events_1_1CursorKey.html">events::CursorKey</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a1b52fb4c38581925aac75888001384ca">parseHistoryCursor</a> (const std::string &amp;cursor)</td></tr>
+<tr class="separator:a1b52fb4c38581925aac75888001384ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a23b7828fd641751e92aefd8569c06b88" id="r_a23b7828fd641751e92aefd8569c06b88"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1http.html#aad74d4f2478c6cc863561ebcf03699a9">http::Header</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a23b7828fd641751e92aefd8569c06b88">parseHeaderFromString</a> (const std::string &amp;header_str)</td></tr>
 <tr class="memdesc:a23b7828fd641751e92aefd8569c06b88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse a header string to a Header enum.  <br /></td></tr>
 <tr class="separator:a23b7828fd641751e92aefd8569c06b88"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -484,8 +494,8 @@ Functions</h2></td></tr>
 <tr class="memitem:acf6fe1b9943960225181b8ee124b0902"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; TransformationRecord &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#acf6fe1b9943960225181b8ee124b0902">parseFromJson</a> (std::string json_str, <a class="el" href="structdcn_1_1parse_1_1use__protobuf__t.html">use_protobuf_t</a>)</td></tr>
 <tr class="memdesc:acf6fe1b9943960225181b8ee124b0902"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a JSON string to a condition object using Protobuf.  <br /></td></tr>
 <tr class="separator:acf6fe1b9943960225181b8ee124b0902"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a759a1aa7170657ecddc4ca25334febfb" id="r_a759a1aa7170657ecddc4ca25334febfb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="namespacedcn_1_1storage.html#ad056a19a83f3cb0a4b0404f8a5394c35">storage::NameCursor</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a759a1aa7170657ecddc4ca25334febfb">parseNameCursor</a> (const std::string &amp;name_token)</td></tr>
-<tr class="separator:a759a1aa7170657ecddc4ca25334febfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad90fa0c1c4e631929b24a9b798d0e9c8" id="r_ad90fa0c1c4e631929b24a9b798d0e9c8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="namespacedcn_1_1registry.html#a116334ca340dc20b747f8af3904967ab">registry::NameCursor</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#ad90fa0c1c4e631929b24a9b798d0e9c8">parseNameCursor</a> (const std::string &amp;name_token)</td></tr>
+<tr class="separator:ad90fa0c1c4e631929b24a9b798d0e9c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a11d4101b517cd0e5cfdc91d3813544d0" id="r_a11d4101b517cd0e5cfdc91d3813544d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; evmc::bytes32 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1parse.html#a11d4101b517cd0e5cfdc91d3813544d0">parseFormatCursorHex</a> (const std::string &amp;cursor_token)</td></tr>
 <tr class="separator:a11d4101b517cd0e5cfdc91d3813544d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1f3fe62d8791af1fb63333cf8fb411fb" id="r_a1f3fe62d8791af1fb63333cf8fb411fb"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
@@ -652,6 +662,42 @@ template&lt;&gt; </div>
           <td>(</td>
           <td class="paramtype">const std::vector&lt; uint8_t &gt; &amp;&#160;</td>
           <td class="paramname"><em>bytes</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a95dc94fc85398415edc97e255192ee02" name="a95dc94fc85398415edc97e255192ee02"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a95dc94fc85398415edc97e255192ee02">&#9670;&#160;</a></span>parseEventState()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="namespacedcn_1_1events.html#a365467bc65ab757b090a99d4f45a21ec">events::EventState</a> &gt; dcn::parse::parseEventState </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a19b952e38b2f845335fb15d8c8cf23a0" name="a19b952e38b2f845335fb15d8c8cf23a0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19b952e38b2f845335fb15d8c8cf23a0">&#9670;&#160;</a></span>parseEventType()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="namespacedcn_1_1events.html#a1b3290c3986edfad7e94637c9ca26e0a">events::EventType</a> &gt; dcn::parse::parseEventType </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -2532,6 +2578,42 @@ template&lt;&gt; </div>
 
 </div>
 </div>
+<a id="ad11599a876bcfd4dc4a39dc47e3fbedc" name="ad11599a876bcfd4dc4a39dc47e3fbedc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad11599a876bcfd4dc4a39dc47e3fbedc">&#9670;&#160;</a></span>parseHexQuantity()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; std::int64_t &gt; dcn::parse::parseHexQuantity </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1b52fb4c38581925aac75888001384ca" name="a1b52fb4c38581925aac75888001384ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b52fb4c38581925aac75888001384ca">&#9670;&#160;</a></span>parseHistoryCursor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1events_1_1CursorKey.html">events::CursorKey</a> &gt; dcn::parse::parseHistoryCursor </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a4579b9652a3b7c60cae457a7ea2a6ab6" name="a4579b9652a3b7c60cae457a7ea2a6ab6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4579b9652a3b7c60cae457a7ea2a6ab6">&#9670;&#160;</a></span>parseMethodFromString()</h2>
 
@@ -2559,18 +2641,52 @@ template&lt;&gt; </div>
 
 </div>
 </div>
-<a id="a759a1aa7170657ecddc4ca25334febfb" name="a759a1aa7170657ecddc4ca25334febfb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a759a1aa7170657ecddc4ca25334febfb">&#9670;&#160;</a></span>parseNameCursor()</h2>
+<a id="ad90fa0c1c4e631929b24a9b798d0e9c8" name="ad90fa0c1c4e631929b24a9b798d0e9c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad90fa0c1c4e631929b24a9b798d0e9c8">&#9670;&#160;</a></span>parseNameCursor()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="namespacedcn_1_1storage.html#ad056a19a83f3cb0a4b0404f8a5394c35">storage::NameCursor</a> &gt; dcn::parse::parseNameCursor </td>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="namespacedcn_1_1registry.html#a116334ca340dc20b747f8af3904967ab">registry::NameCursor</a> &gt; dcn::parse::parseNameCursor </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>name_token</em></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad1d9a1bb7008bef23ee645f24b71d258" name="ad1d9a1bb7008bef23ee645f24b71d258"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1d9a1bb7008bef23ee645f24b71d258">&#9670;&#160;</a></span>parseRawLog()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacedcn_1_1parse.html#a823d8d2707ef0a0a282e642d94b30602">Result</a>&lt; <a class="el" href="structdcn_1_1events_1_1RawChainLog.html">dcn::events::RawChainLog</a> &gt; dcn::parse::parseRawLog </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="parser_8hpp.html#ab701e3ac61a85b337ec5c1abaad6742d">json</a> &amp;&#160;</td>
+          <td class="paramname"><em>log_json</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::int64_t&#160;</td>
+          <td class="paramname"><em>seen_at_ms</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>chain_id</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">

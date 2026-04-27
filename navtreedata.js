@@ -43,7 +43,8 @@ var NAVTREE =
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", "functions_dup" ],
         [ "Functions", "functions_func.html", "functions_func" ],
-        [ "Variables", "functions_vars.html", null ],
+        [ "Variables", "functions_vars.html", "functions_vars" ],
+        [ "Typedefs", "functions_type.html", null ],
         [ "Enumerations", "functions_enum.html", null ]
       ] ]
     ] ],
@@ -63,14 +64,17 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "address_8cpp.html",
-"classdcn_1_1evm_1_1EVM.html#aee6d85a27a62c7fd4227cf6eb77c4688",
-"classdcn_1_1storage_1_1IRegistryStore.html#a51abb084958fab1f50854f759d65e421",
-"connector_8hpp.html#a2d9c8777c5662f5f8847051bdb4efd1f",
-"http__headers_8hpp.html#aad74d4f2478c6cc863561ebcf03699a9a132d1f967127cbce22710ae8939b0ad3",
-"namespacedcn_1_1http.html#a85103dcaf4539b1939d3a039e2f7e4ffaecbf01325f1c744e9d7bb586ac2eb5ed",
-"particles_8cpp.html#aa4d2df1da8189b74c27f25070de9ae66",
-"structdcn_1_1config_1_1Config.html#a528615d2917e69253540788689868f9d",
-"structdcn_1_1utils_1_1LogoUnicode__t.html"
+"classdcn_1_1events_1_1EventRuntime.html#a3f8beea9009767b5f9d1a37a349ab1a1",
+"classdcn_1_1http_1_1MessageBase.html#a025d7be859bf9aa933c43a13ef3c92e8",
+"classdcn_1_1registry_1_1SQLiteRegistryStore.html#a93688e3901b01b752fd8bb80392a23c8",
+"crypto_8hpp.html",
+"functions_func_s.html",
+"namespacedcn_1_1chain.html#a01aa0bdc8cabaf84a06184b41ec2a858",
+"namespacedcn_1_1parse.html#acf6fe1b9943960225181b8ee124b0902",
+"structdcn_1_1auth_1_1AuthError.html#a2e31dda5e3cc541cc10212756b52b57ca865c16f9916ff3298a555db1c0069be1",
+"structdcn_1_1events_1_1EventKey.html#a1a02501818beb9d7666a6cccea8b1b33",
+"structdcn_1_1events_1_1RawChainLog.html#a9e84d40dfbc89e6c30b9e3ee8f1a600d",
+"structdcn_1_1registry_1_1NameCursorPage.html#a3caecc758cfaa331ca769985c7cf38b0"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

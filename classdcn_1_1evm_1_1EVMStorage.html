@@ -117,6 +117,8 @@ Inheritance diagram for dcn::evm::EVMStorage:</div>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1evm_1_1EVMStorage_1_1Account.html">Account</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcn_1_1evm_1_1EVMStorage_1_1EmittedLogRecord.html">EmittedLogRecord</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -158,6 +160,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a53a6a31bc389b5540c50c803a3f4db48"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a30b939883c437e47ca034707ab8fe495" id="r_a30b939883c437e47ca034707ab8fe495"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1evm_1_1EVMStorage.html#a30b939883c437e47ca034707ab8fe495">set_transient_storage</a> (const evmc::address &amp;addr, const evmc::bytes32 &amp;key, const evmc::bytes32 &amp;value) noexcept override</td></tr>
 <tr class="separator:a30b939883c437e47ca034707ab8fe495"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8786117acefbb9a0de1aaeb63bfd2ccd" id="r_a8786117acefbb9a0de1aaeb63bfd2ccd"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structdcn_1_1evm_1_1EVMStorage_1_1EmittedLogRecord.html">EmittedLogRecord</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1evm_1_1EVMStorage.html#a8786117acefbb9a0de1aaeb63bfd2ccd">get_logs_since</a> (std::uint64_t after_seq, std::size_t limit) const</td></tr>
+<tr class="separator:a8786117acefbb9a0de1aaeb63bfd2ccd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a081d7c1fefc70e315451f52e915702e5" id="r_a081d7c1fefc70e315451f52e915702e5"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdcn_1_1evm_1_1EVMStorage.html#a081d7c1fefc70e315451f52e915702e5">head_block_number</a> () const noexcept</td></tr>
+<tr class="separator:a081d7c1fefc70e315451f52e915702e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -678,6 +684,34 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a8786117acefbb9a0de1aaeb63bfd2ccd" name="a8786117acefbb9a0de1aaeb63bfd2ccd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8786117acefbb9a0de1aaeb63bfd2ccd">&#9670;&#160;</a></span>get_logs_since()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="structdcn_1_1evm_1_1EVMStorage_1_1EmittedLogRecord.html">EVMStorage::EmittedLogRecord</a> &gt; dcn::evm::EVMStorage::get_logs_since </td>
+          <td>(</td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>after_seq</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>limit</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ad83015033595b41d24f6556f7cef9218" name="ad83015033595b41d24f6556f7cef9218"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad83015033595b41d24f6556f7cef9218">&#9670;&#160;</a></span>get_storage()</h2>
 
@@ -769,6 +803,31 @@ Protected Member Functions</h2></td></tr>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">override</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a081d7c1fefc70e315451f52e915702e5" name="a081d7c1fefc70e315451f52e915702e5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a081d7c1fefc70e315451f52e915702e5">&#9670;&#160;</a></span>head_block_number()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::int64_t dcn::evm::EVMStorage::head_block_number </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">

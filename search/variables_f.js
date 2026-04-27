@@ -1,14 +1,20 @@
 var searchData=
 [
-  ['raw_5fbytes_0',['raw_bytes',['../sepolia__backend_8cpp.html#a613dabd2c5a7d679dea5b1547d537f85',1,'sepolia_backend.cpp']]],
-  ['receipt_5fpoll_5finterval_5fms_1',['receipt_poll_interval_ms',['../structdcn_1_1sepolia_1_1BackendConfig.html#acabea7fc74a36fce25de1f1bde3dfecb',1,'dcn::sepolia::BackendConfig']]],
-  ['record_2',['record',['../structdcn_1_1storage_1_1ConnectorBatchItem.html#a40e6298a891716b738606b82d399ab9f',1,'dcn::storage::ConnectorBatchItem::record'],['../structdcn_1_1storage_1_1TransformationBatchItem.html#a5fdc7d7bbb15bc69f7e8a04238d2de48',1,'dcn::storage::TransformationBatchItem::record'],['../structdcn_1_1storage_1_1ConditionBatchItem.html#a6db452dee37143c0efe30c0a60b09755',1,'dcn::storage::ConditionBatchItem::record']]],
-  ['registry_5faddress_3',['registry_address',['../structdcn_1_1config_1_1IngestionConfig.html#a55cc3cd3f0ee329a454cf90fe1283c31',1,'dcn::config::IngestionConfig']]],
-  ['registry_5fdb_4',['registry_db',['../structdcn_1_1config_1_1Config.html#aabf8a042f6aa424186e64893ffc7703f',1,'dcn::config::Config']]],
-  ['registry_5fwal_5fsync_5fms_5',['registry_wal_sync_ms',['../structdcn_1_1config_1_1Config.html#af9a724633b31923dbe12a73596f57b52',1,'dcn::config::Config']]],
-  ['requirement_6',['requirement',['../structdcn_1_1server_1_1RouteArgDef.html#af1a624598197b9c876ff351e7d860d76',1,'dcn::server::RouteArgDef']]],
-  ['resources_5fpath_7',['resources_path',['../structdcn_1_1config_1_1Config.html#a90ce95891a307dfedbbeb08608ccbf74',1,'dcn::config::Config']]],
-  ['result_5fbytes_8',['result_bytes',['../structdcn_1_1chain_1_1DeployError.html#ab3b82195fff47cefde271360e1962222',1,'dcn::chain::DeployError::result_bytes'],['../structdcn_1_1chain_1_1ExecuteError.html#a2c9f01222215ae02f18d7ee5dcae0f02',1,'dcn::chain::ExecuteError::result_bytes']]],
-  ['rpc_5fcall_9',['rpc_call',['../structdcn_1_1chain_1_1IngestionRuntimeOptions.html#af390bfd7f9473633956fb9d51dfa2cbe',1,'dcn::chain::IngestionRuntimeOptions']]],
-  ['rpc_5furl_10',['rpc_url',['../structdcn_1_1config_1_1IngestionConfig.html#a382ef16c31f254fa180ecbe6b6fc1984',1,'dcn::config::IngestionConfig::rpc_url'],['../structdcn_1_1sepolia_1_1BackendConfig.html#a3f6112970b06308ce6ea55ec30db2aa5',1,'dcn::sepolia::BackendConfig::rpc_url']]]
+  ['raw_0',['raw',['../structdcn_1_1events_1_1DecodedEvent.html#ac9a45d0ed1edfeedcd2e8ebb0447527e',1,'dcn::events::DecodedEvent']]],
+  ['raw_5fbytes_1',['raw_bytes',['../sepolia__backend_8cpp.html#a613dabd2c5a7d679dea5b1547d537f85',1,'sepolia_backend.cpp']]],
+  ['receipt_5fpoll_5finterval_5fms_2',['receipt_poll_interval_ms',['../structdcn_1_1sepolia_1_1BackendConfig.html#acabea7fc74a36fce25de1f1bde3dfecb',1,'dcn::sepolia::BackendConfig']]],
+  ['record_3',['record',['../structdcn_1_1registry_1_1ConnectorBatchItem.html#a64e5400ee518585bf3ca0e04f59c20a9',1,'dcn::registry::ConnectorBatchItem::record'],['../structdcn_1_1registry_1_1TransformationBatchItem.html#a629feb9d4716417fad12db38b47be9af',1,'dcn::registry::TransformationBatchItem::record'],['../structdcn_1_1registry_1_1ConditionBatchItem.html#a99dd2b329367970e0fa58392d36e49c8',1,'dcn::registry::ConditionBatchItem::record']]],
+  ['registry_5faddress_4',['registry_address',['../structdcn_1_1config_1_1IngestionConfig.html#a55cc3cd3f0ee329a454cf90fe1283c31',1,'dcn::config::IngestionConfig::registry_address'],['../structdcn_1_1events_1_1EventRuntimeConfig.html#a4d410ee0096de08f22142bcf6290a72b',1,'dcn::events::EventRuntimeConfig::registry_address']]],
+  ['registry_5fdb_5',['registry_db',['../structdcn_1_1config_1_1Config.html#aabf8a042f6aa424186e64893ffc7703f',1,'dcn::config::Config']]],
+  ['registry_5fwal_5fsync_5fms_6',['registry_wal_sync_ms',['../structdcn_1_1config_1_1Config.html#af9a724633b31923dbe12a73596f57b52',1,'dcn::config::Config']]],
+  ['removed_7',['removed',['../structdcn_1_1events_1_1RawChainLog.html#af4fc78d9ff9cd9c418f7c3949f7f0f93',1,'dcn::events::RawChainLog']]],
+  ['removed_5fstate_8',['REMOVED_STATE',['../namespacedcn_1_1events.html#ab19cbc149a670dd6f784b8810cf6c2a0',1,'dcn::events']]],
+  ['reorg_5fwindow_5fblocks_9',['reorg_window_blocks',['../structdcn_1_1events_1_1EventRuntimeConfig.html#a437819e8208d7b354b31e2168f9980e4',1,'dcn::events::EventRuntimeConfig']]],
+  ['replay_5ffloor_5fseq_10',['replay_floor_seq',['../structdcn_1_1events_1_1StreamPage.html#a3be2c293f3e46143244ab9653b0a567b',1,'dcn::events::StreamPage']]],
+  ['requirement_11',['requirement',['../structdcn_1_1server_1_1RouteArgDef.html#af1a624598197b9c876ff351e7d860d76',1,'dcn::server::RouteArgDef']]],
+  ['resources_5fpath_12',['resources_path',['../structdcn_1_1config_1_1Config.html#a90ce95891a307dfedbbeb08608ccbf74',1,'dcn::config::Config']]],
+  ['result_5fbytes_13',['result_bytes',['../structdcn_1_1chain_1_1DeployError.html#ab3b82195fff47cefde271360e1962222',1,'dcn::chain::DeployError::result_bytes'],['../structdcn_1_1chain_1_1ExecuteError.html#a2c9f01222215ae02f18d7ee5dcae0f02',1,'dcn::chain::ExecuteError::result_bytes']]],
+  ['rpc_5fcall_14',['rpc_call',['../structdcn_1_1chain_1_1IngestionRuntimeOptions.html#af390bfd7f9473633956fb9d51dfa2cbe',1,'dcn::chain::IngestionRuntimeOptions']]],
+  ['rpc_5ftimeout_5fms_15',['rpc_timeout_ms',['../structdcn_1_1events_1_1EventRuntimeConfig.html#a8c67a7a101c3c0eafe37dffbe9486b64',1,'dcn::events::EventRuntimeConfig']]],
+  ['rpc_5furl_16',['rpc_url',['../structdcn_1_1config_1_1IngestionConfig.html#a382ef16c31f254fa180ecbe6b6fc1984',1,'dcn::config::IngestionConfig::rpc_url'],['../structdcn_1_1events_1_1EventRuntimeConfig.html#ac93291521339f2cc8367b42404392372',1,'dcn::events::EventRuntimeConfig::rpc_url'],['../structdcn_1_1sepolia_1_1BackendConfig.html#a3f6112970b06308ce6ea55ec30db2aa5',1,'dcn::sepolia::BackendConfig::rpc_url']]]
 ];

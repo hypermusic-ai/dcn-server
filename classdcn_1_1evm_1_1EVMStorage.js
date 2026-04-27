@@ -1,6 +1,7 @@
 var classdcn_1_1evm_1_1EVMStorage =
 [
     [ "Account", "structdcn_1_1evm_1_1EVMStorage_1_1Account.html", "structdcn_1_1evm_1_1EVMStorage_1_1Account" ],
+    [ "EmittedLogRecord", "structdcn_1_1evm_1_1EVMStorage_1_1EmittedLogRecord.html", "structdcn_1_1evm_1_1EVMStorage_1_1EmittedLogRecord" ],
     [ "EVMStorage", "classdcn_1_1evm_1_1EVMStorage.html#a08b1c36e82deb5eb191d95cb56ba1471", null ],
     [ "access_account", "classdcn_1_1evm_1_1EVMStorage.html#a8c49fa12dc84ae256f9ff96742718ed9", null ],
     [ "access_storage", "classdcn_1_1evm_1_1EVMStorage.html#abac7d95e92edac91e037bb74658caa5e", null ],
@@ -16,9 +17,11 @@ var classdcn_1_1evm_1_1EVMStorage =
     [ "get_block_hash", "classdcn_1_1evm_1_1EVMStorage.html#a2b33a491aa9019a33e6718afce01b131", null ],
     [ "get_code_hash", "classdcn_1_1evm_1_1EVMStorage.html#ad4a34472f337013490f563a4d2040435", null ],
     [ "get_code_size", "classdcn_1_1evm_1_1EVMStorage.html#ae1ef0b47edbf07df9434c74064f48843", null ],
+    [ "get_logs_since", "classdcn_1_1evm_1_1EVMStorage.html#a8786117acefbb9a0de1aaeb63bfd2ccd", null ],
     [ "get_storage", "classdcn_1_1evm_1_1EVMStorage.html#ad83015033595b41d24f6556f7cef9218", null ],
     [ "get_transient_storage", "classdcn_1_1evm_1_1EVMStorage.html#a53a6a31bc389b5540c50c803a3f4db48", null ],
     [ "get_tx_context", "classdcn_1_1evm_1_1EVMStorage.html#a57595b551175aff5451483f7ab295c5e", null ],
+    [ "head_block_number", "classdcn_1_1evm_1_1EVMStorage.html#a081d7c1fefc70e315451f52e915702e5", null ],
     [ "selfdestruct", "classdcn_1_1evm_1_1EVMStorage.html#a89e9b16e7f6883034c83604afbb996e1", null ],
     [ "set_balance", "classdcn_1_1evm_1_1EVMStorage.html#a04c1841d919c72a3abd7699d1d1814c6", null ],
     [ "set_storage", "classdcn_1_1evm_1_1EVMStorage.html#a3b0e5ba091c8b33ffa02e82ff47f28bd", null ],

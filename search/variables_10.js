@@ -1,12 +1,24 @@
 var searchData=
 [
-  ['scalar_0',['scalar',['../structdcn_1_1chain_1_1ScalarLabel.html#ad252be54089861a67a81ebf45706bda4',1,'dcn::chain::ScalarLabel']]],
-  ['scalar_5fhash_1',['scalar_hash',['../structdcn_1_1chain_1_1ScalarHashEntry.html#a1d642992302c6c1dda36bc7b6765fe70',1,'dcn::chain::ScalarHashEntry']]],
-  ['signer_5faddress_2',['signer_address',['../structdcn_1_1chain_1_1DeployReceipt.html#ad1fc44a9756c212666b9f2e28de9f498',1,'dcn::chain::DeployReceipt']]],
-  ['skip_5fsleep_3',['skip_sleep',['../structdcn_1_1chain_1_1IngestionRuntimeOptions.html#a387495a9c4b768f3db287d29f57062c2',1,'dcn::chain::IngestionRuntimeOptions']]],
-  ['stack_5fref_4',['stack_ref',['../loader_8cpp.html#aa61eb555e4ca945ff45f1a8bf5111c9a',1,'loader.cpp']]],
-  ['staged_5fconnectors_5',['staged_connectors',['../registry_8cpp.html#a79ae241da3f72d47d26aba6710f6d4d3',1,'registry.cpp']]],
-  ['storage_6',['storage',['../structdcn_1_1evm_1_1EVMStorage_1_1Account.html#aeb805928d10d7344c967c76554a20527',1,'dcn::evm::EVMStorage::Account']]],
-  ['storage_5fpath_7',['storage_path',['../structdcn_1_1config_1_1Config.html#a490dc8f75e6aa7fd976fc74a6c05f5be',1,'dcn::config::Config']]],
-  ['store_8',['store',['../registry_8cpp.html#a5d8b59dc54b5778394b05e932e064aab',1,'registry.cpp']]]
+  ['safe_0',['safe',['../structdcn_1_1events_1_1FinalityHeights.html#afa88fd7ba5fe6e9afe5e1e6d6790a250',1,'dcn::events::FinalityHeights']]],
+  ['safe_5fblock_1',['safe_block',['../structdcn_1_1events_1_1FinalityState.html#a91cebf842414011154110fa941aadd16',1,'dcn::events::FinalityState']]],
+  ['safe_5fstate_2',['SAFE_STATE',['../namespacedcn_1_1events.html#a56d466036896af9ae4ce14bb295e033b',1,'dcn::events']]],
+  ['scalar_3',['scalar',['../structdcn_1_1chain_1_1ScalarLabel.html#ad252be54089861a67a81ebf45706bda4',1,'dcn::chain::ScalarLabel']]],
+  ['scalar_5fhash_4',['scalar_hash',['../structdcn_1_1chain_1_1ScalarHashEntry.html#a1d642992302c6c1dda36bc7b6765fe70',1,'dcn::chain::ScalarHashEntry']]],
+  ['seen_5fat_5fms_5',['seen_at_ms',['../structdcn_1_1events_1_1RawChainLog.html#af919ac75a4360847fb57c7fc11a2e9c4',1,'dcn::events::RawChainLog::seen_at_ms'],['../structdcn_1_1events_1_1ChainBlockInfo.html#aa1669f69c29dc0f9e2bb18594605136c',1,'dcn::events::ChainBlockInfo::seen_at_ms'],['../structdcn_1_1events_1_1NormalizedArchiveRow.html#a4cb503cadd6b31647d532b646481a0a6',1,'dcn::events::NormalizedArchiveRow::seen_at_ms']]],
+  ['seq_6',['seq',['../structdcn_1_1evm_1_1EVMStorage_1_1EmittedLogRecord.html#aea8b827fd290edbdf2930ec32614e9ab',1,'dcn::evm::EVMStorage::EmittedLogRecord']]],
+  ['signer_5faddress_7',['signer_address',['../structdcn_1_1chain_1_1DeployReceipt.html#ad1fc44a9756c212666b9f2e28de9f498',1,'dcn::chain::DeployReceipt']]],
+  ['since_5fseq_8',['since_seq',['../structdcn_1_1events_1_1StreamQuery.html#a779351eac62ac3097adf1a6f84559d04',1,'dcn::events::StreamQuery']]],
+  ['skip_5fsleep_9',['skip_sleep',['../structdcn_1_1chain_1_1IngestionRuntimeOptions.html#a387495a9c4b768f3db287d29f57062c2',1,'dcn::chain::IngestionRuntimeOptions']]],
+  ['stack_5fref_10',['stack_ref',['../loader_8cpp.html#aa61eb555e4ca945ff45f1a8bf5111c9a',1,'loader.cpp']]],
+  ['staged_5fconnectors_11',['staged_connectors',['../registry_8cpp.html#a79ae241da3f72d47d26aba6710f6d4d3',1,'registry.cpp']]],
+  ['stale_5fsince_5fseq_12',['stale_since_seq',['../structdcn_1_1events_1_1StreamPage.html#aa2b490ae3a8c358dcefaedf9eb48f5eb',1,'dcn::events::StreamPage']]],
+  ['start_5fblock_13',['start_block',['../structdcn_1_1events_1_1EventRuntimeConfig.html#a6c1ade600c1778e84e50f3fed62556c9',1,'dcn::events::EventRuntimeConfig::start_block'],['../structdcn_1_1config_1_1IngestionConfig.html#a98def680ce82c86feaf3164ddf2ce801',1,'dcn::config::IngestionConfig::start_block']]],
+  ['start_5fblock_5ftime_14',['start_block_time',['../structdcn_1_1events_1_1MonthBounds.html#a54c4822e1d3d30eb78df18b9f5717240',1,'dcn::events::MonthBounds']]],
+  ['state_15',['state',['../structdcn_1_1events_1_1NormalizedArchiveRow.html#a7b8a85a68dc2469b3181174c66dfe5e8',1,'dcn::events::NormalizedArchiveRow::state'],['../structdcn_1_1events_1_1DecodedEvent.html#a5e09c39644dab3a902f7eb1d2f49561c',1,'dcn::events::DecodedEvent::state']]],
+  ['status_16',['status',['../structdcn_1_1events_1_1FeedItem.html#ac05e6aa904c83090348f1185e8589a97',1,'dcn::events::FeedItem::status'],['../structdcn_1_1events_1_1StreamDelta.html#adee61477ee07affe4df1afdfc7043585',1,'dcn::events::StreamDelta::status'],['../structdcn_1_1events_1_1FeedArchiveRow.html#ac0f9da0b53e499688258ff2d83a48224',1,'dcn::events::FeedArchiveRow::status']]],
+  ['storage_17',['storage',['../structdcn_1_1evm_1_1EVMStorage_1_1Account.html#aeb805928d10d7344c967c76554a20527',1,'dcn::evm::EVMStorage::Account']]],
+  ['storage_5fpath_18',['storage_path',['../structdcn_1_1config_1_1Config.html#a490dc8f75e6aa7fd976fc74a6c05f5be',1,'dcn::config::Config']]],
+  ['store_19',['store',['../registry_8cpp.html#a5d8b59dc54b5778394b05e932e064aab',1,'registry.cpp']]],
+  ['stream_5fseq_20',['stream_seq',['../structdcn_1_1events_1_1StreamDelta.html#ad016db0e156c59c924f5d016a83a8121',1,'dcn::events::StreamDelta']]]
 ];

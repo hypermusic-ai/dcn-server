@@ -6,6 +6,7 @@ var dir_279cbe7663829d487e97774a2345ea4e =
     [ "api_condition.cpp", "api__condition_8cpp.html", "api__condition_8cpp" ],
     [ "api_connector.cpp", "api__connector_8cpp.html", "api__connector_8cpp" ],
     [ "api_execute.cpp", "api__execute_8cpp.html", "api__execute_8cpp" ],
+    [ "api_feed.cpp", "api__feed_8cpp.html", "api__feed_8cpp" ],
     [ "api_file.cpp", "api__file_8cpp.html", "api__file_8cpp" ],
     [ "api_format.cpp", "api__format_8cpp.html", "api__format_8cpp" ],
     [ "api_transformation.cpp", "api__transformation_8cpp.html", "api__transformation_8cpp" ]

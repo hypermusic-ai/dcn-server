@@ -4,6 +4,8 @@ var classdcn_1_1server_1_1Server =
     [ "~Server", "classdcn_1_1server_1_1Server.html#acec9f132e1c4387d0ce305eb91988c3b", null ],
     [ "addRoute", "classdcn_1_1server_1_1Server.html#afa94b51405a939843129e02ec374748d", null ],
     [ "addRoute", "classdcn_1_1server_1_1Server.html#aaaf32d78ae3072fe426d94f9adf14592", null ],
+    [ "addStreamingRoute", "classdcn_1_1server_1_1Server.html#a1d263218b9d73b32c681a19584979048", null ],
+    [ "addStreamingRoute", "classdcn_1_1server_1_1Server.html#af513e059fd78baee65769d9bf1955794", null ],
     [ "close", "classdcn_1_1server_1_1Server.html#a857966339be8d3b0f05b04db60387a49", null ],
     [ "handleConnection", "classdcn_1_1server_1_1Server.html#a2de80db5852a886c42d4e09ca16ba7e1", null ],
     [ "listen", "classdcn_1_1server_1_1Server.html#a23e71707c32032d51ee4bea866262849", null ],

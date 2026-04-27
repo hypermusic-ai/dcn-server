@@ -130,6 +130,9 @@ Classes</h2></td></tr>
 Typedefs</h2></td></tr>
 <tr class="memitem:a87e4cf0b25a5b64b428f5b13dfdb86c8" id="r_a87e4cf0b25a5b64b428f5b13dfdb86c8"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">QueryArgsList</a> = absl::flat_hash_map&lt; std::string, <a class="el" href="classdcn_1_1server_1_1RouteArg.html">RouteArg</a> &gt;</td></tr>
 <tr class="separator:a87e4cf0b25a5b64b428f5b13dfdb86c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44f203ebb7db74fe58cafae27255987a" id="r_a44f203ebb7db74fe58cafae27255987a"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1server.html#a44f203ebb7db74fe58cafae27255987a">StreamingHandlerDefinition</a> = std::function&lt; asio::awaitable&lt; void &gt;(asio::ip::tcp::socket &amp;, const <a class="el" href="classdcn_1_1http_1_1Request.html">dcn::http::Request</a> &amp;, std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">RouteArg</a> &gt;, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">QueryArgsList</a>, std::chrono::steady_clock::time_point &amp;)&gt;</td></tr>
+<tr class="memdesc:a44f203ebb7db74fe58cafae27255987a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Streaming handler signature.  <br /></td></tr>
+<tr class="separator:a44f203ebb7db74fe58cafae27255987a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1b911fe729d02d6eb0ad5460e3ee8ad" id="r_ab1b911fe729d02d6eb0ad5460e3ee8ad"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedcn_1_1server.html#ab1b911fe729d02d6eb0ad5460e3ee8ad">HandlerDefinition</a> = std::function&lt; asio::awaitable&lt; <a class="el" href="classdcn_1_1http_1_1Response.html">dcn::http::Response</a> &gt;(const <a class="el" href="classdcn_1_1http_1_1Request.html">dcn::http::Request</a> &amp;, std::vector&lt; <a class="el" href="classdcn_1_1server_1_1RouteArg.html">RouteArg</a> &gt;, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">QueryArgsList</a>)&gt;</td></tr>
 <tr class="memdesc:ab1b911fe729d02d6eb0ad5460e3ee8ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type representing a route handler function.  <br /></td></tr>
 <tr class="separator:ab1b911fe729d02d6eb0ad5460e3ee8ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -191,6 +194,23 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a44f203ebb7db74fe58cafae27255987a" name="a44f203ebb7db74fe58cafae27255987a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a44f203ebb7db74fe58cafae27255987a">&#9670;&#160;</a></span>StreamingHandlerDefinition</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespacedcn_1_1server.html#a44f203ebb7db74fe58cafae27255987a">dcn::server::StreamingHandlerDefinition</a> = typedef std::function&lt;asio::awaitable&lt;void&gt;( asio::ip::tcp::socket &amp;, const <a class="el" href="classdcn_1_1http_1_1Request.html">dcn::http::Request</a> &amp;, std::vector&lt;<a class="el" href="classdcn_1_1server_1_1RouteArg.html">RouteArg</a>&gt;, <a class="el" href="namespacedcn_1_1server.html#a87e4cf0b25a5b64b428f5b13dfdb86c8">QueryArgsList</a>, std::chrono::steady_clock::time_point &amp;)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Streaming handler signature. </p>
+<p>Long-lived handlers (SSE, chunked transfer, etc.) own the socket for the full lifetime of the request. They are responsible for writing the entire HTTP response — status line, headers, and body — and for refreshing <code>deadline</code> so the connection-level watchdog does not trip during healthy streaming. </p>
 
 </div>
 </div>
