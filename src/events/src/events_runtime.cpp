@@ -2,6 +2,7 @@
 #include <chrono>
 #include <exception>
 #include <limits>
+#include <memory>
 #include <spdlog/spdlog.h>
 #include <tuple>
 #include <variant>
@@ -13,6 +14,7 @@
 #include "parser.hpp"
 #include "chain.hpp"
 #include "evm.hpp"
+#include "rpc_client.hpp"
 
 namespace dcn::events
 {
@@ -26,21 +28,106 @@ namespace dcn::events
         return config.use_local_evm_source ? "local" : "eth";
     }
 
-    static std::int64_t _reorgLookbackStart(const std::int64_t next_from_block, const std::size_t reorg_window_blocks)
+    std::int64_t reorgLookbackStart(const std::int64_t next_from_block, const std::size_t reorg_window_blocks)
     {
         const std::int64_t lookback_blocks = static_cast<std::int64_t>(reorg_window_blocks);
         return (next_from_block > lookback_blocks) ? (next_from_block - lookback_blocks) : 0;
     }
 
-    std::int64_t reorgLookbackStart(const std::int64_t next_from_block, const std::size_t reorg_window_blocks)
+    static std::optional<std::int64_t> _parseEthTaggedBlockNumberResult(const json & result)
     {
-        return _reorgLookbackStart(next_from_block, reorg_window_blocks);
+        if(!result.is_object() || result.is_null())
+        {
+            return std::nullopt;
+        }
+
+        const auto number_it = result.find("number");
+        if(number_it == result.end() || !number_it->is_string())
+        {
+            return std::nullopt;
+        }
+
+        const auto parsed = parse::parseHexQuantity(number_it->get<std::string>());
+        if(!parsed.has_value())
+        {
+            return std::nullopt;
+        }
+
+        return *parsed;
+    }
+
+    static std::optional<std::int64_t> _parseEthHeadBlockNumberResult(const json & result)
+    {
+        if(!result.is_string())
+        {
+            return std::nullopt;
+        }
+
+        const auto parsed = parse::parseHexQuantity(result.get<std::string>());
+        if(!parsed.has_value())
+        {
+            return std::nullopt;
+        }
+
+        return *parsed;
+    }
+
+    static std::optional<ChainBlockInfo> _parseEthBlockInfoResult(
+        const json & result,
+        const std::int64_t requested_block_number,
+        const int chain_id)
+    {
+        if(!result.is_object() || result.is_null())
+        {
+            return std::nullopt;
+        }
+
+        if(!result.contains("number") || !result.at("number").is_string() ||
+            !result.contains("hash") || !result.at("hash").is_string() ||
+            !result.contains("parentHash") || !result.at("parentHash").is_string() ||
+            !result.contains("timestamp") || !result.at("timestamp").is_string())
+        {
+            return std::nullopt;
+        }
+
+        const auto parsed_number = parse::parseHexQuantity(result.at("number").get<std::string>());
+        const auto parsed_time = parse::parseHexQuantity(result.at("timestamp").get<std::string>());
+        if(!parsed_number.has_value() || !parsed_time.has_value())
+        {
+            return std::nullopt;
+        }
+
+        if(*parsed_number != requested_block_number)
+        {
+            spdlog::warn(
+                "eth_getBlockByNumber returned block {} when requesting block {}; rejecting response",
+                *parsed_number,
+                requested_block_number);
+            return std::nullopt;
+        }
+
+        std::string hash = chain::normalizeHex(result.at("hash").get<std::string>());
+        std::string parent_hash = chain::normalizeHex(result.at("parentHash").get<std::string>());
+        if(hash.empty() || parent_hash.empty())
+        {
+            return std::nullopt;
+        }
+
+        return ChainBlockInfo{
+            .chain_id = chain_id,
+            .block_number = *parsed_number,
+            .block_hash = std::move(hash),
+            .parent_hash = std::move(parent_hash),
+            .block_time = *parsed_time,
+            .seen_at_ms = utils::nowMs()
+        };
     }
 
     EventRuntime::EventRuntime(asio::io_context & io_context, EventRuntimeConfig cfg)
         : _io_context(io_context)
         , _config(std::move(cfg))
         , _write_strand(asio::make_strand(io_context))
+        , _rpc_client(std::make_shared<RpcClient>(_config.rpc_url, _config.rpc_timeout_ms))
         , _store(std::make_shared<SQLiteHotStore>(
             _config.hot_db_path,
             _config.archive_root,
@@ -125,12 +212,8 @@ namespace dcn::events
             utils::logException(std::current_exception(), "events stop checkpoint failed");
         }
 
-        if(!_rpc_pool_joined.exchange(true, std::memory_order_acq_rel))
-        {
-            _rpc_pool.stop();
-            _rpc_pool.join();
-            spdlog::info("RPC pool stopped");
-        }
+        _rpc_client->stop();
+        spdlog::info("RPC pool stopped");
 
         _running.store(false, std::memory_order_release);
         spdlog::info("Events runtime stopped");
@@ -154,7 +237,7 @@ namespace dcn::events
 
     std::uint64_t EventRuntime::rpcTransportCallCount() const
     {
-        return _rpc_transport_call_count.load(std::memory_order_acquire);
+        return _rpc_client->callCount();
     }
 
     FeedPage EventRuntime::getFeedPage(const FeedQuery & query) const
@@ -193,103 +276,19 @@ namespace dcn::events
     }
 
 
-    asio::awaitable<std::optional<json>> EventRuntime::_rpcResult(const std::string & method, json params) const
+    json EventRuntime::_rpcCall(const std::string & method, json params) const
     {
         if(_write_strand.running_in_this_thread())
         {
             _blocking_transport_on_hot_write_strand.store(true, std::memory_order_release);
         }
-        _rpc_transport_call_count.fetch_add(1, std::memory_order_acq_rel);
 
-        if(_config.rpc_url.empty())
-        {
-            co_return std::nullopt;
-        }
-
-        json request{
-            {"jsonrpc", "2.0"},
-            {"id", 1},
-            {"method", method},
-            {"params", std::move(params)}
-        };
-
-        const auto rpc_url = _config.rpc_url;
-        const auto method_name = std::string(method);
-        const unsigned int timeout_seconds =
-            std::max<unsigned int>(1u, (_config.rpc_timeout_ms + 999u) / 1000u);
-
-        try
-        {
-            co_return co_await asio::co_spawn(
-                _rpc_pool,
-                [rpc_url, method_name, request = std::move(request), timeout_seconds]() mutable
-                    -> asio::awaitable<std::optional<json>>
-                {
-                    try
-                    {
-                        std::vector<std::string> args{
-                            "-sS",
-                            "--max-time",
-                            std::to_string(timeout_seconds),
-                            "-X",
-                            "POST",
-                            rpc_url,
-                            "-H",
-                            "Content-Type: application/json",
-                            "--data",
-                            request.dump()
-                        };
-
-                        const auto [exit_code, output] = native::runProcess("curl", std::move(args));
-                        if(exit_code != 0)
-                        {
-                            spdlog::warn(
-                                "Events RPC call failed for method='{}' (exit={}): {}",
-                                method_name,
-                                exit_code,
-                                output);
-                            co_return std::nullopt;
-                        }
-
-                        const json response = json::parse(output, nullptr, false);
-                        if(response.is_discarded())
-                        {
-                            spdlog::warn("Events RPC response parse failed for method='{}'", method_name);
-                            co_return std::nullopt;
-                        }
-
-                        if(response.contains("error"))
-                        {
-                            spdlog::warn(
-                                "Events RPC response error for method='{}': {}",
-                                method_name,
-                                response.at("error").dump());
-                            co_return std::nullopt;
-                        }
-
-                        if(!response.contains("result"))
-                        {
-                            spdlog::warn(
-                                "Events RPC response missing result for method='{}'",
-                                method_name);
-                            co_return std::nullopt;
-                        }
-
-                        co_return response.at("result");
-                    }
-                    catch(const std::exception & e)
-                    {
-                        spdlog::warn("Events RPC transport failed for method='{}': {}", method_name, e.what());
-                        co_return std::nullopt;
-                    }
-                },
-                asio::use_awaitable);
-        }
-        catch(const std::exception & e)
-        {
-            spdlog::warn("Events RPC dispatch failed for method='{}': {}", method_name, e.what());
-            co_return std::nullopt;
-        }
+        // TEMPORARY GCC 13 workaround:
+        // Coroutine-based async RPC helper paths (co_await + callback/async initiation)
+        // repeatedly trigger internal compiler error:
+        // "internal compiler error: in build_special_member_call, at cp/call.cc:11096".
+        // Keep this synchronous until we have a reliable compiler-side fix/minimal repro.
+        return _rpc_client->callSync(method, std::move(params));
     }
 
     asio::awaitable<std::optional<std::int64_t>> EventRuntime::_storeLoadNextFromBlock(const int chain_id) const
@@ -373,126 +372,6 @@ namespace dcn::events
         co_return _store->checkpointWal(mode);
     }
 
-    asio::awaitable<parse::Result<std::int64_t>> EventRuntime::_ethBlockNumber() const
-    {
-        const auto result = co_await _rpcResult("eth_blockNumber", json::array());
-        if(!result.has_value() || !result->is_string())
-        {
-            co_return std::unexpected(parse::ParseError{parse::ParseError::Kind::INVALID_VALUE});
-        }
-
-        co_return parse::parseHexQuantity(result->get<std::string>());
-    }
-
-    asio::awaitable<parse::Result<std::int64_t>> EventRuntime::_ethTaggedBlockNumber(const std::string & tag) const
-    {
-        const auto result = co_await _rpcResult("eth_getBlockByNumber", json::array({tag, false}));
-        if(!result.has_value() || !result->is_object() || result->is_null())
-        {
-            co_return std::unexpected(parse::ParseError{parse::ParseError::Kind::INVALID_VALUE});
-        }
-
-        if(!result->contains("number") || !result->at("number").is_string())
-        {
-            co_return std::unexpected(parse::ParseError{parse::ParseError::Kind::INVALID_VALUE});
-        }
-
-        co_return parse::parseHexQuantity(result->at("number").get<std::string>());
-    }
-
-    asio::awaitable<std::optional<ChainBlockInfo>> EventRuntime::_ethGetBlockInfo(const std::int64_t block_number) const
-    {
-        const auto result = co_await _rpcResult(
-            "eth_getBlockByNumber",
-            json::array({chain::toHexQuantity(block_number), false}));
-
-        if(!result.has_value() || !result->is_object() || result->is_null())
-        {
-            co_return std::nullopt;
-        }
-
-        if(!result->contains("number") || !result->at("number").is_string() ||
-            !result->contains("hash") || !result->at("hash").is_string() ||
-            !result->contains("parentHash") || !result->at("parentHash").is_string() ||
-            !result->contains("timestamp") || !result->at("timestamp").is_string())
-        {
-            co_return std::nullopt;
-        }
-
-        const auto parsed_number = parse::parseHexQuantity(result->at("number").get<std::string>());
-        const auto parsed_time = parse::parseHexQuantity(result->at("timestamp").get<std::string>());
-        if(!parsed_number.has_value() || !parsed_time.has_value())
-        {
-            co_return std::nullopt;
-        }
-
-        if(*parsed_number != block_number)
-        {
-            spdlog::warn(
-                "eth_getBlockByNumber returned block {} when requesting block {}; rejecting response",
-                *parsed_number,
-                block_number);
-            co_return std::nullopt;
-        }
-
-        std::string hash = chain::normalizeHex(result->at("hash").get<std::string>());
-        std::string parent_hash = chain::normalizeHex(result->at("parentHash").get<std::string>());
-        if(hash.empty() || parent_hash.empty())
-        {
-            co_return std::nullopt;
-        }
-
-        co_return ChainBlockInfo{
-            .chain_id = _config.chain_id,
-            .block_number = *parsed_number,
-            .block_hash = std::move(hash),
-            .parent_hash = std::move(parent_hash),
-            .block_time = *parsed_time,
-            .seen_at_ms = utils::nowMs()
-        };
-    }
-
-    asio::awaitable<std::optional<json>> EventRuntime::_ethGetLogs(const std::int64_t from_block, const std::int64_t to_block) const
-    {
-        if(_config.registry_address.empty())
-        {
-            co_return std::nullopt;
-        }
-
-        if(from_block > to_block)
-        {
-            co_return json::array();
-        }
-
-        const std::string connector_topic = chain::normalizeHex(evmc::hex(chain::constructEventTopic(
-            "ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[],bytes32)")));
-        const std::string transformation_topic = chain::normalizeHex(evmc::hex(chain::constructEventTopic(
-            "TransformationAdded(address,string,address,address,uint32)")));
-        const std::string condition_topic = chain::normalizeHex(evmc::hex(chain::constructEventTopic(
-            "ConditionAdded(address,string,address,address,uint32)")));
-
-        json filter{
-            {"address", chain::normalizeHex(_config.registry_address)},
-            {"fromBlock", chain::toHexQuantity(from_block)},
-            {"toBlock", chain::toHexQuantity(to_block)},
-            {"topics", json::array({
-                json::array({
-                    connector_topic,
-                    transformation_topic,
-                    condition_topic
-                })
-            })}
-        };
-
-        const auto result = co_await _rpcResult("eth_getLogs", json::array({std::move(filter)}));
-        if(!result.has_value() || !result->is_array())
-        {
-            co_return std::nullopt;
-        }
-
-        co_return *result;
-    }
-
     asio::awaitable<FinalityHeights> EventRuntime::_resolveFinality(const std::int64_t head) const
     {
         FinalityHeights heights{
@@ -501,8 +380,17 @@ namespace dcn::events
             .finalized = std::max<std::int64_t>(0, head - static_cast<std::int64_t>(_config.confirmations))
         };
 
-        const auto safe = co_await _ethTaggedBlockNumber("safe");
-        const auto finalized = co_await _ethTaggedBlockNumber("finalized");
+        json safe_params = json::array();
+        safe_params.push_back("safe");
+        safe_params.push_back(false);
+        json safe_result = _rpcCall("eth_getBlockByNumber", std::move(safe_params));
+        const auto safe = _parseEthTaggedBlockNumberResult(safe_result);
+
+        json finalized_params = json::array();
+        finalized_params.push_back("finalized");
+        finalized_params.push_back(false);
+        json finalized_result = _rpcCall("eth_getBlockByNumber", std::move(finalized_params));
+        const auto finalized = _parseEthTaggedBlockNumberResult(finalized_result);
 
         if(safe.has_value() && *safe >= 0 && *safe <= head)
         {
@@ -731,7 +619,8 @@ namespace dcn::events
         {
             try
             {
-                const auto head_opt = co_await _ethBlockNumber();
+                json head_result = _rpcCall("eth_blockNumber", json::array());
+                const auto head_opt = _parseEthHeadBlockNumberResult(head_result);
                 if(!head_opt.has_value())
                 {
                     co_await _sleepFor(_config.poll_interval_ms);
@@ -801,9 +690,44 @@ namespace dcn::events
                     ? (*next_from_block + static_cast<std::int64_t>(_config.block_batch_size) - 1)
                     : std::numeric_limits<std::int64_t>::max();
                 const std::int64_t to_block = std::min<std::int64_t>(head, max_to_block);
-                const std::int64_t from_block = _reorgLookbackStart(*next_from_block, _config.reorg_window_blocks);
+                const std::int64_t from_block = reorgLookbackStart(*next_from_block, _config.reorg_window_blocks);
 
-                const auto logs_result = co_await _ethGetLogs(from_block, to_block);
+                std::optional<json> logs_result = std::nullopt;
+                if(!_config.registry_address.empty())
+                {
+                    if(from_block > to_block)
+                    {
+                        logs_result = json::array();
+                    }
+                    else
+                    {
+                        const std::string connector_topic = chain::normalizeHex(evmc::hex(chain::constructEventTopic(
+                            "ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[],bytes32)")));
+                        const std::string transformation_topic = chain::normalizeHex(evmc::hex(chain::constructEventTopic(
+                            "TransformationAdded(address,string,address,address,uint32)")));
+                        const std::string condition_topic = chain::normalizeHex(evmc::hex(chain::constructEventTopic(
+                            "ConditionAdded(address,string,address,address,uint32)")));
+
+                        json filter{
+                            {"address", chain::normalizeHex(_config.registry_address)},
+                            {"fromBlock", chain::toHexQuantity(from_block)},
+                            {"toBlock", chain::toHexQuantity(to_block)},
+                            {"topics", json::array({
+                                json::array({
+                                    connector_topic,
+                                    transformation_topic,
+                                    condition_topic
+                                })
+                            })}
+                        };
+
+                        json rpc_logs_result = _rpcCall("eth_getLogs", json::array({std::move(filter)}));
+                        if(rpc_logs_result.is_array())
+                        {
+                            logs_result = std::move(rpc_logs_result);
+                        }
+                    }
+                }
 
                 if(!logs_result.has_value())
                 {
@@ -889,7 +813,14 @@ namespace dcn::events
 
                 for(const std::int64_t block_number : required_blocks)
                 {
-                    const auto block_info = co_await _ethGetBlockInfo(block_number);
+                    json block_params = json::array();
+                    block_params.push_back(chain::toHexQuantity(block_number));
+                    block_params.push_back(false);
+                    json block_info_result = _rpcCall("eth_getBlockByNumber", std::move(block_params));
+                    const auto block_info = _parseEthBlockInfoResult(
+                        block_info_result,
+                        block_number,
+                        _config.chain_id);
 
                     if(!block_info.has_value())
                     {

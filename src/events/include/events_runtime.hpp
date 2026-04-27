@@ -23,6 +23,8 @@ namespace dcn::evm
 
 namespace dcn::events
 {
+    class RpcClient;
+
     constexpr std::size_t DEFAULT_PROJECT_BATCH_SIZE = 256;
 
     std::int64_t reorgLookbackStart(std::int64_t next_from_block, std::size_t reorg_window_blocks);
@@ -83,7 +85,7 @@ namespace dcn::events
 
         private:
             asio::awaitable<void> _sleepFor(const std::uint64_t ms) const;
-            asio::awaitable<std::optional<nlohmann::json>> _rpcResult(const std::string & method, nlohmann::json params) const;
+            nlohmann::json _rpcCall(const std::string & method, nlohmann::json params) const;
 
             asio::awaitable<std::optional<std::int64_t>> _storeLoadNextFromBlock(int chain_id) const;
             asio::awaitable<std::optional<std::uint64_t>> _storeLoadNextLocalSeq(int chain_id) const;
@@ -108,11 +110,6 @@ namespace dcn::events
             asio::awaitable<std::size_t> _storeProjectBatch(std::size_t limit, std::int64_t now_ms) const;
             asio::awaitable<bool> _storeRunArchiveCycle(int chain_id, std::size_t hot_window_days, std::int64_t now_ms) const;
 
-            asio::awaitable<parse::Result<std::int64_t>> _ethBlockNumber() const;
-            asio::awaitable<parse::Result<std::int64_t>> _ethTaggedBlockNumber(const std::string & tag) const;
-            asio::awaitable<std::optional<ChainBlockInfo>> _ethGetBlockInfo(const std::int64_t block_number) const;
-            asio::awaitable<std::optional<nlohmann::json>> _ethGetLogs(const std::int64_t from_block, const std::int64_t to_block) const;
-
             asio::awaitable<FinalityHeights> _resolveFinality(const std::int64_t head) const;
 
             asio::awaitable<void> _runLocalIngestionLoop();
@@ -125,8 +122,8 @@ namespace dcn::events
         private:
             asio::io_context & _io_context;
             EventRuntimeConfig _config;
-            mutable asio::thread_pool _rpc_pool{2};
             asio::strand<asio::io_context::executor_type> _write_strand;
+            std::shared_ptr<RpcClient> _rpc_client;
             
             std::shared_ptr<SQLiteHotStore> _store;
             std::unique_ptr<IEventDecoder> _decoder;
@@ -135,9 +132,7 @@ namespace dcn::events
             std::atomic<bool> _running{false};
 
             mutable std::atomic<bool> _blocking_transport_on_hot_write_strand{false};
-            mutable std::atomic<std::uint64_t> _rpc_transport_call_count{0};
 
             std::atomic<std::size_t> _active_loop_count{0};
-            std::atomic<bool> _rpc_pool_joined{false};
     };
 }
