@@ -30,7 +30,7 @@ namespace dcn
         const http::Request &,
         std::vector<server::RouteArg> args,
         server::QueryArgsList query_args,
-        storage::Registry &)
+        registry::Registry &)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -86,7 +86,7 @@ namespace dcn
         const http::Request &,
         std::vector<server::RouteArg> args,
         server::QueryArgsList query_args,
-        storage::Registry & registry)
+        registry::Registry & registry)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -191,7 +191,7 @@ namespace dcn
         const http::Request & request,
         std::vector<server::RouteArg> args,
         server::QueryArgsList query_args,
-        storage::Registry & registry)
+        registry::Registry & registry)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -248,7 +248,7 @@ namespace dcn
             limit_res = std::unexpected(parse::ParseError{parse::ParseError::Kind::OUT_OF_RANGE});
         }
 
-        std::optional<storage::NameCursor> after_name;
+        std::optional<registry::NameCursor> after_name;
         if(query_args.contains("after"))
         {
             const auto after_res =

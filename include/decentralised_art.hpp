@@ -18,6 +18,9 @@
 #include "evm.hpp"
 #include "pt.hpp"
 #include "file.hpp"
+#include "storage.hpp"
+#include "registry.hpp"
+#include "events.hpp"
 #include "api.hpp"
 #include "auth.hpp"
 #include "utils.hpp"
@@ -25,7 +28,6 @@
 #include "loader.hpp"
 #include "chain.hpp"
 #include "crypto.hpp"
-#include "storage.hpp"
 
 #include "sepolia_backend.hpp"
 

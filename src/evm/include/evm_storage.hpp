@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <cstring>
 #include <vector>
@@ -33,6 +34,21 @@ namespace dcn::evm
     class EVMStorage : public evmc::Host
     {
     public:
+        struct EmittedLogRecord
+        {
+            std::uint64_t seq = 0;
+            std::int64_t block_number = 0;
+            std::string block_hash;
+            std::string parent_hash;
+            std::int64_t tx_index = 0;
+            std::string tx_hash;
+            std::int64_t log_index = 0;
+            std::string address;
+            std::vector<std::string> topics;
+            std::string data_hex;
+            std::int64_t block_time = 0;
+        };
+
         struct Account
         {
             evmc_uint256be balance;
@@ -113,6 +129,9 @@ namespace dcn::evm
                                        const evmc::bytes32& key,
                                        const evmc::bytes32& value) noexcept override;
 
+        std::vector<EmittedLogRecord> get_logs_since(std::uint64_t after_seq, std::size_t limit) const;
+        std::int64_t head_block_number() const noexcept;
+
     protected:
         std::string to_key(const evmc::address& addr) const;
 
@@ -123,6 +142,22 @@ namespace dcn::evm
         void deploy_contract(evmc::address addr, std::vector<std::uint8_t>&& code, evmc_uint256be value, evmc::address creator, std::uint64_t nonce);
     
     private:
+        struct ActiveTxContext
+        {
+            std::int64_t block_number = 0;
+            std::int64_t block_time = 0;
+            evmc::bytes32 block_hash{};
+            evmc::bytes32 parent_hash{};
+            evmc::bytes32 tx_hash{};
+            std::int64_t tx_index = 0;
+            std::int64_t next_log_index = 0;
+        };
+
+        evmc::bytes32 make_pseudo_hash(
+            std::uint64_t value_a,
+            std::uint64_t value_b,
+            std::uint64_t value_c) const;
+
         evmc::VM & _vm;
         evmc_revision _revision;
 
@@ -130,6 +165,12 @@ namespace dcn::evm
         absl::flat_hash_map<evmc::address, std::uint64_t> _create_nonce;
 
         std::stack<evmc::address> _sender_stack;
+        std::vector<ActiveTxContext> _tx_context_stack;
+        std::vector<EmittedLogRecord> _emitted_logs;
+        std::int64_t _head_block_number = 0;
+        evmc::bytes32 _head_block_hash{};
+        std::uint64_t _next_tx_id = 1;
+        std::uint64_t _next_log_seq = 1;
     };
 
     template <typename H>

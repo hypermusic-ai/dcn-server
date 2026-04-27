@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <cstring>
 #include <filesystem>
@@ -42,6 +44,8 @@ namespace dcn::evm
     class EVM
     {
     public:
+        using EmittedLogRecord = EVMStorage::EmittedLogRecord;
+
         EVM(asio::io_context & io_context, evmc_revision rev, std::filesystem::path solc_path, std::filesystem::path pt_path);
         ~EVM() = default;
 
@@ -79,6 +83,9 @@ namespace dcn::evm
                     std::vector<std::uint8_t> input_bytes,
                     std::uint64_t gas_limit,
                     std::uint64_t value) noexcept;
+
+        asio::awaitable<std::vector<EmittedLogRecord>> getLogsSince(std::uint64_t after_seq, std::size_t limit) noexcept;
+        asio::awaitable<std::int64_t> getHeadBlockNumber() noexcept;
 
         chain::Address getRegistryAddress() const;
         chain::Address getRunnerAddress() const;

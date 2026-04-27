@@ -24,4 +24,7 @@ namespace dcn::chain
 
     // Get Ethereum address from public key (last 20 bytes of Keccak256(pubkey))
     chain::Address ethAddressFromPublicKey(const std::uint8_t* pubkey, std::size_t len);
+
+    std::string addressToHex(const chain::Address & address);
+
 }

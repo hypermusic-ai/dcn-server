@@ -2222,6 +2222,12 @@ const formatCursorHistory = [];
 let lastAccountAddressInputValue = '';
 let lastFormatHashInputValue = '';
 
+let eventsFeedAbortController = null;
+let eventsFeedReader = null;
+let eventsFeedLastSeq = null;
+let eventsFeedItems = [];
+const EVENTS_FEED_MAX_ITEMS = 50;
+
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -2690,6 +2696,177 @@ export async function fetchFormatResources() {
 }
 
 scheduleSimpleFormInitialization();
+
+// --------------------------------------------------------------------------
+// Events Feed (SSE)
+// --------------------------------------------------------------------------
+
+function setEventsFeedStatus(connected) {
+    const dot = document.getElementById('eventsFeedStatusDot');
+    const label = document.getElementById('eventsFeedStatusLabel');
+    const connectBtn = document.getElementById('btn_connectEventsFeed');
+    const disconnectBtn = document.getElementById('btn_disconnectEventsFeed');
+    if (dot) dot.className = `status-dot ${connected ? 'status-dot--connected' : 'status-dot--disconnected'}`;
+    if (label) label.textContent = connected ? 'Connected' : 'Disconnected';
+    if (connectBtn) connectBtn.disabled = connected;
+    if (disconnectBtn) disconnectBtn.disabled = !connected;
+}
+
+function updateEventsFeedSeqLabel(seq) {
+    const label = document.getElementById('eventsFeedSeqLabel');
+    if (label) label.textContent = seq != null ? `seq: ${seq}` : 'seq: —';
+}
+
+function renderEventsFeedItem(delta) {
+    const date = delta.created_at_ms
+        ? new Date(delta.created_at_ms).toLocaleString(undefined, {
+              day: '2-digit', month: '2-digit', year: 'numeric',
+              hour: '2-digit', minute: '2-digit'
+          })
+        : '?';
+    const feedId = escapeHtml(delta.feed_id ?? '—');
+    const eventType = escapeHtml(delta.event_type ?? '—');
+    const status = delta.status ? escapeHtml(delta.status) : '';
+    const seq = delta.stream_seq ?? '?';
+
+    const payload = delta.payload && typeof delta.payload === 'object' ? delta.payload : {};
+    const payloadRows = [
+        payload.name  != null ? `<div class="events-feed-payload-row"><span class="events-feed-payload-label">name</span><span class="events-feed-payload-value">${escapeHtml(String(payload.name))}</span></div>` : '',
+        payload.type  != null ? `<div class="events-feed-payload-row"><span class="events-feed-payload-label">type</span><span class="events-feed-payload-value">${escapeHtml(String(payload.type))}</span></div>` : '',
+        payload.owner != null ? `<div class="events-feed-payload-row"><span class="events-feed-payload-label">owner</span><span class="events-feed-payload-value">${escapeHtml(String(payload.owner))}</span></div>` : '',
+    ].filter(Boolean).join('');
+
+    return `<div class="events-feed-item">
+        <div class="events-feed-item-header">
+            <span class="events-feed-item-type">${eventType}</span>
+            <span class="events-feed-item-time">${escapeHtml(date)}</span>
+        </div>
+        ${payloadRows ? `<div class="events-feed-item-payload">${payloadRows}</div>` : ''}
+        <div class="events-feed-item-meta">
+            <span class="events-feed-item-seq">seq ${escapeHtml(String(seq))}</span>
+            ${status ? `<span class="events-feed-item-status">${status}</span>` : ''}
+            <span class="events-feed-item-feed">${feedId}</span>
+        </div>
+    </div>`;
+}
+
+function prependEventsFeedItem(delta) {
+    eventsFeedItems.unshift(delta);
+    if (eventsFeedItems.length > EVENTS_FEED_MAX_ITEMS) {
+        eventsFeedItems.length = EVENTS_FEED_MAX_ITEMS;
+    }
+    const listDiv = document.getElementById('eventsFeedList');
+    if (listDiv) listDiv.innerHTML = eventsFeedItems.map(renderEventsFeedItem).join('');
+}
+
+async function* parseSseStream(reader) {
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let frame = { id: null, event: 'message', data: [] };
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const parts = buffer.split('\n');
+        buffer = parts.pop();
+
+        for (const line of parts) {
+            if (line === '') {
+                if (frame.data.length > 0 || frame.event !== 'message') {
+                    yield { id: frame.id, event: frame.event, data: frame.data.join('\n') };
+                }
+                frame = { id: null, event: 'message', data: [] };
+            } else if (line.startsWith(':')) {
+                yield { comment: line.slice(1).trimStart() };
+            } else if (line.startsWith('id:')) {
+                frame.id = line.slice(3).trimStart();
+            } else if (line.startsWith('event:')) {
+                frame.event = line.slice(6).trimStart();
+            } else if (line.startsWith('data:')) {
+                frame.data.push(line.slice(5).trimStart());
+            }
+        }
+    }
+}
+
+export async function connectEventsFeed() {
+    if (eventsFeedAbortController) return;
+
+    const sinceSeqInput = document.getElementById('eventsSinceSeqInput');
+    const raw = sinceSeqInput ? sinceSeqInput.value.trim() : '';
+    const sinceSeq = raw !== '' ? parseInt(raw, 10) : eventsFeedLastSeq;
+
+    const params = new URLSearchParams();
+    if (sinceSeq != null && !isNaN(sinceSeq)) {
+        params.set('since_seq', String(sinceSeq));
+    }
+
+    const qs = params.toString();
+    const url = apiUrl(`/feed/stream${qs ? '?' + qs : ''}`);
+
+    const listDiv = document.getElementById('eventsFeedList');
+    if (listDiv && eventsFeedItems.length === 0) listDiv.textContent = 'Connecting...';
+
+    const abortController = new AbortController();
+    eventsFeedAbortController = abortController;
+    setEventsFeedStatus(true);
+
+    try {
+        const response = await fetch(url, { signal: abortController.signal });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.body) throw new Error('No response body');
+
+        const reader = response.body.getReader();
+        eventsFeedReader = reader;
+        for await (const frame of parseSseStream(reader)) {
+            if (abortController.signal.aborted) break;
+            if (frame.comment !== undefined) continue;
+            if (frame.event === 'stream_meta') {
+                try {
+                    const meta = JSON.parse(frame.data);
+                    if (meta.last_seq != null) {
+                        eventsFeedLastSeq = meta.last_seq;
+                        updateEventsFeedSeqLabel(eventsFeedLastSeq);
+                    }
+                } catch (_) {}
+                continue;
+            }
+            try {
+                const delta = JSON.parse(frame.data);
+                if (delta.stream_seq != null) {
+                    eventsFeedLastSeq = delta.stream_seq;
+                    updateEventsFeedSeqLabel(eventsFeedLastSeq);
+                }
+                prependEventsFeedItem(delta);
+            } catch (_) {}
+        }
+    } catch (err) {
+        if (!abortController.signal.aborted) {
+            const errDiv = document.getElementById('eventsFeedList');
+            if (errDiv && eventsFeedItems.length === 0) errDiv.textContent = `❌ ${err.message}`;
+        }
+    } finally {
+        if (eventsFeedAbortController === abortController) {
+            eventsFeedAbortController = null;
+        }
+        eventsFeedReader = null;
+        setEventsFeedStatus(false);
+    }
+}
+
+export function disconnectEventsFeed() {
+    if (eventsFeedAbortController) {
+        eventsFeedAbortController.abort();
+        eventsFeedAbortController = null;
+    }
+    if (eventsFeedReader) {
+        eventsFeedReader.cancel();
+        eventsFeedReader = null;
+    }
+    setEventsFeedStatus(false);
+}
 
 // --------------------------------------------------------------------------
 // Login

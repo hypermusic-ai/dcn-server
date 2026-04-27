@@ -1,24 +1,22 @@
-#include "registry_wal_sync_worker.hpp"
-
 #include <system_error>
 
 #include <spdlog/spdlog.h>
 
-#include "registry.hpp"
+#include "sqlite/wal_sync_worker.hpp"
 
-namespace dcn::storage
+namespace dcn::storage::sqlite
 {
-    RegistryWalSyncWorker::RegistryWalSyncWorker(
+    WalSyncWorker::WalSyncWorker(
         asio::io_context & io_context,
-        Registry & registry,
+        IWalStore & store,
         const std::chrono::milliseconds interval)
         : _timer(io_context)
-        , _registry(registry)
+        , _store(store)
         , _interval(interval)
     {
     }
 
-    asio::awaitable<void> RegistryWalSyncWorker::run()
+    asio::awaitable<void> WalSyncWorker::run()
     {
         while(!_stop_requested.load(std::memory_order_acquire))
         {
@@ -33,26 +31,26 @@ namespace dcn::storage
 
             if(wait_ec)
             {
-                spdlog::warn("Registry WAL sync worker timer failed: {}", wait_ec.message());
+                spdlog::warn("WAL sync worker timer failed: {}", wait_ec.message());
                 continue;
             }
 
-            const bool checkpoint_ok = co_await _registry.checkpointWal(WalCheckpointMode::PASSIVE);
-            if(!checkpoint_ok)
+            const auto stats = co_await _store.checkpointWal(storage::sqlite::WalCheckpointMode::PASSIVE);
+            if(!stats.ok)
             {
-                spdlog::warn("Registry WAL passive checkpoint failed");
+                spdlog::warn("WAL passive checkpoint failed");
             }
             else
             {
-                spdlog::debug("Registry WAL passive checkpoint ok");
+                spdlog::debug("WAL passive checkpoint ok");
             }
         }
 
-        spdlog::debug("Registry WAL sync worker stopped");
+        spdlog::debug("WAL sync worker stopped");
         co_return;
     }
 
-    void RegistryWalSyncWorker::requestStop()
+    void WalSyncWorker::requestStop()
     {
         _stop_requested.store(true, std::memory_order_release);
         (void)_timer.cancel();

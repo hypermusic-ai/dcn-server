@@ -12,7 +12,7 @@
 #include "registry.hpp"
 #include "sqlite_registry_store.hpp"
 
-namespace dcn::storage
+namespace dcn::registry
 {
     namespace
     {
@@ -1648,10 +1648,14 @@ namespace dcn::storage
         co_return _store->getAccountsCursor(after, limit);
     }
 
-    asio::awaitable<bool> Registry::checkpointWal(const WalCheckpointMode mode) const
+    asio::awaitable<storage::sqlite::WalCheckpointStats> Registry::checkpointWal(const storage::sqlite::WalCheckpointMode mode) const
     {
         co_await async::ensureOnStrand(_strand);
-        co_return _store->checkpointWal(mode);
+
+        storage::sqlite::WalCheckpointStats stats{};
+        stats.ok = _store->checkpointWal(mode);
+        
+        co_return stats;
     }
 
     asio::awaitable<bool> Registry::add(chain::Address address, ConnectorRecord connector)

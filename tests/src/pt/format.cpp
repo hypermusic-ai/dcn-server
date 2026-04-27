@@ -835,7 +835,7 @@ TEST_F(UnitTest, PT_Registry_FormatHash_MatchesForSeparateConnectorsWithSameProd
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("pt_format_same_labels");
     runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
     runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
@@ -907,7 +907,7 @@ TEST_F(UnitTest, PT_Registry_FormatHash_IsOrderIndependentAcrossDimensionOrder)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("pt_format_dim_order");
     runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
     runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
@@ -985,7 +985,7 @@ TEST_F(UnitTest, PT_Registry_FormatHash_IgnoresScalarMultiplicity)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("pt_format_multiset");
     runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
     runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
@@ -1045,7 +1045,7 @@ TEST_F(UnitTest, PT_Registry_FormatHash_IsPathSensitiveAcrossBindingSlots)
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("pt_format_slot_bind");
     runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
     runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
@@ -1109,7 +1109,7 @@ TEST_F(UnitTest, PT_Registry_FormatHash_MatchesForSameScalarNamesWhenTailLabelsM
     evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
     io_context.run();
 
-    storage::Registry registry(io_context);
+    registry::Registry registry(io_context);
     const chain::Address owner = makeAddressFromSuffix("pt_format_paths");
     runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
     runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));

@@ -49,7 +49,7 @@ namespace dcn::tests::helpers
 
     inline bool addConnectorRecord(
         asio::io_context & io_context,
-        storage::Registry & registry,
+        registry::Registry & registry,
         std::uint8_t address_byte,
         ConnectorRecord record)
     {
@@ -60,7 +60,7 @@ namespace dcn::tests::helpers
 
     inline bool addScalarConnector(
         asio::io_context & io_context,
-        storage::Registry & registry,
+        registry::Registry & registry,
         const std::string & name,
         const std::string & owner_hex,
         std::uint8_t address_byte,

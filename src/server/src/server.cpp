@@ -95,7 +95,7 @@ namespace dcn::server
             }
             catch(...)
             {
-                spdlog::debug("client disconected");
+                spdlog::debug("client disconnected");
                 co_return;
             }
 
@@ -136,7 +136,7 @@ namespace dcn::server
                     bytes_transferred = co_await sock.async_read_some(asio::buffer(read_buffer), asio::use_awaitable);
                     if (bytes_transferred == 0)
                     {
-                        spdlog::warn("client disconected while reading body");
+                        spdlog::warn("client disconnected while reading body");
                         co_return;
                     };
 
@@ -152,7 +152,29 @@ namespace dcn::server
 
             auto [handler, route_args, query_args] = _router.findRoute(request);
 
-            if (handler) 
+            if (handler && handler->kind() == RouteHandlerFunc::Kind::Streaming)
+            {
+                // Streaming handler owns the socket for the full lifetime of this
+                // request. It is responsible for writing status line + headers + body
+                // and for refreshing `deadline` so the connection-level watchdog
+                // does not trip during healthy streaming. When it returns we are
+                // done with this connection.
+                try
+                {
+                    co_await handler->invokeStreaming(sock, const_request, std::move(route_args), std::move(query_args), deadline);
+                }
+                catch(const std::exception & e)
+                {
+                    spdlog::error("Streaming handler terminated with exception: {}", e.what());
+                }
+                catch(...)
+                {
+                    spdlog::error("Streaming handler terminated with unknown exception");
+                }
+                co_return;
+            }
+
+            if (handler)
             {
                 try
                 {
@@ -167,20 +189,20 @@ namespace dcn::server
                     response.setBodyWithContentLength("500 Internal Server Error");
 
                 }
-            } 
-            else 
+            }
+            else
             {
                 response.setVersion("HTTP/1.1");
                 response.setCode(http::Code::NotFound);
                 response.setHeader(http::Header::Connection, "close");
                 response.setBodyWithContentLength("404 Not Found");
             }
-            
+
             spdlog::debug("Send response\n{}\n", std::format("{}", response));
 
             co_await writeData(sock, std::format("{}", response));
 
-            // conection should close
+            // connection should close
             const auto connection_header = response.getHeader(http::Header::Connection);
             if(std::ranges::find(connection_header, "close") != connection_header.end())co_return;
 

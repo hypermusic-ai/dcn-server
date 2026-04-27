@@ -3,6 +3,7 @@ add_module(NAME "API"
         "${PROJECT_PREFIX}::Utils"
         "${PROJECT_PREFIX}::Async"
         "${PROJECT_PREFIX}::Native"
+        "${PROJECT_PREFIX}::Events"
         "${PROJECT_PREFIX}::Version"
         "${PROJECT_PREFIX}::Config"
         "${PROJECT_PREFIX}::PT"
@@ -14,6 +15,7 @@ add_module(NAME "API"
         "${PROJECT_PREFIX}::Chain"
         "${PROJECT_PREFIX}::Loader"
         "${PROJECT_PREFIX}::Crypto"
+        "${PROJECT_PREFIX}::Registry"
         "${PROJECT_PREFIX}::Storage"
 
         spdlog::spdlog
@@ -23,5 +25,6 @@ add_module(NAME "API"
         evmc
         evmone
         nlohmann_json
+        sqlite3
 )
 

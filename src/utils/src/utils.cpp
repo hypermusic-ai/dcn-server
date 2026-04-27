@@ -40,6 +40,13 @@ namespace dcn::utils
             local_tm.tm_sec);
     }
 
+    std::int64_t nowMs()
+    {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    }
+
     bool equalsIgnoreCase(const std::string& a, const std::string& b) {
     return a.size() == b.size() &&
            std::equal(a.begin(), a.end(), b.begin(), [](char a, char b) {
@@ -71,6 +78,18 @@ namespace dcn::utils
             }).base();
 
         return std::string(first_non_space, last_non_space);
+    }
+
+    std::string toLower(std::string value)
+    {
+        std::ranges::transform(value, value.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        return value;
+    }
+
+    bool likelyNetworkPath(const std::filesystem::path & path)
+    {
+        const std::string raw = path.lexically_normal().string();
+        return raw.rfind("\\\\", 0) == 0 || raw.rfind("//", 0) == 0;
     }
 
 

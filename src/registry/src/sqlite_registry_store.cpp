@@ -14,9 +14,12 @@
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 
+#include "sqlite/statement.hpp"
+#include "sqlite/exec.hpp"
+
 #include "sqlite_registry_store.hpp"
 
-namespace dcn::storage
+namespace dcn::registry
 {
     namespace
     {
@@ -25,48 +28,6 @@ namespace dcn::storage
         constexpr int MAX_RECORD_BLOB_BYTES = 16 * 1024 * 1024;
         constexpr int SQLITE_DEFAULT_BUSY_TIMEOUT_MS = 5000;
         constexpr int SQLITE_CHECKPOINT_BUSY_TIMEOUT_MS = 250;
-
-        class Statement
-        {
-            public:
-                Statement(sqlite3 * db, const char * sql)
-                {
-                    if(sqlite3_prepare_v2(db, sql, -1, &_stmt, nullptr) != SQLITE_OK)
-                    {
-                        throw std::runtime_error(std::string("sqlite prepare failed: ") + sqlite3_errmsg(db));
-                    }
-                }
-
-                ~Statement()
-                {
-                    if(_stmt != nullptr)
-                    {
-                        sqlite3_finalize(_stmt);
-                    }
-                }
-
-                Statement(const Statement &) = delete;
-                Statement & operator=(const Statement &) = delete;
-
-                sqlite3_stmt * get() const
-                {
-                    return _stmt;
-                }
-
-                int step() const
-                {
-                    return sqlite3_step(_stmt);
-                }
-
-                void reset() const
-                {
-                    sqlite3_reset(_stmt);
-                    sqlite3_clear_bindings(_stmt);
-                }
-
-            private:
-                sqlite3_stmt * _stmt = nullptr;
-        };
 
         static int toSqliteInt(std::size_t value)
         {
@@ -138,36 +99,6 @@ namespace dcn::storage
 
             return record;
         }
-
-        static const char * checkpointModeToString(const WalCheckpointMode mode)
-        {
-            switch(mode)
-            {
-                case WalCheckpointMode::PASSIVE:
-                    return "PASSIVE";
-                case WalCheckpointMode::FULL:
-                    return "FULL";
-                case WalCheckpointMode::TRUNCATE:
-                    return "TRUNCATE";
-                default:
-                    return "UNKNOWN";
-            }
-        }
-
-        static int toSqliteCheckpointMode(const WalCheckpointMode mode)
-        {
-            switch(mode)
-            {
-                case WalCheckpointMode::PASSIVE:
-                    return SQLITE_CHECKPOINT_PASSIVE;
-                case WalCheckpointMode::FULL:
-                    return SQLITE_CHECKPOINT_FULL;
-                case WalCheckpointMode::TRUNCATE:
-                    return SQLITE_CHECKPOINT_TRUNCATE;
-                default:
-                    return SQLITE_CHECKPOINT_PASSIVE;
-            }
-        }
     }
 
     SQLiteRegistryStore::SQLiteRegistryStore(const std::string & db_path)
@@ -214,22 +145,7 @@ namespace dcn::storage
 
     bool SQLiteRegistryStore::_exec(const char * sql) const
     {
-        char * error_message = nullptr;
-        const int res = sqlite3_exec(_db, sql, nullptr, nullptr, &error_message);
-        if(res == SQLITE_OK)
-        {
-            return true;
-        }
-
-        const std::string error =
-            (error_message == nullptr) ? std::string(sqlite3_errmsg(_db)) : std::string(error_message);
-        if(error_message != nullptr)
-        {
-            sqlite3_free(error_message);
-        }
-
-        spdlog::error("SQLite exec failed: {} | sql={}", error, sql);
-        return false;
+        return storage::sqlite::exec(_db, sql);
     }
 
     bool SQLiteRegistryStore::_beginTransaction() const
@@ -330,7 +246,7 @@ namespace dcn::storage
             
             spdlog::debug("SQLite::hasConnector('{}'): prepare (db={})", name, static_cast<const void *>(_db));
             
-            Statement stmt(_db, "SELECT 1 FROM connectors WHERE name = ?1 LIMIT 1;");
+            storage::sqlite::Statement stmt(_db, "SELECT 1 FROM connectors WHERE name = ?1 LIMIT 1;");
             const int bind_rc = sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
             
             spdlog::debug("SQLite::hasConnector('{}'): bind rc={}", name, bind_rc);
@@ -357,10 +273,9 @@ namespace dcn::storage
     {
         try
         {
-            
             spdlog::debug("SQLite::getConnectorRecordHandle('{}'): prepare", name);
             
-            Statement stmt(_db, "SELECT payload_blob FROM connectors WHERE name = ?1 LIMIT 1;");
+            storage::sqlite::Statement stmt(_db, "SELECT payload_blob FROM connectors WHERE name = ?1 LIMIT 1;");
             sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
             
             spdlog::debug("SQLite::getConnectorRecordHandle('{}'): bound name", name);
@@ -400,7 +315,7 @@ namespace dcn::storage
     {
         try
         {
-            Statement stmt(_db, "SELECT format_hash FROM connectors WHERE name = ?1 LIMIT 1;");
+            storage::sqlite::Statement stmt(_db, "SELECT format_hash FROM connectors WHERE name = ?1 LIMIT 1;");
             sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
             if(stmt.step() != SQLITE_ROW)
             {
@@ -460,7 +375,7 @@ namespace dcn::storage
 
         try
         {
-            Statement insert_connector(
+            storage::sqlite::Statement insert_connector(
                 _db,
                 "INSERT INTO connectors(name, owner, format_hash, payload_blob) VALUES(?1, ?2, ?3, ?4);");
             sqlite3_bind_text(insert_connector.get(), 1, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
@@ -473,7 +388,7 @@ namespace dcn::storage
                 return false;
             }
 
-            Statement insert_format_member(
+            storage::sqlite::Statement insert_format_member(
                 _db,
                 "INSERT OR IGNORE INTO format_members(format_hash, name) VALUES(?1, ?2);");
             bindBytes32(insert_format_member.get(), 1, format_hash);
@@ -484,7 +399,7 @@ namespace dcn::storage
                 return false;
             }
 
-            Statement insert_scalar_label(
+            storage::sqlite::Statement insert_scalar_label(
                 _db,
                 "INSERT OR IGNORE INTO scalar_labels_by_format(format_hash, scalar, path_hash, tail_id) "
                 "VALUES(?1, ?2, ?3, ?4);");
@@ -502,7 +417,7 @@ namespace dcn::storage
                 }
             }
 
-            Statement insert_owned(
+            storage::sqlite::Statement insert_owned(
                 _db,
                 "INSERT OR REPLACE INTO owned_connectors(owner, name) VALUES(?1, ?2);");
             bindAddress(insert_owned.get(), 1, *owner_opt);
@@ -553,10 +468,10 @@ namespace dcn::storage
 
         try
         {
-            Statement insert_connector(_db, "INSERT INTO connectors(name, owner, format_hash, payload_blob) VALUES(?1, ?2, ?3, ?4);");
-            Statement insert_format_member(_db, "INSERT OR IGNORE INTO format_members(format_hash, name) VALUES(?1, ?2);");
-            Statement insert_scalar_label(_db, "INSERT OR IGNORE INTO scalar_labels_by_format(format_hash, scalar, path_hash, tail_id) VALUES(?1, ?2, ?3, ?4);");
-            Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_connectors(owner, name) VALUES(?1, ?2);");
+            storage::sqlite::Statement insert_connector(_db, "INSERT INTO connectors(name, owner, format_hash, payload_blob) VALUES(?1, ?2, ?3, ?4);");
+            storage::sqlite::Statement insert_format_member(_db, "INSERT OR IGNORE INTO format_members(format_hash, name) VALUES(?1, ?2);");
+            storage::sqlite::Statement insert_scalar_label(_db, "INSERT OR IGNORE INTO scalar_labels_by_format(format_hash, scalar, path_hash, tail_id) VALUES(?1, ?2, ?3, ?4);");
+            storage::sqlite::Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_connectors(owner, name) VALUES(?1, ?2);");
 
             for(const ConnectorBatchItem & item : items)
             {
@@ -713,7 +628,7 @@ namespace dcn::storage
     {
         try
         {
-            Statement stmt(_db, "SELECT COUNT(*) FROM format_members WHERE format_hash = ?1;");
+            storage::sqlite::Statement stmt(_db, "SELECT COUNT(*) FROM format_members WHERE format_hash = ?1;");
             bindBytes32(stmt.get(), 1, format_hash);
             if(stmt.step() != SQLITE_ROW)
             {
@@ -747,7 +662,7 @@ namespace dcn::storage
             const std::size_t query_limit = limit + 1;
             if(after.has_value())
             {
-                Statement stmt(_db, "SELECT name FROM format_members WHERE format_hash = ?1 AND name > ?2 ORDER BY name ASC LIMIT ?3;");
+                storage::sqlite::Statement stmt(_db, "SELECT name FROM format_members WHERE format_hash = ?1 AND name > ?2 ORDER BY name ASC LIMIT ?3;");
                 bindBytes32(stmt.get(), 1, format_hash);
                 sqlite3_bind_text(stmt.get(), 2, after->c_str(), static_cast<int>(after->size()), SQLITE_TRANSIENT);
                 sqlite3_bind_int(stmt.get(), 3, toSqliteInt(query_limit));
@@ -762,7 +677,7 @@ namespace dcn::storage
             }
             else
             {
-                Statement stmt(_db, "SELECT name FROM format_members WHERE format_hash = ?1 ORDER BY name ASC LIMIT ?2;");
+                storage::sqlite::Statement stmt(_db, "SELECT name FROM format_members WHERE format_hash = ?1 ORDER BY name ASC LIMIT ?2;");
                 bindBytes32(stmt.get(), 1, format_hash);
                 sqlite3_bind_int(stmt.get(), 2, toSqliteInt(query_limit));
                 for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
@@ -803,7 +718,7 @@ namespace dcn::storage
     {
         try
         {
-            Statement stmt(_db, "SELECT COUNT(DISTINCT format_hash) FROM format_members;");
+            storage::sqlite::Statement stmt(_db, "SELECT COUNT(DISTINCT format_hash) FROM format_members;");
             if(stmt.step() != SQLITE_ROW)
             {
                 return 0;
@@ -832,7 +747,7 @@ namespace dcn::storage
             const std::size_t query_limit = limit + 1;
             if(after.has_value())
             {
-                Statement stmt(
+                storage::sqlite::Statement stmt(
                     _db,
                     "SELECT DISTINCT format_hash FROM format_members "
                     "WHERE format_hash > ?1 ORDER BY format_hash ASC LIMIT ?2;");
@@ -849,7 +764,7 @@ namespace dcn::storage
             }
             else
             {
-                Statement stmt(
+                storage::sqlite::Statement stmt(
                     _db,
                     "SELECT DISTINCT format_hash FROM format_members "
                     "ORDER BY format_hash ASC LIMIT ?1;");
@@ -891,7 +806,7 @@ namespace dcn::storage
     {
         try
         {
-            Statement stmt(
+            storage::sqlite::Statement stmt(
                 _db,
                 "SELECT scalar, path_hash, tail_id FROM scalar_labels_by_format WHERE format_hash = ?1 ORDER BY path_hash ASC, scalar ASC, tail_id ASC;");
             bindBytes32(stmt.get(), 1, format_hash);
@@ -941,7 +856,7 @@ namespace dcn::storage
             
             spdlog::debug("SQLite::hasTransformation('{}'): prepare (db={})", name, static_cast<const void *>(_db));
             
-            Statement stmt(_db, "SELECT 1 FROM transformations WHERE name = ?1 LIMIT 1;");
+            storage::sqlite::Statement stmt(_db, "SELECT 1 FROM transformations WHERE name = ?1 LIMIT 1;");
             const int bind_rc = sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
             
             spdlog::debug("SQLite::hasTransformation('{}'): bind rc={}", name, bind_rc);
@@ -971,7 +886,7 @@ namespace dcn::storage
             
             spdlog::debug("SQLite::getTransformationRecordHandle('{}'): prepare", name);
             
-            Statement stmt(_db, "SELECT payload_blob FROM transformations WHERE name = ?1 LIMIT 1;");
+            storage::sqlite::Statement stmt(_db, "SELECT payload_blob FROM transformations WHERE name = ?1 LIMIT 1;");
             sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
             
             spdlog::debug("SQLite::getTransformationRecordHandle('{}'): bound name", name);
@@ -1042,7 +957,7 @@ namespace dcn::storage
 
         try
         {
-            Statement insert_entity(_db, "INSERT INTO transformations(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
+            storage::sqlite::Statement insert_entity(_db, "INSERT INTO transformations(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
             sqlite3_bind_text(insert_entity.get(), 1, transformation_name.c_str(), static_cast<int>(transformation_name.size()), SQLITE_TRANSIENT);
             bindAddress(insert_entity.get(), 2, *owner_opt);
             sqlite3_bind_blob(insert_entity.get(), 3, payload_blob.data(), static_cast<int>(payload_blob.size()), SQLITE_TRANSIENT);
@@ -1052,7 +967,7 @@ namespace dcn::storage
                 return false;
             }
 
-            Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_transformations(owner, name) VALUES(?1, ?2);");
+            storage::sqlite::Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_transformations(owner, name) VALUES(?1, ?2);");
             bindAddress(insert_owned.get(), 1, *owner_opt);
             sqlite3_bind_text(insert_owned.get(), 2, transformation_name.c_str(), static_cast<int>(transformation_name.size()), SQLITE_TRANSIENT);
             if(insert_owned.step() != SQLITE_DONE)
@@ -1101,8 +1016,8 @@ namespace dcn::storage
 
         try
         {
-            Statement insert_entity(_db, "INSERT INTO transformations(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
-            Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_transformations(owner, name) VALUES(?1, ?2);");
+            storage::sqlite::Statement insert_entity(_db, "INSERT INTO transformations(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
+            storage::sqlite::Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_transformations(owner, name) VALUES(?1, ?2);");
             for(const TransformationBatchItem & item : items)
             {
                 const bool use_savepoint = !all_or_nothing;
@@ -1241,7 +1156,7 @@ namespace dcn::storage
             
             spdlog::debug("SQLite::hasCondition('{}'): prepare (db={})", name, static_cast<const void *>(_db));
             
-            Statement stmt(_db, "SELECT 1 FROM conditions WHERE name = ?1 LIMIT 1;");
+            storage::sqlite::Statement stmt(_db, "SELECT 1 FROM conditions WHERE name = ?1 LIMIT 1;");
             const int bind_rc = sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
             
             spdlog::debug("SQLite::hasCondition('{}'): bind rc={}", name, bind_rc);
@@ -1271,7 +1186,7 @@ namespace dcn::storage
             
             spdlog::debug("SQLite::getConditionRecordHandle('{}'): prepare", name);
             
-            Statement stmt(_db, "SELECT payload_blob FROM conditions WHERE name = ?1 LIMIT 1;");
+            storage::sqlite::Statement stmt(_db, "SELECT payload_blob FROM conditions WHERE name = ?1 LIMIT 1;");
             sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
             
             spdlog::debug("SQLite::getConditionRecordHandle('{}'): bound name", name);
@@ -1342,7 +1257,7 @@ namespace dcn::storage
 
         try
         {
-            Statement insert_entity(_db, "INSERT INTO conditions(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
+            storage::sqlite::Statement insert_entity(_db, "INSERT INTO conditions(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
             sqlite3_bind_text(insert_entity.get(), 1, condition_name.c_str(), static_cast<int>(condition_name.size()), SQLITE_TRANSIENT);
             bindAddress(insert_entity.get(), 2, *owner_opt);
             sqlite3_bind_blob(insert_entity.get(), 3, payload_blob.data(), static_cast<int>(payload_blob.size()), SQLITE_TRANSIENT);
@@ -1352,7 +1267,7 @@ namespace dcn::storage
                 return false;
             }
 
-            Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_conditions(owner, name) VALUES(?1, ?2);");
+            storage::sqlite::Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_conditions(owner, name) VALUES(?1, ?2);");
             bindAddress(insert_owned.get(), 1, *owner_opt);
             sqlite3_bind_text(insert_owned.get(), 2, condition_name.c_str(), static_cast<int>(condition_name.size()), SQLITE_TRANSIENT);
             if(insert_owned.step() != SQLITE_DONE)
@@ -1401,8 +1316,8 @@ namespace dcn::storage
 
         try
         {
-            Statement insert_entity(_db, "INSERT INTO conditions(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
-            Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_conditions(owner, name) VALUES(?1, ?2);");
+            storage::sqlite::Statement insert_entity(_db, "INSERT INTO conditions(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
+            storage::sqlite::Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_conditions(owner, name) VALUES(?1, ?2);");
             for(const ConditionBatchItem & item : items)
             {
                 const bool use_savepoint = !all_or_nothing;
@@ -1549,7 +1464,7 @@ namespace dcn::storage
                 const std::string sql =
                     std::string("SELECT name FROM ") + table_name +
                     " WHERE owner = ?1 AND name > ?2 ORDER BY name ASC LIMIT ?3;";
-                Statement stmt(_db, sql.c_str());
+                storage::sqlite::Statement stmt(_db, sql.c_str());
                 bindAddress(stmt.get(), 1, owner);
                 sqlite3_bind_text(stmt.get(), 2, after->c_str(), static_cast<int>(after->size()), SQLITE_TRANSIENT);
                 sqlite3_bind_int(stmt.get(), 3, toSqliteInt(query_limit));
@@ -1568,7 +1483,7 @@ namespace dcn::storage
                 const std::string sql =
                     std::string("SELECT name FROM ") + table_name +
                     " WHERE owner = ?1 ORDER BY name ASC LIMIT ?2;";
-                Statement stmt(_db, sql.c_str());
+                storage::sqlite::Statement stmt(_db, sql.c_str());
                 bindAddress(stmt.get(), 1, owner);
                 sqlite3_bind_int(stmt.get(), 2, toSqliteInt(query_limit));
                 for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
@@ -1626,7 +1541,7 @@ namespace dcn::storage
     {
         try
         {
-            Statement stmt(
+            storage::sqlite::Statement stmt(
                 _db,
                 "SELECT COUNT(*) FROM ("
                 "SELECT owner FROM owned_connectors "
@@ -1663,7 +1578,7 @@ namespace dcn::storage
             const std::size_t query_limit = limit + 1;
             if(after.has_value())
             {
-                Statement stmt(
+                storage::sqlite::Statement stmt(
                     _db,
                     "SELECT owner FROM ("
                     "SELECT owner FROM owned_connectors "
@@ -1686,7 +1601,7 @@ namespace dcn::storage
             }
             else
             {
-                Statement stmt(
+                storage::sqlite::Statement stmt(
                     _db,
                     "SELECT owner FROM ("
                     "SELECT owner FROM owned_connectors "
@@ -1730,7 +1645,7 @@ namespace dcn::storage
         return page;
     }
 
-    bool SQLiteRegistryStore::checkpointWal(const WalCheckpointMode mode) const
+    bool SQLiteRegistryStore::checkpointWal(const storage::sqlite::WalCheckpointMode mode) const
     {
         if(_db == nullptr)
         {
@@ -1752,7 +1667,7 @@ namespace dcn::storage
         const int res = sqlite3_wal_checkpoint_v2(
             _db,
             nullptr,
-            toSqliteCheckpointMode(mode),
+            storage::sqlite::toSqliteCheckpointMode(mode),
             &wal_frames_total,
             &wal_frames_checkpointed);
         (void)sqlite3_busy_timeout(_db, SQLITE_DEFAULT_BUSY_TIMEOUT_MS);
@@ -1761,7 +1676,7 @@ namespace dcn::storage
         {
             spdlog::warn(
                 "SQLite WAL checkpoint failed mode={} rc={} err={}",
-                checkpointModeToString(mode),
+                storage::sqlite::checkpointModeToString(mode),
                 res,
                 sqlite3_errmsg(_db));
             return false;
@@ -1769,7 +1684,7 @@ namespace dcn::storage
 
         spdlog::debug(
             "SQLite WAL checkpoint mode={} frames_total={} frames_checkpointed={}",
-            checkpointModeToString(mode),
+            storage::sqlite::checkpointModeToString(mode),
             wal_frames_total,
             wal_frames_checkpointed);
         return true;
@@ -1779,7 +1694,7 @@ namespace dcn::storage
 
 namespace dcn::parse
 {
-    Result<storage::NameCursor> parseNameCursor(const std::string & name_token)
+    Result<registry::NameCursor> parseNameCursor(const std::string & name_token)
     {
         if(name_token.empty())
         {

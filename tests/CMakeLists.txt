@@ -106,6 +106,18 @@ add_executable("${UNIT_TEST_TARGET}"
     "src/db_first_runtime.cpp"
     "src/pt/proxy_upgrade.cpp"
     "src/registry.cpp"
+
+    # --- events module test files ---
+    "src/events/decoder_tests.cpp"
+    "src/events/hot_store_ingest_tests.cpp"
+    "src/events/projection_outbox_tests.cpp"
+    "src/events/finality_reorg_tests.cpp"
+    "src/events/feed_stream_sse_tests.cpp"
+    "src/events/feed_history_tests.cpp"
+    "src/events/archive_export_prune_tests.cpp"
+    "src/events/recovery_failpoint_tests.cpp"
+    "src/events/concurrency_backpressure_tests.cpp"
+    "src/events/maintenance_wal_integrity_tests.cpp"
 )
 
 configure_test_target("${UNIT_TEST_TARGET}")
@@ -115,7 +127,8 @@ gtest_discover_tests("${UNIT_TEST_TARGET}" PROPERTIES LABELS "unit")
 if(DECENTRALISED_ART_BUILD_STRESS_TESTS)
     add_executable("${STRESS_TEST_TARGET}"
         "src/stress/tests.cpp"
-        "src/stress/registry_stress.cpp")
+        "src/stress/registry_stress.cpp"
+        "src/stress/events_load.cpp")
 
     configure_test_target("${STRESS_TEST_TARGET}")
     copy_evmone_runtime_to_target("${STRESS_TEST_TARGET}")

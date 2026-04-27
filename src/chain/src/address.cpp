@@ -2,6 +2,7 @@
 
 #include "address.hpp"
 #include "crypto.hpp"
+#include "hex.hpp"
 
 namespace dcn::chain
 {
@@ -39,4 +40,10 @@ namespace dcn::chain
         std::copy(hash + 12, hash + 32, address.bytes);
         return address; 
     }
+
+    std::string addressToHex(const chain::Address & address)
+    {
+        return normalizeHex(evmc::hex(address));
+    }
+
 }

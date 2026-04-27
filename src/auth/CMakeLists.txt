@@ -4,6 +4,7 @@ add_module(NAME "Auth"
         "${PROJECT_PREFIX}::Async"
         "${PROJECT_PREFIX}::Crypto"
         "${PROJECT_PREFIX}::Chain"
+        "${PROJECT_PREFIX}::Parser"
 
         spdlog::spdlog
         asio
@@ -12,5 +13,6 @@ add_module(NAME "Auth"
         jwt-cpp
         evmc
         nlohmann_json
+        protobuf::libprotobuf
 )
 

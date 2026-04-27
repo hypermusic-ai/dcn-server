@@ -77,7 +77,7 @@ namespace dcn
         const http::Request &,
         std::vector<server::RouteArg> args,
         server::QueryArgsList query_args,
-        storage::Registry &)
+        registry::Registry &)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -133,7 +133,7 @@ namespace dcn
         const http::Request &,
         std::vector<server::RouteArg> args,
         server::QueryArgsList query_args,
-        storage::Registry & registry)
+        registry::Registry & registry)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -234,7 +234,7 @@ namespace dcn
         co_return response;
     }
 
-    asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList query_args, storage::Registry & registry)
+    asio::awaitable<http::Response> GET_accountInfo(const http::Request & request, std::vector<server::RouteArg> args, server::QueryArgsList query_args, registry::Registry & registry)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -304,9 +304,9 @@ namespace dcn
             co_return response;
         }
 
-        std::optional<storage::NameCursor> after_connectors;
-        std::optional<storage::NameCursor> after_transformations;
-        std::optional<storage::NameCursor> after_conditions;
+        std::optional<registry::NameCursor> after_connectors;
+        std::optional<registry::NameCursor> after_transformations;
+        std::optional<registry::NameCursor> after_conditions;
 
         if(query_args.contains("after_connectors"))
         {
@@ -393,17 +393,17 @@ namespace dcn
         json_output["cursor_connectors"] = json::object();
         json_output["cursor_connectors"]["has_more"] = connectors_page.has_more;
         json_output["cursor_connectors"]["next_after"] =
-            connectors_page.next_after.has_value() ? json(storage::serializeNameCursor(*connectors_page.next_after)) : json(nullptr);
+            connectors_page.next_after.has_value() ? json(registry::serializeNameCursor(*connectors_page.next_after)) : json(nullptr);
 
         json_output["cursor_transformations"] = json::object();
         json_output["cursor_transformations"]["has_more"] = transformations_page.has_more;
         json_output["cursor_transformations"]["next_after"] =
-            transformations_page.next_after.has_value() ? json(storage::serializeNameCursor(*transformations_page.next_after)) : json(nullptr);
+            transformations_page.next_after.has_value() ? json(registry::serializeNameCursor(*transformations_page.next_after)) : json(nullptr);
 
         json_output["cursor_conditions"] = json::object();
         json_output["cursor_conditions"]["has_more"] = conditions_page.has_more;
         json_output["cursor_conditions"]["next_after"] =
-            conditions_page.next_after.has_value() ? json(storage::serializeNameCursor(*conditions_page.next_after)) : json(nullptr);
+            conditions_page.next_after.has_value() ? json(registry::serializeNameCursor(*conditions_page.next_after)) : json(nullptr);
 
         response.setCode(http::Code::OK)
             .setBodyWithContentLength(json_output.dump());
