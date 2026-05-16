@@ -70,12 +70,11 @@ namespace dcn
         return  "//SPDX-License-Identifier: MIT\n"
                 "pragma solidity ^0.8.0;\n"
                 "import \"transformation/TransformationBase.sol\";\n"
-                "contract " + transformation.name() + " is TransformationBase{\n" // open contract
+                "contract " + transformation.name() + " is TransformationBase{\n"
                 "constructor(address registryAddr) TransformationBase(registryAddr, \"" + transformation.name() + "\"," +  std::to_string(argc) +"){}\n"
-                "function run(uint32 x, uint32 [] calldata args) view external returns (uint32){\n" // open function
-                "require(args.length == this.getArgsCount(), \"wrong number of arguments\");\n"
-                + transformation.sol_src() + "\n}" // close function
-                "\n}"; // close contract
+                "function _runImpl(uint32 x, uint32 [] memory args) internal view virtual override returns (uint32){\n"
+                + transformation.sol_src() + "\n}"
+                "\n}";
     }
 }
 
