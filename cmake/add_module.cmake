@@ -7,11 +7,6 @@ function(add_module)
     file(GLOB_RECURSE INCLUDE_SOURCES "include/*.h*")
     file(GLOB_RECURSE SOURCES "src/*.c*")
 
-    if(${add_module_NAME} STREQUAL "Storage")
-        message(${INCLUDE_SOURCES})
-        message(${SOURCES})
-    endif()
-
     add_library("${add_module_NAME}"  
         OBJECT
             ${SOURCES}
