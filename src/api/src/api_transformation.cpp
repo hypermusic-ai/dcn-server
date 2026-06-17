@@ -183,6 +183,20 @@ namespace dcn
         transformation_record.set_owner(evmc::hex(address));
         *transformation_record.mutable_transformation() = std::move(transformation);
 
+        // args_count is chain-derivable from the source (matches the value registered on chain).
+        // Record it so the saved JSON artifact and the response carry it explicitly.
+        const auto args_count_res = countTransformationArgs(transformation_record.transformation().sol_src());
+        if(!args_count_res)
+        {
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", std::format("Failed to parse transformation: {}", args_count_res.error().message)}
+                }.dump());
+
+            co_return response;
+        }
+        transformation_record.mutable_transformation()->set_args_count(*args_count_res);
+
         const auto deploy_res = co_await loader::deployTransformation(evm, registry, transformation_record, config.storage_path);
         if(!deploy_res)
         {
@@ -198,6 +212,7 @@ namespace dcn
         json_output["name"] = transformation_record.transformation().name();
         json_output["owner"] = transformation_record.owner();
         json_output["address"] = "0x0";
+        json_output["args_count"] = transformation_record.transformation().args_count();
 
         response.setCode(http::Code::Created)
             .setBodyWithContentLength(json_output.dump());

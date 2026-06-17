@@ -4,7 +4,8 @@ package dcn;
 
 message Condition {
     string name = 1;
-    string sol_src = 2;
+    string sol_src = 2; // local-only deploy input / JSON-storage artifact; never persisted in the registry nor served
+    uint32 args_count = 3; // chain-derivable (emitted by ConditionAdded / contract getArgsCount())
 }
 
 // Internal full record (used in storage, indexing, etc.)

@@ -90,6 +90,8 @@ namespace dcn::pt
         std::string condition_name;
         std::vector<std::int32_t> condition_args;
         evmc::bytes32 format_hash{};
+        // Static running instances keyed by local position id -> {start_point, transformation_shift}.
+        std::map<std::uint32_t, std::pair<std::uint32_t, std::uint32_t>> static_ri;
     };
 
     std::optional<ConnectorAddedEvent> decodeConnectorAddedEvent(

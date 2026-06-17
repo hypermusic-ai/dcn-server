@@ -25,7 +25,6 @@ namespace dcn::registry
     {
         constexpr std::size_t ADDRESS_BYTES_SIZE = 20;
         constexpr std::size_t BYTES32_SIZE = 32;
-        constexpr int MAX_RECORD_BLOB_BYTES = 16 * 1024 * 1024;
         constexpr int SQLITE_DEFAULT_BUSY_TIMEOUT_MS = 5000;
         constexpr int SQLITE_CHECKPOINT_BUSY_TIMEOUT_MS = 250;
 
@@ -71,33 +70,6 @@ namespace dcn::registry
             chain::Address out{};
             std::memcpy(out.bytes, blob, ADDRESS_BYTES_SIZE);
             return out;
-        }
-
-        template <typename TRecord>
-        static std::optional<TRecord> parseRecordBlob(sqlite3_stmt * stmt, int index)
-        {
-            const void * payload_blob = sqlite3_column_blob(stmt, index);
-            const int payload_size = sqlite3_column_bytes(stmt, index);
-            if(payload_blob == nullptr || payload_size <= 0)
-            {
-                return std::nullopt;
-            }
-            if(payload_size > MAX_RECORD_BLOB_BYTES)
-            {
-                spdlog::error(
-                    "SQLite record payload too large for protobuf decode: bytes={} (limit={})",
-                    payload_size,
-                    MAX_RECORD_BLOB_BYTES);
-                return std::nullopt;
-            }
-
-            TRecord record;
-            if(!record.ParseFromArray(payload_blob, payload_size))
-            {
-                return std::nullopt;
-            }
-
-            return record;
         }
     }
 
@@ -166,26 +138,75 @@ namespace dcn::registry
     bool SQLiteRegistryStore::_initializeSchema() const
     {
         const bool base_schema_ok =
+            // Entities mirror only chain-derivable state, stored in explicit columns (no opaque
+            // payload blob). sol_src is intentionally absent: it cannot be reconstructed from chain.
             _exec(
                 "CREATE TABLE IF NOT EXISTS connectors ("
                 "name TEXT PRIMARY KEY,"
                 "owner BLOB NOT NULL,"
                 "format_hash BLOB NOT NULL,"
-                "payload_blob BLOB NOT NULL,"
+                "condition_name TEXT NOT NULL,"
                 "created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER))"
+                ");") &&
+            _exec(
+                "CREATE TABLE IF NOT EXISTS connector_dimensions ("
+                "connector_name TEXT NOT NULL,"
+                "dim_index INTEGER NOT NULL,"
+                "composite TEXT NOT NULL,"
+                "PRIMARY KEY(connector_name, dim_index)"
+                ");") &&
+            _exec(
+                "CREATE TABLE IF NOT EXISTS connector_dimension_bindings ("
+                "connector_name TEXT NOT NULL,"
+                "dim_index INTEGER NOT NULL,"
+                "slot TEXT NOT NULL,"
+                "target TEXT NOT NULL,"
+                "PRIMARY KEY(connector_name, dim_index, slot)"
+                ");") &&
+            _exec(
+                "CREATE TABLE IF NOT EXISTS connector_transformation_defs ("
+                "connector_name TEXT NOT NULL,"
+                "dim_index INTEGER NOT NULL,"
+                "op_index INTEGER NOT NULL,"
+                "transformation_name TEXT NOT NULL,"
+                "PRIMARY KEY(connector_name, dim_index, op_index)"
+                ");") &&
+            _exec(
+                "CREATE TABLE IF NOT EXISTS connector_transformation_def_args ("
+                "connector_name TEXT NOT NULL,"
+                "dim_index INTEGER NOT NULL,"
+                "op_index INTEGER NOT NULL,"
+                "arg_index INTEGER NOT NULL,"
+                "value INTEGER NOT NULL,"
+                "PRIMARY KEY(connector_name, dim_index, op_index, arg_index)"
+                ");") &&
+            _exec(
+                "CREATE TABLE IF NOT EXISTS connector_condition_args ("
+                "connector_name TEXT NOT NULL,"
+                "arg_index INTEGER NOT NULL,"
+                "value INTEGER NOT NULL,"
+                "PRIMARY KEY(connector_name, arg_index)"
+                ");") &&
+            _exec(
+                "CREATE TABLE IF NOT EXISTS connector_static_ri ("
+                "connector_name TEXT NOT NULL,"
+                "position INTEGER NOT NULL,"
+                "start_point INTEGER NOT NULL,"
+                "transformation_shift INTEGER NOT NULL,"
+                "PRIMARY KEY(connector_name, position)"
                 ");") &&
             _exec(
                 "CREATE TABLE IF NOT EXISTS transformations ("
                 "name TEXT PRIMARY KEY,"
                 "owner BLOB NOT NULL,"
-                "payload_blob BLOB NOT NULL,"
+                "args_count INTEGER NOT NULL,"
                 "created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER))"
                 ");") &&
             _exec(
                 "CREATE TABLE IF NOT EXISTS conditions ("
                 "name TEXT PRIMARY KEY,"
                 "owner BLOB NOT NULL,"
-                "payload_blob BLOB NOT NULL,"
+                "args_count INTEGER NOT NULL,"
                 "created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER))"
                 ");") &&
             _exec(
@@ -234,6 +255,299 @@ namespace dcn::registry
         return true;
     }
 
+    bool SQLiteRegistryStore::_insertConnectorRows(
+        const chain::Address & owner,
+        const evmc::bytes32 & format_hash,
+        const ConnectorRecord & record,
+        const std::vector<ScalarLabel> & canonical_scalar_labels) const
+    {
+        const Connector & connector = record.connector();
+        const std::string & connector_name = connector.name();
+
+        {
+            storage::sqlite::Statement insert_connector(
+                _db,
+                "INSERT INTO connectors(name, owner, format_hash, condition_name) VALUES(?1, ?2, ?3, ?4);");
+            sqlite3_bind_text(insert_connector.get(), 1, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
+            bindAddress(insert_connector.get(), 2, owner);
+            bindBytes32(insert_connector.get(), 3, format_hash);
+            sqlite3_bind_text(insert_connector.get(), 4, connector.condition_name().c_str(), static_cast<int>(connector.condition_name().size()), SQLITE_TRANSIENT);
+            if(insert_connector.step() != SQLITE_DONE)
+            {
+                spdlog::error("SQLite insert connectors failed for `{}`", connector_name);
+                return false;
+            }
+        }
+
+        {
+            storage::sqlite::Statement insert_format_member(
+                _db,
+                "INSERT OR IGNORE INTO format_members(format_hash, name) VALUES(?1, ?2);");
+            bindBytes32(insert_format_member.get(), 1, format_hash);
+            sqlite3_bind_text(insert_format_member.get(), 2, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
+            if(insert_format_member.step() != SQLITE_DONE)
+            {
+                spdlog::error("SQLite insert format_members failed for `{}`", connector_name);
+                return false;
+            }
+        }
+
+        {
+            storage::sqlite::Statement insert_scalar_label(
+                _db,
+                "INSERT OR IGNORE INTO scalar_labels_by_format(format_hash, scalar, path_hash, tail_id) VALUES(?1, ?2, ?3, ?4);");
+            for(const ScalarLabel & label : canonical_scalar_labels)
+            {
+                insert_scalar_label.reset();
+                bindBytes32(insert_scalar_label.get(), 1, format_hash);
+                sqlite3_bind_text(insert_scalar_label.get(), 2, label.scalar.c_str(), static_cast<int>(label.scalar.size()), SQLITE_TRANSIENT);
+                bindBytes32(insert_scalar_label.get(), 3, label.path_hash);
+                sqlite3_bind_int64(insert_scalar_label.get(), 4, static_cast<sqlite3_int64>(label.tail_id));
+                if(insert_scalar_label.step() != SQLITE_DONE)
+                {
+                    spdlog::error("SQLite insert scalar_labels_by_format failed for `{}`", connector_name);
+                    return false;
+                }
+            }
+        }
+
+        {
+            storage::sqlite::Statement insert_owned(
+                _db,
+                "INSERT OR REPLACE INTO owned_connectors(owner, name) VALUES(?1, ?2);");
+            bindAddress(insert_owned.get(), 1, owner);
+            sqlite3_bind_text(insert_owned.get(), 2, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
+            if(insert_owned.step() != SQLITE_DONE)
+            {
+                spdlog::error("SQLite insert owned_connectors failed for `{}`", connector_name);
+                return false;
+            }
+        }
+
+        {
+            storage::sqlite::Statement insert_cond_arg(
+                _db,
+                "INSERT INTO connector_condition_args(connector_name, arg_index, value) VALUES(?1, ?2, ?3);");
+            for(int i = 0; i < connector.condition_args_size(); ++i)
+            {
+                insert_cond_arg.reset();
+                sqlite3_bind_text(insert_cond_arg.get(), 1, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
+                sqlite3_bind_int64(insert_cond_arg.get(), 2, static_cast<sqlite3_int64>(i));
+                sqlite3_bind_int64(insert_cond_arg.get(), 3, static_cast<sqlite3_int64>(connector.condition_args(i)));
+                if(insert_cond_arg.step() != SQLITE_DONE)
+                {
+                    spdlog::error("SQLite insert connector_condition_args failed for `{}`", connector_name);
+                    return false;
+                }
+            }
+        }
+
+        {
+            storage::sqlite::Statement insert_static_ri(
+                _db,
+                "INSERT INTO connector_static_ri(connector_name, position, start_point, transformation_shift) VALUES(?1, ?2, ?3, ?4);");
+            for(const auto & [position, running_instance] : connector.static_ri())
+            {
+                insert_static_ri.reset();
+                sqlite3_bind_text(insert_static_ri.get(), 1, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
+                sqlite3_bind_int64(insert_static_ri.get(), 2, static_cast<sqlite3_int64>(position));
+                sqlite3_bind_int64(insert_static_ri.get(), 3, static_cast<sqlite3_int64>(running_instance.start_point()));
+                sqlite3_bind_int64(insert_static_ri.get(), 4, static_cast<sqlite3_int64>(running_instance.transformation_shift()));
+                if(insert_static_ri.step() != SQLITE_DONE)
+                {
+                    spdlog::error("SQLite insert connector_static_ri failed for `{}`", connector_name);
+                    return false;
+                }
+            }
+        }
+
+        {
+            storage::sqlite::Statement insert_dim(
+                _db,
+                "INSERT INTO connector_dimensions(connector_name, dim_index, composite) VALUES(?1, ?2, ?3);");
+            storage::sqlite::Statement insert_binding(
+                _db,
+                "INSERT INTO connector_dimension_bindings(connector_name, dim_index, slot, target) VALUES(?1, ?2, ?3, ?4);");
+            storage::sqlite::Statement insert_tdef(
+                _db,
+                "INSERT INTO connector_transformation_defs(connector_name, dim_index, op_index, transformation_name) VALUES(?1, ?2, ?3, ?4);");
+            storage::sqlite::Statement insert_tdef_arg(
+                _db,
+                "INSERT INTO connector_transformation_def_args(connector_name, dim_index, op_index, arg_index, value) VALUES(?1, ?2, ?3, ?4, ?5);");
+
+            for(int dim_index = 0; dim_index < connector.dimensions_size(); ++dim_index)
+            {
+                const Dimension & dimension = connector.dimensions(dim_index);
+
+                insert_dim.reset();
+                sqlite3_bind_text(insert_dim.get(), 1, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
+                sqlite3_bind_int64(insert_dim.get(), 2, static_cast<sqlite3_int64>(dim_index));
+                sqlite3_bind_text(insert_dim.get(), 3, dimension.composite().c_str(), static_cast<int>(dimension.composite().size()), SQLITE_TRANSIENT);
+                if(insert_dim.step() != SQLITE_DONE)
+                {
+                    spdlog::error("SQLite insert connector_dimensions failed for `{}`", connector_name);
+                    return false;
+                }
+
+                for(const auto & [slot, target] : dimension.bindings())
+                {
+                    insert_binding.reset();
+                    sqlite3_bind_text(insert_binding.get(), 1, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
+                    sqlite3_bind_int64(insert_binding.get(), 2, static_cast<sqlite3_int64>(dim_index));
+                    sqlite3_bind_text(insert_binding.get(), 3, slot.c_str(), static_cast<int>(slot.size()), SQLITE_TRANSIENT);
+                    sqlite3_bind_text(insert_binding.get(), 4, target.c_str(), static_cast<int>(target.size()), SQLITE_TRANSIENT);
+                    if(insert_binding.step() != SQLITE_DONE)
+                    {
+                        spdlog::error("SQLite insert connector_dimension_bindings failed for `{}`", connector_name);
+                        return false;
+                    }
+                }
+
+                for(int op_index = 0; op_index < dimension.transformations_size(); ++op_index)
+                {
+                    const TransformationDef & tdef = dimension.transformations(op_index);
+
+                    insert_tdef.reset();
+                    sqlite3_bind_text(insert_tdef.get(), 1, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
+                    sqlite3_bind_int64(insert_tdef.get(), 2, static_cast<sqlite3_int64>(dim_index));
+                    sqlite3_bind_int64(insert_tdef.get(), 3, static_cast<sqlite3_int64>(op_index));
+                    sqlite3_bind_text(insert_tdef.get(), 4, tdef.name().c_str(), static_cast<int>(tdef.name().size()), SQLITE_TRANSIENT);
+                    if(insert_tdef.step() != SQLITE_DONE)
+                    {
+                        spdlog::error("SQLite insert connector_transformation_defs failed for `{}`", connector_name);
+                        return false;
+                    }
+
+                    for(int arg_index = 0; arg_index < tdef.args_size(); ++arg_index)
+                    {
+                        insert_tdef_arg.reset();
+                        sqlite3_bind_text(insert_tdef_arg.get(), 1, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
+                        sqlite3_bind_int64(insert_tdef_arg.get(), 2, static_cast<sqlite3_int64>(dim_index));
+                        sqlite3_bind_int64(insert_tdef_arg.get(), 3, static_cast<sqlite3_int64>(op_index));
+                        sqlite3_bind_int64(insert_tdef_arg.get(), 4, static_cast<sqlite3_int64>(arg_index));
+                        sqlite3_bind_int64(insert_tdef_arg.get(), 5, static_cast<sqlite3_int64>(tdef.args(arg_index)));
+                        if(insert_tdef_arg.step() != SQLITE_DONE)
+                        {
+                            spdlog::error("SQLite insert connector_transformation_def_args failed for `{}`", connector_name);
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    std::optional<ConnectorRecord> SQLiteRegistryStore::_readConnectorRecord(const std::string & name) const
+    {
+        ConnectorRecord record;
+        Connector * connector = record.mutable_connector();
+        connector->set_name(name);
+
+        {
+            storage::sqlite::Statement stmt(_db, "SELECT owner, condition_name FROM connectors WHERE name = ?1 LIMIT 1;");
+            sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+            if(stmt.step() != SQLITE_ROW)
+            {
+                return std::nullopt;
+            }
+
+            const auto owner = columnAddress(stmt.get(), 0);
+            if(!owner)
+            {
+                spdlog::error("SQLite connector `{}` has invalid owner column", name);
+                return std::nullopt;
+            }
+            record.set_owner(evmc::hex(*owner));
+
+            const unsigned char * condition_name = sqlite3_column_text(stmt.get(), 1);
+            if(condition_name != nullptr)
+            {
+                connector->set_condition_name(reinterpret_cast<const char *>(condition_name));
+            }
+        }
+
+        {
+            storage::sqlite::Statement stmt(_db, "SELECT value FROM connector_condition_args WHERE connector_name = ?1 ORDER BY arg_index ASC;");
+            sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+            for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
+            {
+                connector->add_condition_args(static_cast<std::int32_t>(sqlite3_column_int64(stmt.get(), 0)));
+            }
+        }
+
+        {
+            storage::sqlite::Statement stmt(_db, "SELECT position, start_point, transformation_shift FROM connector_static_ri WHERE connector_name = ?1;");
+            sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+            for(int rc = stmt.step(); rc == SQLITE_ROW; rc = stmt.step())
+            {
+                const std::uint32_t position = static_cast<std::uint32_t>(sqlite3_column_int64(stmt.get(), 0));
+                RunningInstance running_instance;
+                running_instance.set_start_point(static_cast<std::uint32_t>(sqlite3_column_int64(stmt.get(), 1)));
+                running_instance.set_transformation_shift(static_cast<std::uint32_t>(sqlite3_column_int64(stmt.get(), 2)));
+                (*connector->mutable_static_ri())[position] = running_instance;
+            }
+        }
+
+        {
+            storage::sqlite::Statement dim_stmt(_db, "SELECT dim_index, composite FROM connector_dimensions WHERE connector_name = ?1 ORDER BY dim_index ASC;");
+            sqlite3_bind_text(dim_stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+            for(int rc = dim_stmt.step(); rc == SQLITE_ROW; rc = dim_stmt.step())
+            {
+                const std::int64_t dim_index = sqlite3_column_int64(dim_stmt.get(), 0);
+                Dimension * dimension = connector->add_dimensions();
+                const unsigned char * composite = sqlite3_column_text(dim_stmt.get(), 1);
+                if(composite != nullptr)
+                {
+                    dimension->set_composite(reinterpret_cast<const char *>(composite));
+                }
+
+                {
+                    storage::sqlite::Statement binding_stmt(_db, "SELECT slot, target FROM connector_dimension_bindings WHERE connector_name = ?1 AND dim_index = ?2;");
+                    sqlite3_bind_text(binding_stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+                    sqlite3_bind_int64(binding_stmt.get(), 2, dim_index);
+                    for(int brc = binding_stmt.step(); brc == SQLITE_ROW; brc = binding_stmt.step())
+                    {
+                        const unsigned char * slot = sqlite3_column_text(binding_stmt.get(), 0);
+                        const unsigned char * target = sqlite3_column_text(binding_stmt.get(), 1);
+                        if(slot != nullptr && target != nullptr)
+                        {
+                            (*dimension->mutable_bindings())[reinterpret_cast<const char *>(slot)] = reinterpret_cast<const char *>(target);
+                        }
+                    }
+                }
+
+                {
+                    storage::sqlite::Statement tdef_stmt(_db, "SELECT op_index, transformation_name FROM connector_transformation_defs WHERE connector_name = ?1 AND dim_index = ?2 ORDER BY op_index ASC;");
+                    sqlite3_bind_text(tdef_stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+                    sqlite3_bind_int64(tdef_stmt.get(), 2, dim_index);
+                    for(int trc = tdef_stmt.step(); trc == SQLITE_ROW; trc = tdef_stmt.step())
+                    {
+                        const std::int64_t op_index = sqlite3_column_int64(tdef_stmt.get(), 0);
+                        TransformationDef * tdef = dimension->add_transformations();
+                        const unsigned char * tdef_name = sqlite3_column_text(tdef_stmt.get(), 1);
+                        if(tdef_name != nullptr)
+                        {
+                            tdef->set_name(reinterpret_cast<const char *>(tdef_name));
+                        }
+
+                        storage::sqlite::Statement arg_stmt(_db, "SELECT value FROM connector_transformation_def_args WHERE connector_name = ?1 AND dim_index = ?2 AND op_index = ?3 ORDER BY arg_index ASC;");
+                        sqlite3_bind_text(arg_stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
+                        sqlite3_bind_int64(arg_stmt.get(), 2, dim_index);
+                        sqlite3_bind_int64(arg_stmt.get(), 3, op_index);
+                        for(int arc = arg_stmt.step(); arc == SQLITE_ROW; arc = arg_stmt.step())
+                        {
+                            tdef->add_args(static_cast<std::int32_t>(sqlite3_column_int64(arg_stmt.get(), 0)));
+                        }
+                    }
+                }
+            }
+        }
+
+        return record;
+    }
+
     bool SQLiteRegistryStore::hasConnector(const std::string & name) const
     {
         try
@@ -275,33 +589,14 @@ namespace dcn::registry
         {
             spdlog::debug("SQLite::getConnectorRecordHandle('{}'): prepare", name);
             
-            storage::sqlite::Statement stmt(_db, "SELECT payload_blob FROM connectors WHERE name = ?1 LIMIT 1;");
-            sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-            
-            spdlog::debug("SQLite::getConnectorRecordHandle('{}'): bound name", name);
-
-            const int rc = stmt.step();
-            
-            spdlog::debug("SQLite::getConnectorRecordHandle('{}'): step rc={}", name, rc);
-            
-            if(rc != SQLITE_ROW)
-            {
-                return std::nullopt;
-            }
-
-            const int blob_size = sqlite3_column_bytes(stmt.get(), 0);
-            spdlog::debug("SQLite::getConnectorRecordHandle('{}'): row found blob_size={}", name, blob_size);
-
-            auto record_opt = parseRecordBlob<ConnectorRecord>(stmt.get(), 0);
+            auto record_opt = _readConnectorRecord(name);
             if(!record_opt.has_value())
             {
-                
-                spdlog::debug("SQLite::getConnectorRecordHandle('{}'): protobuf decode failed", name);
+                spdlog::debug("SQLite::getConnectorRecordHandle('{}'): not found", name);
                 return std::nullopt;
             }
 
-            
-            spdlog::debug("SQLite::getConnectorRecordHandle('{}'): decoded record", name);
+            spdlog::debug("SQLite::getConnectorRecordHandle('{}'): reassembled record", name);
             return std::make_shared<ConnectorRecord>(std::move(*record_opt));
         }
         catch(const std::exception & e)
@@ -344,13 +639,6 @@ namespace dcn::registry
             return false;
         }
 
-        std::string payload_blob;
-        if(!record.SerializeToString(&payload_blob))
-        {
-            spdlog::error("Failed to serialize connector record for `{}`", connector_name);
-            return false;
-        }
-
         spdlog::debug(
             "DB add connector name={} runtime_address={} format_hash={} scalar_labels={}",
             connector_name,
@@ -375,56 +663,9 @@ namespace dcn::registry
 
         try
         {
-            storage::sqlite::Statement insert_connector(
-                _db,
-                "INSERT INTO connectors(name, owner, format_hash, payload_blob) VALUES(?1, ?2, ?3, ?4);");
-            sqlite3_bind_text(insert_connector.get(), 1, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
-            bindAddress(insert_connector.get(), 2, *owner_opt);
-            bindBytes32(insert_connector.get(), 3, format_hash);
-            sqlite3_bind_blob(insert_connector.get(), 4, payload_blob.data(), static_cast<int>(payload_blob.size()), SQLITE_TRANSIENT);
-            if(insert_connector.step() != SQLITE_DONE)
+            if(!_insertConnectorRows(*owner_opt, format_hash, record, canonical_scalar_labels))
             {
-                rollback_with_log("insert connectors");
-                return false;
-            }
-
-            storage::sqlite::Statement insert_format_member(
-                _db,
-                "INSERT OR IGNORE INTO format_members(format_hash, name) VALUES(?1, ?2);");
-            bindBytes32(insert_format_member.get(), 1, format_hash);
-            sqlite3_bind_text(insert_format_member.get(), 2, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
-            if(insert_format_member.step() != SQLITE_DONE)
-            {
-                rollback_with_log("insert format_members");
-                return false;
-            }
-
-            storage::sqlite::Statement insert_scalar_label(
-                _db,
-                "INSERT OR IGNORE INTO scalar_labels_by_format(format_hash, scalar, path_hash, tail_id) "
-                "VALUES(?1, ?2, ?3, ?4);");
-            for(const ScalarLabel & label : canonical_scalar_labels)
-            {
-                insert_scalar_label.reset();
-                bindBytes32(insert_scalar_label.get(), 1, format_hash);
-                sqlite3_bind_text(insert_scalar_label.get(), 2, label.scalar.c_str(), static_cast<int>(label.scalar.size()), SQLITE_TRANSIENT);
-                bindBytes32(insert_scalar_label.get(), 3, label.path_hash);
-                sqlite3_bind_int64(insert_scalar_label.get(), 4, static_cast<sqlite3_int64>(label.tail_id));
-                if(insert_scalar_label.step() != SQLITE_DONE)
-                {
-                    rollback_with_log("insert scalar_labels_by_format");
-                    return false;
-                }
-            }
-
-            storage::sqlite::Statement insert_owned(
-                _db,
-                "INSERT OR REPLACE INTO owned_connectors(owner, name) VALUES(?1, ?2);");
-            bindAddress(insert_owned.get(), 1, *owner_opt);
-            sqlite3_bind_text(insert_owned.get(), 2, connector_name.c_str(), static_cast<int>(connector_name.size()), SQLITE_TRANSIENT);
-            if(insert_owned.step() != SQLITE_DONE)
-            {
-                rollback_with_log("insert owned_connectors");
+                rollback_with_log("insert connector rows");
                 return false;
             }
         }
@@ -468,11 +709,6 @@ namespace dcn::registry
 
         try
         {
-            storage::sqlite::Statement insert_connector(_db, "INSERT INTO connectors(name, owner, format_hash, payload_blob) VALUES(?1, ?2, ?3, ?4);");
-            storage::sqlite::Statement insert_format_member(_db, "INSERT OR IGNORE INTO format_members(format_hash, name) VALUES(?1, ?2);");
-            storage::sqlite::Statement insert_scalar_label(_db, "INSERT OR IGNORE INTO scalar_labels_by_format(format_hash, scalar, path_hash, tail_id) VALUES(?1, ?2, ?3, ?4);");
-            storage::sqlite::Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_connectors(owner, name) VALUES(?1, ?2);");
-
             for(const ConnectorBatchItem & item : items)
             {
                 const bool use_savepoint = !all_or_nothing;
@@ -514,69 +750,11 @@ namespace dcn::registry
                     continue;
                 }
 
-                std::string payload_blob;
-                if(!item.record.SerializeToString(&payload_blob))
-                {
-                    all_ok = false;
-                    if(all_or_nothing)
-                    {
-                        rollback_batch_with_log("serialize connector");
-                        return false;
-                    }
-                    (void)fail_item("serialize connector");
-                    ++failed_count;
-                    continue;
-                }
-
                 bool item_ok = true;
 
-                insert_connector.reset();
-                sqlite3_bind_text(insert_connector.get(), 1, item.record.connector().name().c_str(), static_cast<int>(item.record.connector().name().size()), SQLITE_TRANSIENT);
-                bindAddress(insert_connector.get(), 2, *owner_opt);
-                bindBytes32(insert_connector.get(), 3, item.format_hash);
-                sqlite3_bind_blob(insert_connector.get(), 4, payload_blob.data(), static_cast<int>(payload_blob.size()), SQLITE_TRANSIENT);
-                if(insert_connector.step() != SQLITE_DONE)
+                if(!_insertConnectorRows(*owner_opt, item.format_hash, item.record, item.canonical_scalar_labels))
                 {
-                    item_ok = fail_item("insert connectors");
-                }
-
-                if(item_ok)
-                {
-                    insert_format_member.reset();
-                    bindBytes32(insert_format_member.get(), 1, item.format_hash);
-                    sqlite3_bind_text(insert_format_member.get(), 2, item.record.connector().name().c_str(), static_cast<int>(item.record.connector().name().size()), SQLITE_TRANSIENT);
-                    if(insert_format_member.step() != SQLITE_DONE)
-                    {
-                        item_ok = fail_item("insert format_members");
-                    }
-                }
-
-                if(item_ok)
-                {
-                    for(const ScalarLabel & label : item.canonical_scalar_labels)
-                    {
-                        insert_scalar_label.reset();
-                        bindBytes32(insert_scalar_label.get(), 1, item.format_hash);
-                        sqlite3_bind_text(insert_scalar_label.get(), 2, label.scalar.c_str(), static_cast<int>(label.scalar.size()), SQLITE_TRANSIENT);
-                        bindBytes32(insert_scalar_label.get(), 3, label.path_hash);
-                        sqlite3_bind_int64(insert_scalar_label.get(), 4, static_cast<sqlite3_int64>(label.tail_id));
-                        if(insert_scalar_label.step() != SQLITE_DONE)
-                        {
-                            item_ok = fail_item("insert scalar_labels_by_format");
-                            break;
-                        }
-                    }
-                }
-
-                if(item_ok)
-                {
-                    insert_owned.reset();
-                    bindAddress(insert_owned.get(), 1, *owner_opt);
-                    sqlite3_bind_text(insert_owned.get(), 2, item.record.connector().name().c_str(), static_cast<int>(item.record.connector().name().size()), SQLITE_TRANSIENT);
-                    if(insert_owned.step() != SQLITE_DONE)
-                    {
-                        item_ok = fail_item("insert owned_connectors");
-                    }
+                    item_ok = fail_item("insert connector rows");
                 }
 
                 if(item_ok && savepoint_active)
@@ -886,34 +1064,35 @@ namespace dcn::registry
             
             spdlog::debug("SQLite::getTransformationRecordHandle('{}'): prepare", name);
             
-            storage::sqlite::Statement stmt(_db, "SELECT payload_blob FROM transformations WHERE name = ?1 LIMIT 1;");
+            storage::sqlite::Statement stmt(_db, "SELECT owner, args_count FROM transformations WHERE name = ?1 LIMIT 1;");
             sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-            
+
             spdlog::debug("SQLite::getTransformationRecordHandle('{}'): bound name", name);
-            
+
             const int rc = stmt.step();
-            
+
             spdlog::debug("SQLite::getTransformationRecordHandle('{}'): step rc={}", name, rc);
-            
+
             if(rc != SQLITE_ROW)
             {
                 return std::nullopt;
             }
 
-            
-            const int blob_size = sqlite3_column_bytes(stmt.get(), 0);
-            spdlog::debug("SQLite::getTransformationRecordHandle('{}'): row found blob_size={}", name, blob_size);
-
-            auto record_opt = parseRecordBlob<TransformationRecord>(stmt.get(), 0);
-            if(!record_opt.has_value())
+            const auto owner = columnAddress(stmt.get(), 0);
+            if(!owner)
             {
-                
-                spdlog::debug("SQLite::getTransformationRecordHandle('{}'): protobuf decode failed", name);
+                spdlog::error("SQLite transformation `{}` has invalid owner column", name);
                 return std::nullopt;
             }
 
-            spdlog::debug("SQLite::getTransformationRecordHandle('{}'): decoded record", name);
-            return std::make_shared<TransformationRecord>(std::move(*record_opt));
+            TransformationRecord record;
+            Transformation * transformation = record.mutable_transformation();
+            transformation->set_name(name);
+            transformation->set_args_count(static_cast<std::uint32_t>(sqlite3_column_int64(stmt.get(), 1)));
+            record.set_owner(evmc::hex(*owner));
+
+            spdlog::debug("SQLite::getTransformationRecordHandle('{}'): reassembled record", name);
+            return std::make_shared<TransformationRecord>(std::move(record));
         }
         catch(const std::exception & e)
         {
@@ -929,13 +1108,6 @@ namespace dcn::registry
         if(!owner_opt)
         {
             spdlog::error("Failed to parse transformation owner for `{}`", transformation_name);
-            return false;
-        }
-
-        std::string payload_blob;
-        if(!record.SerializeToString(&payload_blob))
-        {
-            spdlog::error("Failed to serialize transformation `{}`", transformation_name);
             return false;
         }
 
@@ -957,10 +1129,10 @@ namespace dcn::registry
 
         try
         {
-            storage::sqlite::Statement insert_entity(_db, "INSERT INTO transformations(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
+            storage::sqlite::Statement insert_entity(_db, "INSERT INTO transformations(name, owner, args_count) VALUES(?1, ?2, ?3);");
             sqlite3_bind_text(insert_entity.get(), 1, transformation_name.c_str(), static_cast<int>(transformation_name.size()), SQLITE_TRANSIENT);
             bindAddress(insert_entity.get(), 2, *owner_opt);
-            sqlite3_bind_blob(insert_entity.get(), 3, payload_blob.data(), static_cast<int>(payload_blob.size()), SQLITE_TRANSIENT);
+            sqlite3_bind_int64(insert_entity.get(), 3, static_cast<sqlite3_int64>(record.transformation().args_count()));
             if(insert_entity.step() != SQLITE_DONE)
             {
                 rollback_with_log("insert transformations");
@@ -1016,7 +1188,7 @@ namespace dcn::registry
 
         try
         {
-            storage::sqlite::Statement insert_entity(_db, "INSERT INTO transformations(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
+            storage::sqlite::Statement insert_entity(_db, "INSERT INTO transformations(name, owner, args_count) VALUES(?1, ?2, ?3);");
             storage::sqlite::Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_transformations(owner, name) VALUES(?1, ?2);");
             for(const TransformationBatchItem & item : items)
             {
@@ -1063,26 +1235,12 @@ namespace dcn::registry
                     continue;
                 }
 
-                std::string payload_blob;
-                if(!item.record.SerializeToString(&payload_blob))
-                {
-                    all_ok = false;
-                    if(all_or_nothing)
-                    {
-                        rollback_batch_with_log("serialize transformation");
-                        return false;
-                    }
-                    (void)fail_item("serialize transformation");
-                    ++failed_count;
-                    continue;
-                }
-
                 bool item_ok = true;
 
                 insert_entity.reset();
                 sqlite3_bind_text(insert_entity.get(), 1, item.record.transformation().name().c_str(), static_cast<int>(item.record.transformation().name().size()), SQLITE_TRANSIENT);
                 bindAddress(insert_entity.get(), 2, *owner_opt);
-                sqlite3_bind_blob(insert_entity.get(), 3, payload_blob.data(), static_cast<int>(payload_blob.size()), SQLITE_TRANSIENT);
+                sqlite3_bind_int64(insert_entity.get(), 3, static_cast<sqlite3_int64>(item.record.transformation().args_count()));
                 if(insert_entity.step() != SQLITE_DONE)
                 {
                     item_ok = fail_item("insert transformations");
@@ -1186,13 +1344,13 @@ namespace dcn::registry
             
             spdlog::debug("SQLite::getConditionRecordHandle('{}'): prepare", name);
             
-            storage::sqlite::Statement stmt(_db, "SELECT payload_blob FROM conditions WHERE name = ?1 LIMIT 1;");
+            storage::sqlite::Statement stmt(_db, "SELECT owner, args_count FROM conditions WHERE name = ?1 LIMIT 1;");
             sqlite3_bind_text(stmt.get(), 1, name.c_str(), static_cast<int>(name.size()), SQLITE_TRANSIENT);
-            
+
             spdlog::debug("SQLite::getConditionRecordHandle('{}'): bound name", name);
 
             const int rc = stmt.step();
-            
+
             spdlog::debug("SQLite::getConditionRecordHandle('{}'): step rc={}", name, rc);
 
             if(rc != SQLITE_ROW)
@@ -1200,20 +1358,21 @@ namespace dcn::registry
                 return std::nullopt;
             }
 
-            const int blob_size = sqlite3_column_bytes(stmt.get(), 0);
-            spdlog::debug("SQLite::getConditionRecordHandle('{}'): row found blob_size={}", name, blob_size);
-
-            auto record_opt = parseRecordBlob<ConditionRecord>(stmt.get(), 0);
-            if(!record_opt.has_value())
+            const auto owner = columnAddress(stmt.get(), 0);
+            if(!owner)
             {
-                
-                spdlog::debug("SQLite::getConditionRecordHandle('{}'): protobuf decode failed", name);
+                spdlog::error("SQLite condition `{}` has invalid owner column", name);
                 return std::nullopt;
             }
 
-            
-            spdlog::debug("SQLite::getConditionRecordHandle('{}'): decoded record", name);
-            return std::make_shared<ConditionRecord>(std::move(*record_opt));
+            ConditionRecord record;
+            Condition * condition = record.mutable_condition();
+            condition->set_name(name);
+            condition->set_args_count(static_cast<std::uint32_t>(sqlite3_column_int64(stmt.get(), 1)));
+            record.set_owner(evmc::hex(*owner));
+
+            spdlog::debug("SQLite::getConditionRecordHandle('{}'): reassembled record", name);
+            return std::make_shared<ConditionRecord>(std::move(record));
         }
         catch(const std::exception & e)
         {
@@ -1229,13 +1388,6 @@ namespace dcn::registry
         if(!owner_opt)
         {
             spdlog::error("Failed to parse condition owner for `{}`", condition_name);
-            return false;
-        }
-
-        std::string payload_blob;
-        if(!record.SerializeToString(&payload_blob))
-        {
-            spdlog::error("Failed to serialize condition `{}`", condition_name);
             return false;
         }
 
@@ -1257,10 +1409,10 @@ namespace dcn::registry
 
         try
         {
-            storage::sqlite::Statement insert_entity(_db, "INSERT INTO conditions(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
+            storage::sqlite::Statement insert_entity(_db, "INSERT INTO conditions(name, owner, args_count) VALUES(?1, ?2, ?3);");
             sqlite3_bind_text(insert_entity.get(), 1, condition_name.c_str(), static_cast<int>(condition_name.size()), SQLITE_TRANSIENT);
             bindAddress(insert_entity.get(), 2, *owner_opt);
-            sqlite3_bind_blob(insert_entity.get(), 3, payload_blob.data(), static_cast<int>(payload_blob.size()), SQLITE_TRANSIENT);
+            sqlite3_bind_int64(insert_entity.get(), 3, static_cast<sqlite3_int64>(record.condition().args_count()));
             if(insert_entity.step() != SQLITE_DONE)
             {
                 rollback_with_log("insert conditions");
@@ -1316,7 +1468,7 @@ namespace dcn::registry
 
         try
         {
-            storage::sqlite::Statement insert_entity(_db, "INSERT INTO conditions(name, owner, payload_blob) VALUES(?1, ?2, ?3);");
+            storage::sqlite::Statement insert_entity(_db, "INSERT INTO conditions(name, owner, args_count) VALUES(?1, ?2, ?3);");
             storage::sqlite::Statement insert_owned(_db, "INSERT OR REPLACE INTO owned_conditions(owner, name) VALUES(?1, ?2);");
             for(const ConditionBatchItem & item : items)
             {
@@ -1363,26 +1515,12 @@ namespace dcn::registry
                     continue;
                 }
 
-                std::string payload_blob;
-                if(!item.record.SerializeToString(&payload_blob))
-                {
-                    all_ok = false;
-                    if(all_or_nothing)
-                    {
-                        rollback_batch_with_log("serialize condition");
-                        return false;
-                    }
-                    (void)fail_item("serialize condition");
-                    ++failed_count;
-                    continue;
-                }
-
                 bool item_ok = true;
 
                 insert_entity.reset();
                 sqlite3_bind_text(insert_entity.get(), 1, item.record.condition().name().c_str(), static_cast<int>(item.record.condition().name().size()), SQLITE_TRANSIENT);
                 bindAddress(insert_entity.get(), 2, *owner_opt);
-                sqlite3_bind_blob(insert_entity.get(), 3, payload_blob.data(), static_cast<int>(payload_blob.size()), SQLITE_TRANSIENT);
+                sqlite3_bind_int64(insert_entity.get(), 3, static_cast<sqlite3_int64>(item.record.condition().args_count()));
                 if(insert_entity.step() != SQLITE_DONE)
                 {
                     item_ok = fail_item("insert conditions");

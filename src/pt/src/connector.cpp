@@ -404,13 +404,13 @@ namespace dcn::pt
         const evmc::bytes32 topics[],
         std::size_t num_topics)
     {
-        if(data == nullptr || topics == nullptr || num_topics < 3 || data_size < 32 * 11)
+        if(data == nullptr || topics == nullptr || num_topics < 3 || data_size < 32 * 14)
         {
             return std::nullopt;
         }
 
         const evmc::bytes32 expected_topic = chain::constructEventTopic(
-            "ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[],bytes32)");
+            "ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[],bytes32,uint32[],uint32[],uint32[])");
 
         if(topics[0] != expected_topic)
         {
@@ -438,7 +438,11 @@ namespace dcn::pt
         }
         std::memcpy(format_hash_word.bytes, data + 320, 32);
 
-        if(!name_offset || !connector_address || !dimensions_count || !composite_dim_ids_offset || !composite_names_offset || !binding_dim_ids_offset || !binding_slot_ids_offset || !binding_names_offset || !condition_offset || !condition_args_offset)
+        const auto static_ri_positions_offset = chain::readWordAsSizeT(data, data_size, 352);
+        const auto static_ri_start_points_offset = chain::readWordAsSizeT(data, data_size, 384);
+        const auto static_ri_transform_shifts_offset = chain::readWordAsSizeT(data, data_size, 416);
+
+        if(!name_offset || !connector_address || !dimensions_count || !composite_dim_ids_offset || !composite_names_offset || !binding_dim_ids_offset || !binding_slot_ids_offset || !binding_names_offset || !condition_offset || !condition_args_offset || !static_ri_positions_offset || !static_ri_start_points_offset || !static_ri_transform_shifts_offset)
         {
             return std::nullopt;
         }
@@ -456,8 +460,16 @@ namespace dcn::pt
         const auto binding_names = chain::decodeAbiStringArray(data, data_size, *binding_names_offset);
         const auto condition_name = chain::decodeAbiString(data, data_size, *condition_offset);
         const auto condition_args = chain::decodeAbiInt32Array(data, data_size, *condition_args_offset);
+        const auto static_ri_positions = chain::decodeAbiUint32Array(data, data_size, *static_ri_positions_offset);
+        const auto static_ri_start_points = chain::decodeAbiUint32Array(data, data_size, *static_ri_start_points_offset);
+        const auto static_ri_transform_shifts = chain::decodeAbiUint32Array(data, data_size, *static_ri_transform_shifts_offset);
 
-        if(!name || !composite_dim_ids || !composite_names || !binding_dim_ids || !binding_slot_ids || !binding_names || !condition_name || !condition_args)
+        if(!name || !composite_dim_ids || !composite_names || !binding_dim_ids || !binding_slot_ids || !binding_names || !condition_name || !condition_args || !static_ri_positions || !static_ri_start_points || !static_ri_transform_shifts)
+        {
+            return std::nullopt;
+        }
+
+        if(static_ri_positions->size() != static_ri_start_points->size() || static_ri_positions->size() != static_ri_transform_shifts->size())
         {
             return std::nullopt;
         }
@@ -513,6 +525,17 @@ namespace dcn::pt
             const auto [_, inserted] = event.bindings.try_emplace(
                 std::make_pair(binding_dim_ids->at(i), binding_slot_ids->at(i)),
                 binding_names->at(i));
+            if(!inserted)
+            {
+                return std::nullopt;
+            }
+        }
+
+        for(std::size_t i = 0; i < static_ri_positions->size(); ++i)
+        {
+            const auto [_, inserted] = event.static_ri.try_emplace(
+                static_ri_positions->at(i),
+                std::make_pair(static_ri_start_points->at(i), static_ri_transform_shifts->at(i)));
             if(!inserted)
             {
                 return std::nullopt;

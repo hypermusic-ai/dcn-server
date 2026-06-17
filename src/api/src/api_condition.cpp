@@ -183,6 +183,20 @@ namespace dcn
         condition_record.set_owner(evmc::hex(address));
         *condition_record.mutable_condition() = std::move(condition);
 
+        // args_count is chain-derivable from the source (matches the value registered on chain).
+        // Record it so the saved JSON artifact and the response carry it explicitly.
+        const auto args_count_res = countConditionArgs(condition_record.condition().sol_src());
+        if(!args_count_res)
+        {
+            response.setCode(http::Code::BadRequest)
+                .setBodyWithContentLength(json {
+                    {"message", std::format("Failed to parse condition: {}", args_count_res.error().message)}
+                }.dump());
+
+            co_return response;
+        }
+        condition_record.mutable_condition()->set_args_count(*args_count_res);
+
         const auto deploy_res = co_await loader::deployCondition(evm, registry, condition_record, config.storage_path);
         if(!deploy_res)
         {
@@ -198,6 +212,7 @@ namespace dcn
         json_output["name"] = condition_record.condition().name();
         json_output["owner"] = condition_record.owner();
         json_output["address"] = "0x0";
+        json_output["args_count"] = condition_record.condition().args_count();
 
         response.setCode(http::Code::Created)
             .setBodyWithContentLength(json_output.dump());

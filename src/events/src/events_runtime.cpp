@@ -702,7 +702,7 @@ namespace dcn::events
                     else
                     {
                         const std::string connector_topic = chain::normalizeHex(evmc::hex(chain::constructEventTopic(
-                            "ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[],bytes32)")));
+                            "ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[],bytes32,uint32[],uint32[],uint32[])")));
                         const std::string transformation_topic = chain::normalizeHex(evmc::hex(chain::constructEventTopic(
                             "TransformationAdded(address,string,address,address,uint32)")));
                         const std::string condition_topic = chain::normalizeHex(evmc::hex(chain::constructEventTopic(

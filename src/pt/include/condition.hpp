@@ -19,12 +19,19 @@ namespace dcn
      * @tparam H The hash state type.
      * @param h The initial hash state.
      * @param c The Condition object whose attributes will be hashed.
-     * @return A combined hash state incorporating the name and solution source of the Condition.
+     * @return A combined hash state incorporating the chain-derivable identity (name and args_count).
      */
     template <typename H>
     inline H AbslHashValue(H h, const Condition & c) {
-        return H::combine(std::move(h), c.name(), c.sol_src());
+        return H::combine(std::move(h), c.name(), c.args_count());
     }
+
+    /**
+     * @brief Counts the number of distinct args[N] slots referenced by a condition's source.
+     *        This is the chain-derivable args_count (it matches the value registered on chain).
+     * @param sol_src The user-supplied Solidity source fragment.
+     */
+    parse::Result<std::uint32_t> countConditionArgs(const std::string & sol_src);
 
     parse::Result<std::string> constructConditionSolidityCode(const Condition & condition);
 }

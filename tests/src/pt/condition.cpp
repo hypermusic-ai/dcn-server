@@ -22,10 +22,12 @@ namespace
         return record;
     }
 
+    // Compares the chain-derivable identity. sol_src is a local-only deploy input that the
+    // use_json serializer intentionally drops, so it is not part of this equality.
     void expectEqual(const Condition & lhs, const Condition & rhs)
     {
         ASSERT_EQ(lhs.name(), rhs.name());
-        ASSERT_EQ(lhs.sol_src(), rhs.sol_src());
+        ASSERT_EQ(lhs.args_count(), rhs.args_count());
     }
 
     void expectEqual(const ConditionRecord & lhs, const ConditionRecord & rhs)
@@ -105,6 +107,31 @@ TEST_F(UnitTest, ConditionRecord_ParseToJson_RoundTripAcrossParsers)
     ASSERT_TRUE(from_protobuf_via_json.has_value());
     expectEqual(record, *from_json_via_protobuf);
     expectEqual(record, *from_protobuf_via_json);
+}
+
+TEST_F(UnitTest, Condition_ParseToJson_UseJsonDropsSolSrcExposesArgsCount)
+{
+    Condition condition = makeConditionSample();
+    condition.set_args_count(2);
+
+    auto json_out = parseToJson(condition, use_json);
+    ASSERT_TRUE(json_out.has_value());
+
+    EXPECT_FALSE(json_out->contains("sol_src"));
+    ASSERT_TRUE(json_out->contains("args_count"));
+    EXPECT_EQ((*json_out)["args_count"].get<std::uint32_t>(), 2u);
+}
+
+TEST_F(UnitTest, Condition_UseProtobuf_PreservesSolSrcForLocalStorage)
+{
+    Condition condition = makeConditionSample();
+
+    auto protobuf_out = parseToJson(condition, use_protobuf);
+    ASSERT_TRUE(protobuf_out.has_value());
+
+    auto parsed = parseFromJson<Condition>(*protobuf_out, use_protobuf);
+    ASSERT_TRUE(parsed.has_value());
+    EXPECT_EQ(parsed->sol_src(), condition.sol_src());
 }
 
 TEST_F(UnitTest, Condition_ConstructSolidityCode_UsesConstructorPattern)

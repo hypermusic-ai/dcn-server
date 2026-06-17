@@ -317,7 +317,9 @@ TEST_F(UnitTest, PT_Deploy_Transformation_DeploysAndRegisters)
     EXPECT_EQ(snapshot.transformation_owner, snapshot.owner);
 
     EXPECT_EQ(snapshot.transformation.name(), "DeployTransformation");
-    EXPECT_EQ(snapshot.transformation.sol_src(), "return x + uint32(args[0]);");
+    // The registry mirrors only chain-derivable state: sol_src is dropped, args_count is recorded.
+    EXPECT_TRUE(snapshot.transformation.sol_src().empty());
+    EXPECT_EQ(snapshot.transformation.args_count(), 1u);
 }
 
 TEST_F(UnitTest, PT_Deploy_Condition_DeploysAndRegisters)
@@ -329,7 +331,9 @@ TEST_F(UnitTest, PT_Deploy_Condition_DeploysAndRegisters)
     EXPECT_EQ(snapshot.condition_owner, snapshot.owner);
 
     EXPECT_EQ(snapshot.condition.name(), "DeployCondition");
-    EXPECT_EQ(snapshot.condition.sol_src(), "return true;");
+    // The registry mirrors only chain-derivable state: sol_src is dropped, args_count is recorded.
+    EXPECT_TRUE(snapshot.condition.sol_src().empty());
+    EXPECT_EQ(snapshot.condition.args_count(), 0u);
 }
 
 TEST_F(UnitTest, PT_Deploy_Connector_DeploysAndRegisters)
@@ -407,6 +411,71 @@ TEST_F(UnitTest, PT_Deploy_Connector_DuplicateName_ReturnsConnectorAlreadyRegist
         loader::deployConnector(evm_instance, registry, connector_record, storage_path));
     ASSERT_FALSE(second_connector_deploy_result);
     EXPECT_EQ(second_connector_deploy_result.error().kind, pt::PTDeployError::Kind::CONNECTOR_ALREADY_REGISTERED);
+}
+
+TEST_F(UnitTest, PT_Connector_ConnectorAddedEvent_ExposesStaticRunningInstances)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts directory at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeDeployStoragePath();
+    ASSERT_TRUE(prepareDeployStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    registry::Registry registry(io_context);
+    const chain::Address owner = makeAddressFromSuffix("static_ri_owner");
+    runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
+    runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
+    const std::string owner_hex = evmc::hex(owner);
+
+    TransformationRecord transformation_record;
+    transformation_record.mutable_transformation()->set_name("StaticRiTransform");
+    transformation_record.mutable_transformation()->set_sol_src("return x;");
+    transformation_record.set_owner(owner_hex);
+
+    ConnectorRecord connector_record;
+    auto * connector = connector_record.mutable_connector();
+    connector->set_name("StaticRiConnector");
+    connector->add_dimensions()->add_transformations()->set_name("StaticRiTransform");
+    (*connector->mutable_static_ri())[0].set_start_point(11);
+    (*connector->mutable_static_ri())[0].set_transformation_shift(22);
+    connector_record.set_owner(owner_hex);
+
+    const auto transformation_deploy_result = runAwaitable(
+        io_context,
+        loader::deployTransformation(evm_instance, registry, transformation_record, storage_path));
+    ASSERT_TRUE(transformation_deploy_result) << std::format("deployTransformation failed: {}", transformation_deploy_result.error().kind);
+
+    const auto connector_deploy_result = runAwaitable(
+        io_context,
+        loader::deployConnector(evm_instance, registry, connector_record, storage_path));
+    ASSERT_TRUE(connector_deploy_result) << std::format("deployConnector failed: {}", connector_deploy_result.error().kind);
+
+    // Reconstruct the connector's static running instances purely from the emitted ConnectorAdded log,
+    // proving they are now recoverable from chain alone.
+    const auto logs = runAwaitable(io_context, evm_instance.getLogsSince(0, 1024));
+
+    std::optional<pt::ConnectorAddedEvent> decoded;
+    for(const auto & log : logs)
+    {
+        auto candidate = pt::decodeConnectorAddedEvent(log.data_hex, log.topics);
+        if(candidate && candidate->name == "StaticRiConnector")
+        {
+            decoded = std::move(candidate);
+            break;
+        }
+    }
+
+    ASSERT_TRUE(decoded.has_value()) << "ConnectorAdded event for StaticRiConnector was not decodable";
+    EXPECT_EQ(decoded->name, "StaticRiConnector");
+    EXPECT_EQ(decoded->dimensions_count, 1u);
+    ASSERT_EQ(decoded->static_ri.size(), 1u);
+    ASSERT_EQ(decoded->static_ri.count(0), 1u);
+    EXPECT_EQ(decoded->static_ri.at(0).first, 11u);
+    EXPECT_EQ(decoded->static_ri.at(0).second, 22u);
 }
 
 TEST_F(UnitTest, PT_Deploy_Connector_InvalidInput_CleansTemporarySoliditySourceFile)

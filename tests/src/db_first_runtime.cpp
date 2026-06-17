@@ -565,6 +565,8 @@ TEST_F(UnitTest, API_PostConnector_DeploysMissingTransformationDependencyFromDb)
 
     const auto transformation_record = makeTransformationRecord("mul", caller_hex, "return x * 2;");
     ASSERT_TRUE(runAwaitable(io_context, registry.addTransformation(makeAddressFromByte(0x4A), transformation_record)));
+    // sol_src is not mirrored in the registry; the local EVM redeploy sources it from JSON storage.
+    ASSERT_TRUE(writeJsonRecord(storage_path / "transformations" / "mul.json", transformation_record));
 
     const auto contains_tx_before = containsTransformation(io_context, evm_instance, "mul");
     ASSERT_TRUE(contains_tx_before.has_value());
@@ -1019,6 +1021,8 @@ TEST_F(UnitTest, API_Execute_LazilyDeploysConnectorClosureFromDb)
 
     ASSERT_TRUE(runAwaitable(io_context, registry.addTransformation(makeAddressFromByte(0x31), transformation_record)));
     ASSERT_TRUE(runAwaitable(io_context, registry.addConnector(makeAddressFromByte(0x32), connector_record)));
+    // sol_src is not mirrored in the registry; the lazy redeploy of the transformation sources it from JSON storage.
+    ASSERT_TRUE(writeJsonRecord(storage_path / "transformations" / "LazyTx.json", transformation_record));
 
     const auto contains_tx_before = containsTransformation(io_context, evm_instance, "LazyTx");
     ASSERT_TRUE(contains_tx_before.has_value());
@@ -1213,7 +1217,8 @@ TEST_F(UnitTest, Loader_StartupImport_DbHitJsonIsNoopAndKeepsFile)
     const auto persisted_record = runAwaitable(io_context, registry.getTransformationRecordHandle("ImportedTx"));
     ASSERT_TRUE(persisted_record.has_value());
     ASSERT_TRUE(*persisted_record);
-    EXPECT_EQ((*persisted_record)->transformation().sol_src(), "return x;");
+    // The registry mirrors only chain-derivable state; sol_src lives solely in the (untouched) JSON file.
+    EXPECT_TRUE((*persisted_record)->transformation().sol_src().empty());
 
     const auto contains_after = containsTransformation(io_context, evm_instance, "ImportedTx");
     ASSERT_TRUE(contains_after.has_value());

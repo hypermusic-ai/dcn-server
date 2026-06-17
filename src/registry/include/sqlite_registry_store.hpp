@@ -109,6 +109,18 @@ namespace dcn::registry
             bool _commitTransaction() const;
             void _rollbackTransaction() const;
 
+            // Persists a connector and its normalized child rows (dimensions, bindings,
+            // transformation defs + args, condition args, static running instances) using explicit
+            // columns. Must be called inside an active transaction/savepoint.
+            bool _insertConnectorRows(
+                const chain::Address & owner,
+                const evmc::bytes32 & format_hash,
+                const ConnectorRecord & record,
+                const std::vector<ScalarLabel> & canonical_scalar_labels) const;
+
+            // Reassembles a ConnectorRecord from its explicit columns / child tables.
+            std::optional<ConnectorRecord> _readConnectorRecord(const std::string & name) const;
+
             NameCursorPage _getOwnedCursorFromTable(
                 const char * table_name,
                 const chain::Address & owner,

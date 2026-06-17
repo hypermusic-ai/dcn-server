@@ -11,6 +11,8 @@
 
 #include "registry.hpp"
 #include "sqlite_registry_store.hpp"
+#include "transformation.hpp"
+#include "condition.hpp"
 
 namespace dcn::registry
 {
@@ -659,6 +661,56 @@ namespace dcn::registry
             return lhs_bytes == rhs_bytes;
         }
 
+        // The registry mirrors only chain-derivable state. sol_src is a local-only deploy input that
+        // cannot be reconstructed from chain, so it never enters the registry: we record the
+        // chain-derivable args_count (computed from the source when present, otherwise left as set by
+        // chain ingestion) and drop sol_src before the record is stored, compared, or cached.
+        static void normalizeForRegistry(TransformationRecord & record)
+        {
+            auto * transformation = record.mutable_transformation();
+            if(transformation->sol_src().empty())
+            {
+                return;
+            }
+
+            const auto args_count = countTransformationArgs(transformation->sol_src());
+            if(args_count)
+            {
+                transformation->set_args_count(*args_count);
+            }
+            else
+            {
+                spdlog::warn(
+                    "Failed to compute args_count for transformation `{}`: {}",
+                    transformation->name(),
+                    args_count.error().message);
+            }
+            transformation->clear_sol_src();
+        }
+
+        static void normalizeForRegistry(ConditionRecord & record)
+        {
+            auto * condition = record.mutable_condition();
+            if(condition->sol_src().empty())
+            {
+                return;
+            }
+
+            const auto args_count = countConditionArgs(condition->sol_src());
+            if(args_count)
+            {
+                condition->set_args_count(*args_count);
+            }
+            else
+            {
+                spdlog::warn(
+                    "Failed to compute args_count for condition `{}`: {}",
+                    condition->name(),
+                    args_count.error().message);
+            }
+            condition->clear_sol_src();
+        }
+
         template<typename KeyT>
         static std::string cacheKeyToString(const KeyT & key)
         {
@@ -1229,6 +1281,8 @@ namespace dcn::registry
 
         co_await async::ensureOnStrand(_strand);
 
+        normalizeForRegistry(record);
+
         const auto existing_record_handle_opt = _store->getTransformationRecordHandle(transformation_name);
         if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
         {
@@ -1295,6 +1349,8 @@ namespace dcn::registry
                 }
                 continue;
             }
+
+            normalizeForRegistry(record);
 
             const auto existing_record_handle_opt = _store->getTransformationRecordHandle(transformation_name);
             if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
@@ -1425,6 +1481,8 @@ namespace dcn::registry
 
         co_await async::ensureOnStrand(_strand);
 
+        normalizeForRegistry(record);
+
         const auto existing_record_handle_opt = _store->getConditionRecordHandle(condition_name);
         if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
         {
@@ -1480,6 +1538,8 @@ namespace dcn::registry
                 }
                 continue;
             }
+
+            normalizeForRegistry(record);
 
             if(!seen_names.insert(condition_name).second)
             {
