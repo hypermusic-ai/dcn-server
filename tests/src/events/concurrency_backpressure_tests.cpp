@@ -60,6 +60,70 @@ namespace
             return future.get();
         }
     }
+
+    // Scripted EmittedLogRecord source: replays a fixed batch, advancing the
+    // cursor by seq. One source owns one chain_id (the ingestion model).
+    class FakeEmittedLogSource final : public events::IEmittedLogSource
+    {
+        public:
+            FakeEmittedLogSource(int chain_id, std::vector<evm::EVM::EmittedLogRecord> records)
+                : _chain_id(chain_id)
+                , _records(std::move(records))
+            {
+            }
+
+            int chainId() const override { return _chain_id; }
+            bool ephemeralEntities() const override { return false; }
+
+            asio::awaitable<events::SourcePoll> pollSince(std::uint64_t cursor, std::size_t limit) override
+            {
+                std::vector<evm::EVM::EmittedLogRecord> out;
+                std::int64_t max_block = 0;
+                for(const auto & record : _records)
+                {
+                    max_block = std::max<std::int64_t>(max_block, record.block_number);
+                    if(record.seq >= cursor && out.size() < limit)
+                    {
+                        out.push_back(record);
+                    }
+                }
+                const std::uint64_t next_cursor = out.empty() ? cursor : out.back().seq + 1;
+                co_return events::SourcePoll{
+                    std::move(out),
+                    events::FinalityHeights{ .head = max_block, .safe = max_block, .finalized = max_block },
+                    next_cursor
+                };
+            }
+
+        private:
+            int _chain_id;
+            std::vector<evm::EVM::EmittedLogRecord> _records;
+    };
+
+    evm::EVM::EmittedLogRecord makeEmittedRecord(
+        const std::uint64_t seq,
+        const std::int64_t block_number,
+        const std::uint8_t block_hash_byte)
+    {
+        evm::EVM::EmittedLogRecord record{};
+        record.seq = seq;
+        record.block_number = block_number;
+        record.block_hash = hexBytes(block_hash_byte, 32);
+        record.parent_hash = hexBytes(0x7F, 32);
+        record.tx_index = 0;
+        record.tx_hash = hexBytes(0x22, 32);
+        record.log_index = 0;
+        record.address = hexAddress(0xAB);
+        record.topics = { topicForEvent("TransformationAdded(address,string,address,address,uint32)") };
+        record.data_hex = encodeSimpleAddedEventDataV2(
+            makeAddressFromByte(0x41),
+            "fake_entity",
+            makeAddressFromByte(0x43),
+            makeAddressFromByte(0x42),
+            2);
+        record.block_time = 1'700'000'000;
+        return record;
+    }
 }
 
 TEST_F(UnitTest, Events_Concurrency_StrandSerializedIngestAndProject_AreDeterministic)
@@ -237,9 +301,27 @@ TEST_F(UnitTest, Events_Concurrency_IngestAndProjectSerializeOnSameHotWriteStran
     EXPECT_EQ(projected_partial + projected_flush, static_cast<std::size_t>(EVENT_COUNT));
 }
 
-TEST_F(UnitTest, Events_Runtime_TransportPath_NotExecutedOnHotWriteStrand)
+TEST_F(UnitTest, Events_Runtime_MultipleSources_MergeIntoStorePerChain)
 {
-    const auto paths = makeTempEventsPaths("concurrency_transport_not_hot_strand");
+    const auto paths = makeTempEventsPaths("runtime_multi_source_merge");
+
+    std::vector<evm::EVM::EmittedLogRecord> chain1_records;
+    for(std::uint64_t i = 0; i < 3; ++i)
+    {
+        chain1_records.push_back(
+            makeEmittedRecord(i, 1'000 + static_cast<std::int64_t>(i), static_cast<std::uint8_t>(0x10 + i)));
+    }
+
+    std::vector<evm::EVM::EmittedLogRecord> chain2_records;
+    for(std::uint64_t i = 0; i < 2; ++i)
+    {
+        chain2_records.push_back(
+            makeEmittedRecord(i, 2'000 + static_cast<std::int64_t>(i), static_cast<std::uint8_t>(0x50 + i)));
+    }
+
+    std::vector<std::shared_ptr<events::IEmittedLogSource>> sources;
+    sources.push_back(std::make_shared<FakeEmittedLogSource>(1, std::move(chain1_records)));
+    sources.push_back(std::make_shared<FakeEmittedLogSource>(2, std::move(chain2_records)));
 
     asio::io_context io_context;
     events::EventRuntime runtime(
@@ -247,11 +329,9 @@ TEST_F(UnitTest, Events_Runtime_TransportPath_NotExecutedOnHotWriteStrand)
         events::EventRuntimeConfig{
             .hot_db_path = paths.hot_db,
             .archive_root = paths.archive_root,
-            .chain_id = CHAIN_ID,
+            .chain_id = 1,
             .ingestion_enabled = true,
-            .rpc_url = "",
-            .registry_address = hexAddress(0xAB),
-            .rpc_timeout_ms = 100,
+            .sources = std::move(sources),
             .poll_interval_ms = 20,
             .projector_interval_ms = 20,
             .archive_interval_ms = 5'000,
@@ -264,13 +344,19 @@ TEST_F(UnitTest, Events_Runtime_TransportPath_NotExecutedOnHotWriteStrand)
         io_context.run();
     });
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(120));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     auto stop_future = asio::co_spawn(io_context, runtime.stop(), asio::use_future);
     stop_future.get();
     io_worker.join();
 
-    EXPECT_GT(runtime.rpcTransportCallCount(), 0u);
-    EXPECT_FALSE(runtime.blockingTransportObservedOnHotWriteStrand());
+    // Both sources merged into the one store, partitioned by chain_id...
+    SqliteReadonly db(paths.hot_db);
+    EXPECT_EQ(db.scalarInt64("SELECT COUNT(1) FROM raw_events_hot WHERE chain_id=1;"), 3);
+    EXPECT_EQ(db.scalarInt64("SELECT COUNT(1) FROM raw_events_hot WHERE chain_id=2;"), 2);
+
+    // ...with independent per-chain cursors persisted (next_seq = last seq + 1).
+    EXPECT_EQ(db.scalarInt64("SELECT next_seq FROM local_ingest_resume_state WHERE chain_id=1;"), 3);
+    EXPECT_EQ(db.scalarInt64("SELECT next_seq FROM local_ingest_resume_state WHERE chain_id=2;"), 2);
 }
 
 TEST_F(UnitTest, Events_Concurrency_ReadersDuringWriter_DoNotCorruptState)

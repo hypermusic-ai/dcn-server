@@ -492,6 +492,14 @@ int main(int argc, char* argv[])
 
     server.setIdleInterval(5000ms);
 
+    std::vector<std::shared_ptr<dcn::events::IEmittedLogSource>> event_sources;
+    if(cfg.chain_ingestion.use_local_evm_source)
+    {
+        event_sources.push_back(
+            std::make_shared<dcn::events::LocalEvmSource>(evm, static_cast<int>(cfg.events_chain_id)));
+    }
+    // Future: push RPC-backed IEmittedLogSource instances here.
+
     dcn::events::EventRuntime events_runtime(
         io_context,
         dcn::events::EventRuntimeConfig{
@@ -499,10 +507,7 @@ int main(int argc, char* argv[])
             .archive_root = cfg.events_archive_root,
             .chain_id = static_cast<int>(cfg.events_chain_id),
             .ingestion_enabled = cfg.chain_ingestion.enabled,
-            .use_local_evm_source = cfg.chain_ingestion.use_local_evm_source,
-            .local_evm = cfg.chain_ingestion.use_local_evm_source ? &evm : nullptr,
-            .rpc_url = cfg.chain_ingestion.rpc_url,
-            .registry_address = cfg.chain_ingestion.registry_address,
+            .sources = std::move(event_sources),
             .start_block = cfg.chain_ingestion.start_block.has_value()
                 ? std::optional<std::int64_t>(static_cast<std::int64_t>(*cfg.chain_ingestion.start_block))
                 : std::nullopt,

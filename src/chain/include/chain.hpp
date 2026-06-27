@@ -2,7 +2,6 @@
 
 #include "address.hpp"
 #include "chain_interface.hpp"
-#include "ingestion.hpp"
 #include "deploy.hpp"
 #include "execute.hpp"
 #include "format_hash.hpp"

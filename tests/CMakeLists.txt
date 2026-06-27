@@ -118,6 +118,7 @@ add_executable("${UNIT_TEST_TARGET}"
     "src/events/recovery_failpoint_tests.cpp"
     "src/events/concurrency_backpressure_tests.cpp"
     "src/events/maintenance_wal_integrity_tests.cpp"
+    "src/events/source_adapter_tests.cpp"
 )
 
 configure_test_target("${UNIT_TEST_TARGET}")
