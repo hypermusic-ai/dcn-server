@@ -571,48 +571,43 @@ namespace dcn::feed
 
         _appendFeedRowsFromDatabase(_read_db, "feed_items_hot", query, before_key, limit + 1, all_items, seen_feed_ids);
 
-        // Only descend into archive shards when the hot table underfills the page:
-        // rows are archived and pruned from hot only once they age past the hot
-        // window, so a full hot page already holds the newest matching rows.
-        // ponytail: a late backfill of old blocks can archive a recently-created row
-        // early and hide it from a full first page; store created_at bounds in
-        // shard_catalog if that ever matters.
-        if (all_items.size() <= limit)
+        // Feed order is by created_at_ms (projection time), which is not aligned
+        // with archival (driven by block-time aging), so an archived row can
+        // outrank a full hot page. Always scan the archive shards and let the
+        // sort/truncate below pick the true top rows.
+        const std::vector<std::filesystem::path> archive_paths = _candidateArchivePaths(before_key);
+
+        for (const auto& archive_path : archive_paths)
         {
-            const std::vector<std::filesystem::path> archive_paths = _candidateArchivePaths(before_key);
+            sqlite3* archive_db = nullptr;
+            const int open_rc = sqlite3_open_v2(
+                archive_path.string().c_str(),
+                &archive_db,
+                SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX,
+                nullptr);
 
-            for (const auto& archive_path : archive_paths)
+            if (open_rc != SQLITE_OK)
             {
-                sqlite3* archive_db = nullptr;
-                const int open_rc = sqlite3_open_v2(
-                    archive_path.string().c_str(),
-                    &archive_db,
-                    SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX,
-                    nullptr);
-
-                if (open_rc != SQLITE_OK)
+                if (archive_db != nullptr)
                 {
-                    if (archive_db != nullptr)
-                    {
-                        sqlite3_close(archive_db);
-                    }
-                    continue;
+                    sqlite3_close(archive_db);
                 }
-
-                sqlite3_busy_timeout(archive_db, 10'000);
-
-                _appendFeedRowsFromDatabase(
-                    archive_db,
-                    "feed_items_archive",
-                    query,
-                    before_key,
-                    limit + 1,
-                    all_items,
-                    seen_feed_ids);
-
-                sqlite3_close(archive_db);
-                archive_db = nullptr;
+                continue;
             }
+
+            sqlite3_busy_timeout(archive_db, 10'000);
+
+            _appendFeedRowsFromDatabase(
+                archive_db,
+                "feed_items_archive",
+                query,
+                before_key,
+                limit + 1,
+                all_items,
+                seen_feed_ids);
+
+            sqlite3_close(archive_db);
+            archive_db = nullptr;
         }
 
         std::ranges::sort(all_items, _feedDescComparator);
