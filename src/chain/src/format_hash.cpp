@@ -129,20 +129,6 @@ namespace dcn::chain
         return out;
     }
 
-    evmc::bytes32 computeFormatHashFromLabelHashes(const std::vector<evmc::bytes32> & label_hashes)
-    {
-        std::vector<evmc::bytes32> unique_label_hashes = label_hashes;
-        sortAndUniqueBytes32(unique_label_hashes);
-
-        evmc::bytes32 format_hash{};
-        for(const evmc::bytes32 & label_hash : unique_label_hashes)
-        {
-            format_hash = composeFormatHash(format_hash, labelHashToFormatHash(label_hash));
-        }
-
-        return format_hash;
-    }
-
     evmc::bytes32 computeFormatHash(const std::vector<ScalarHashEntry> & hash_entries)
     {
         std::vector<evmc::bytes32> label_hashes;

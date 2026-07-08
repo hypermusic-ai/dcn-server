@@ -45,6 +45,10 @@ function(configure_test_target test_target)
 
     set_target_properties("${test_target}" PROPERTIES CXX_STANDARD 23)
 
+    if(MSVC)
+        target_compile_options("${test_target}" PRIVATE /bigobj)
+    endif()
+
     if(APPLE)
         set_target_properties("${test_target}" PROPERTIES BUILD_RPATH "@loader_path")
     elseif(UNIX)
@@ -119,6 +123,14 @@ add_executable("${UNIT_TEST_TARGET}"
     "src/events/concurrency_backpressure_tests.cpp"
     "src/events/maintenance_wal_integrity_tests.cpp"
     "src/events/source_adapter_tests.cpp"
+    "src/events/registry_projection_tests.cpp"
+    "src/events/registry_e2e_tests.cpp"
+
+    # --- feed module test files ---
+    "src/feed/feed_store_tests.cpp"
+    "src/feed/feed_facade_tests.cpp"
+    "src/feed/feed_projector_tests.cpp"
+    "src/feed/archive_shard_consolidation_tests.cpp"
 )
 
 configure_test_target("${UNIT_TEST_TARGET}")

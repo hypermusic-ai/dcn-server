@@ -17,7 +17,7 @@ TEST_F(UnitTest, Events_Recovery_WorkerThreadWrite_IsCommitted)
     std::atomic<bool> worker_ok{true};
     {
         asio::io_context io_context;
-        events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 60 * 60 * 1000, CHAIN_ID);
+        events::SQLiteHotStore store(paths.hot_db, CHAIN_ID);
 
         std::thread worker([&]
         {
@@ -42,11 +42,7 @@ TEST_F(UnitTest, Events_Recovery_WorkerThreadWrite_IsCommitted)
 
     {
         asio::io_context restarted_io_context;
-        events::SQLiteHotStore restarted(
-            paths.hot_db,
-            paths.archive_root,
-            60 * 60 * 1000,
-            CHAIN_ID);
+        events::SQLiteHotStore restarted(paths.hot_db, CHAIN_ID);
         const auto next_from = awaitLoadNextFromBlock(restarted_io_context, restarted, CHAIN_ID);
         ASSERT_TRUE(next_from.has_value());
         EXPECT_EQ(*next_from, 111);
@@ -54,7 +50,6 @@ TEST_F(UnitTest, Events_Recovery_WorkerThreadWrite_IsCommitted)
 
     events_sql::expectRowCount(paths.hot_db, "raw_events_hot", 1);
     events_sql::expectRowCount(paths.hot_db, "normalized_events_hot", 1);
-    events_sql::expectRowCount(paths.hot_db, "projection_jobs", 1);
 }
 
 TEST_F(UnitTest, Events_Recovery_CrashAfterIngestBeforeProjection_ProjectsAfterRestart)
@@ -64,7 +59,7 @@ TEST_F(UnitTest, Events_Recovery_CrashAfterIngestBeforeProjection_ProjectsAfterR
     events::DecodedEvent event;
     {
         asio::io_context store_io_context;
-        events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 60 * 60 * 1000, CHAIN_ID);
+        events::SQLiteHotStore store(paths.hot_db, CHAIN_ID);
         event = makeDecodedEvent(111, 0, 1, 0xA9, 0x3A, events::EventType::TRANSFORMATION_ADDED, events::EventState::OBSERVED, 1'700'002'001);
         const events::ChainBlockInfo block = makeBlockInfo(111, event.raw.block_hash, hexBytes(0x4F, 32), 1'700'002'001, 1'700'002'001'100);
         ASSERT_TRUE(awaitIngestBatch(store_io_context, store, CHAIN_ID, {event}, {block}, 112, 1'700'002'001'200));
@@ -72,17 +67,13 @@ TEST_F(UnitTest, Events_Recovery_CrashAfterIngestBeforeProjection_ProjectsAfterR
 
     {
         asio::io_context restarted_io_context;
-        events::SQLiteHotStore restarted(
-            paths.hot_db,
-            paths.archive_root,
-            60 * 60 * 1000,
-            CHAIN_ID);
-        EXPECT_EQ(projectAll(restarted_io_context, restarted, 1'700'002'001'500), 1u);
+        events::SQLiteHotStore restarted(paths.hot_db, CHAIN_ID);
+        feed::Feed feed_obj(restarted_io_context, paths.feed_db, paths.feed_archive_root, 7LL*24*60*60*1000, CHAIN_ID);
+        EXPECT_EQ(projectAll(restarted_io_context, restarted, feed_obj, 1'700'002'001'500), 1u);
     }
 
-    events_sql::expectRowCount(paths.hot_db, "feed_items_hot", 1);
-    events_sql::expectRowCount(paths.hot_db, "global_outbox", 1);
-    events_sql::expectRowCount(paths.hot_db, "projection_jobs", 0);
+    events_sql::expectRowCount(paths.feed_db, "feed_items_hot", 1);
+    events_sql::expectRowCount(paths.feed_db, "global_outbox", 1);
 }
 
 TEST_F(UnitTest, Events_Recovery_CrashAfterProjectionCommit_StreamReplayRemainsConsistent)
@@ -91,7 +82,8 @@ TEST_F(UnitTest, Events_Recovery_CrashAfterProjectionCommit_StreamReplayRemainsC
 
     {
         asio::io_context store_io_context;
-        events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 60 * 60 * 1000, CHAIN_ID);
+        events::SQLiteHotStore store(paths.hot_db, CHAIN_ID);
+        feed::Feed feed_obj(store_io_context, paths.feed_db, paths.feed_archive_root, 7LL*24*60*60*1000, CHAIN_ID);
         const events::DecodedEvent first = makeDecodedEvent(112, 0, 1, 0xAA, 0x3B, events::EventType::CONDITION_ADDED, events::EventState::OBSERVED, 1'700'002'002);
         const events::DecodedEvent second = makeDecodedEvent(113, 0, 1, 0xAB, 0x3C, events::EventType::CONDITION_ADDED, events::EventState::OBSERVED, 1'700'002'003);
         ASSERT_TRUE(awaitIngestBatch(
@@ -105,17 +97,14 @@ TEST_F(UnitTest, Events_Recovery_CrashAfterProjectionCommit_StreamReplayRemainsC
             },
             114,
             1'700'002'003'200));
-        EXPECT_EQ(projectAll(store_io_context, store, 1'700'002'003'300), 2u);
+        EXPECT_EQ(projectAll(store_io_context, store, feed_obj, 1'700'002'003'300), 2u);
     }
 
     {
         asio::io_context restarted_io_context;
-        events::SQLiteHotStore restarted(
-            paths.hot_db,
-            paths.archive_root,
-            60 * 60 * 1000,
-            CHAIN_ID);
-        const events::StreamPage replay = restarted.getStreamPage(events::StreamQuery{
+        events::SQLiteHotStore restarted(paths.hot_db, CHAIN_ID);
+        feed::Feed feed_obj(restarted_io_context, paths.feed_db, paths.feed_archive_root, 7LL*24*60*60*1000, CHAIN_ID);
+        const feed::StreamPage replay = feed_obj.getStreamPage(feed::StreamQuery{
             .since_seq = 1,
             .limit = 100
         });
@@ -128,7 +117,8 @@ TEST_F(UnitTest, Events_Recovery_RpcDisconnectEquivalent_NoCorruptionOnNoopCycle
 {
     const auto paths = makeTempEventsPaths("recovery_noop_cycles");
     asio::io_context store_io_context;
-    events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 60 * 60 * 1000, CHAIN_ID);
+    events::SQLiteHotStore store(paths.hot_db, CHAIN_ID);
+    feed::Feed feed_obj(store_io_context, paths.feed_db, paths.feed_archive_root, 7LL*24*60*60*1000, CHAIN_ID);
 
     // Simulate repeated no-op polling cycles by only applying advancing finality.
     for(std::int64_t i = 0; i < 5; ++i)
@@ -149,7 +139,7 @@ TEST_F(UnitTest, Events_Recovery_RpcDisconnectEquivalent_NoCorruptionOnNoopCycle
 
     events_sql::expectRowCount(paths.hot_db, "raw_events_hot", 0);
     events_sql::expectRowCount(paths.hot_db, "normalized_events_hot", 0);
-    events_sql::expectRowCount(paths.hot_db, "feed_items_hot", 0);
+    events_sql::expectRowCount(paths.feed_db, "feed_items_hot", 0);
     {
         SqliteReadonly db(paths.hot_db);
         EXPECT_EQ(db.scalarInt64("SELECT head_block FROM finality_state WHERE chain_id=1;"), 204);

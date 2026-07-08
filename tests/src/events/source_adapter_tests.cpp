@@ -119,13 +119,11 @@ namespace
     {
         return events::EventRuntimeConfig{
             .hot_db_path = paths.hot_db,
-            .archive_root = paths.archive_root,
             .chain_id = CHAIN_ID,
             .ingestion_enabled = true,
             .sources = std::move(sources),
             .poll_interval_ms = 20,
             .projector_interval_ms = 20,
-            .archive_interval_ms = 5'000,
             .wal_checkpoint_interval_ms = 5'000
         };
     }

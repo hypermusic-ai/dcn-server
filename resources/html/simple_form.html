@@ -55,6 +55,8 @@
 
             connectEventsFeed,
             disconnectEventsFeed,
+            fetchHistoryEvents,
+            nextHistoryPage,
 
             updateExecuteActionAvailability,
             copyTextFromElement
@@ -107,6 +109,8 @@
 
         document.getElementById('btn_connectEventsFeed').addEventListener('click', connectEventsFeed);
         document.getElementById('btn_disconnectEventsFeed').addEventListener('click', disconnectEventsFeed);
+        document.getElementById('btn_fetchHistoryEvents').addEventListener('click', fetchHistoryEvents);
+        document.getElementById('btn_nextHistoryPage').addEventListener('click', nextHistoryPage);
 
         const nav = document.getElementById('siteNav');
         const navToggle = document.getElementById('siteNavToggle');
@@ -516,6 +520,40 @@
                                 <div class="tab-column">
                                     <h3>Recent Events</h3>
                                     <div id="eventsFeedList" class="events-feed-list response-body">Waiting for connection...</div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="explore-section">
+                            <div class="group-head">
+                                <h2>Event History</h2>
+                                <p>Static browse via limit, before cursor, and event type</p>
+                            </div>
+                            <div class="tab-grid">
+                                <div class="tab-column">
+                                    <label>Limit</label>
+                                    <input type="number" id="eventsHistoryLimitInput" value="20" min="1" max="256">
+
+                                    <label>Before cursor</label>
+                                    <input type="text" id="eventsHistoryBeforeInput" placeholder="history cursor">
+
+                                    <label>Event type</label>
+                                    <input type="text" id="eventsHistoryTypeInput" list="eventsHistoryTypeOptions" placeholder="connector_added">
+                                    <datalist id="eventsHistoryTypeOptions">
+                                        <option value="connector_added"></option>
+                                        <option value="transformation_added"></option>
+                                        <option value="condition_added"></option>
+                                    </datalist>
+
+                                    <div class="button-row">
+                                        <button id="btn_fetchHistoryEvents" class="action-button">Fetch history</button>
+                                        <button id="btn_nextHistoryPage" class="action-button" disabled>Next page</button>
+                                    </div>
+                                </div>
+
+                                <div class="tab-column">
+                                    <h3>History Events</h3>
+                                    <div id="eventsHistoryList" class="events-feed-list response-body">Waiting...</div>
                                 </div>
                             </div>
                         </section>

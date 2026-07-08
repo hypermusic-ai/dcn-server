@@ -630,6 +630,35 @@ namespace dcn::registry
             return root_it->second;
         }
 
+        // Validate slots/bindings and resolve the connector's composite-aware scalar
+        // entries. Single source of truth for the format-hash inputs, shared by
+        // addConnector, addConnectorsBatch, and computeConnectorFormatHash.
+        static std::optional<std::shared_ptr<const dcn::chain::ResolvedScalarEntries>> resolveConnectorScalarEntries(
+            const std::string & connector_name,
+            ConnectorGraphContext & graph_context)
+        {
+            if(!computeOpenSlotsIterative(connector_name, graph_context).has_value())
+            {
+                spdlog::error("Connector `{}` failed slot/binding validation", connector_name);
+                return std::nullopt;
+            }
+
+            const auto root_scalar_entries_opt = computeScalarEntriesIterative(connector_name, graph_context);
+            if(
+                !root_scalar_entries_opt.has_value() ||
+                !(*root_scalar_entries_opt) ||
+                (*root_scalar_entries_opt)->hash_entries.empty() ||
+                (*root_scalar_entries_opt)->hash_entries.size() != (*root_scalar_entries_opt)->display_entries.size())
+            {
+                spdlog::error(
+                    "Connector `{}` produced invalid scalar entries while computing format hash",
+                    connector_name);
+                return std::nullopt;
+            }
+
+            return *root_scalar_entries_opt;
+        }
+
         template<typename RecordT>
         static bool recordsEqual(const RecordT & lhs, const RecordT & rhs)
         {
@@ -816,7 +845,8 @@ namespace dcn::registry
         _condition_record_cache.capacity = kHotCacheCapacity;
     }
 
-    asio::awaitable<bool> Registry::addConnector(chain::Address address, ConnectorRecord record)
+    asio::awaitable<bool> Registry::addConnector(chain::Address address, ConnectorRecord record,
+        std::optional<evmc::bytes32> expected_format_hash)
     {
         const Connector & connector = record.connector();
         const std::string connector_name = connector.name();
@@ -850,26 +880,24 @@ namespace dcn::registry
             .connector_cache = {},
         };
 
-        if(!computeOpenSlotsIterative(connector_name, graph_context).has_value())
+        const auto root_scalar_entries_opt = resolveConnectorScalarEntries(connector_name, graph_context);
+        if(!root_scalar_entries_opt)
         {
-            spdlog::error("Connector `{}` failed slot/binding validation", connector_name);
-            co_return false;
-        }
-
-        const auto root_scalar_entries_opt = computeScalarEntriesIterative(connector_name, graph_context);
-        if(
-            !root_scalar_entries_opt.has_value() ||
-            !(*root_scalar_entries_opt) ||
-            (*root_scalar_entries_opt)->hash_entries.empty() ||
-            (*root_scalar_entries_opt)->hash_entries.size() != (*root_scalar_entries_opt)->display_entries.size())
-        {
-            spdlog::error(
-                "Connector `{}` produced invalid scalar entries while computing format hash",
-                connector_name);
             co_return false;
         }
 
         const evmc::bytes32 format_hash = chain::computeFormatHash((*root_scalar_entries_opt)->hash_entries);
+
+        if(expected_format_hash.has_value() && !chain::equalBytes32(*expected_format_hash, format_hash))
+        {
+            spdlog::error(
+                "Connector `{}` chain-emitted format hash {} diverges from locally computed {} — refusing to materialize",
+                connector_name,
+                evmc::hex(*expected_format_hash),
+                evmc::hex(format_hash));
+            co_return false;
+        }
+
         const std::vector<ScalarLabel> canonical_scalar_labels =
             chain::canonicalizeScalarLabels((*root_scalar_entries_opt)->display_entries);
 
@@ -1020,27 +1048,9 @@ namespace dcn::registry
                 .connector_cache = {},
             };
 
-            if(!computeOpenSlotsIterative(connector_name, graph_context).has_value())
+            const auto root_scalar_entries_opt = resolveConnectorScalarEntries(connector_name, graph_context);
+            if(!root_scalar_entries_opt)
             {
-                spdlog::error("Connector `{}` failed slot/binding validation", connector_name);
-                all_valid = false;
-                if(all_or_nothing)
-                {
-                    co_return false;
-                }
-                continue;
-            }
-
-            const auto root_scalar_entries_opt = computeScalarEntriesIterative(connector_name, graph_context);
-            if(
-                !root_scalar_entries_opt.has_value() ||
-                !(*root_scalar_entries_opt) ||
-                (*root_scalar_entries_opt)->hash_entries.empty() ||
-                (*root_scalar_entries_opt)->hash_entries.size() != (*root_scalar_entries_opt)->display_entries.size())
-            {
-                spdlog::error(
-                    "Connector `{}` produced invalid scalar entries while computing format hash",
-                    connector_name);
                 all_valid = false;
                 if(all_or_nothing)
                 {
@@ -1232,6 +1242,25 @@ namespace dcn::registry
         const auto format_hash_opt = _store->getConnectorFormatHash(name);
         putHotCacheEntry(_format_hash_cache, name, format_hash_opt);
         co_return format_hash_opt;
+    }
+
+    asio::awaitable<std::optional<evmc::bytes32>> Registry::computeConnectorFormatHash(Connector connector) const
+    {
+        co_await async::ensureOnStrand(_strand);
+
+        ConnectorGraphContext graph_context{
+            .pending_connector = connector,
+            .store = *_store,
+            .connector_cache = {},
+        };
+
+        const auto root_scalar_entries_opt = resolveConnectorScalarEntries(connector.name(), graph_context);
+        if(!root_scalar_entries_opt)
+        {
+            co_return std::nullopt;
+        }
+
+        co_return chain::computeFormatHash((*root_scalar_entries_opt)->hash_entries);
     }
 
     asio::awaitable<std::size_t> Registry::getFormatConnectorNamesCount(const evmc::bytes32 & format_hash) const
@@ -1718,18 +1747,14 @@ namespace dcn::registry
         co_return stats;
     }
 
-    asio::awaitable<bool> Registry::add(chain::Address address, ConnectorRecord connector)
+    std::int64_t Registry::getMaterializationCursor() const
     {
-        return addConnector(address, std::move(connector));
+        return _store->getMaterializationCursor();
     }
 
-    asio::awaitable<bool> Registry::add(chain::Address address, TransformationRecord transformation)
+    asio::awaitable<bool> Registry::setMaterializationCursor(std::int64_t seq)
     {
-        return addTransformation(address, std::move(transformation));
-    }
-
-    asio::awaitable<bool> Registry::add(chain::Address address, ConditionRecord condition)
-    {
-        return addCondition(address, std::move(condition));
+        co_await async::ensureOnStrand(_strand);
+        co_return _store->setMaterializationCursor(seq);
     }
 }

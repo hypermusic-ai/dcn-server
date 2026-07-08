@@ -252,7 +252,63 @@ namespace dcn::registry
             return false;
         }
 
+        // Materialization cursor: singleton row that tracks the last hot-store change_seq
+        // consumed by RegistryProjector. Seeded to 0 so a fresh DB starts from the beginning.
+        const bool cursor_ok =
+            _exec(
+                "CREATE TABLE IF NOT EXISTS materialization_cursor ("
+                "singleton INTEGER PRIMARY KEY CHECK(singleton=1),"
+                "last_change_seq INTEGER NOT NULL"
+                ");") &&
+            _exec("INSERT OR IGNORE INTO materialization_cursor(singleton, last_change_seq) VALUES(1, 0);");
+
+        if(!cursor_ok)
+        {
+            return false;
+        }
+
         return true;
+    }
+
+    std::int64_t SQLiteRegistryStore::getMaterializationCursor() const
+    {
+        try
+        {
+            storage::sqlite::Statement stmt(_db,
+                "SELECT last_change_seq FROM materialization_cursor WHERE singleton=1;");
+            if(stmt.step() != SQLITE_ROW)
+            {
+                return 0;
+            }
+            return static_cast<std::int64_t>(sqlite3_column_int64(stmt.get(), 0));
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("SQLite getMaterializationCursor failed: {}", e.what());
+            return 0;
+        }
+    }
+
+    bool SQLiteRegistryStore::setMaterializationCursor(std::int64_t last_change_seq)
+    {
+        try
+        {
+            storage::sqlite::Statement stmt(_db,
+                "UPDATE materialization_cursor SET last_change_seq=?1 WHERE singleton=1;");
+            sqlite3_bind_int64(stmt.get(), 1, last_change_seq);
+            if(stmt.step() != SQLITE_DONE)
+            {
+                spdlog::error("SQLite setMaterializationCursor seq={} did not complete: {}",
+                    last_change_seq, sqlite3_errmsg(_db));
+                return false;
+            }
+            return true;
+        }
+        catch(const std::exception & e)
+        {
+            spdlog::error("SQLite setMaterializationCursor failed seq={}: {}", last_change_seq, e.what());
+            return false;
+        }
     }
 
     bool SQLiteRegistryStore::_insertConnectorRows(

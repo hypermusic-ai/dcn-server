@@ -1,4 +1,5 @@
 #include "api.hpp"
+#include "address.hpp"
 
 // TODO
 // ABI offset encoding (correctness)
@@ -180,7 +181,7 @@ namespace dcn
         const Condition & condition = *condition_res;
 
         ConditionRecord condition_record;
-        condition_record.set_owner(evmc::hex(address));
+        condition_record.set_owner(chain::addressToHex(address));
         *condition_record.mutable_condition() = std::move(condition);
 
         // args_count is chain-derivable from the source (matches the value registered on chain).

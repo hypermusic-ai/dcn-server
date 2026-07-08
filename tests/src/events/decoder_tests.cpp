@@ -6,6 +6,88 @@ using namespace dcn;
 using namespace dcn::tests;
 using namespace dcn::tests::events_harness;
 
+// Forward declarations for connector-event ABI encoding helpers defined in
+// tests/src/pt/connector.cpp (compiled into the same binary).
+namespace dcn::tests
+{
+    struct EncodedConnectorAddedEvent
+    {
+        std::string data_hex;
+        std::vector<std::string> topics_hex;
+    };
+    EncodedConnectorAddedEvent encodeConnectorAddedForTest(const ConnectorRecord & record);
+}
+
+TEST_F(UnitTest, Events_Decoder_ConnectorAddedEvent_DecodesTransformationDefs)
+{
+    events::PTEventDecoder decoder;
+
+    // Build a ConnectorRecord with two scalar dimensions, each with one transformation def.
+    ConnectorRecord record;
+    chain::Address owner{};
+    owner.bytes[19] = 0xAB;
+    record.set_owner(chain::addressToHex(owner));
+
+    Connector * connector = record.mutable_connector();
+    connector->set_name("decode_tf_test");
+
+    // dim0: transformation "scale" with args [2, 3]
+    Dimension * dim0 = connector->add_dimensions();
+    dim0->set_composite("");
+    TransformationDef * scale = dim0->add_transformations();
+    scale->set_name("scale");
+    scale->add_args(2);
+    scale->add_args(3);
+
+    // dim1: transformation "shift" with no args
+    Dimension * dim1 = connector->add_dimensions();
+    dim1->set_composite("");
+    TransformationDef * shift = dim1->add_transformations();
+    shift->set_name("shift");
+
+    // Encode via the connector-event ABI helper (defined in tests/src/pt/connector.cpp).
+    const auto encoded = dcn::tests::encodeConnectorAddedForTest(record);
+
+    // makeRawLog sets only topics[0]; patch topics[1] (caller) and topics[2] (owner).
+    events::RawChainLog log = makeRawLog(
+        100,
+        2,
+        5,
+        hexBytes(0xC1, 32),
+        hexBytes(0xD1, 32),
+        encoded.topics_hex[0],
+        encoded.data_hex,
+        false,
+        1'700'000'000,
+        1'700'000'002'000);
+    log.topics[1] = encoded.topics_hex[1];
+    log.topics[2] = encoded.topics_hex[2];
+
+    const auto decoded = decoder.decode(log);
+    ASSERT_TRUE(decoded.has_value());
+    EXPECT_EQ(decoded->event_type, events::EventType::CONNECTOR_ADDED);
+
+    const auto payload = json::parse(decoded->decoded_json, nullptr, false);
+    ASSERT_FALSE(payload.is_discarded());
+    ASSERT_TRUE(payload.contains("transformations"));
+    ASSERT_TRUE(payload.at("transformations").is_array());
+
+    const auto & tfs = payload.at("transformations");
+    ASSERT_EQ(tfs.size(), 2u);
+
+    // dim0 -> "scale" with args [2, 3]
+    EXPECT_EQ(tfs[0].value("dim_id", std::uint32_t{9999}), 0u);
+    EXPECT_EQ(tfs[0].value("name", std::string{}), std::string{"scale"});
+    ASSERT_EQ(tfs[0].at("args").size(), 2u);
+    EXPECT_EQ(tfs[0].at("args")[0].get<int>(), 2);
+    EXPECT_EQ(tfs[0].at("args")[1].get<int>(), 3);
+
+    // dim1 -> "shift" with no args
+    EXPECT_EQ(tfs[1].value("dim_id", std::uint32_t{9999}), 1u);
+    EXPECT_EQ(tfs[1].value("name", std::string{}), std::string{"shift"});
+    EXPECT_EQ(tfs[1].at("args").size(), 0u);
+}
+
 TEST_F(UnitTest, Events_Decoder_TransformationEvent_DecodesCanonicalFields)
 {
     events::PTEventDecoder decoder;

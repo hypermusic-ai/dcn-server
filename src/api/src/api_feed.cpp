@@ -31,7 +31,7 @@ namespace dcn
         const http::Request &,
         std::vector<server::RouteArg> route_args,
         server::QueryArgsList query_args,
-        events::EventRuntime & events_runtime)
+        feed::IFeedRepository & feed_repo)
     {
         http::Response response;
         response.setCode(http::Code::Unknown)
@@ -72,7 +72,7 @@ namespace dcn
             co_return response;
         }
 
-        events::FeedQuery feed_query;
+        feed::FeedQuery feed_query;
         feed_query.limit = *limit_res;
 
         if(query_args.contains("before"))
@@ -127,7 +127,7 @@ namespace dcn
             feed_query.include_unfinalized = (*include_res == 1u);
         }
 
-        const events::FeedPage page = events_runtime.getFeedPage(feed_query);
+        const feed::FeedPage page = feed_repo.getFeedPage(feed_query);
 
         json output;
         output["limit"] = feed_query.limit;
@@ -137,7 +137,7 @@ namespace dcn
             ? json(*page.next_before_cursor)
             : json(nullptr);
         output["items"] = json::array();
-        for(const events::FeedItem & item : page.items)
+        for(const feed::FeedItem & item : page.items)
         {
             output["items"].push_back(json{
                 {"feed_id", item.feed_id},
@@ -180,7 +180,7 @@ namespace dcn
         constexpr std::chrono::seconds STREAM_DEADLINE_PER_WRITE{60};
         constexpr std::size_t STREAM_LIVE_LIMIT = 200;
 
-        std::string formatDeltaFrame(const events::StreamDelta & delta)
+        std::string formatDeltaFrame(const feed::StreamDelta & delta)
         {
             const json data{
                 {"stream_seq", delta.stream_seq},
@@ -234,16 +234,16 @@ namespace dcn
     }
 
     std::string buildFeedStreamSseReplay(
-        events::EventRuntime & events_runtime,
-        const events::StreamQuery & stream_query)
+        feed::IFeedRepository & feed_repo,
+        const feed::StreamQuery & stream_query)
     {
-        const events::StreamPage stream_page = events_runtime.getStreamPage(stream_query);
+        const feed::StreamPage stream_page = feed_repo.getStreamPage(stream_query);
 
         std::string sse_body;
         sse_body.reserve(stream_page.deltas.size() * 256);
         sse_body += std::format(": min_available_seq={}\n\n", stream_page.min_available_seq);
 
-        for(const events::StreamDelta & delta : stream_page.deltas)
+        for(const feed::StreamDelta & delta : stream_page.deltas)
         {
             sse_body += formatDeltaFrame(delta);
         }
@@ -268,7 +268,7 @@ namespace dcn
         std::vector<server::RouteArg> route_args,
         server::QueryArgsList query_args,
         std::chrono::steady_clock::time_point & deadline,
-        events::EventRuntime & events_runtime)
+        feed::IFeedRepository & feed_repo)
     {
         const auto refreshDeadline = [&deadline]()
         {
@@ -281,7 +281,7 @@ namespace dcn
             co_return;
         }
 
-        events::StreamQuery stream_query;
+        feed::StreamQuery stream_query;
         stream_query.since_seq = 0;
         stream_query.limit = 200;
 
@@ -324,12 +324,12 @@ namespace dcn
 
         // Initial replay: leading min_available_seq comment, all currently-available
         // deltas the cursor can see, and a stream_meta frame describing pagination.
-        const events::StreamPage replay_page = events_runtime.getStreamPage(stream_query);
+        const feed::StreamPage replay_page = feed_repo.getStreamPage(stream_query);
 
         std::string replay_buf;
         replay_buf.reserve(replay_page.deltas.size() * 256);
         replay_buf += std::format(": min_available_seq={}\n\n", replay_page.min_available_seq);
-        for(const events::StreamDelta & delta : replay_page.deltas)
+        for(const feed::StreamDelta & delta : replay_page.deltas)
         {
             replay_buf += formatDeltaFrame(delta);
         }
@@ -353,9 +353,9 @@ namespace dcn
         // Anchor live tailing on the highest seq the replay observed. If the page
         // had no last_seq (no deltas), keep the requested cursor so nothing is missed.
         std::int64_t last_seq = replay_page.last_seq.value_or(stream_query.since_seq);
-        spdlog::info("SSE feed/stream: replay sent, tailing from stream_seq={}", last_seq);
+        spdlog::debug("SSE feed/stream: replay sent, tailing from stream_seq={}", last_seq);
 
-        // Live loop: poll EventRuntime for new deltas once per STREAM_POLL_INTERVAL.
+        // Live loop: poll feed repository for new deltas once per STREAM_POLL_INTERVAL.
         // Always write to the socket each cycle (deltas or a keepalive comment) so
         // a disconnected client is detected within one poll cycle via write failure.
         asio::steady_timer poll_timer(co_await asio::this_coro::executor);
@@ -372,12 +372,12 @@ namespace dcn
                 co_return;
             }
 
-            events::StreamQuery live_query;
+            feed::StreamQuery live_query;
             live_query.since_seq = last_seq;
             live_query.limit = STREAM_LIVE_LIMIT;
-            const events::StreamPage live_page = events_runtime.getStreamPage(live_query);
+            const feed::StreamPage live_page = feed_repo.getStreamPage(live_query);
 
-            spdlog::info("SSE feed/stream poll: since_seq={} returned deltas={} page_last_seq={} min_available={}",
+            spdlog::debug("SSE feed/stream poll: since_seq={} returned deltas={} page_last_seq={} min_available={}",
                 last_seq,
                 live_page.deltas.size(),
                 live_page.last_seq.has_value() ? *live_page.last_seq : -1,
@@ -387,7 +387,7 @@ namespace dcn
             {
                 std::string buf;
                 buf.reserve(live_page.deltas.size() * 256);
-                for(const events::StreamDelta & delta : live_page.deltas)
+                for(const feed::StreamDelta & delta : live_page.deltas)
                 {
                     buf += formatDeltaFrame(delta);
                 }
@@ -395,7 +395,7 @@ namespace dcn
                 {
                     last_seq = *live_page.last_seq;
                 }
-                spdlog::info("SSE feed/stream: emitting {} delta(s), advancing last_seq to {}", live_page.deltas.size(), last_seq);
+                spdlog::debug("SSE feed/stream: emitting {} delta(s), advancing last_seq to {}", live_page.deltas.size(), last_seq);
                 if(!co_await writeRaw(sock, std::move(buf)))
                 {
                     co_return;

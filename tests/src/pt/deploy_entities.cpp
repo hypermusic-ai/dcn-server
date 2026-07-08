@@ -138,9 +138,10 @@ namespace
         chain::Address condition_owner{};
         chain::Address connector_owner{};
 
-        Transformation transformation{};
-        Condition condition{};
-        Connector connector{};
+        // EVM-log-decoded entity data (replaces the former registry-DB readbacks)
+        pt::TransformationAddedEvent transformation_event{};
+        pt::ConditionAddedEvent condition_event{};
+        pt::ConnectorAddedEvent connector_event{};
     };
 
     PTDeployEntitiesSnapshot deployEntities()
@@ -231,35 +232,51 @@ namespace
             }
             snapshot.connector_address = connector_deploy_result.value();
 
-            const auto transformation_res = runAwaitable(
-                io_context,
-                registry.getTransformationRecordHandle("DeployTransformation"));
-            if(!transformation_res.has_value())
+            // Verify EVM presence by decoding the emitted deployment logs
+            const auto logs = runAwaitable(io_context, evm_instance.getLogsSince(0, 1024));
+            for(const auto & log : logs)
             {
-                snapshot.error_message = "getTransformation returned no value";
-                return snapshot;
+                if(snapshot.transformation_event.name.empty())
+                {
+                    auto ev = pt::decodeTransformationAddedEvent(log.data_hex, log.topics);
+                    if(ev && ev->name == "DeployTransformation")
+                    {
+                        snapshot.transformation_event = *ev;
+                    }
+                }
+                if(snapshot.condition_event.name.empty())
+                {
+                    auto ev = pt::decodeConditionAddedEvent(log.data_hex, log.topics);
+                    if(ev && ev->name == "DeployCondition")
+                    {
+                        snapshot.condition_event = *ev;
+                    }
+                }
+                if(snapshot.connector_event.name.empty())
+                {
+                    auto ev = pt::decodeConnectorAddedEvent(log.data_hex, log.topics);
+                    if(ev && ev->name == "DeployConnector")
+                    {
+                        snapshot.connector_event = *ev;
+                    }
+                }
             }
-            snapshot.transformation = (*transformation_res)->transformation();
 
-            const auto condition_res = runAwaitable(
-                io_context,
-                registry.getConditionRecordHandle("DeployCondition"));
-            if(!condition_res.has_value())
+            if(snapshot.transformation_event.name.empty())
             {
-                snapshot.error_message = "getCondition returned no value";
+                snapshot.error_message = "TransformationAdded event for 'DeployTransformation' not found in EVM logs";
                 return snapshot;
             }
-            snapshot.condition = (*condition_res)->condition();
-
-            const auto connector_res = runAwaitable(
-                io_context,
-                registry.getConnectorRecordHandle("DeployConnector"));
-            if(!connector_res.has_value())
+            if(snapshot.condition_event.name.empty())
             {
-                snapshot.error_message = "getConnector returned no value";
+                snapshot.error_message = "ConditionAdded event for 'DeployCondition' not found in EVM logs";
                 return snapshot;
             }
-            snapshot.connector = (*connector_res)->connector();
+            if(snapshot.connector_event.name.empty())
+            {
+                snapshot.error_message = "ConnectorAdded event for 'DeployConnector' not found in EVM logs";
+                return snapshot;
+            }
 
             const auto transformation_owner_res = fetchOwnerAddress(io_context, evm_instance, snapshot.transformation_address);
             if(!transformation_owner_res)
@@ -316,10 +333,9 @@ TEST_F(UnitTest, PT_Deploy_Transformation_DeploysAndRegisters)
     EXPECT_FALSE(isZeroAddress(snapshot.transformation_address));
     EXPECT_EQ(snapshot.transformation_owner, snapshot.owner);
 
-    EXPECT_EQ(snapshot.transformation.name(), "DeployTransformation");
-    // The registry mirrors only chain-derivable state: sol_src is dropped, args_count is recorded.
-    EXPECT_TRUE(snapshot.transformation.sol_src().empty());
-    EXPECT_EQ(snapshot.transformation.args_count(), 1u);
+    // EVM-presence check: verify the TransformationAdded event was emitted on chain
+    EXPECT_EQ(snapshot.transformation_event.name, "DeployTransformation");
+    EXPECT_EQ(snapshot.transformation_event.args_count, 1u);
 }
 
 TEST_F(UnitTest, PT_Deploy_Condition_DeploysAndRegisters)
@@ -330,10 +346,9 @@ TEST_F(UnitTest, PT_Deploy_Condition_DeploysAndRegisters)
     EXPECT_FALSE(isZeroAddress(snapshot.condition_address));
     EXPECT_EQ(snapshot.condition_owner, snapshot.owner);
 
-    EXPECT_EQ(snapshot.condition.name(), "DeployCondition");
-    // The registry mirrors only chain-derivable state: sol_src is dropped, args_count is recorded.
-    EXPECT_TRUE(snapshot.condition.sol_src().empty());
-    EXPECT_EQ(snapshot.condition.args_count(), 0u);
+    // EVM-presence check: verify the ConditionAdded event was emitted on chain
+    EXPECT_EQ(snapshot.condition_event.name, "DeployCondition");
+    EXPECT_EQ(snapshot.condition_event.args_count, 0u);
 }
 
 TEST_F(UnitTest, PT_Deploy_Connector_DeploysAndRegisters)
@@ -344,15 +359,17 @@ TEST_F(UnitTest, PT_Deploy_Connector_DeploysAndRegisters)
     EXPECT_FALSE(isZeroAddress(snapshot.connector_address));
     EXPECT_EQ(snapshot.connector_owner, snapshot.owner);
 
-    EXPECT_EQ(snapshot.connector.name(), "DeployConnector");
-    ASSERT_EQ(snapshot.connector.dimensions_size(), 1);
-    ASSERT_EQ(snapshot.connector.dimensions(0).transformations_size(), 1);
-    EXPECT_EQ(snapshot.connector.dimensions(0).transformations(0).name(), "DeployTransformation");
-    ASSERT_EQ(snapshot.connector.dimensions(0).transformations(0).args_size(), 1);
-    EXPECT_EQ(snapshot.connector.dimensions(0).transformations(0).args(0), 7);
-    EXPECT_EQ(snapshot.connector.dimensions(0).composite(), "");
-    EXPECT_EQ(snapshot.connector.condition_name(), "DeployCondition");
-    EXPECT_EQ(snapshot.connector.condition_args_size(), 0);
+    // EVM-presence check: verify the ConnectorAdded event was emitted on chain
+    EXPECT_EQ(snapshot.connector_event.name, "DeployConnector");
+    EXPECT_EQ(snapshot.connector_event.dimensions_count, 1u);
+    ASSERT_EQ(snapshot.connector_event.transformations.count(0u), 1u);
+    ASSERT_EQ(snapshot.connector_event.transformations.at(0u).size(), 1u);
+    EXPECT_EQ(snapshot.connector_event.transformations.at(0u)[0].name(), "DeployTransformation");
+    ASSERT_EQ(snapshot.connector_event.transformations.at(0u)[0].args_size(), 1);
+    EXPECT_EQ(snapshot.connector_event.transformations.at(0u)[0].args(0), 7);
+    EXPECT_EQ(snapshot.connector_event.composites.count(0u), 0u); // no composite
+    EXPECT_EQ(snapshot.connector_event.condition_name, "DeployCondition");
+    EXPECT_EQ(snapshot.connector_event.condition_args.size(), 0u);
 }
 
 TEST_F(UnitTest, PT_Deploy_Connector_DuplicateName_ReturnsConnectorAlreadyRegistered)

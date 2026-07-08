@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <exception>
+#include <format>
 #include <limits>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -18,16 +20,6 @@
 
 namespace dcn::events
 {
-    static std::string _resolveChainNamespace(const EventRuntimeConfig & config)
-    {
-        if(!config.chain_namespace.empty())
-        {
-            return config.chain_namespace;
-        }
-
-        return "local";
-    }
-
     std::int64_t reorgLookbackStart(const std::int64_t next_from_block, const std::size_t reorg_window_blocks)
     {
         const std::int64_t lookback_blocks = static_cast<std::int64_t>(reorg_window_blocks);
@@ -40,10 +32,7 @@ namespace dcn::events
         , _write_strand(asio::make_strand(io_context))
         , _store(std::make_shared<SQLiteHotStore>(
             _config.hot_db_path,
-            _config.archive_root,
-            _config.outbox_retention_ms,
-            _config.chain_id,
-            _resolveChainNamespace(_config)))
+            _config.chain_id))
         , _decoder(std::make_unique<PTEventDecoder>())
     {
     }
@@ -89,7 +78,7 @@ namespace dcn::events
         };
 
         spawn_loop(_runProjectorLoop(), "events projector loop failed");
-        spawn_loop(_runArchiveLoop(), "events archive loop failed");
+        spawn_loop(_runPruneLoop(), "events prune loop failed");
         spawn_loop(_runMaintenanceLoop(), "events maintenance loop failed");
 
         if(_config.ingestion_enabled)
@@ -157,19 +146,16 @@ namespace dcn::events
         return _config.ingestion_enabled;
     }
 
-    FeedPage EventRuntime::getFeedPage(const FeedQuery & query) const
+    void EventRuntime::addProjector(std::unique_ptr<IEventProjector> projector)
     {
-        return _store->getFeedPage(query);
+        // Pre-start-only: _projectors is iterated by _runProjectorLoop without synchronization.
+        assert(!_running.load(std::memory_order_acquire) && "addProjector must be called before start()");
+        _projectors.push_back(std::move(projector));
     }
 
-    StreamPage EventRuntime::getStreamPage(const StreamQuery & query) const
+    SQLiteHotStore & EventRuntime::projectionStore()
     {
-        return _store->getStreamPage(query);
-    }
-
-    std::int64_t EventRuntime::minAvailableStreamSeq() const
-    {
-        return _store->minAvailableStreamSeq();
+        return *_store;
     }
 
     asio::awaitable<void> EventRuntime::_sleepFor(const std::uint64_t ms) const
@@ -252,21 +238,6 @@ namespace dcn::events
         co_return _store->applyFinality(chain_id, heights, now_ms, reorg_window_blocks);
     }
 
-    asio::awaitable<std::size_t> EventRuntime::_storeProjectBatch(const std::size_t limit, const std::int64_t now_ms) const
-    {
-        co_await async::ensureOnStrand(_write_strand);
-        co_return _store->projectBatch(limit, now_ms);
-    }
-
-    asio::awaitable<bool> EventRuntime::_storeRunArchiveCycle(
-        const int chain_id,
-        const std::size_t hot_window_days,
-        const std::int64_t now_ms) const
-    {
-        co_await async::ensureOnStrand(_write_strand);
-        co_return _store->runArchiveCycle(chain_id, hot_window_days, now_ms);
-    }
-
     asio::awaitable<storage::sqlite::WalCheckpointStats> EventRuntime::checkpointWal(storage::sqlite::WalCheckpointMode mode) const
     {
         co_await async::ensureOnStrand(_write_strand);
@@ -288,7 +259,8 @@ namespace dcn::events
         }
         next_from_block_hint = co_await _storeLoadNextFromBlock(chain_id);
 
-        const std::size_t poll_limit = std::max<std::size_t>(1, std::min<std::size_t>(MAX_STREAM_LIMIT, _config.block_batch_size * 8ULL));
+        constexpr std::size_t MAX_POLL_LIMIT = 2048; // ponytail: matches feed::MAX_STREAM_LIMIT
+        const std::size_t poll_limit = std::max<std::size_t>(1, std::min<std::size_t>(MAX_POLL_LIMIT, _config.block_batch_size * 8ULL));
         constexpr const char* EPHEMERAL_ENTITY_ADDRESS = "0x0";
 
         while(!_stop_requested.load(std::memory_order_acquire))
@@ -467,34 +439,76 @@ namespace dcn::events
 
         while(!_stop_requested.load(std::memory_order_acquire))
         {
-            const std::size_t projected = co_await _storeProjectBatch(DEFAULT_PROJECT_BATCH_SIZE, utils::nowMs());
-
-            if(projected == 0)
+            std::size_t total = 0;
+            for(auto & p : _projectors)
             {
-                co_await _sleepFor(_config.projector_interval_ms);
+                // Isolate per-projector failures: a transient DB error (e.g. SQLITE_BUSY
+                // surfaced as an exception) must not kill the loop coroutine for good.
+                try
+                {
+                    total += co_await p->projectBatch(DEFAULT_PROJECT_BATCH_SIZE, utils::nowMs());
+                }
+                catch(...)
+                {
+                    utils::logException(std::current_exception(),
+                        std::format("events projector '{}' batch failed", p->id()));
+                }
             }
+            if(total == 0) co_await _sleepFor(_config.projector_interval_ms);
         }
 
         spdlog::info("Events projector loop stopped");
         co_return;
     }
 
-    asio::awaitable<void> EventRuntime::_runArchiveLoop()
+    asio::awaitable<void> EventRuntime::_runPruneLoop()
     {
-        spdlog::info("Events archive loop started");
+        spdlog::info("Events prune loop started");
 
         while(!_stop_requested.load(std::memory_order_acquire))
         {
-            co_await _sleepFor(_config.archive_interval_ms);
+            co_await _sleepFor(_config.prune_interval_ms);
             if(_stop_requested.load(std::memory_order_acquire))
             {
                 break;
             }
 
-            (void)co_await _storeRunArchiveCycle(_config.chain_id, _config.hot_window_days, utils::nowMs());
+            co_await async::ensureOnStrand(_write_strand);
+
+            if(_projectors.empty())
+            {
+                continue;
+            }
+
+            // watermark = min cursor over all projectors (skip if none have advanced)
+            std::int64_t watermark = std::numeric_limits<std::int64_t>::max();
+            for(const auto & p : _projectors)
+            {
+                watermark = std::min(watermark, p->cursor());
+            }
+
+            if(watermark <= 0)
+            {
+                continue;
+            }
+
+            // finalized_floor_block = head - reorg_window (below this we know nothing can reorg)
+            const std::int64_t head = _store->loadHeadBlock(_config.chain_id);
+            if(head <= 0)
+            {
+                continue;
+            }
+
+            const std::int64_t floor =
+                (head > static_cast<std::int64_t>(_config.reorg_window_blocks))
+                    ? (head - static_cast<std::int64_t>(_config.reorg_window_blocks))
+                    : 0;
+
+            constexpr std::size_t PRUNE_BATCH = 500;
+            (void)_store->pruneConsumedRaw(watermark, floor, PRUNE_BATCH);
         }
 
-        spdlog::info("Events archive loop stopped");
+        spdlog::info("Events prune loop stopped");
         co_return;
     }
 

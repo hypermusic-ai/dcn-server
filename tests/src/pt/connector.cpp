@@ -1,5 +1,10 @@
 #include "unit-tests.hpp"
 
+#include <array>
+#include <cstdint>
+#include <string>
+#include <vector>
+
 using namespace dcn;
 using namespace dcn::parse;
 using namespace dcn::tests;
@@ -593,4 +598,296 @@ TEST_F(UnitTest, Connector_ConstructSolidityCode_RejectsReservedKeywordBindingTa
     auto solidity_result = constructConnectorSolidityCode(connector);
     ASSERT_FALSE(solidity_result.has_value());
     EXPECT_EQ(solidity_result.error().kind, ParseError::Kind::INVALID_VALUE);
+}
+
+namespace
+{
+    // ABI-encoding helpers for the ConnectorAdded event used to exercise
+    // decodeConnectorAddedEvent / buildConnectorRecordFromEvent without an EVM deploy.
+    // Layout MUST match the Solidity emit order and dcn::chain::decodeAbi* readers.
+    void appendUintWord(std::vector<std::uint8_t> & out, std::uint64_t value)
+    {
+        std::array<std::uint8_t, 32> word{};
+        for(std::size_t i = 0; i < sizeof(std::uint64_t); ++i)
+        {
+            word[31 - i] = static_cast<std::uint8_t>((value >> (i * 8)) & 0xFFu);
+        }
+        out.insert(out.end(), word.begin(), word.end());
+    }
+
+    void appendUint32Word(std::vector<std::uint8_t> & out, std::uint32_t value)
+    {
+        appendUintWord(out, static_cast<std::uint64_t>(value));
+    }
+
+    void appendInt32Word(std::vector<std::uint8_t> & out, std::int32_t value)
+    {
+        const std::uint32_t bits = static_cast<std::uint32_t>(value);
+        const std::uint8_t fill = (value < 0) ? 0xFFu : 0x00u;
+        std::array<std::uint8_t, 32> word{};
+        word.fill(fill);
+        word[28] = static_cast<std::uint8_t>((bits >> 24) & 0xFFu);
+        word[29] = static_cast<std::uint8_t>((bits >> 16) & 0xFFu);
+        word[30] = static_cast<std::uint8_t>((bits >> 8) & 0xFFu);
+        word[31] = static_cast<std::uint8_t>(bits & 0xFFu);
+        out.insert(out.end(), word.begin(), word.end());
+    }
+
+    void appendBytes32Word(std::vector<std::uint8_t> & out, const evmc::bytes32 & value)
+    {
+        out.insert(out.end(), std::begin(value.bytes), std::end(value.bytes));
+    }
+
+    void appendAddressWord(std::vector<std::uint8_t> & out, const chain::Address & address)
+    {
+        std::array<std::uint8_t, 32> word{};
+        std::memcpy(word.data() + 12, address.bytes, sizeof(address.bytes));
+        out.insert(out.end(), word.begin(), word.end());
+    }
+
+    std::vector<std::uint8_t> encodeUint32Array(const std::vector<std::uint32_t> & values)
+    {
+        std::vector<std::uint8_t> out;
+        appendUintWord(out, values.size());
+        for(const std::uint32_t value : values)
+        {
+            appendUint32Word(out, value);
+        }
+        return out;
+    }
+
+    std::vector<std::uint8_t> encodeInt32Array(const std::vector<std::int32_t> & values)
+    {
+        std::vector<std::uint8_t> out;
+        appendUintWord(out, values.size());
+        for(const std::int32_t value : values)
+        {
+            appendInt32Word(out, value);
+        }
+        return out;
+    }
+
+    std::vector<std::uint8_t> encodeString(const std::string & value)
+    {
+        std::vector<std::uint8_t> out;
+        appendUintWord(out, value.size());
+        out.insert(
+            out.end(),
+            reinterpret_cast<const std::uint8_t *>(value.data()),
+            reinterpret_cast<const std::uint8_t *>(value.data()) + value.size());
+        const std::size_t padding = (32 - (value.size() % 32)) % 32;
+        out.insert(out.end(), padding, 0);
+        return out;
+    }
+
+    std::vector<std::uint8_t> encodeStringArray(const std::vector<std::string> & values)
+    {
+        std::vector<std::uint8_t> out;
+        appendUintWord(out, values.size());
+
+        std::vector<std::vector<std::uint8_t>> encoded;
+        encoded.reserve(values.size());
+        for(const std::string & value : values)
+        {
+            encoded.push_back(encodeString(value));
+        }
+
+        // Offsets are relative to the start of the area right after the length word.
+        std::uint64_t offset = static_cast<std::uint64_t>(values.size()) * 32u;
+        for(const auto & blob : encoded)
+        {
+            appendUintWord(out, offset);
+            offset += blob.size();
+        }
+        for(const auto & blob : encoded)
+        {
+            out.insert(out.end(), blob.begin(), blob.end());
+        }
+        return out;
+    }
+
+    std::string toHexString(const std::uint8_t * data, std::size_t size)
+    {
+        static const char * digits = "0123456789abcdef";
+        std::string out;
+        out.reserve(size * 2);
+        for(std::size_t i = 0; i < size; ++i)
+        {
+            out.push_back(digits[(data[i] >> 4) & 0x0F]);
+            out.push_back(digits[data[i] & 0x0F]);
+        }
+        return out;
+    }
+
+    ConnectorRecord makeConnectorWithTransformations()
+    {
+        ConnectorRecord record;
+        // Canonical owner string so a round-tripped addressToHex compares equal.
+        chain::Address owner{};
+        owner.bytes[19] = 0xAB;
+        owner.bytes[18] = 0xCD;
+        record.set_owner(chain::addressToHex(owner));
+
+        Connector * connector = record.mutable_connector();
+        connector->set_name("connector_with_tf");
+
+        // dim0: transformation "scale" with args [2, 3].
+        Dimension * dim0 = connector->add_dimensions();
+        dim0->set_composite("");
+        TransformationDef * scale = dim0->add_transformations();
+        scale->set_name("scale");
+        scale->add_args(2);
+        scale->add_args(3);
+
+        // dim1: transformation "shift" with no args.
+        Dimension * dim1 = connector->add_dimensions();
+        dim1->set_composite("");
+        TransformationDef * shift = dim1->add_transformations();
+        shift->set_name("shift");
+
+        return record;
+    }
+}
+
+namespace dcn::tests
+{
+    struct EncodedConnectorAddedEvent
+    {
+        std::string data_hex;
+        std::vector<std::string> topics_hex;
+    };
+
+    EncodedConnectorAddedEvent encodeConnectorAddedForTest(const ConnectorRecord & record)
+    {
+        const Connector & connector = record.connector();
+
+        // Build the parallel transformation arrays in (dimId, indexWithinDim) order,
+        // mirroring the Solidity codegen in src/pt/src/connector.cpp.
+        std::vector<std::uint32_t> transformation_dim_ids;
+        std::vector<std::string> transformation_names;
+        std::vector<std::uint32_t> transformation_arg_counts;
+        std::vector<std::int32_t> transformation_args;
+        for(int i = 0; i < connector.dimensions_size(); ++i)
+        {
+            for(int j = 0; j < connector.dimensions(i).transformations_size(); ++j)
+            {
+                const TransformationDef & tf = connector.dimensions(i).transformations(j);
+                transformation_dim_ids.push_back(static_cast<std::uint32_t>(i));
+                transformation_names.push_back(tf.name());
+                transformation_arg_counts.push_back(static_cast<std::uint32_t>(tf.args_size()));
+                for(int k = 0; k < tf.args_size(); ++k)
+                {
+                    transformation_args.push_back(tf.args(k));
+                }
+            }
+        }
+
+        std::vector<std::int32_t> condition_args;
+        for(int i = 0; i < connector.condition_args_size(); ++i)
+        {
+            condition_args.push_back(connector.condition_args(i));
+        }
+
+        constexpr std::uint64_t head_words = 18;
+        const std::uint64_t head_bytes = head_words * 32u;
+
+        std::vector<std::uint8_t> head;
+        std::vector<std::uint8_t> tails;
+        head.reserve(static_cast<std::size_t>(head_bytes));
+
+        const auto addDynamic = [&](std::vector<std::uint8_t> blob)
+        {
+            appendUintWord(head, head_bytes + tails.size());
+            tails.insert(tails.end(), blob.begin(), blob.end());
+        };
+
+        chain::Address connector_address{};
+        evmc::bytes32 format_hash{};
+
+        // 0 name (string)
+        addDynamic(encodeString(connector.name()));
+        // 1 connectorAddr (address)
+        appendAddressWord(head, connector_address);
+        // 2 dimensionsCount (uint32)
+        appendUint32Word(head, static_cast<std::uint32_t>(connector.dimensions_size()));
+        // 3 compositeDimIds (uint32[])
+        addDynamic(encodeUint32Array({}));
+        // 4 compositeNames (string[])
+        addDynamic(encodeStringArray({}));
+        // 5 bindingDimIds (uint32[])
+        addDynamic(encodeUint32Array({}));
+        // 6 bindingSlotIds (uint32[])
+        addDynamic(encodeUint32Array({}));
+        // 7 bindingNames (string[])
+        addDynamic(encodeStringArray({}));
+        // 8 conditionName (string)
+        addDynamic(encodeString(connector.condition_name()));
+        // 9 conditionArgs (int32[])
+        addDynamic(encodeInt32Array(condition_args));
+        // 10 formatHash (bytes32)
+        appendBytes32Word(head, format_hash);
+        // 11 staticRiPositions (uint32[])
+        addDynamic(encodeUint32Array({}));
+        // 12 staticRiStartPoints (uint32[])
+        addDynamic(encodeUint32Array({}));
+        // 13 staticRiTransformShifts (uint32[])
+        addDynamic(encodeUint32Array({}));
+        // 14 transformationDimIds (uint32[])
+        addDynamic(encodeUint32Array(transformation_dim_ids));
+        // 15 transformationNames (string[])
+        addDynamic(encodeStringArray(transformation_names));
+        // 16 transformationArgCounts (uint32[])
+        addDynamic(encodeUint32Array(transformation_arg_counts));
+        // 17 transformationArgs (int32[])
+        addDynamic(encodeInt32Array(transformation_args));
+
+        std::vector<std::uint8_t> data = std::move(head);
+        data.insert(data.end(), tails.begin(), tails.end());
+
+        EncodedConnectorAddedEvent out;
+        out.data_hex = toHexString(data.data(), data.size());
+
+        const evmc::bytes32 topic0 = chain::constructEventTopic(
+            "ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[],bytes32,uint32[],uint32[],uint32[],uint32[],string[],uint32[],int32[])");
+        out.topics_hex.push_back(toHexString(topic0.bytes, sizeof(topic0.bytes)));
+
+        // topic[1] = caller (indexed), topic[2] = owner (indexed).
+        const auto owner_address = evmc::from_hex<chain::Address>(record.owner());
+        chain::Address owner = owner_address.value_or(chain::Address{});
+        std::array<std::uint8_t, 32> caller_word{};
+        out.topics_hex.push_back(toHexString(caller_word.data(), caller_word.size()));
+        std::array<std::uint8_t, 32> owner_word{};
+        std::memcpy(owner_word.data() + 12, owner.bytes, sizeof(owner.bytes));
+        out.topics_hex.push_back(toHexString(owner_word.data(), owner_word.size()));
+
+        return out;
+    }
+}
+
+TEST(PtConnectorEvent, DecodeRecoversTransformationDefs)
+{
+    const ConnectorRecord record = makeConnectorWithTransformations();
+    const auto event_bytes = dcn::tests::encodeConnectorAddedForTest(record);
+    const auto decoded = dcn::pt::decodeConnectorAddedEvent(event_bytes.data_hex, event_bytes.topics_hex);
+    ASSERT_TRUE(decoded.has_value());
+    ASSERT_EQ(decoded->transformations.at(0).size(), 1u);
+    EXPECT_EQ(decoded->transformations.at(0)[0].name(), "scale");
+    ASSERT_EQ(decoded->transformations.at(0)[0].args_size(), 2);
+    EXPECT_EQ(decoded->transformations.at(0)[0].args(0), 2);
+    EXPECT_EQ(decoded->transformations.at(1)[0].name(), "shift");
+    EXPECT_EQ(decoded->transformations.at(1)[0].args_size(), 0);
+}
+
+TEST(PtConnectorEvent, BuildRecordRoundTrips)
+{
+    const ConnectorRecord original = makeConnectorWithTransformations();
+    const auto enc = dcn::tests::encodeConnectorAddedForTest(original);
+    const auto decoded = dcn::pt::decodeConnectorAddedEvent(enc.data_hex, enc.topics_hex);
+    ASSERT_TRUE(decoded.has_value());
+
+    const ConnectorRecord rebuilt = dcn::pt::buildConnectorRecordFromEvent(*decoded);
+
+    EXPECT_EQ(rebuilt.connector().name(), original.connector().name());
+    EXPECT_EQ(rebuilt.connector().dimensions_size(), original.connector().dimensions_size());
+    EXPECT_EQ(rebuilt.owner(), original.owner());
 }

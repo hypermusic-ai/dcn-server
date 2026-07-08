@@ -2,32 +2,25 @@
 
 #include <cstdint>
 #include <filesystem>
-#include <memory>
 #include <optional>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 #include <sqlite3.h>
 
 #include "sqlite/wal.hpp"
 
+#include "event_projector.hpp"
 #include "events_store.hpp"
-#include "events_archive.hpp"
-#include "events_feed.hpp"
-#include "events_shard.hpp"
 
 namespace dcn::events
 {
-    class SQLiteHotStore final : public IHotEventStore, public IArchiveManager
+    class SQLiteHotStore final : public IHotEventStore
     {
         public:
             SQLiteHotStore(
                 const std::filesystem::path & hot_db_path,
-                const std::filesystem::path & archive_root,
-                const std::int64_t outbox_retention_ms,
-                const int default_chain_id,
-                std::string default_chain_namespace = "eth");
+                const int default_chain_id);
 
             ~SQLiteHotStore() override;
 
@@ -64,52 +57,32 @@ namespace dcn::events
                     const FinalityHeights & heights,
                     const std::int64_t now_ms,
                     const std::size_t reorg_window_blocks) override;
-                
-            std::size_t projectBatch(const std::size_t limit, const std::int64_t now_ms) override;
-                
-            bool runArchiveCycle(
-                    const int chain_id,
-                    const std::size_t hot_window_days,
-                    const std::int64_t now_ms) override;
-                
-            bool runCycle(const int chain_id, const std::size_t hot_window_days, const std::int64_t now_ms) override;
-                
+
+            // ---- min-cursor pruning / write-strand only ----
+
+            std::size_t pruneConsumedRaw(
+                    std::int64_t watermark,
+                    std::int64_t finalized_floor_block,
+                    std::size_t batch_limit);
+
+            std::int64_t loadHeadBlock(int chain_id);
+
             storage::sqlite::WalCheckpointStats checkpointWal(storage::sqlite::WalCheckpointMode mode);
 
             // ---- read side / synchronous ----
 
-            FeedPage getFeedPage(const FeedQuery & query) const;
-            StreamPage getStreamPage(const StreamQuery & query) const;
-                
-            std::int64_t minAvailableStreamSeq() const;
-                
+            std::vector<ChangeRecord> readChangesSince(std::int64_t after_change_seq, std::size_t limit) const;
+
         private:
             bool _initializeHotSchema();
-            bool _initializeArchiveSchema(sqlite3 * archive_db) const;
-            
-            bool _exportMonth(const int chain_id, const std::string& month_token, const std::int64_t now_ms);
-
-            std::vector<std::filesystem::path> _candidateArchivePaths(const std::optional<CursorKey> & before_key) const;
-                
-            void _appendFeedRowsFromDatabase(
-                sqlite3 * db,
-                const char * table_name,
-                const FeedQuery & query,
-                const std::optional<CursorKey> & before_key,
-                const std::size_t limit,
-                std::vector<FeedItem> & out_items,
-                std::unordered_set<std::string> & seen_feed_ids) const;
+            std::int64_t _nextChangeSeq();
 
         private:
             std::filesystem::path _hot_db_path;
-            std::filesystem::path _archive_root;
-            std::int64_t _outbox_retention_ms = 0;
 
             sqlite3 * _write_db = nullptr;
             sqlite3 * _read_db = nullptr;
-            std::unique_ptr<IEventShardRouter> _shard_router;
 
             int _default_chain_id = 1;
-            std::string _default_chain_namespace = "eth";
     };
 }

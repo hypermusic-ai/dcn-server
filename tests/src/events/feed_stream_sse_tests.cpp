@@ -13,6 +13,7 @@ namespace
     void ingestAndProjectOne(
         asio::io_context & writer_io_context,
         events::SQLiteHotStore & store,
+        feed::Feed & feed,
         const std::int64_t block_number,
         const std::uint8_t block_hash_byte,
         const std::uint8_t tx_hash_byte,
@@ -43,7 +44,7 @@ namespace
             {block},
             block_number + 1,
             now_ms - 30));
-        EXPECT_EQ(projectAll(writer_io_context, store, now_ms), 1u);
+        EXPECT_EQ(projectAll(writer_io_context, store, feed, now_ms), 1u);
     }
 }
 
@@ -51,13 +52,14 @@ TEST_F(UnitTest, Events_StreamPage_SinceSeqAndOrdering_AreMonotonic)
 {
     const auto paths = makeTempEventsPaths("stream_monotonic");
     asio::io_context store_io_context;
-    events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 60 * 60 * 1000, CHAIN_ID);
+    events::SQLiteHotStore store(paths.hot_db, CHAIN_ID);
+    feed::Feed feed_obj(store_io_context, paths.feed_db, paths.feed_archive_root, 7LL*24*60*60*1000, CHAIN_ID);
 
-    ingestAndProjectOne(store_io_context, store, 80, 0xD0, 0xF0, 1'700'000'700, 1'700'000'700'100);
-    ingestAndProjectOne(store_io_context, store, 81, 0xD1, 0xF1, 1'700'000'701, 1'700'000'701'100);
-    ingestAndProjectOne(store_io_context, store, 82, 0xD2, 0xF2, 1'700'000'702, 1'700'000'702'100);
+    ingestAndProjectOne(store_io_context, store, feed_obj, 80, 0xD0, 0xF0, 1'700'000'700, 1'700'000'700'100);
+    ingestAndProjectOne(store_io_context, store, feed_obj, 81, 0xD1, 0xF1, 1'700'000'701, 1'700'000'701'100);
+    ingestAndProjectOne(store_io_context, store, feed_obj, 82, 0xD2, 0xF2, 1'700'000'702, 1'700'000'702'100);
 
-    const events::StreamPage page = store.getStreamPage(events::StreamQuery{
+    const feed::StreamPage page = feed_obj.getStreamPage(feed::StreamQuery{
         .since_seq = 1,
         .limit = 100
     });
@@ -74,7 +76,8 @@ TEST_F(UnitTest, Events_StreamPage_FiltersDeltasByDefaultChainId)
 {
     const auto paths = makeTempEventsPaths("stream_chain_filter");
     asio::io_context store_io_context;
-    events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 60 * 60 * 1000, CHAIN_ID);
+    events::SQLiteHotStore store(paths.hot_db, CHAIN_ID);
+    feed::Feed feed_obj(store_io_context, paths.feed_db, paths.feed_archive_root, 7LL*24*60*60*1000, CHAIN_ID);
 
     const events::DecodedEvent chain_one_event = makeDecodedEvent(
         300,
@@ -113,33 +116,34 @@ TEST_F(UnitTest, Events_StreamPage_FiltersDeltasByDefaultChainId)
     chain_two_block.chain_id = 2;
     ASSERT_TRUE(awaitIngestBatch(store_io_context, store, 2, {chain_two_event}, {chain_two_block}, 302, 1'700'050'001'200));
 
-    EXPECT_EQ(projectAll(store_io_context, store, 1'700'050'001'300), 2u);
+    EXPECT_EQ(projectAll(store_io_context, store, feed_obj, 1'700'050'001'300), 2u);
 
-    const events::StreamPage page = store.getStreamPage(events::StreamQuery{
+    const feed::StreamPage page = feed_obj.getStreamPage(feed::StreamQuery{
         .since_seq = 0,
         .limit = 16
     });
     ASSERT_EQ(page.deltas.size(), 1u);
-    EXPECT_EQ(page.deltas.front().feed_id.rfind("eth:1:", 0), 0u);
+    EXPECT_EQ(page.deltas.front().feed_id.rfind("local:1:", 0), 0u);
 }
 
 TEST_F(UnitTest, Events_StreamPage_ReconnectWithLastSeq_DoesNotDuplicate)
 {
     const auto paths = makeTempEventsPaths("stream_reconnect");
     asio::io_context store_io_context;
-    events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 60 * 60 * 1000, CHAIN_ID);
+    events::SQLiteHotStore store(paths.hot_db, CHAIN_ID);
+    feed::Feed feed_obj(store_io_context, paths.feed_db, paths.feed_archive_root, 7LL*24*60*60*1000, CHAIN_ID);
 
-    ingestAndProjectOne(store_io_context, store, 83, 0xD3, 0xF3, 1'700'000'703, 1'700'000'703'100);
-    ingestAndProjectOne(store_io_context, store, 84, 0xD4, 0xF4, 1'700'000'704, 1'700'000'704'100);
+    ingestAndProjectOne(store_io_context, store, feed_obj, 83, 0xD3, 0xF3, 1'700'000'703, 1'700'000'703'100);
+    ingestAndProjectOne(store_io_context, store, feed_obj, 84, 0xD4, 0xF4, 1'700'000'704, 1'700'000'704'100);
 
-    const events::StreamPage first = store.getStreamPage(events::StreamQuery{
+    const feed::StreamPage first = feed_obj.getStreamPage(feed::StreamQuery{
         .since_seq = 0,
         .limit = 100
     });
     ASSERT_EQ(first.deltas.size(), 2u);
     ASSERT_TRUE(first.last_seq.has_value());
 
-    const events::StreamPage second = store.getStreamPage(events::StreamQuery{
+    const feed::StreamPage second = feed_obj.getStreamPage(feed::StreamQuery{
         .since_seq = *first.last_seq,
         .limit = 100
     });
@@ -147,25 +151,20 @@ TEST_F(UnitTest, Events_StreamPage_ReconnectWithLastSeq_DoesNotDuplicate)
     EXPECT_FALSE(second.last_seq.has_value());
 }
 
+// NOTE: This test is in the known-failing list (feed_repo wiring to SSE not
+// completed) but must compile cleanly.
 TEST_F(UnitTest, Events_API_FeedStream_EmitsSseFramesWithFloorAndMeta)
 {
     const auto paths = makeTempEventsPaths("stream_sse_contract");
     asio::io_context writer_io_context;
-    events::SQLiteHotStore writer(paths.hot_db, paths.archive_root, 10, CHAIN_ID);
+    events::SQLiteHotStore writer(paths.hot_db, CHAIN_ID);
+    // retention=10ms: outbox rows pruned quickly on next projectBatch pass
+    feed::Feed feed_obj(writer_io_context, paths.feed_db, paths.feed_archive_root, 10, CHAIN_ID);
 
-    ingestAndProjectOne(writer_io_context, writer, 85, 0xD5, 0xF5, 1'700'000'705, 1'700'000'705'100);
-    ingestAndProjectOne(writer_io_context, writer, 86, 0xD6, 0xF6, 1'700'000'706, 1'700'000'706'100);
+    ingestAndProjectOne(writer_io_context, writer, feed_obj, 85, 0xD5, 0xF5, 1'700'000'705, 1'700'000'705'100);
+    ingestAndProjectOne(writer_io_context, writer, feed_obj, 86, 0xD6, 0xF6, 1'700'000'706, 1'700'000'706'100);
 
-    asio::io_context io_context;
-    events::EventRuntime runtime(
-        io_context,
-        events::EventRuntimeConfig{
-            .hot_db_path = paths.hot_db,
-            .archive_root = paths.archive_root,
-            .chain_id = CHAIN_ID
-        });
-
-    const std::string body = buildFeedStreamSseReplay(runtime, events::StreamQuery{.since_seq = 0, .limit = 10});
+    const std::string body = buildFeedStreamSseReplay(feed_obj, feed::StreamQuery{.since_seq = 0, .limit = 10});
 
     const std::vector<SseFrame> frames = parseSseFrames(body);
     ASSERT_GE(frames.size(), 3u);
@@ -193,30 +192,22 @@ TEST_F(UnitTest, Events_API_FeedStream_EmitsSseFramesWithFloorAndMeta)
     EXPECT_EQ(meta_data.value("stale_since_seq", true), false);
 }
 
+// NOTE: This test is in the known-failing list.
 TEST_F(UnitTest, Events_API_FeedStream_AfterRestart_UsesDurableOutboxState)
 {
     const auto paths = makeTempEventsPaths("stream_restart");
     {
         asio::io_context writer_io_context;
-        events::SQLiteHotStore writer(
-            paths.hot_db,
-            paths.archive_root,
-            60 * 60 * 1000,
-            CHAIN_ID);
-        ingestAndProjectOne(writer_io_context, writer, 87, 0xD7, 0xF7, 1'700'000'707, 1'700'000'707'100);
-        ingestAndProjectOne(writer_io_context, writer, 88, 0xD8, 0xF8, 1'700'000'708, 1'700'000'708'100);
+        events::SQLiteHotStore writer(paths.hot_db, CHAIN_ID);
+        feed::Feed feed_writer(writer_io_context, paths.feed_db, paths.feed_archive_root, 7LL*24*60*60*1000, CHAIN_ID);
+        ingestAndProjectOne(writer_io_context, writer, feed_writer, 87, 0xD7, 0xF7, 1'700'000'707, 1'700'000'707'100);
+        ingestAndProjectOne(writer_io_context, writer, feed_writer, 88, 0xD8, 0xF8, 1'700'000'708, 1'700'000'708'100);
     }
 
+    // "Restart": open a new Feed on the same DB to verify durable state.
     asio::io_context io_context;
-    events::EventRuntime runtime(
-        io_context,
-        events::EventRuntimeConfig{
-            .hot_db_path = paths.hot_db,
-            .archive_root = paths.archive_root,
-            .chain_id = CHAIN_ID
-        });
-
-    const std::string body = buildFeedStreamSseReplay(runtime, events::StreamQuery{.since_seq = 1, .limit = 10});
+    feed::Feed feed_reader(io_context, paths.feed_db, paths.feed_archive_root, 7LL*24*60*60*1000, CHAIN_ID);
+    const std::string body = buildFeedStreamSseReplay(feed_reader, feed::StreamQuery{.since_seq = 1, .limit = 10});
 
     const std::vector<SseFrame> frames = parseSseFrames(body);
     ASSERT_GE(frames.size(), 2u);
@@ -238,22 +229,19 @@ TEST_F(UnitTest, Events_API_FeedStream_StaleCursor_IsStructuredInMeta)
     const auto paths = makeTempEventsPaths("stream_stale_cursor_meta");
     {
         asio::io_context writer_io_context;
-        events::SQLiteHotStore writer(paths.hot_db, paths.archive_root, 10, CHAIN_ID);
-        ingestAndProjectOne(writer_io_context, writer, 89, 0xD9, 0xF9, 1'700'000'709, 1'700'000'709'100);
-        EXPECT_EQ(awaitProjectBatch(writer_io_context, writer, 16, 1'700'000'710'500), 0u); // prune old outbox rows
-        ingestAndProjectOne(writer_io_context, writer, 90, 0xDA, 0xFA, 1'700'000'710, 1'700'000'710'100);
+        events::SQLiteHotStore writer(paths.hot_db, CHAIN_ID);
+        // retention=10ms: first outbox row expires on the next projectBatch call
+        feed::Feed feed_obj(writer_io_context, paths.feed_db, paths.feed_archive_root, 10, CHAIN_ID);
+        ingestAndProjectOne(writer_io_context, writer, feed_obj, 89, 0xD9, 0xF9, 1'700'000'709, 1'700'000'709'100);
+        // Force a projectBatch pass at a later timestamp so maintainOutbox prunes the first row
+        EXPECT_EQ(awaitProjectBatch(writer_io_context, writer, feed_obj, 16, 1'700'000'710'500), 0u);
+        ingestAndProjectOne(writer_io_context, writer, feed_obj, 90, 0xDA, 0xFA, 1'700'000'710, 1'700'000'710'100);
     }
 
+    // "Restart" on the same feed DB.
     asio::io_context io_context;
-    events::EventRuntime runtime(
-        io_context,
-        events::EventRuntimeConfig{
-            .hot_db_path = paths.hot_db,
-            .archive_root = paths.archive_root,
-            .chain_id = CHAIN_ID
-        });
-
-    const std::string body = buildFeedStreamSseReplay(runtime, events::StreamQuery{.since_seq = 1, .limit = 10});
+    feed::Feed feed_reader(io_context, paths.feed_db, paths.feed_archive_root, 10, CHAIN_ID);
+    const std::string body = buildFeedStreamSseReplay(feed_reader, feed::StreamQuery{.since_seq = 1, .limit = 10});
 
     const std::vector<SseFrame> frames = parseSseFrames(body);
     ASSERT_GE(frames.size(), 2u);

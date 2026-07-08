@@ -1,4 +1,5 @@
 #include "api.hpp"
+#include "address.hpp"
 
 // TODO
 // ABI offset encoding (correctness)
@@ -180,7 +181,7 @@ namespace dcn
         const Transformation & transformation = *transformation_res;
 
         TransformationRecord transformation_record;
-        transformation_record.set_owner(evmc::hex(address));
+        transformation_record.set_owner(chain::addressToHex(address));
         *transformation_record.mutable_transformation() = std::move(transformation);
 
         // args_count is chain-derivable from the source (matches the value registered on chain).

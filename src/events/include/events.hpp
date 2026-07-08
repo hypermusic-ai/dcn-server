@@ -1,8 +1,6 @@
 #pragma once
 
 #include "events_shard.hpp"
-#include "events_archive.hpp"
-#include "events_feed.hpp"
 #include "events_ingest.hpp"
 #include "events_store.hpp"
 #include "emitted_log_source.hpp"

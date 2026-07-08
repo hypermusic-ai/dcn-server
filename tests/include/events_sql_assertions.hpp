@@ -17,4 +17,12 @@ namespace dcn::tests::events_sql
     {
         EXPECT_EQ(events_harness::rowCount(db_path, table_name), expected) << table_name;
     }
+
+    inline std::int64_t scalarInt(
+        const std::filesystem::path & db_path,
+        const std::string & sql)
+    {
+        events_harness::SqliteReadonly db(db_path);
+        return db.scalarInt64(sql);
+    }
 }

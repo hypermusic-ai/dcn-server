@@ -4,21 +4,35 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   docs:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Install Doxygen
-      run: sudo apt-get install doxygen -y
+      run: |
+        sudo apt-get install -y graphviz
+        curl -sL https://github.com/doxygen/doxygen/releases/download/Release_1_14_0/doxygen-1.14.0.linux.bin.tar.gz | tar xz
+        sudo make -C doxygen-1.14.0 install
 
     - name: Generate Documentation
       run: doxygen Doxyfile
 
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs_output/html
+        path: ./docs_output/html
+
+    - name: Deploy to GitHub Pages
+      id: deploy
+      uses: actions/deploy-pages@v5

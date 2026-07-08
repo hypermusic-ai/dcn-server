@@ -137,6 +137,9 @@ namespace dcn::registry
                 std::size_t limit) const = 0;
 
             virtual bool checkpointWal(storage::sqlite::WalCheckpointMode mode) const = 0;
+
+            virtual std::int64_t getMaterializationCursor() const = 0;
+            virtual bool setMaterializationCursor(std::int64_t last_change_seq) = 0;
     };
 }
 

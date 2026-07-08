@@ -9,6 +9,7 @@ add_module(NAME "Registry"
         "${PROJECT_PREFIX}::Parser"
         "${PROJECT_PREFIX}::Crypto"
         "${PROJECT_PREFIX}::Storage"
+        "${PROJECT_PREFIX}::Events"
 
         spdlog::spdlog
         asio

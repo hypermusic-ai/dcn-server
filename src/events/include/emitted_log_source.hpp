@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string_view>
 #include <vector>
 
 #include <asio.hpp>
@@ -31,6 +32,11 @@ namespace dcn::events
             virtual ~IEmittedLogSource() = default;
 
             virtual int chainId() const = 0;
+
+            // Namespace prefix for feed ids / cursors produced from this source's
+            // events. Defaults to the in-process EVM namespace; remote sources
+            // must override (e.g. "eth" for a mainnet RPC source).
+            virtual std::string_view chainNamespace() const { return "local"; }
 
             // When true, ingestion rewrites decoded entity addresses to the
             // ephemeral sentinel for this source's events (local EVM policy).

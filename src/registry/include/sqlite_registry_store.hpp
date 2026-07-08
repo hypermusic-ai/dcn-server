@@ -100,6 +100,11 @@ namespace dcn::registry
 
             bool checkpointWal(storage::sqlite::WalCheckpointMode mode) const override;
 
+            // Materialization cursor: persists the last change_seq consumed from the
+            // hot-store changelog, so RegistryProjector survives restarts.
+            std::int64_t getMaterializationCursor() const override;
+            bool setMaterializationCursor(std::int64_t last_change_seq) override;
+
         private:
             sqlite3 * _db = nullptr;
 

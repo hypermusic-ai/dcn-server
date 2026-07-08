@@ -327,6 +327,39 @@ namespace dcn
             }
         }
 
+        // Parallel transformation-definition arrays, ordered by (dimId, indexWithinDim),
+        // so that a full ConnectorRecord is reconstructable from the ConnectorAdded log alone.
+        std::string transformation_dim_ids_code;
+        std::string transformation_names_code;
+        std::string transformation_arg_counts_code;
+        std::string transformation_args_code;
+        std::size_t tx_k = 0;        // index into the parallel dimId/name/count arrays
+        std::size_t tx_arg_k = 0;    // index into the flattened args array
+        for(int i = 0; i < connector.dimensions_size(); ++i)
+        {
+            for(int j = 0; j < connector.dimensions(i).transformations_size(); ++j)
+            {
+                const auto & tf = connector.dimensions(i).transformations(j);
+                transformation_dim_ids_code += std::format("transformationDimIds[{}] = uint32({});\n", tx_k, i);
+                transformation_names_code += std::format(
+                    "transformationNames[{}] = \"{}\";\n",
+                    tx_k,
+                    _escapeSolidityStringLiteral(tf.name()));
+                transformation_arg_counts_code += std::format(
+                    "transformationArgCounts[{}] = uint32({});\n",
+                    tx_k,
+                    tf.args_size());
+                for(int k = 0; k < tf.args_size(); ++k)
+                {
+                    transformation_args_code += std::format("transformationArgs[{}] = int32({});\n", tx_arg_k, tf.args(k));
+                    ++tx_arg_k;
+                }
+                ++tx_k;
+            }
+        }
+        const std::size_t total_transformations = tx_k;
+        const std::size_t total_transformation_args = tx_arg_k;
+
         return std::format(
             "//SPDX-License-Identifier: MIT\n"
             "pragma solidity >=0.8.2 <0.9.0;\n"
@@ -368,9 +401,25 @@ namespace dcn
             "conditionArgs = new int32[]({12});"
             "{13}"
             "}}\n"
+            "function _transformationDimIds() internal pure returns (uint32[] memory transformationDimIds) {{"
+            "transformationDimIds = new uint32[]({18});"
+            "{19}"
+            "}}\n"
+            "function _transformationNames() internal pure returns (string[] memory transformationNames) {{"
+            "transformationNames = new string[]({18});"
+            "{20}"
+            "}}\n"
+            "function _transformationArgCounts() internal pure returns (uint32[] memory transformationArgCounts) {{"
+            "transformationArgCounts = new uint32[]({18});"
+            "{21}"
+            "}}\n"
+            "function _transformationArgs() internal pure returns (int32[] memory transformationArgs) {{"
+            "transformationArgs = new int32[]({22});"
+            "{23}"
+            "}}\n"
             "constructor(address registryAddr) ConnectorBase(registryAddr, \"{17}\", {14}) {{\n"
             "{15}"
-            "__ConnectorBase_finalizeInit(_compositeDimIds(), _compositeNames(), _bindingDimIds(), _bindingSlotIds(), _bindingNames(), _staticRiPositions(), _staticRiStartPoints(), _staticRiTransformShifts(), \"{16}\", _conditionArgs());\n"
+            "__ConnectorBase_finalizeInit(_compositeDimIds(), _compositeNames(), _bindingDimIds(), _bindingSlotIds(), _bindingNames(), _staticRiPositions(), _staticRiStartPoints(), _staticRiTransformShifts(), \"{16}\", _conditionArgs(), _transformationDimIds(), _transformationNames(), _transformationArgCounts(), _transformationArgs());\n"
             "}}\n"
             "}}",
 
@@ -391,7 +440,13 @@ namespace dcn
             connector.dimensions_size(),              // 14
             std::move(transform_def_code),            // 15
             escaped_condition_name,                   // 16
-            escaped_connector_name                    // 17
+            escaped_connector_name,                   // 17
+            total_transformations,                    // 18
+            std::move(transformation_dim_ids_code),   // 19
+            std::move(transformation_names_code),     // 20
+            std::move(transformation_arg_counts_code),// 21
+            total_transformation_args,                // 22
+            std::move(transformation_args_code)       // 23
         );
     }
 }
@@ -404,13 +459,13 @@ namespace dcn::pt
         const evmc::bytes32 topics[],
         std::size_t num_topics)
     {
-        if(data == nullptr || topics == nullptr || num_topics < 3 || data_size < 32 * 14)
+        if(data == nullptr || topics == nullptr || num_topics < 3 || data_size < 32 * 18)
         {
             return std::nullopt;
         }
 
         const evmc::bytes32 expected_topic = chain::constructEventTopic(
-            "ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[],bytes32,uint32[],uint32[],uint32[])");
+            "ConnectorAdded(address,address,string,address,uint32,uint32[],string[],uint32[],uint32[],string[],string,int32[],bytes32,uint32[],uint32[],uint32[],uint32[],string[],uint32[],int32[])");
 
         if(topics[0] != expected_topic)
         {
@@ -442,7 +497,13 @@ namespace dcn::pt
         const auto static_ri_start_points_offset = chain::readWordAsSizeT(data, data_size, 384);
         const auto static_ri_transform_shifts_offset = chain::readWordAsSizeT(data, data_size, 416);
 
-        if(!name_offset || !connector_address || !dimensions_count || !composite_dim_ids_offset || !composite_names_offset || !binding_dim_ids_offset || !binding_slot_ids_offset || !binding_names_offset || !condition_offset || !condition_args_offset || !static_ri_positions_offset || !static_ri_start_points_offset || !static_ri_transform_shifts_offset)
+        // Four new dynamic-array head pointers appended after staticRiTransformShifts.
+        const auto transformation_dim_ids_offset = chain::readWordAsSizeT(data, data_size, 448);
+        const auto transformation_names_offset = chain::readWordAsSizeT(data, data_size, 480);
+        const auto transformation_arg_counts_offset = chain::readWordAsSizeT(data, data_size, 512);
+        const auto transformation_args_offset = chain::readWordAsSizeT(data, data_size, 544);
+
+        if(!name_offset || !connector_address || !dimensions_count || !composite_dim_ids_offset || !composite_names_offset || !binding_dim_ids_offset || !binding_slot_ids_offset || !binding_names_offset || !condition_offset || !condition_args_offset || !static_ri_positions_offset || !static_ri_start_points_offset || !static_ri_transform_shifts_offset || !transformation_dim_ids_offset || !transformation_names_offset || !transformation_arg_counts_offset || !transformation_args_offset)
         {
             return std::nullopt;
         }
@@ -463,13 +524,22 @@ namespace dcn::pt
         const auto static_ri_positions = chain::decodeAbiUint32Array(data, data_size, *static_ri_positions_offset);
         const auto static_ri_start_points = chain::decodeAbiUint32Array(data, data_size, *static_ri_start_points_offset);
         const auto static_ri_transform_shifts = chain::decodeAbiUint32Array(data, data_size, *static_ri_transform_shifts_offset);
+        const auto transformation_dim_ids = chain::decodeAbiUint32Array(data, data_size, *transformation_dim_ids_offset);
+        const auto transformation_names = chain::decodeAbiStringArray(data, data_size, *transformation_names_offset);
+        const auto transformation_arg_counts = chain::decodeAbiUint32Array(data, data_size, *transformation_arg_counts_offset);
+        const auto transformation_args = chain::decodeAbiInt32Array(data, data_size, *transformation_args_offset);
 
-        if(!name || !composite_dim_ids || !composite_names || !binding_dim_ids || !binding_slot_ids || !binding_names || !condition_name || !condition_args || !static_ri_positions || !static_ri_start_points || !static_ri_transform_shifts)
+        if(!name || !composite_dim_ids || !composite_names || !binding_dim_ids || !binding_slot_ids || !binding_names || !condition_name || !condition_args || !static_ri_positions || !static_ri_start_points || !static_ri_transform_shifts || !transformation_dim_ids || !transformation_names || !transformation_arg_counts || !transformation_args)
         {
             return std::nullopt;
         }
 
         if(static_ri_positions->size() != static_ri_start_points->size() || static_ri_positions->size() != static_ri_transform_shifts->size())
+        {
+            return std::nullopt;
+        }
+
+        if(transformation_dim_ids->size() != transformation_names->size() || transformation_dim_ids->size() != transformation_arg_counts->size())
         {
             return std::nullopt;
         }
@@ -542,6 +612,39 @@ namespace dcn::pt
             }
         }
 
+        // Walk the parallel transformation arrays, consuming the flattened args left-to-right
+        // by transformationArgCounts[k], grouping into transformations[transformationDimIds[k]].
+        std::size_t transformation_arg_cursor = 0;
+        for(std::size_t k = 0; k < transformation_dim_ids->size(); ++k)
+        {
+            const std::uint32_t dim_id = transformation_dim_ids->at(k);
+            if(dim_id >= event.dimensions_count)
+            {
+                return std::nullopt;
+            }
+
+            const std::size_t arg_count = transformation_arg_counts->at(k);
+            if(arg_count > transformation_args->size() - transformation_arg_cursor)
+            {
+                return std::nullopt;
+            }
+
+            TransformationDef transformation;
+            transformation.set_name(transformation_names->at(k));
+            for(std::size_t a = 0; a < arg_count; ++a)
+            {
+                transformation.add_args(transformation_args->at(transformation_arg_cursor + a));
+            }
+            transformation_arg_cursor += arg_count;
+
+            event.transformations[dim_id].push_back(std::move(transformation));
+        }
+
+        if(transformation_arg_cursor != transformation_args->size())
+        {
+            return std::nullopt;
+        }
+
         return event;
     }
 
@@ -566,6 +669,57 @@ namespace dcn::pt
             data_bytes->size(),
             topic_words->data(),
             topic_words->size());
+    }
+
+    ConnectorRecord buildConnectorRecordFromEvent(const ConnectorAddedEvent & event)
+    {
+        ConnectorRecord record;
+        record.set_owner(chain::addressToHex(event.owner));
+
+        Connector * connector = record.mutable_connector();
+        connector->set_name(event.name);
+        connector->set_condition_name(event.condition_name);
+        for(const std::int32_t arg : event.condition_args)
+        {
+            connector->add_condition_args(arg);
+        }
+
+        // Allocate dims [0, dimensions_count), then fill each from the parallel maps.
+        for(std::uint32_t dim = 0; dim < event.dimensions_count; ++dim)
+        {
+            Dimension * dimension = connector->add_dimensions();
+
+            if(const auto it = event.transformations.find(dim); it != event.transformations.end())
+            {
+                for(const auto & transformation : it->second)
+                {
+                    *dimension->add_transformations() = transformation;
+                }
+            }
+
+            if(const auto it = event.composites.find(dim); it != event.composites.end())
+            {
+                dimension->set_composite(it->second);
+            }
+
+            for(const auto & [key, name] : event.bindings)
+            {
+                if(key.first == dim)
+                {
+                    (*dimension->mutable_bindings())[std::to_string(key.second)] = name;
+                }
+            }
+        }
+
+        for(const auto & [position, running_instance] : event.static_ri)
+        {
+            RunningInstance instance;
+            instance.set_start_point(running_instance.first);
+            instance.set_transformation_shift(running_instance.second);
+            (*connector->mutable_static_ri())[position] = instance;
+        }
+
+        return record;
     }
 }
 

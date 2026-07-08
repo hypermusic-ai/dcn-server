@@ -11,17 +11,17 @@
 
 #include "parser.hpp"
 
-namespace dcn::events
+namespace dcn::feed
 {
     constexpr std::size_t DEFAULT_FEED_LIMIT = 100;
     constexpr std::size_t MAX_FEED_LIMIT = 256;
     constexpr std::size_t DEFAULT_STREAM_LIMIT = 500;
     constexpr std::size_t MAX_STREAM_LIMIT = 2048;
-    
+
     struct CursorKey
     {
         int chain_id = 1;
-        std::string chain_namespace = "eth";
+        std::string chain_namespace = "local";
         std::int64_t created_at_ms = 0;
         std::int64_t block_number = 0;
         std::int64_t tx_index = 0;
@@ -96,16 +96,13 @@ namespace dcn::events
             virtual StreamPage getStreamPage(const StreamQuery & query) const = 0;
             virtual std::int64_t minAvailableStreamSeq() const = 0;
     };
-}
 
-namespace dcn::parse
-{    
-    Result<events::CursorKey> parseHistoryCursor(const std::string & cursor);
+    parse::Result<CursorKey> parseHistoryCursor(const std::string & cursor);
 }
 
 template <>
-struct std::formatter<dcn::events::CursorKey> : std::formatter<std::string> {
-    auto format(const dcn::events::CursorKey & cursor, format_context& ctx) const {
+struct std::formatter<dcn::feed::CursorKey> : std::formatter<std::string> {
+    auto format(const dcn::feed::CursorKey & cursor, format_context& ctx) const {
         return std::formatter<std::string>::format(
             std::format("c{}:{}:{}:{}",
                 cursor.created_at_ms,

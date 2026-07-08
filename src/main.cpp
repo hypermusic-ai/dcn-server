@@ -1,4 +1,7 @@
 #include "decentralised_art.hpp"
+#include "feed_projector.hpp"
+#include "feed_runtime.hpp"
+#include "registry_projector.hpp"
 #include <exception>
 #include <string_view>
 
@@ -136,15 +139,29 @@ static bool _createDirectories(const dcn::config::Config & cfg)
         }
     }
 
-    // Create events archive directory if it doesn't exist
-    if(!cfg.events_archive_root.empty() && std::filesystem::exists(cfg.events_archive_root) == false)
+    // Create feed DB directory if it doesn't exist
+    if(!cfg.feed_db.parent_path().empty() && std::filesystem::exists(cfg.feed_db.parent_path()) == false)
     {
-        std::filesystem::create_directories(cfg.events_archive_root, creation_dir_ec);
+        std::filesystem::create_directories(cfg.feed_db.parent_path(), creation_dir_ec);
         if(creation_dir_ec)
         {
             spdlog::error(
-                "Failed to create events archive directory '{}': {}",
-                cfg.events_archive_root.string(),
+                "Failed to create feed DB directory '{}': {}",
+                cfg.feed_db.parent_path().string(),
+                creation_dir_ec.message());
+            return false;
+        }
+    }
+
+    // Create feed archive directory if it doesn't exist
+    if(!cfg.feed_archive_root.empty() && std::filesystem::exists(cfg.feed_archive_root) == false)
+    {
+        std::filesystem::create_directories(cfg.feed_archive_root, creation_dir_ec);
+        if(creation_dir_ec)
+        {
+            spdlog::error(
+                "Failed to create feed archive directory '{}': {}",
+                cfg.feed_archive_root.string(),
                 creation_dir_ec.message());
             return false;
         }
@@ -200,19 +217,12 @@ static asio::awaitable<void> _runStartupAndListen(
     dcn::server::Server & server,
     const dcn::config::Config & cfg)
 {
-    const dcn::loader::LoaderBatchConfig loader_batch_config{
-        .connectors = cfg.loader_batch_connectors,
-        .transformations = cfg.loader_batch_transformations,
-        .conditions = cfg.loader_batch_conditions
-    };
-
     spdlog::info("Starting JSON storage import...");
 
     const bool import_success = co_await dcn::loader::importJsonStorageToDatabase(
         evm,
         registry,
-        cfg.storage_path,
-        loader_batch_config);
+        cfg.storage_path);
 
     if(!import_success)
     {
@@ -238,11 +248,17 @@ static asio::awaitable<void> _runGracefulShutdown(
     std::atomic<bool> & wal_sync_worker_stopped,
     dcn::registry::Registry & registry,
     bool wal_enabled,
-    dcn::events::EventRuntime & events_runtime)
+    dcn::events::EventRuntime & events_runtime,
+    dcn::feed::FeedRuntime & feed_runtime)
 {
     spdlog::info("Decentralised Art server stopping...");
+    // Stop events first: its projectors write into feed_runtime.feed(), so the feed
+    // must outlive them. Stopping feed first would let a final projector pass write
+    // after the feed's final checkpoint, losing those rows.
     co_await events_runtime.stop();
     spdlog::info("Events runtime stopped");
+    co_await feed_runtime.stop();
+    spdlog::info("Feed runtime stopped");
     co_await server.close();
     spdlog::info("Decentralised Art server close requested");
 
@@ -291,8 +307,11 @@ static asio::awaitable<void> _runGracefulShutdown(
 
 static void _runImmediateShutdown(
     std::optional<dcn::storage::sqlite::WalSyncWorker> & wal_sync_worker,
-    dcn::events::EventRuntime & events_runtime)
+    dcn::events::EventRuntime & events_runtime,
+    dcn::feed::FeedRuntime & feed_runtime)
 {
+    feed_runtime.requestStop();
+    spdlog::info("Feed runtime stop requested");
     events_runtime.requestStop();
     spdlog::info("Events runtime stop requested");
 
@@ -355,16 +374,14 @@ int main(int argc, char* argv[])
     arg_parser.addArg<std::filesystem::path>("--registry-db", "SQLite path for registry storage");
     arg_parser.addArg<unsigned int>("--registry-wal-sync-ms", "Interval in milliseconds for periodic SQLite WAL passive checkpoints");
     arg_parser.addArg<std::filesystem::path>("--events-db", "SQLite path for events hot storage");
-    arg_parser.addArg<std::filesystem::path>("--events-archive-root", "Directory for archived monthly events shards");
+    arg_parser.addArg<std::filesystem::path>("--feed-db", "SQLite path for feed storage");
+    arg_parser.addArg<std::filesystem::path>("--feed-archive-root", "Directory root for feed archive segments");
     arg_parser.addArg<unsigned int>("--events-chain-id", "Chain id used for events ingestion and feed projection");
     arg_parser.addArg<unsigned int>("--events-hot-window-days", "Retention window in days for hot events storage");
     arg_parser.addArg<unsigned int>("--events-projector-ms", "Interval in milliseconds for projector loop when idle");
     arg_parser.addArg<unsigned int>("--events-archive-ms", "Interval in milliseconds for archive maintenance loop");
     arg_parser.addArg<unsigned int>("--events-reorg-window-blocks", "Rolling block window size for reorg reconciliation");
     arg_parser.addArg<unsigned int>("--events-outbox-retention-days", "Retention window in days for replay outbox rows");
-    arg_parser.addArg<unsigned int>("--loader-batch-connectors", "Batch size used while adding loaded connectors to registry");
-    arg_parser.addArg<unsigned int>("--loader-batch-transformations", "Batch size used while adding loaded transformations to registry");
-    arg_parser.addArg<unsigned int>("--loader-batch-conditions", "Batch size used while adding loaded conditions to registry");
 
     arg_parser.parse(argc, argv);
 
@@ -416,6 +433,11 @@ int main(int argc, char* argv[])
         cfg.chain_ingestion.enabled = true;
         cfg.chain_ingestion.rpc_url.clear();
         cfg.chain_ingestion.registry_address.clear();
+        // Local EVM source is polled in-process with zero network latency, so a fast
+        // poll interval is safe and necessary: the deploy POST handlers await registry
+        // materialization with a 5 s budget, and a 5 s poll would consume nearly the
+        // entire budget before the first ingest even begins.
+        cfg.chain_ingestion.poll_interval_ms = 100;
     }
     else if(has_chain_registry)
     {
@@ -434,10 +456,6 @@ int main(int argc, char* argv[])
         cfg.chain_ingestion.enabled = false;
     }
 
-    cfg.loader_batch_connectors = arg_parser.getArg<unsigned int>("--loader-batch-connectors").value_or(1000);
-    cfg.loader_batch_transformations = arg_parser.getArg<unsigned int>("--loader-batch-transformations").value_or(5000);
-    cfg.loader_batch_conditions = arg_parser.getArg<unsigned int>("--loader-batch-conditions").value_or(5000);
-
     cfg.registry_wal_sync_ms = arg_parser.getArg<unsigned int>("--registry-wal-sync-ms").value_or(30000);
 
     const std::chrono::milliseconds registry_wal_sync_interval(cfg.registry_wal_sync_ms);
@@ -449,8 +467,11 @@ int main(int argc, char* argv[])
     cfg.events_db = arg_parser.getArg<std::filesystem::path>("--events-db").value_or(
         cfg.storage_path / "events" / "events_hot.sqlite"
     );
-    cfg.events_archive_root = arg_parser.getArg<std::filesystem::path>("--events-archive-root").value_or(
-        cfg.storage_path / "events" / "archive"
+    cfg.feed_db = arg_parser.getArg<std::filesystem::path>("--feed-db").value_or(
+        cfg.storage_path / "feed" / "feed.sqlite"
+    );
+    cfg.feed_archive_root = arg_parser.getArg<std::filesystem::path>("--feed-archive-root").value_or(
+        cfg.storage_path / "feed" / "archive"
     );
     cfg.events_chain_id = arg_parser.getArg<unsigned int>("--events-chain-id").value_or(1);
     cfg.events_hot_window_days = arg_parser.getArg<unsigned int>("--events-hot-window-days").value_or(90);
@@ -504,7 +525,6 @@ int main(int argc, char* argv[])
         io_context,
         dcn::events::EventRuntimeConfig{
             .hot_db_path = cfg.events_db,
-            .archive_root = cfg.events_archive_root,
             .chain_id = static_cast<int>(cfg.events_chain_id),
             .ingestion_enabled = cfg.chain_ingestion.enabled,
             .sources = std::move(event_sources),
@@ -514,13 +534,21 @@ int main(int argc, char* argv[])
             .poll_interval_ms = cfg.chain_ingestion.poll_interval_ms,
             .confirmations = cfg.chain_ingestion.confirmations,
             .block_batch_size = cfg.chain_ingestion.block_batch_size,
-            .hot_window_days = static_cast<std::size_t>(cfg.events_hot_window_days),
             .reorg_window_blocks = static_cast<std::size_t>(cfg.events_reorg_window_blocks),
+            .projector_interval_ms = cfg.events_projector_interval_ms
+        });
+
+    dcn::feed::FeedRuntime feed_runtime(
+        io_context,
+        dcn::feed::FeedRuntimeConfig{
+            .feed_db_path   = cfg.feed_db,
+            .archive_root   = cfg.feed_archive_root,
+            .chain_id       = static_cast<int>(cfg.events_chain_id),
+            .hot_window_days = cfg.events_hot_window_days,
             .outbox_retention_ms = static_cast<std::int64_t>(cfg.events_outbox_retention_days) * 24LL * 60LL * 60LL * 1000LL,
-            .projector_interval_ms = cfg.events_projector_interval_ms,
             .archive_interval_ms = cfg.events_archive_interval_ms
         });
-    
+
     const auto favicon = dcn::file::loadBinaryFile(cfg.resources_path / "media" / "img" / "favicon.svg");
     
     // HTML
@@ -602,9 +630,9 @@ int main(int argc, char* argv[])
     server.addRoute({dcn::http::Method::GET, "/format/<string>?limit=<uint>&after=<~string>"}, dcn::GET_format, std::ref(registry));
 
     server.addRoute({dcn::http::Method::OPTIONS, "/feed?limit=<uint>&before=<~string>&type=<~string>&include_unfinalized=<~uint>"}, dcn::OPTIONS_feed);
-    server.addRoute({dcn::http::Method::GET, "/feed?limit=<uint>&before=<~string>&type=<~string>&include_unfinalized=<~uint>"}, dcn::GET_feed, std::ref(events_runtime));
+    server.addRoute({dcn::http::Method::GET, "/feed?limit=<uint>&before=<~string>&type=<~string>&include_unfinalized=<~uint>"}, dcn::GET_feed, std::ref(static_cast<dcn::feed::IFeedRepository &>(feed_runtime.feed())));
     server.addRoute({dcn::http::Method::OPTIONS, "/feed/stream?since_seq=<~uint>&limit=<~uint>"}, dcn::OPTIONS_feedStream);
-    server.addStreamingRoute({dcn::http::Method::GET, "/feed/stream?since_seq=<~uint>&limit=<~uint>"}, dcn::GET_feedStream, std::ref(events_runtime));
+    server.addStreamingRoute({dcn::http::Method::GET, "/feed/stream?since_seq=<~uint>&limit=<~uint>"}, dcn::GET_feedStream, std::ref(static_cast<dcn::feed::IFeedRepository &>(feed_runtime.feed())));
 
     server.addRoute({dcn::http::Method::HEAD, "/connector/<string>"},       dcn::HEAD_connector, std::ref(registry));
     server.addRoute({dcn::http::Method::OPTIONS, "/connector"},             dcn::OPTIONS_connector);
@@ -633,13 +661,36 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    // Wire both projectors into the EventRuntime before start() — symmetric construction.
+    // feed::FeedProjector first so it runs first in every projector loop iteration.
+    events_runtime.addProjector(std::make_unique<dcn::feed::FeedProjector>(
+        events_runtime.projectionStore(), feed_runtime.feed(), events_runtime.writeStrand()));
+    events_runtime.addProjector(std::make_unique<dcn::registry::RegistryProjector>(
+        events_runtime.projectionStore(),
+        registry,
+        events_runtime.writeStrand()));
+
     events_runtime.start();
+    feed_runtime.start();
     spdlog::info(
         "Events runtime started (ingestion_enabled={}, local_source={}, chain_id={}, hot_db='{}')",
         events_runtime.ingestionEnabled(),
         cfg.chain_ingestion.use_local_evm_source,
         cfg.events_chain_id,
         cfg.events_db.string());
+    spdlog::info(
+        "Feed runtime started (feed_db='{}')",
+        cfg.feed_db.string());
+
+    if(!cfg.chain_ingestion.use_local_evm_source)
+    {
+        spdlog::warn(
+            "Event ingestion pipeline is DISABLED (no --chain-local-source configured). "
+            "POST /connector, POST /transformation, and POST /condition still deploy to the EVM "
+            "and return 201 with locally-computed fields, but registry materialization will NOT "
+            "occur — the GET read endpoints will not reflect the deployed entities. "
+            "Pass --chain-local-source to enable the local EVM source and close the deploy loop.");
+    }
 
     const bool wal_enabled = !registry_db_in_memory;
     std::atomic<bool> wal_sync_worker_stopped = true;
@@ -677,6 +728,7 @@ int main(int argc, char* argv[])
          &wal_sync_worker_stopped,
          &registry,
          &events_runtime,
+         &feed_runtime,
          wal_enabled]() -> asio::awaitable<void>
         {
             return _runGracefulShutdown(
@@ -685,13 +737,14 @@ int main(int argc, char* argv[])
                 wal_sync_worker_stopped,
                 registry,
                 wal_enabled,
-                events_runtime);
+                events_runtime,
+                feed_runtime);
         },
 
         // immediate shutdown
-        [&wal_sync_worker, &events_runtime]()
+        [&wal_sync_worker, &events_runtime, &feed_runtime]()
         {
-            _runImmediateShutdown(wal_sync_worker, events_runtime);
+            _runImmediateShutdown(wal_sync_worker, events_runtime, feed_runtime);
         }
     );
     

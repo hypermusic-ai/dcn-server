@@ -18,6 +18,8 @@
 #include <nlohmann/json.hpp>
 
 #include "decentralised_art.hpp"
+#include "feed.hpp"
+#include "feed_projector.hpp"
 
 #ifndef DECENTRALISED_ART_TEST_BINARY_DIR
     #error "DECENTRALISED_ART_TEST_BINARY_DIR is not defined"
@@ -47,7 +49,9 @@ namespace dcn::tests::events_harness
     {
         std::filesystem::path root;
         std::filesystem::path hot_db;
-        std::filesystem::path archive_root;
+
+        std::filesystem::path feed_db;
+        std::filesystem::path feed_archive_root;
 
         ~TempEventsPaths()
         {
@@ -62,12 +66,13 @@ namespace dcn::tests::events_harness
         TempEventsPaths paths{};
         paths.root = buildPath() / "tests" / "events" / (test_name + "_" + suffix);
         paths.hot_db = paths.root / "events_hot.sqlite";
-        paths.archive_root = paths.root / "archive";
+        paths.feed_db = paths.root / "feed.sqlite";
+        paths.feed_archive_root = paths.root / "feed_archive";
 
         std::error_code ec;
         std::filesystem::remove_all(paths.root, ec);
         ec.clear();
-        std::filesystem::create_directories(paths.archive_root, ec);
+        std::filesystem::create_directories(paths.root, ec);
         if(ec)
         {
             throw std::runtime_error(std::format("Failed to create temp events test dir '{}': {}", paths.root.string(), ec.message()));
@@ -438,25 +443,44 @@ namespace dcn::tests::events_harness
         return store.applyFinality(chain_id, heights, now_ms, reorg_window_blocks);
     }
 
+    inline bool awaitApplyFinality(
+        asio::io_context & io_context,
+        events::SQLiteHotStore & store,
+        const int chain_id,
+        const std::int64_t head,
+        const std::int64_t safe,
+        const std::int64_t finalized,
+        const std::int64_t now_ms,
+        const std::size_t reorg_window_blocks = 2048)
+    {
+        (void)io_context;
+        return store.applyFinality(
+            chain_id,
+            events::FinalityHeights{head, safe, finalized},
+            now_ms,
+            reorg_window_blocks);
+    }
+
     inline std::size_t awaitProjectBatch(
         asio::io_context & io_context,
         events::SQLiteHotStore & store,
+        feed::Feed & feed,
         const std::size_t limit,
         const std::int64_t now_ms)
     {
-        (void)io_context;
-        return store.projectBatch(limit, now_ms);
+        auto strand = asio::make_strand(io_context);
+        feed::FeedProjector projector(store, feed, strand);
+        return runAwaitable(io_context, projector.projectBatch(limit, now_ms));
     }
 
     inline bool awaitRunArchiveCycle(
         asio::io_context & io_context,
-        events::SQLiteHotStore & store,
+        feed::Feed & feed,
         const int chain_id,
         const std::size_t hot_window_days,
         const std::int64_t now_ms)
     {
-        (void)io_context;
-        return store.runArchiveCycle(chain_id, hot_window_days, now_ms);
+        return runAwaitable(io_context, feed.runArchiveCycle(chain_id, hot_window_days, now_ms));
     }
 
     inline std::optional<std::int64_t> awaitLoadNextFromBlock(
@@ -507,12 +531,13 @@ namespace dcn::tests::events_harness
     inline std::size_t projectAll(
         asio::io_context & io_context,
         events::SQLiteHotStore & store,
+        feed::Feed & feed,
         const std::int64_t now_ms)
     {
         std::size_t total = 0;
         for(std::size_t i = 0; i < 1024; ++i)
         {
-            const std::size_t projected = awaitProjectBatch(io_context, store, 512, now_ms);
+            const std::size_t projected = awaitProjectBatch(io_context, store, feed, 512, now_ms);
             total += projected;
             if(projected == 0)
             {
