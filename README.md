@@ -1,10 +1,14 @@
 # Decentralised Art server
 
-[![Docs](https://img.shields.io/badge/docs-online-blue)](https://hypermusic-ai.github.io/dcn-server/)
-
-[View docs](https://hypermusic-ai.github.io/dcn-server/)
+[![Test (linux Debug)](https://github.com/hypermusic-ai/dcn-server/actions/workflows/test-linux-debug.yml/badge.svg)](https://github.com/hypermusic-ai/dcn-server/actions/workflows/test-linux-debug.yml) [![Test (Windows Debug)](https://github.com/hypermusic-ai/dcn-server/actions/workflows/test-windows-debug.yml/badge.svg)](https://github.com/hypermusic-ai/dcn-server/actions/workflows/test-windows-debug.yml) [![Test (macOS Debug)](https://github.com/hypermusic-ai/dcn-server/actions/workflows/test-macos-debug.yml/badge.svg)](https://github.com/hypermusic-ai/dcn-server/actions/workflows/test-macos-debug.yml)
 
 ---
+
+[View docs](https://hypermusic-ai.github.io/dcn-server/) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://hypermusic-ai.github.io/dcn-server/)
+
+## Module docs
+
+- [Events Pipeline](https://hypermusic-ai.github.io/dcn-server/readme_src_events.html)
 
 ## Dependencies
 
@@ -60,8 +64,6 @@ cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DDECENTRALIZED_ART_BUILD_TES
 |RelWithDebInfo|`cmake --build build --config RelWithDebInfo`|
 
 ## Installing
-
-To install project in **Debug Mode**, use:
 
 |type|command|
 |---|---|
