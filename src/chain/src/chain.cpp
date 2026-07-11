@@ -1,5 +1,7 @@
 #include "chain.hpp"
 
+#include "crypto.hpp"
+
 namespace dcn::chain
 {
     std::vector<std::uint8_t> constructSelector(std::string signature)

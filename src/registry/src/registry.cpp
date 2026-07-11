@@ -11,6 +11,8 @@
 
 #include "registry.hpp"
 #include "sqlite_registry_store.hpp"
+#include "transformation.hpp"
+#include "condition.hpp"
 
 namespace dcn::registry
 {
@@ -628,6 +630,35 @@ namespace dcn::registry
             return root_it->second;
         }
 
+        // Validate slots/bindings and resolve the connector's composite-aware scalar
+        // entries. Single source of truth for the format-hash inputs, shared by
+        // addConnector, addConnectorsBatch, and computeConnectorFormatHash.
+        static std::optional<std::shared_ptr<const dcn::chain::ResolvedScalarEntries>> resolveConnectorScalarEntries(
+            const std::string & connector_name,
+            ConnectorGraphContext & graph_context)
+        {
+            if(!computeOpenSlotsIterative(connector_name, graph_context).has_value())
+            {
+                spdlog::error("Connector `{}` failed slot/binding validation", connector_name);
+                return std::nullopt;
+            }
+
+            const auto root_scalar_entries_opt = computeScalarEntriesIterative(connector_name, graph_context);
+            if(
+                !root_scalar_entries_opt.has_value() ||
+                !(*root_scalar_entries_opt) ||
+                (*root_scalar_entries_opt)->hash_entries.empty() ||
+                (*root_scalar_entries_opt)->hash_entries.size() != (*root_scalar_entries_opt)->display_entries.size())
+            {
+                spdlog::error(
+                    "Connector `{}` produced invalid scalar entries while computing format hash",
+                    connector_name);
+                return std::nullopt;
+            }
+
+            return *root_scalar_entries_opt;
+        }
+
         template<typename RecordT>
         static bool recordsEqual(const RecordT & lhs, const RecordT & rhs)
         {
@@ -657,6 +688,56 @@ namespace dcn::registry
             }
 
             return lhs_bytes == rhs_bytes;
+        }
+
+        // The registry mirrors only chain-derivable state. sol_src is a local-only deploy input that
+        // cannot be reconstructed from chain, so it never enters the registry: we record the
+        // chain-derivable args_count (computed from the source when present, otherwise left as set by
+        // chain ingestion) and drop sol_src before the record is stored, compared, or cached.
+        static void normalizeForRegistry(TransformationRecord & record)
+        {
+            auto * transformation = record.mutable_transformation();
+            if(transformation->sol_src().empty())
+            {
+                return;
+            }
+
+            const auto args_count = countTransformationArgs(transformation->sol_src());
+            if(args_count)
+            {
+                transformation->set_args_count(*args_count);
+            }
+            else
+            {
+                spdlog::warn(
+                    "Failed to compute args_count for transformation `{}`: {}",
+                    transformation->name(),
+                    args_count.error().message);
+            }
+            transformation->clear_sol_src();
+        }
+
+        static void normalizeForRegistry(ConditionRecord & record)
+        {
+            auto * condition = record.mutable_condition();
+            if(condition->sol_src().empty())
+            {
+                return;
+            }
+
+            const auto args_count = countConditionArgs(condition->sol_src());
+            if(args_count)
+            {
+                condition->set_args_count(*args_count);
+            }
+            else
+            {
+                spdlog::warn(
+                    "Failed to compute args_count for condition `{}`: {}",
+                    condition->name(),
+                    args_count.error().message);
+            }
+            condition->clear_sol_src();
         }
 
         template<typename KeyT>
@@ -764,7 +845,8 @@ namespace dcn::registry
         _condition_record_cache.capacity = kHotCacheCapacity;
     }
 
-    asio::awaitable<bool> Registry::addConnector(chain::Address address, ConnectorRecord record)
+    asio::awaitable<bool> Registry::addConnector(chain::Address address, ConnectorRecord record,
+        std::optional<evmc::bytes32> expected_format_hash)
     {
         const Connector & connector = record.connector();
         const std::string connector_name = connector.name();
@@ -798,26 +880,24 @@ namespace dcn::registry
             .connector_cache = {},
         };
 
-        if(!computeOpenSlotsIterative(connector_name, graph_context).has_value())
+        const auto root_scalar_entries_opt = resolveConnectorScalarEntries(connector_name, graph_context);
+        if(!root_scalar_entries_opt)
         {
-            spdlog::error("Connector `{}` failed slot/binding validation", connector_name);
-            co_return false;
-        }
-
-        const auto root_scalar_entries_opt = computeScalarEntriesIterative(connector_name, graph_context);
-        if(
-            !root_scalar_entries_opt.has_value() ||
-            !(*root_scalar_entries_opt) ||
-            (*root_scalar_entries_opt)->hash_entries.empty() ||
-            (*root_scalar_entries_opt)->hash_entries.size() != (*root_scalar_entries_opt)->display_entries.size())
-        {
-            spdlog::error(
-                "Connector `{}` produced invalid scalar entries while computing format hash",
-                connector_name);
             co_return false;
         }
 
         const evmc::bytes32 format_hash = chain::computeFormatHash((*root_scalar_entries_opt)->hash_entries);
+
+        if(expected_format_hash.has_value() && !chain::equalBytes32(*expected_format_hash, format_hash))
+        {
+            spdlog::error(
+                "Connector `{}` chain-emitted format hash {} diverges from locally computed {} — refusing to materialize",
+                connector_name,
+                evmc::hex(*expected_format_hash),
+                evmc::hex(format_hash));
+            co_return false;
+        }
+
         const std::vector<ScalarLabel> canonical_scalar_labels =
             chain::canonicalizeScalarLabels((*root_scalar_entries_opt)->display_entries);
 
@@ -968,27 +1048,9 @@ namespace dcn::registry
                 .connector_cache = {},
             };
 
-            if(!computeOpenSlotsIterative(connector_name, graph_context).has_value())
+            const auto root_scalar_entries_opt = resolveConnectorScalarEntries(connector_name, graph_context);
+            if(!root_scalar_entries_opt)
             {
-                spdlog::error("Connector `{}` failed slot/binding validation", connector_name);
-                all_valid = false;
-                if(all_or_nothing)
-                {
-                    co_return false;
-                }
-                continue;
-            }
-
-            const auto root_scalar_entries_opt = computeScalarEntriesIterative(connector_name, graph_context);
-            if(
-                !root_scalar_entries_opt.has_value() ||
-                !(*root_scalar_entries_opt) ||
-                (*root_scalar_entries_opt)->hash_entries.empty() ||
-                (*root_scalar_entries_opt)->hash_entries.size() != (*root_scalar_entries_opt)->display_entries.size())
-            {
-                spdlog::error(
-                    "Connector `{}` produced invalid scalar entries while computing format hash",
-                    connector_name);
                 all_valid = false;
                 if(all_or_nothing)
                 {
@@ -1182,6 +1244,25 @@ namespace dcn::registry
         co_return format_hash_opt;
     }
 
+    asio::awaitable<std::optional<evmc::bytes32>> Registry::computeConnectorFormatHash(Connector connector) const
+    {
+        co_await async::ensureOnStrand(_strand);
+
+        ConnectorGraphContext graph_context{
+            .pending_connector = connector,
+            .store = *_store,
+            .connector_cache = {},
+        };
+
+        const auto root_scalar_entries_opt = resolveConnectorScalarEntries(connector.name(), graph_context);
+        if(!root_scalar_entries_opt)
+        {
+            co_return std::nullopt;
+        }
+
+        co_return chain::computeFormatHash((*root_scalar_entries_opt)->hash_entries);
+    }
+
     asio::awaitable<std::size_t> Registry::getFormatConnectorNamesCount(const evmc::bytes32 & format_hash) const
     {
         co_await async::ensureOnStrand(_strand);
@@ -1228,6 +1309,8 @@ namespace dcn::registry
         }
 
         co_await async::ensureOnStrand(_strand);
+
+        normalizeForRegistry(record);
 
         const auto existing_record_handle_opt = _store->getTransformationRecordHandle(transformation_name);
         if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
@@ -1295,6 +1378,8 @@ namespace dcn::registry
                 }
                 continue;
             }
+
+            normalizeForRegistry(record);
 
             const auto existing_record_handle_opt = _store->getTransformationRecordHandle(transformation_name);
             if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
@@ -1425,6 +1510,8 @@ namespace dcn::registry
 
         co_await async::ensureOnStrand(_strand);
 
+        normalizeForRegistry(record);
+
         const auto existing_record_handle_opt = _store->getConditionRecordHandle(condition_name);
         if(existing_record_handle_opt.has_value() && *existing_record_handle_opt)
         {
@@ -1480,6 +1567,8 @@ namespace dcn::registry
                 }
                 continue;
             }
+
+            normalizeForRegistry(record);
 
             if(!seen_names.insert(condition_name).second)
             {
@@ -1658,18 +1747,14 @@ namespace dcn::registry
         co_return stats;
     }
 
-    asio::awaitable<bool> Registry::add(chain::Address address, ConnectorRecord connector)
+    std::int64_t Registry::getMaterializationCursor() const
     {
-        return addConnector(address, std::move(connector));
+        return _store->getMaterializationCursor();
     }
 
-    asio::awaitable<bool> Registry::add(chain::Address address, TransformationRecord transformation)
+    asio::awaitable<bool> Registry::setMaterializationCursor(std::int64_t seq)
     {
-        return addTransformation(address, std::move(transformation));
-    }
-
-    asio::awaitable<bool> Registry::add(chain::Address address, ConditionRecord condition)
-    {
-        return addCondition(address, std::move(condition));
+        co_await async::ensureOnStrand(_strand);
+        co_return _store->setMaterializationCursor(seq);
     }
 }

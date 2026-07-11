@@ -78,3 +78,19 @@ When rebuild is needed, prefer incremental verification:
 - Build `DecentralisedArtServerTests`
 - Run only relevant test cases first (targeted filter)
 - Run broader/full test pass only when the scope of changes justifies it
+
+## Temporary working area
+
+All documentation, plans, tasks descriptions, etc. should be placed in the `.agent/docs` directory.
+All temporary files, logs, etc. should be placed in the `.agent/tmp` directory.
+All temporary scripts, agents, etc. should be placed in the `.agent/bin` directory.
+
+## Comments
+
+When writing or modifying code, never add comments that describe old behavior, previous implementations, migration history, or what changed. Comments must only explain the current behavior, current intent, or current constraints.
+
+Avoid comments like “previously…”, “old behavior…”, “changed from…”, “implemented in phase 2”, “temporary migration”, or anything tied to development history. The codebase should read as if the current implementation is the only relevant truth.
+
+## Tests
+
+All code should be covered by unit tests

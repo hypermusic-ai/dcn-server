@@ -2226,6 +2226,7 @@ let eventsFeedAbortController = null;
 let eventsFeedReader = null;
 let eventsFeedLastSeq = null;
 let eventsFeedItems = [];
+let eventsHistoryNextBeforeCursor = null;
 const EVENTS_FEED_MAX_ITEMS = 50;
 
 function escapeHtml(value) {
@@ -2391,6 +2392,18 @@ function updateFormatFetchAvailability() {
     setControlAvailability(fetchButton, hasHash, 'Fill format hash first.');
 }
 
+function updateHistoryPaginationControls() {
+    const nextButton = document.getElementById('btn_nextHistoryPage');
+    if (nextButton) {
+        nextButton.disabled = !eventsHistoryNextBeforeCursor;
+    }
+}
+
+function resetHistoryPagination() {
+    eventsHistoryNextBeforeCursor = null;
+    updateHistoryPaginationControls();
+}
+
 function initializeAccountControls() {
     const addressInput = document.getElementById('accountAddressInput');
     if (addressInput) {
@@ -2428,6 +2441,16 @@ function initializeAccountControls() {
     updateFormatPaginationControls();
 }
 
+function initializeEventsHistoryControls() {
+    for (const id of ['eventsHistoryLimitInput', 'eventsHistoryBeforeInput', 'eventsHistoryTypeInput']) {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', resetHistoryPagination);
+        }
+    }
+    updateHistoryPaginationControls();
+}
+
 function initializeEntityActionControls() {
     updateExecuteActionAvailability();
     syncTransformationFormAvailability();
@@ -2438,6 +2461,7 @@ function initializeEntityActionControls() {
 function initializeSimpleFormControls() {
     initializeEntityActionControls();
     initializeAccountControls();
+    initializeEventsHistoryControls();
 }
 
 function scheduleSimpleFormInitialization() {
@@ -2727,7 +2751,11 @@ function renderEventsFeedItem(delta) {
     const feedId = escapeHtml(delta.feed_id ?? '—');
     const eventType = escapeHtml(delta.event_type ?? '—');
     const status = delta.status ? escapeHtml(delta.status) : '';
-    const seq = delta.stream_seq ?? '?';
+    const cursor = delta.stream_seq != null
+        ? `seq ${delta.stream_seq}`
+        : delta.history_cursor != null
+            ? `cursor ${delta.history_cursor}`
+            : 'seq ?';
 
     const payload = delta.payload && typeof delta.payload === 'object' ? delta.payload : {};
     const payloadRows = [
@@ -2743,11 +2771,25 @@ function renderEventsFeedItem(delta) {
         </div>
         ${payloadRows ? `<div class="events-feed-item-payload">${payloadRows}</div>` : ''}
         <div class="events-feed-item-meta">
-            <span class="events-feed-item-seq">seq ${escapeHtml(String(seq))}</span>
+            <span class="events-feed-item-seq">${escapeHtml(cursor)}</span>
             ${status ? `<span class="events-feed-item-status">${status}</span>` : ''}
             <span class="events-feed-item-feed">${feedId}</span>
         </div>
     </div>`;
+}
+
+function renderEventsFeedItems(items) {
+    return Array.isArray(items) && items.length > 0
+        ? items.map(renderEventsFeedItem).join('')
+        : '(none)';
+}
+
+function decodeQueryField(value) {
+    try {
+        return decodeURIComponent(value);
+    } catch (_) {
+        return value;
+    }
 }
 
 function prependEventsFeedItem(delta) {
@@ -2756,7 +2798,65 @@ function prependEventsFeedItem(delta) {
         eventsFeedItems.length = EVENTS_FEED_MAX_ITEMS;
     }
     const listDiv = document.getElementById('eventsFeedList');
-    if (listDiv) listDiv.innerHTML = eventsFeedItems.map(renderEventsFeedItem).join('');
+    if (listDiv) listDiv.innerHTML = renderEventsFeedItems(eventsFeedItems);
+}
+
+export async function fetchHistoryEvents() {
+    const limitInput = document.getElementById('eventsHistoryLimitInput');
+    const beforeInput = document.getElementById('eventsHistoryBeforeInput');
+    const typeInput = document.getElementById('eventsHistoryTypeInput');
+    const listDiv = document.getElementById('eventsHistoryList');
+    const limitRaw = limitInput ? limitInput.value.trim() : '';
+
+    if (!/^\d+$/.test(limitRaw)) {
+        alert('History limit must be a positive integer.');
+        return;
+    }
+
+    const limit = Number.parseInt(limitRaw, 10);
+    if (limit < 1 || limit > 256) {
+        alert('History limit must be between 1 and 256.');
+        return;
+    }
+
+    const params = [`limit=${limit}`];
+    const before = beforeInput ? decodeQueryField(beforeInput.value.trim()) : '';
+    const type = typeInput ? decodeQueryField(typeInput.value.trim()) : '';
+    if (before) params.push(`before=${before}`);
+    if (type) params.push(`type=${type}`);
+
+    resetHistoryPagination();
+    if (listDiv) listDiv.textContent = 'Loading...';
+
+    try {
+        const res = await fetch(apiUrl(`/feed?${params.join('&')}`));
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(typeof data?.message === 'string' ? data.message : `HTTP ${res.status}`);
+        }
+
+        eventsHistoryNextBeforeCursor = data?.cursor?.has_more
+            ? normalizeCursorToken(data?.cursor?.next_before)
+            : null;
+        if (listDiv) listDiv.innerHTML = renderEventsFeedItems(data?.items);
+    } catch (err) {
+        const message = err instanceof Error && err.message ? err.message : 'Failed to fetch history';
+        if (listDiv) listDiv.textContent = `❌ ${message}`;
+    } finally {
+        updateHistoryPaginationControls();
+    }
+}
+
+export function nextHistoryPage() {
+    if (!eventsHistoryNextBeforeCursor) {
+        return;
+    }
+
+    const beforeInput = document.getElementById('eventsHistoryBeforeInput');
+    if (beforeInput) {
+        beforeInput.value = eventsHistoryNextBeforeCursor;
+    }
+    fetchHistoryEvents();
 }
 
 async function* parseSseStream(reader) {

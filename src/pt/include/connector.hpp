@@ -90,6 +90,10 @@ namespace dcn::pt
         std::string condition_name;
         std::vector<std::int32_t> condition_args;
         evmc::bytes32 format_hash{};
+        // Static running instances keyed by local position id -> {start_point, transformation_shift}.
+        std::map<std::uint32_t, std::pair<std::uint32_t, std::uint32_t>> static_ri;
+        // Per-dimension transformation defs, reconstructed from the log (key = dim id, value ordered as emitted).
+        std::map<std::uint32_t, std::vector<TransformationDef>> transformations;
     };
 
     std::optional<ConnectorAddedEvent> decodeConnectorAddedEvent(
@@ -102,6 +106,10 @@ namespace dcn::pt
         const std::string & data_hex,
         const std::vector<std::string> & topics_hex);
 
+    // Reconstruct a full ConnectorRecord from a decoded ConnectorAdded event.
+    // Maps name, owner (hex), dims (transformations + composite + bindings),
+    // condition name/args, and static_ri back into the Connector proto.
+    ConnectorRecord buildConnectorRecordFromEvent(const ConnectorAddedEvent & event);
 }
 
 namespace dcn::parse

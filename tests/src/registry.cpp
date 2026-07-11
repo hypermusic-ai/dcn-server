@@ -1,5 +1,6 @@
 #include "unit-tests.hpp"
 #include "test_connector_helpers.hpp"
+#include "sqlite_registry_store.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -565,3 +566,116 @@ TEST_F(UnitTest, Registry_AddCondition_IsIdempotentForExactDuplicateAndRejectsCo
     EXPECT_TRUE(runAwaitable(io_context, registry.addCondition(condition_address, different_name_same_address)));
 }
 
+
+TEST_F(UnitTest, Registry_AddTransformation_StripsSolSrcAndRecordsArgsCount)
+{
+    asio::io_context io_context;
+    registry::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0xA1));
+    TransformationRecord record = makeTransformationRecord("RT_TRANSFORM", owner_hex);
+    record.mutable_transformation()->set_sol_src("return x + args[0] + args[2];");
+
+    ASSERT_TRUE(runAwaitable(io_context, registry.addTransformation(makeAddressFromByte(0x01), record)));
+
+    const auto handle = runAwaitable(io_context, registry.getTransformationRecordHandle("RT_TRANSFORM"));
+    ASSERT_TRUE(handle.has_value());
+    ASSERT_TRUE(*handle);
+
+    EXPECT_EQ((*handle)->transformation().name(), "RT_TRANSFORM");
+    EXPECT_EQ((*handle)->owner(), owner_hex);
+    // args[0] and args[2] referenced -> chain-derivable args_count is 3.
+    EXPECT_EQ((*handle)->transformation().args_count(), 3u);
+    // sol_src is local-only and must never be mirrored in the registry.
+    EXPECT_TRUE((*handle)->transformation().sol_src().empty());
+}
+
+TEST_F(UnitTest, Registry_AddCondition_StripsSolSrcAndRecordsArgsCount)
+{
+    asio::io_context io_context;
+    registry::Registry registry(io_context);
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0xB2));
+    ConditionRecord record = makeConditionRecord("RT_CONDITION", owner_hex);
+    record.mutable_condition()->set_sol_src("return args[0] > 0;");
+
+    ASSERT_TRUE(runAwaitable(io_context, registry.addCondition(makeAddressFromByte(0x02), record)));
+
+    const auto handle = runAwaitable(io_context, registry.getConditionRecordHandle("RT_CONDITION"));
+    ASSERT_TRUE(handle.has_value());
+    ASSERT_TRUE(*handle);
+
+    EXPECT_EQ((*handle)->condition().name(), "RT_CONDITION");
+    EXPECT_EQ((*handle)->owner(), owner_hex);
+    EXPECT_EQ((*handle)->condition().args_count(), 1u);
+    EXPECT_TRUE((*handle)->condition().sol_src().empty());
+}
+
+TEST_F(UnitTest, SQLiteRegistryStore_Connector_ColumnRoundTrip)
+{
+    registry::SQLiteRegistryStore store("");
+
+    const std::string owner_hex = evmc::hex(makeAddressFromByte(0xC3));
+    ConnectorRecord record = makeConnectorRecord("RT_CONNECTOR", owner_hex);
+    auto * connector = record.mutable_connector();
+    connector->set_condition_name("RT_COND");
+    connector->add_condition_args(7);
+    connector->add_condition_args(-3);
+
+    auto * dimension0 = connector->add_dimensions();
+    dimension0->set_composite("COMPOSITE_A");
+    (*dimension0->mutable_bindings())["0"] = "TARGET_X";
+    (*dimension0->mutable_bindings())["2"] = "TARGET_Y";
+    auto * op_add = dimension0->add_transformations();
+    op_add->set_name("OP_ADD");
+    op_add->add_args(11);
+    op_add->add_args(22);
+    auto * op_mul = dimension0->add_transformations();
+    op_mul->set_name("OP_MUL");
+
+    auto * dimension1 = connector->add_dimensions();
+    dimension1->set_composite("");
+
+    RunningInstance running_instance;
+    running_instance.set_start_point(5);
+    running_instance.set_transformation_shift(9);
+    (*connector->mutable_static_ri())[3] = running_instance;
+
+    ASSERT_TRUE(store.addConnector(makeAddressFromByte(0x10), record, evmc::bytes32{}, {}));
+
+    const auto handle = store.getConnectorRecordHandle("RT_CONNECTOR");
+    ASSERT_TRUE(handle.has_value());
+    ASSERT_TRUE(*handle);
+    const Connector & out = (*handle)->connector();
+
+    EXPECT_EQ(out.name(), "RT_CONNECTOR");
+    EXPECT_EQ((*handle)->owner(), owner_hex);
+    EXPECT_EQ(out.condition_name(), "RT_COND");
+
+    ASSERT_EQ(out.condition_args_size(), 2);
+    EXPECT_EQ(out.condition_args(0), 7);
+    EXPECT_EQ(out.condition_args(1), -3);
+
+    ASSERT_EQ(out.dimensions_size(), 2);
+    const auto & out_dim0 = out.dimensions(0);
+    EXPECT_EQ(out_dim0.composite(), "COMPOSITE_A");
+
+    ASSERT_EQ(out_dim0.transformations_size(), 2);
+    EXPECT_EQ(out_dim0.transformations(0).name(), "OP_ADD");
+    ASSERT_EQ(out_dim0.transformations(0).args_size(), 2);
+    EXPECT_EQ(out_dim0.transformations(0).args(0), 11);
+    EXPECT_EQ(out_dim0.transformations(0).args(1), 22);
+    EXPECT_EQ(out_dim0.transformations(1).name(), "OP_MUL");
+    EXPECT_EQ(out_dim0.transformations(1).args_size(), 0);
+
+    ASSERT_EQ(out_dim0.bindings().size(), 2u);
+    EXPECT_EQ(out_dim0.bindings().at("0"), "TARGET_X");
+    EXPECT_EQ(out_dim0.bindings().at("2"), "TARGET_Y");
+
+    EXPECT_EQ(out.dimensions(1).composite(), "");
+
+    ASSERT_EQ(out.static_ri().size(), 1u);
+    ASSERT_EQ(out.static_ri().count(3), 1u);
+    EXPECT_EQ(out.static_ri().at(3).start_point(), 5u);
+    EXPECT_EQ(out.static_ri().at(3).transformation_shift(), 9u);
+}

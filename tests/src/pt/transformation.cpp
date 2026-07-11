@@ -23,10 +23,12 @@ namespace
         return record;
     }
 
+    // Compares the chain-derivable identity. sol_src is a local-only deploy input that the
+    // use_json serializer intentionally drops, so it is not part of this equality.
     void expectEqual(const Transformation & lhs, const Transformation & rhs)
     {
         ASSERT_EQ(lhs.name(), rhs.name());
-        ASSERT_EQ(lhs.sol_src(), rhs.sol_src());
+        ASSERT_EQ(lhs.args_count(), rhs.args_count());
     }
 
     void expectEqual(const TransformationRecord & lhs, const TransformationRecord & rhs)
@@ -106,6 +108,31 @@ TEST_F(UnitTest, TransformationRecord_ParseToJson_RoundTripAcrossParsers)
     ASSERT_TRUE(from_protobuf_via_json.has_value());
     expectEqual(record, *from_json_via_protobuf);
     expectEqual(record, *from_protobuf_via_json);
+}
+
+TEST_F(UnitTest, Transformation_ParseToJson_UseJsonDropsSolSrcExposesArgsCount)
+{
+    Transformation transformation = makeTransformationSample();
+    transformation.set_args_count(1);
+
+    auto json_out = parseToJson(transformation, use_json);
+    ASSERT_TRUE(json_out.has_value());
+
+    EXPECT_FALSE(json_out->contains("sol_src"));
+    ASSERT_TRUE(json_out->contains("args_count"));
+    EXPECT_EQ((*json_out)["args_count"].get<std::uint32_t>(), 1u);
+}
+
+TEST_F(UnitTest, Transformation_UseProtobuf_PreservesSolSrcForLocalStorage)
+{
+    Transformation transformation = makeTransformationSample();
+
+    auto protobuf_out = parseToJson(transformation, use_protobuf);
+    ASSERT_TRUE(protobuf_out.has_value());
+
+    auto parsed = parseFromJson<Transformation>(*protobuf_out, use_protobuf);
+    ASSERT_TRUE(parsed.has_value());
+    EXPECT_EQ(parsed->sol_src(), transformation.sol_src());
 }
 
 TEST_F(UnitTest, Transformation_ConstructSolidityCode_UsesConstructorPattern)

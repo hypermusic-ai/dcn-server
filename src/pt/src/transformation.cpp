@@ -7,6 +7,41 @@
 
 namespace dcn
 {
+    parse::Result<std::uint32_t> countTransformationArgs(const std::string & sol_src)
+    {
+        std::regex used_args_pattern(R"(args\[(\d+)\])");
+        std::uint32_t argc = 0;
+
+        std::smatch match;
+        auto it = sol_src.cbegin();
+        while (std::regex_search(it, sol_src.cend(), match, used_args_pattern))
+        {
+            try
+            {
+                unsigned long value = std::stoul(match[1].str());
+
+                if (value >= std::numeric_limits<std::uint32_t>::max()) {
+                    spdlog::error("Transformation args index overflows uint32_t argc computation");
+                    return std::unexpected(parse::ParseError{
+                        parse::ParseError::Kind::INVALID_VALUE,
+                        "Transformation args index must be less than uint32_t max"});
+                }
+                argc = std::max(argc, static_cast<std::uint32_t>(value) + 1U);
+            }
+            catch(const std::exception& e)
+            {
+                spdlog::error("Invalid argument index: {}", match[1].str());
+                return std::unexpected(parse::ParseError{
+                    parse::ParseError::Kind::INVALID_VALUE,
+                    std::format("Invalid transformation args index `{}`", match[1].str())});
+            }
+
+            it = match.suffix().first;
+        }
+
+        return argc;
+    }
+
     parse::Result<std::string> constructTransformationSolidityCode(const Transformation & transformation)
     {
         /* ------------- EXAMPLE -------------
@@ -37,35 +72,12 @@ namespace dcn
                 std::format("Transformation `{}` has invalid Solidity identifier name", transformation.name())});
         }
 
-        std::regex used_args_pattern(R"(args\[(\d+)\])");
-        std::uint32_t argc = 0;
-
-        std::smatch match;
-        auto it = transformation.sol_src().cbegin();
-        while (std::regex_search(it, transformation.sol_src().cend(), match, used_args_pattern)) 
+        const auto argc_res = countTransformationArgs(transformation.sol_src());
+        if(!argc_res)
         {
-            try
-            {
-                unsigned long value = std::stoul(match[1].str());
-
-                if (value >= std::numeric_limits<std::uint32_t>::max()) {
-                    spdlog::error("Transformation args index overflows uint32_t argc computation");
-                    return std::unexpected(parse::ParseError{
-                        parse::ParseError::Kind::INVALID_VALUE,
-                        "Transformation args index must be less than uint32_t max"});
-                }
-                argc = std::max(argc, static_cast<std::uint32_t>(value) + 1U);
-            }
-            catch(const std::exception& e)
-            {
-                spdlog::error("Invalid argument index: {}", match[1].str());
-                return std::unexpected(parse::ParseError{
-                    parse::ParseError::Kind::INVALID_VALUE,
-                    std::format("Invalid transformation args index `{}`", match[1].str())});
-            }
-
-            it = match.suffix().first;
+            return std::unexpected(argc_res.error());
         }
+        const std::uint32_t argc = *argc_res;
 
         return  "//SPDX-License-Identifier: MIT\n"
                 "pragma solidity ^0.8.0;\n"
@@ -156,7 +168,7 @@ namespace dcn::parse
         json json_obj;
 
         json_obj["name"] = transformation.name();
-        json_obj["sol_src"] = transformation.sol_src();
+        json_obj["args_count"] = transformation.args_count();
 
         return json_obj;
     }
@@ -172,11 +184,14 @@ namespace dcn::parse
         else return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid name"});
         
 
+        // sol_src is a local-only deploy input; absent from served responses, so it is optional here.
         if (json_obj.contains("sol_src")) {
             transformation.set_sol_src(json_obj["sol_src"].get<std::string>());
         }
-        else return std::unexpected(ParseError{ParseError::Kind::INVALID_VALUE, "invalid sol_src"});
-        
+
+        if (json_obj.contains("args_count")) {
+            transformation.set_args_count(json_obj["args_count"].get<std::uint32_t>());
+        }
 
         return transformation;
     }

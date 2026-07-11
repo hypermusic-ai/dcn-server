@@ -16,6 +16,7 @@ add_module(NAME "API"
         "${PROJECT_PREFIX}::Loader"
         "${PROJECT_PREFIX}::Crypto"
         "${PROJECT_PREFIX}::Registry"
+        "${PROJECT_PREFIX}::Feed"
         "${PROJECT_PREFIX}::Storage"
 
         spdlog::spdlog

@@ -138,9 +138,10 @@ namespace
         chain::Address condition_owner{};
         chain::Address connector_owner{};
 
-        Transformation transformation{};
-        Condition condition{};
-        Connector connector{};
+        // EVM-log-decoded entity data (replaces the former registry-DB readbacks)
+        pt::TransformationAddedEvent transformation_event{};
+        pt::ConditionAddedEvent condition_event{};
+        pt::ConnectorAddedEvent connector_event{};
     };
 
     PTDeployEntitiesSnapshot deployEntities()
@@ -231,35 +232,51 @@ namespace
             }
             snapshot.connector_address = connector_deploy_result.value();
 
-            const auto transformation_res = runAwaitable(
-                io_context,
-                registry.getTransformationRecordHandle("DeployTransformation"));
-            if(!transformation_res.has_value())
+            // Verify EVM presence by decoding the emitted deployment logs
+            const auto logs = runAwaitable(io_context, evm_instance.getLogsSince(0, 1024));
+            for(const auto & log : logs)
             {
-                snapshot.error_message = "getTransformation returned no value";
-                return snapshot;
+                if(snapshot.transformation_event.name.empty())
+                {
+                    auto ev = pt::decodeTransformationAddedEvent(log.data_hex, log.topics);
+                    if(ev && ev->name == "DeployTransformation")
+                    {
+                        snapshot.transformation_event = *ev;
+                    }
+                }
+                if(snapshot.condition_event.name.empty())
+                {
+                    auto ev = pt::decodeConditionAddedEvent(log.data_hex, log.topics);
+                    if(ev && ev->name == "DeployCondition")
+                    {
+                        snapshot.condition_event = *ev;
+                    }
+                }
+                if(snapshot.connector_event.name.empty())
+                {
+                    auto ev = pt::decodeConnectorAddedEvent(log.data_hex, log.topics);
+                    if(ev && ev->name == "DeployConnector")
+                    {
+                        snapshot.connector_event = *ev;
+                    }
+                }
             }
-            snapshot.transformation = (*transformation_res)->transformation();
 
-            const auto condition_res = runAwaitable(
-                io_context,
-                registry.getConditionRecordHandle("DeployCondition"));
-            if(!condition_res.has_value())
+            if(snapshot.transformation_event.name.empty())
             {
-                snapshot.error_message = "getCondition returned no value";
+                snapshot.error_message = "TransformationAdded event for 'DeployTransformation' not found in EVM logs";
                 return snapshot;
             }
-            snapshot.condition = (*condition_res)->condition();
-
-            const auto connector_res = runAwaitable(
-                io_context,
-                registry.getConnectorRecordHandle("DeployConnector"));
-            if(!connector_res.has_value())
+            if(snapshot.condition_event.name.empty())
             {
-                snapshot.error_message = "getConnector returned no value";
+                snapshot.error_message = "ConditionAdded event for 'DeployCondition' not found in EVM logs";
                 return snapshot;
             }
-            snapshot.connector = (*connector_res)->connector();
+            if(snapshot.connector_event.name.empty())
+            {
+                snapshot.error_message = "ConnectorAdded event for 'DeployConnector' not found in EVM logs";
+                return snapshot;
+            }
 
             const auto transformation_owner_res = fetchOwnerAddress(io_context, evm_instance, snapshot.transformation_address);
             if(!transformation_owner_res)
@@ -316,8 +333,9 @@ TEST_F(UnitTest, PT_Deploy_Transformation_DeploysAndRegisters)
     EXPECT_FALSE(isZeroAddress(snapshot.transformation_address));
     EXPECT_EQ(snapshot.transformation_owner, snapshot.owner);
 
-    EXPECT_EQ(snapshot.transformation.name(), "DeployTransformation");
-    EXPECT_EQ(snapshot.transformation.sol_src(), "return x + uint32(args[0]);");
+    // EVM-presence check: verify the TransformationAdded event was emitted on chain
+    EXPECT_EQ(snapshot.transformation_event.name, "DeployTransformation");
+    EXPECT_EQ(snapshot.transformation_event.args_count, 1u);
 }
 
 TEST_F(UnitTest, PT_Deploy_Condition_DeploysAndRegisters)
@@ -328,8 +346,9 @@ TEST_F(UnitTest, PT_Deploy_Condition_DeploysAndRegisters)
     EXPECT_FALSE(isZeroAddress(snapshot.condition_address));
     EXPECT_EQ(snapshot.condition_owner, snapshot.owner);
 
-    EXPECT_EQ(snapshot.condition.name(), "DeployCondition");
-    EXPECT_EQ(snapshot.condition.sol_src(), "return true;");
+    // EVM-presence check: verify the ConditionAdded event was emitted on chain
+    EXPECT_EQ(snapshot.condition_event.name, "DeployCondition");
+    EXPECT_EQ(snapshot.condition_event.args_count, 0u);
 }
 
 TEST_F(UnitTest, PT_Deploy_Connector_DeploysAndRegisters)
@@ -340,15 +359,17 @@ TEST_F(UnitTest, PT_Deploy_Connector_DeploysAndRegisters)
     EXPECT_FALSE(isZeroAddress(snapshot.connector_address));
     EXPECT_EQ(snapshot.connector_owner, snapshot.owner);
 
-    EXPECT_EQ(snapshot.connector.name(), "DeployConnector");
-    ASSERT_EQ(snapshot.connector.dimensions_size(), 1);
-    ASSERT_EQ(snapshot.connector.dimensions(0).transformations_size(), 1);
-    EXPECT_EQ(snapshot.connector.dimensions(0).transformations(0).name(), "DeployTransformation");
-    ASSERT_EQ(snapshot.connector.dimensions(0).transformations(0).args_size(), 1);
-    EXPECT_EQ(snapshot.connector.dimensions(0).transformations(0).args(0), 7);
-    EXPECT_EQ(snapshot.connector.dimensions(0).composite(), "");
-    EXPECT_EQ(snapshot.connector.condition_name(), "DeployCondition");
-    EXPECT_EQ(snapshot.connector.condition_args_size(), 0);
+    // EVM-presence check: verify the ConnectorAdded event was emitted on chain
+    EXPECT_EQ(snapshot.connector_event.name, "DeployConnector");
+    EXPECT_EQ(snapshot.connector_event.dimensions_count, 1u);
+    ASSERT_EQ(snapshot.connector_event.transformations.count(0u), 1u);
+    ASSERT_EQ(snapshot.connector_event.transformations.at(0u).size(), 1u);
+    EXPECT_EQ(snapshot.connector_event.transformations.at(0u)[0].name(), "DeployTransformation");
+    ASSERT_EQ(snapshot.connector_event.transformations.at(0u)[0].args_size(), 1);
+    EXPECT_EQ(snapshot.connector_event.transformations.at(0u)[0].args(0), 7);
+    EXPECT_EQ(snapshot.connector_event.composites.count(0u), 0u); // no composite
+    EXPECT_EQ(snapshot.connector_event.condition_name, "DeployCondition");
+    EXPECT_EQ(snapshot.connector_event.condition_args.size(), 0u);
 }
 
 TEST_F(UnitTest, PT_Deploy_Connector_DuplicateName_ReturnsConnectorAlreadyRegistered)
@@ -407,6 +428,71 @@ TEST_F(UnitTest, PT_Deploy_Connector_DuplicateName_ReturnsConnectorAlreadyRegist
         loader::deployConnector(evm_instance, registry, connector_record, storage_path));
     ASSERT_FALSE(second_connector_deploy_result);
     EXPECT_EQ(second_connector_deploy_result.error().kind, pt::PTDeployError::Kind::CONNECTOR_ALREADY_REGISTERED);
+}
+
+TEST_F(UnitTest, PT_Connector_ConnectorAddedEvent_ExposesStaticRunningInstances)
+{
+    ASSERT_TRUE(std::filesystem::exists(solcPath())) << std::format("Missing Solidity compiler at '{}'", solcPath().string());
+    ASSERT_TRUE(std::filesystem::exists(ptPath() / "contracts")) << std::format("Missing PT contracts directory at '{}'", (ptPath() / "contracts").string());
+
+    const auto storage_path = makeDeployStoragePath();
+    ASSERT_TRUE(prepareDeployStorageDirectories(storage_path));
+
+    asio::io_context io_context;
+    evm::EVM evm_instance(io_context, EVMC_SHANGHAI, solcPath(), ptPath());
+    io_context.run();
+
+    registry::Registry registry(io_context);
+    const chain::Address owner = makeAddressFromSuffix("static_ri_owner");
+    runAwaitable(io_context, evm_instance.addAccount(owner, evm::DEFAULT_GAS_LIMIT));
+    runAwaitable(io_context, evm_instance.setGas(owner, evm::DEFAULT_GAS_LIMIT));
+    const std::string owner_hex = evmc::hex(owner);
+
+    TransformationRecord transformation_record;
+    transformation_record.mutable_transformation()->set_name("StaticRiTransform");
+    transformation_record.mutable_transformation()->set_sol_src("return x;");
+    transformation_record.set_owner(owner_hex);
+
+    ConnectorRecord connector_record;
+    auto * connector = connector_record.mutable_connector();
+    connector->set_name("StaticRiConnector");
+    connector->add_dimensions()->add_transformations()->set_name("StaticRiTransform");
+    (*connector->mutable_static_ri())[0].set_start_point(11);
+    (*connector->mutable_static_ri())[0].set_transformation_shift(22);
+    connector_record.set_owner(owner_hex);
+
+    const auto transformation_deploy_result = runAwaitable(
+        io_context,
+        loader::deployTransformation(evm_instance, registry, transformation_record, storage_path));
+    ASSERT_TRUE(transformation_deploy_result) << std::format("deployTransformation failed: {}", transformation_deploy_result.error().kind);
+
+    const auto connector_deploy_result = runAwaitable(
+        io_context,
+        loader::deployConnector(evm_instance, registry, connector_record, storage_path));
+    ASSERT_TRUE(connector_deploy_result) << std::format("deployConnector failed: {}", connector_deploy_result.error().kind);
+
+    // Reconstruct the connector's static running instances purely from the emitted ConnectorAdded log,
+    // proving they are now recoverable from chain alone.
+    const auto logs = runAwaitable(io_context, evm_instance.getLogsSince(0, 1024));
+
+    std::optional<pt::ConnectorAddedEvent> decoded;
+    for(const auto & log : logs)
+    {
+        auto candidate = pt::decodeConnectorAddedEvent(log.data_hex, log.topics);
+        if(candidate && candidate->name == "StaticRiConnector")
+        {
+            decoded = std::move(candidate);
+            break;
+        }
+    }
+
+    ASSERT_TRUE(decoded.has_value()) << "ConnectorAdded event for StaticRiConnector was not decodable";
+    EXPECT_EQ(decoded->name, "StaticRiConnector");
+    EXPECT_EQ(decoded->dimensions_count, 1u);
+    ASSERT_EQ(decoded->static_ri.size(), 1u);
+    ASSERT_EQ(decoded->static_ri.count(0), 1u);
+    EXPECT_EQ(decoded->static_ri.at(0).first, 11u);
+    EXPECT_EQ(decoded->static_ri.at(0).second, 22u);
 }
 
 TEST_F(UnitTest, PT_Deploy_Connector_InvalidInput_CleansTemporarySoliditySourceFile)

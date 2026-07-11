@@ -7,7 +7,8 @@ namespace dcn::events
     PTEventDecoder::PTEventDecoder()
         : _connector_topic(chain::normalizeHex(
               evmc::hex(chain::constructEventTopic("ConnectorAdded(address,address,string,address,uint32,uint32[],string[],"
-                                                   "uint32[],uint32[],string[],string,int32[],bytes32)"))))
+                                                   "uint32[],uint32[],string[],string,int32[],bytes32,uint32[],uint32[],uint32[],"
+                                                   "uint32[],string[],uint32[],int32[])"))))
         , _transformation_topic(chain::normalizeHex(
               evmc::hex(chain::constructEventTopic("TransformationAdded(address,string,address,address,uint32)"))))
         , _condition_topic(chain::normalizeHex(
@@ -70,6 +71,25 @@ namespace dcn::events
                     json {{"dim_id", binding_key.first}, {"slot_id", binding_key.second}, {"binding_name", binding_name}});
             }
             payload["bindings"] = std::move(bindings);
+
+            json static_ri = json::array();
+            for (const auto& [position, running_instance] : connector->static_ri)
+            {
+                static_ri.push_back(json {{"position", position},
+                                          {"start_point", running_instance.first},
+                                          {"transformation_shift", running_instance.second}});
+            }
+            payload["static_ri"] = std::move(static_ri);
+
+            json transformations = json::array();
+            for (const auto& [dim_id, defs] : connector->transformations)
+                for (const auto& def : defs)
+                {
+                    json args = json::array();
+                    for (int a = 0; a < def.args_size(); ++a) args.push_back(def.args(a));
+                    transformations.push_back(json{{"dim_id", dim_id}, {"name", def.name()}, {"args", std::move(args)}});
+                }
+            payload["transformations"] = std::move(transformations);
 
             return DecodedEvent {.raw = log,
                                  .event_type = EventType::CONNECTOR_ADDED,

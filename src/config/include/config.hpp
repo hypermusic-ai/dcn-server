@@ -31,22 +31,22 @@ namespace dcn::config
 
         std::uint32_t port;
 
-        unsigned int loader_batch_connectors;
-        unsigned int loader_batch_transformations;
-        unsigned int loader_batch_conditions;
-
         IngestionConfig chain_ingestion;
 
         unsigned int registry_wal_sync_ms;
         std::filesystem::path registry_db;
 
         std::filesystem::path events_db;
-        std::filesystem::path events_archive_root;
+
+        std::filesystem::path feed_db;
+        std::filesystem::path feed_archive_root;
         unsigned int events_chain_id = 1;
         unsigned int events_hot_window_days = 90;
         unsigned int events_projector_interval_ms = 200;
         unsigned int events_archive_interval_ms = 30000;
         unsigned int events_reorg_window_blocks = 2048;
         unsigned int events_outbox_retention_days = 7;
+        unsigned int events_projector_retry_attempts = 5;
+        unsigned int events_dead_letter_sweep_ms = 60000;
     };
 }

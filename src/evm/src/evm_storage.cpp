@@ -1,6 +1,8 @@
 #include "evm_storage.hpp"
 #include "evm.hpp"
 
+#include "keccak256.hpp"
+
 #include <array>
 #include <algorithm>
 #include <cstddef>

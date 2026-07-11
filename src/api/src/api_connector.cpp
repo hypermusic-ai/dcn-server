@@ -1,4 +1,5 @@
 #include "api.hpp"
+#include "address.hpp"
 
 // TODO
 // ABI offset encoding (correctness)
@@ -192,7 +193,7 @@ namespace dcn
         const Connector & connector = *connector_res;
 
         ConnectorRecord connector_record;
-        connector_record.set_owner(evmc::hex(address));
+        connector_record.set_owner(chain::addressToHex(address));
         *connector_record.mutable_connector() = std::move(connector);
 
         const auto deploy_res = co_await loader::deployConnector(evm, registry, connector_record, config.storage_path);
@@ -206,21 +207,25 @@ namespace dcn
             co_return response;
         }
 
-        json json_output;
-        json_output["name"] = connector_record.connector().name();
-        json_output["owner"] = connector_record.owner();
-        json_output["address"] = "0x0";
-        const auto format_hash_res = co_await registry.getFormatHash(connector_record.connector().name());
-        if(!format_hash_res)
+        // Compute the canonical, composite-aware format hash deterministically from the
+        // connector definition. This does not depend on the EVM having processed/emitted
+        // the deploy log, so the response is immediate and reproducible.
+        const auto format_hash_opt = co_await registry.computeConnectorFormatHash(connector_record.connector());
+        if(!format_hash_opt)
         {
             response.setCode(http::Code::InternalServerError)
-                .setBodyWithContentLength(json {
-                    {"message", "Failed to fetch connector format hash"}
+                .setBodyWithContentLength(json{
+                    {"message", "Failed to compute connector format hash"}
                 }.dump());
 
             co_return response;
         }
-        json_output["format_hash"] = evmc::hex(*format_hash_res);
+
+        json json_output;
+        json_output["name"] = connector_record.connector().name();
+        json_output["owner"] = connector_record.owner();
+        json_output["address"] = "0x0";
+        json_output["format_hash"] = evmc::hex(*format_hash_opt);
 
         response.setCode(http::Code::Created)
             .setBodyWithContentLength(json_output.dump());

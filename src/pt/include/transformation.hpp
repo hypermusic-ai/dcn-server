@@ -19,13 +19,20 @@ namespace dcn
      * @tparam H The hash state type.
      * @param h The initial hash state.
      * @param t The Transformation object whose attributes will be hashed.
-     * @return A combined hash state incorporating the name and source of the Transformation.
+     * @return A combined hash state incorporating the chain-derivable identity (name and args_count).
      */
     template <typename H>
     inline H AbslHashValue(H h, const Transformation& t) {
-        return H::combine(std::move(h), t.name(), t.sol_src());
+        return H::combine(std::move(h), t.name(), t.args_count());
     }
-    
+
+    /**
+     * @brief Counts the number of distinct args[N] slots referenced by a transformation's source.
+     *        This is the chain-derivable args_count (it matches the value registered on chain).
+     * @param sol_src The user-supplied Solidity source fragment.
+     */
+    parse::Result<std::uint32_t> countTransformationArgs(const std::string & sol_src);
+
     parse::Result<std::string> constructTransformationSolidityCode(const Transformation & transformation);
 }
 

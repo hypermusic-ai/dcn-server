@@ -38,7 +38,8 @@ TEST_F(StressTest, Stress_Events_SustainedIngestProjectionEnvelope)
 
     const auto paths = makeTempEventsPaths("stress_events_envelope");
     asio::io_context store_io_context;
-    events::SQLiteHotStore store(paths.hot_db, paths.archive_root, 24LL * 60 * 60 * 1000, CHAIN_ID);
+    events::SQLiteHotStore store(paths.hot_db, CHAIN_ID);
+    feed::Feed feed_obj(store_io_context, paths.feed_db, paths.feed_archive_root, 7LL*24*60*60*1000, CHAIN_ID);
 
     std::int64_t next_block = 3'000;
     std::size_t emitted = 0;
@@ -90,12 +91,12 @@ TEST_F(StressTest, Stress_Events_SustainedIngestProjectionEnvelope)
         next_block += static_cast<std::int64_t>(this_batch);
     }
 
-    const std::size_t projected = projectAll(store_io_context, store, 1'700'011'000'000);
+    const std::size_t projected = projectAll(store_io_context, store, feed_obj, 1'700'011'000'000);
     EXPECT_EQ(projected, event_count);
 
-    const events::StreamPage replay = store.getStreamPage(events::StreamQuery{
+    const feed::StreamPage replay = feed_obj.getStreamPage(feed::StreamQuery{
         .since_seq = 0,
-        .limit = std::min<std::size_t>(event_count, events::MAX_STREAM_LIMIT)
+        .limit = std::min<std::size_t>(event_count, feed::MAX_STREAM_LIMIT)
     });
     EXPECT_FALSE(replay.deltas.empty());
     EXPECT_EQ(replay.deltas.front().stream_seq, 1);

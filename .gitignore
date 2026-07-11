@@ -3,3 +3,5 @@
 build*/
 install*/
 docs_output/
+docs/superpowers/**
+.agent/

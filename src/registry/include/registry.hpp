@@ -49,14 +49,20 @@ namespace dcn::registry
 
             ~Registry() = default;
 
-            asio::awaitable<bool> add(chain::Address address, ConnectorRecord connector);
-            asio::awaitable<bool> add(chain::Address address, TransformationRecord transformation);
-            asio::awaitable<bool> add(chain::Address address, ConditionRecord condition);
-
-            asio::awaitable<bool> addConnector(chain::Address address, ConnectorRecord connector);
+            // expected_format_hash, when set, is the chain-emitted format hash. The registry is a
+            // mirror of chain state, so a locally-recomputed hash that disagrees with the chain is a
+            // divergence: addConnector refuses rather than storing a hash the POST response/event
+            // never carried.
+            asio::awaitable<bool> addConnector(chain::Address address, ConnectorRecord connector,
+                std::optional<evmc::bytes32> expected_format_hash = std::nullopt);
             asio::awaitable<bool> addConnectorsBatch(
                 std::vector<std::pair<chain::Address, ConnectorRecord>> connectors,
                 bool all_or_nothing = true);
+
+            // Deterministically compute a connector's composite-aware format hash from its
+            // definition, without persisting it. Resolves composite dimensions against
+            // already-registered connectors; returns nullopt if resolution/validation fails.
+            asio::awaitable<std::optional<evmc::bytes32>> computeConnectorFormatHash(Connector connector) const;
 
             asio::awaitable<std::optional<ConnectorRecordHandle>> getConnectorRecordHandle(
                 const std::string & name) const;
@@ -123,6 +129,13 @@ namespace dcn::registry
                 std::size_t limit) const;
 
             asio::awaitable<storage::sqlite::WalCheckpointStats> checkpointWal(storage::sqlite::WalCheckpointMode mode) const override;
+
+            // Materialization cursor, owned by RegistryProjector. getMaterializationCursor
+            // is synchronous because it is read once at construction (pre-start, single
+            // threaded). setMaterializationCursor runs on the Registry strand so the cursor
+            // write serializes with every other access to the registry DB.
+            std::int64_t getMaterializationCursor() const;
+            asio::awaitable<bool> setMaterializationCursor(std::int64_t seq);
 
         private:
             static constexpr std::size_t kHotCacheCapacity = 1024;
