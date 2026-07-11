@@ -31,22 +31,23 @@ namespace dcn::registry
      *   - failure (undecodable log, divergence, add rejection) → cursor is left before
      *     the row and the row is retried on subsequent projectBatch passes, so transient
      *     failures (e.g. busy registry DB) heal on their own. After
-     *     MAX_MATERIALIZE_ATTEMPTS consecutive failing passes the row is poison-skipped
-     *     with an error log carrying its block/log identifiers: a permanently parked
-     *     cursor would also freeze the prune watermark for every projector and grow the
-     *     hot store without bound.
+     *     ProjectorRetryConfig::max_attempts consecutive failing passes the row is
+     *     dead-lettered (REGISTRY_DEAD_LETTER_BIT in the hot store) and the cursor
+     *     advances past it: a permanently parked cursor would freeze the prune
+     *     watermark for every projector and grow the hot store without bound.
+     *     Dead-lettered rows are exempt from pruning, so no chain event data is lost;
+     *     a periodic idle-time sweep (ProjectorRetryConfig::sweep_interval_ms) retries
+     *     them and clears the bit once materialization succeeds. If the dead-letter
+     *     mark itself cannot be written, the cursor stays parked.
      */
     class RegistryProjector final : public events::IEventProjector
     {
         public:
-            // ponytail: fixed retry budget (~1s at the default 200ms projector interval);
-            // make it configurable if a real transient failure ever needs longer to heal.
-            static constexpr std::size_t MAX_MATERIALIZE_ATTEMPTS = 5;
-
             RegistryProjector(
                 events::SQLiteHotStore & store,
                 Registry & registry,
-                const asio::strand<asio::io_context::executor_type> & write_strand);
+                const asio::strand<asio::io_context::executor_type> & write_strand,
+                events::ProjectorRetryConfig retry = {});
 
             std::string_view id() const override;
 
@@ -57,17 +58,24 @@ namespace dcn::registry
         private:
             // Returns true  → row materialized (or already present); advance past it.
             // Returns false → materialization failed; projectBatch retries the row on
-            //                 later passes and poison-skips it after
-            //                 MAX_MATERIALIZE_ATTEMPTS consecutive failures.
+            //                 later passes and dead-letters it after
+            //                 _retry.max_attempts consecutive failures.
             asio::awaitable<bool> _materializeOne(const events::ChangeRecord & row);
+
+            // Retries dead-lettered rows (throttled by _retry.sweep_interval_ms)
+            // and clears their bit on success. Returns the number of rows resolved.
+            asio::awaitable<std::size_t> _sweepDeadLetters(std::size_t limit, std::int64_t now_ms);
 
             events::SQLiteHotStore & _store;
             Registry & _registry;
             asio::strand<asio::io_context::executor_type> _write_strand;
+            events::ProjectorRetryConfig _retry;
             std::int64_t _cursor{0};
 
             // Consecutive-failure tracking for the row currently at the cursor head.
             std::int64_t _failing_seq{0};
             std::size_t _failure_count{0};
+
+            std::int64_t _last_sweep_ms{0};
     };
 }

@@ -15,6 +15,25 @@ namespace dcn::events
     constexpr std::string_view FEED_PROJECTOR_ID = "feed";
     constexpr std::string_view REGISTRY_PROJECTOR_ID = "registry";
 
+    // Bits in normalized_events_hot.dead_letter. A projector sets its bit when it
+    // exhausts its retry budget on a row and advances its cursor past it. Rows with
+    // any bit set are exempt from pruning, so the raw chain evidence is retained
+    // until every marking projector resolves the row and clears its bit.
+    constexpr int FEED_DEAD_LETTER_BIT = 1 << 0;
+    constexpr int REGISTRY_DEAD_LETTER_BIT = 1 << 1;
+
+    // Retry/quarantine tuning shared by the projectors.
+    struct ProjectorRetryConfig
+    {
+        // Consecutive failing passes on the same row before it is dead-lettered and
+        // the cursor advances past it. Values <= 1 dead-letter on the first failure.
+        std::size_t max_attempts = 5;
+
+        // Minimum time between idle-time dead-letter retry sweeps; dead letters are
+        // rare, so a slow cadence keeps the recovery path cheap.
+        std::int64_t sweep_interval_ms = 60'000;
+    };
+
     struct ChangeRecord
     {
         int chain_id = 0;

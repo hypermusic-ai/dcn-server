@@ -382,6 +382,8 @@ int main(int argc, char* argv[])
     arg_parser.addArg<unsigned int>("--events-archive-ms", "Interval in milliseconds for archive maintenance loop");
     arg_parser.addArg<unsigned int>("--events-reorg-window-blocks", "Rolling block window size for reorg reconciliation");
     arg_parser.addArg<unsigned int>("--events-outbox-retention-days", "Retention window in days for replay outbox rows");
+    arg_parser.addArg<unsigned int>("--events-projector-retry-attempts", "Consecutive failing projector passes on a row before it is dead-lettered");
+    arg_parser.addArg<unsigned int>("--events-dead-letter-sweep-ms", "Interval in milliseconds between idle-time dead-letter retry sweeps");
 
     arg_parser.parse(argc, argv);
 
@@ -479,6 +481,8 @@ int main(int argc, char* argv[])
     cfg.events_archive_interval_ms = arg_parser.getArg<unsigned int>("--events-archive-ms").value_or(30000);
     cfg.events_reorg_window_blocks = arg_parser.getArg<unsigned int>("--events-reorg-window-blocks").value_or(2048);
     cfg.events_outbox_retention_days = arg_parser.getArg<unsigned int>("--events-outbox-retention-days").value_or(7);
+    cfg.events_projector_retry_attempts = arg_parser.getArg<unsigned int>("--events-projector-retry-attempts").value_or(5);
+    cfg.events_dead_letter_sweep_ms = arg_parser.getArg<unsigned int>("--events-dead-letter-sweep-ms").value_or(60'000);
 
     spdlog::info("Current working path: {}", std::filesystem::current_path().string());
 
@@ -663,12 +667,17 @@ int main(int argc, char* argv[])
 
     // Wire both projectors into the EventRuntime before start() — symmetric construction.
     // feed::FeedProjector first so it runs first in every projector loop iteration.
+    const dcn::events::ProjectorRetryConfig projector_retry{
+        .max_attempts = cfg.events_projector_retry_attempts,
+        .sweep_interval_ms = static_cast<std::int64_t>(cfg.events_dead_letter_sweep_ms)
+    };
     events_runtime.addProjector(std::make_unique<dcn::feed::FeedProjector>(
-        events_runtime.projectionStore(), feed_runtime.feed(), events_runtime.writeStrand()));
+        events_runtime.projectionStore(), feed_runtime.feed(), events_runtime.writeStrand(), projector_retry));
     events_runtime.addProjector(std::make_unique<dcn::registry::RegistryProjector>(
         events_runtime.projectionStore(),
         registry,
-        events_runtime.writeStrand()));
+        events_runtime.writeStrand(),
+        projector_retry));
 
     events_runtime.start();
     feed_runtime.start();

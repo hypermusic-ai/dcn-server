@@ -69,9 +69,19 @@ namespace dcn::events
 
             storage::sqlite::WalCheckpointStats checkpointWal(storage::sqlite::WalCheckpointMode mode);
 
+            // ---- dead letters / write-strand only ----
+            // projector_bit is one of the *_DEAD_LETTER_BIT constants. A marked row is
+            // exempt from pruneConsumedRaw until every marking projector clears its bit.
+            // markDeadLetter returns false when the row does not exist or the write failed,
+            // in which case the caller must keep its cursor parked instead of skipping.
+
+            bool markDeadLetter(int projector_bit, int chain_id, const std::string & block_hash, std::int64_t log_index);
+            bool clearDeadLetter(int projector_bit, int chain_id, const std::string & block_hash, std::int64_t log_index);
+
             // ---- read side / synchronous ----
 
             std::vector<ChangeRecord> readChangesSince(std::int64_t after_change_seq, std::size_t limit) const;
+            std::vector<ChangeRecord> readDeadLetters(int projector_bit, std::size_t limit) const;
 
         private:
             bool _initializeHotSchema();

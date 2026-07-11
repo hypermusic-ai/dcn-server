@@ -96,7 +96,7 @@ sequenceDiagram
 | Table | Key | Purpose |
 | --- | --- | --- |
 | `raw_events_hot` | `(chain_id, block_hash, log_index)` | Full raw log evidence: tx, block, topics, data, state, timestamps, and removal marker. |
-| `normalized_events_hot` | `(chain_id, block_hash, log_index)` | Decoded event index used by projectors: type, name, owner, entity address, args, format hash, state, and `change_seq`. |
+| `normalized_events_hot` | `(chain_id, block_hash, log_index)` | Decoded event index used by projectors: type, name, owner, entity address, args, format hash, state, `change_seq`, and the per-projector `dead_letter` bitmask (see Failure Handling). |
 | `decode_failures_hot` | `(chain_id, block_hash, log_index)` | Tracks raw logs that could not decode; after repeated attempts rows become non-retryable/dead-lettered. |
 | `ingest_resume_state` | `chain_id` | Next block cursor for chain-style ingestion. |
 | `local_ingest_resume_state` | `chain_id` | Next local EVM log sequence cursor. |
@@ -152,10 +152,11 @@ flowchart TD
 | `registry::RegistryProjector` | Registry DB `materialization_cursor` | All changelog rows after its cursor | Skips non-finalized rows; re-decodes finalized rows and writes registry tables. |
 
 The prune loop deletes consumed finalized/removed raw and normalized rows only
-when every projector has advanced beyond the row and the block is below the
-reorg floor. The registry cursor is therefore part of data-retention safety:
-raw evidence is kept until registry materialization either succeeds or parks on
-a failing row.
+when every projector has advanced beyond the row, the block is below the reorg
+floor, and no dead-letter bit is set on the row. Projector cursors and the
+dead-letter flag together form the data-retention safety net: raw evidence is
+kept until every projector has either materialized the row or dead-lettered it,
+and dead-lettered rows stay retained until they resolve (see Failure Handling).
 
 ## Feed Archive
 
@@ -220,17 +221,43 @@ flowchart LR
 | Entity | Primary table | Secondary tables | Notes |
 | --- | --- | --- | --- |
 | Connector | `connectors(name, owner, format_hash, condition_name)` | `connector_dimensions`, `connector_dimension_bindings`, `connector_transformation_defs`, `connector_transformation_def_args`, `connector_condition_args`, `connector_static_ri`, `format_members`, `scalar_labels_by_format`, `owned_connectors` | Stores only chain-derivable registry state. The format hash comes from the PT event. |
-| Transformation | `transformations(name, owner, args_count)` | `owned_transformations` | Existing matching rows are idempotent; divergent rows park the cursor. |
-| Condition | `conditions(name, owner, args_count)` | `owned_conditions` | Existing matching rows are idempotent; divergent rows park the cursor. |
+| Transformation | `transformations(name, owner, args_count)` | `owned_transformations` | Existing matching rows are idempotent; divergent rows are retried, then dead-lettered. |
+| Condition | `conditions(name, owner, args_count)` | `owned_conditions` | Existing matching rows are idempotent; divergent rows are retried, then dead-lettered. |
 | Cursor | `materialization_cursor(singleton, last_change_seq)` | none | Last hot-store `change_seq` durably consumed by `RegistryProjector`. |
 
 ## Failure Handling
+
+Both projectors share one failure policy: retry in place, then quarantine — never
+silently drop a chain event.
+
+1. A row that fails (`FeedProjector` `applyChange` throws, or `RegistryProjector`
+   `_materializeOne` returns false: undecodable log, divergence, add rejection)
+   parks the cursor and is retried on each projector pass, so transient failures
+   (e.g. a busy DB) heal on their own.
+2. After `ProjectorRetryConfig::max_attempts` consecutive failing passes
+   (`--events-projector-retry-attempts`, default 5) the projector sets its bit in
+   `normalized_events_hot.dead_letter` (`FEED_DEAD_LETTER_BIT` /
+   `REGISTRY_DEAD_LETTER_BIT`) and advances its cursor past the row, keeping the
+   prune watermark moving for every other row. If the dead-letter mark itself
+   cannot be written, the cursor stays parked.
+3. Rows with any dead-letter bit set are exempt from `pruneConsumedRaw`: the raw
+   and normalized chain evidence stays in the hot store until every marking
+   projector resolves the row.
+4. When a projector's changelog is drained, an idle-time sweep — throttled per
+   projector by `ProjectorRetryConfig::sweep_interval_ms`
+   (`--events-dead-letter-sweep-ms`, default 60 s) — re-reads its dead-lettered
+   rows and retries them; on success the projector clears its bit and the row
+   becomes prunable again. Divergence cases stay quarantined until the
+   conflicting registry state is fixed, then resolve on the next sweep with no
+   manual replay.
 
 | Failure | Behavior |
 | --- | --- |
 | Unknown topic or undecodable source log during ingestion | Raw row is stored and `decode_failures_hot` is updated; no normalized row is projected. |
 | Non-finalized registry row | Registry projector advances past it; finality promotion creates a later `change_seq` that will be seen. |
-| Finalized registry row cannot be decoded | Registry projector stops before advancing its cursor, preserving raw evidence for inspection/retry. |
+| Finalized registry row cannot be decoded | Retried for the configured budget, then dead-lettered: cursor advances, raw evidence is retained (exempt from pruning) and retried by the sweep. |
 | Registry already has matching entity | Treated as idempotent success and cursor advances. |
-| Registry has divergent entity | Registry projector stops before advancing; there is no update/delete reconciliation path. |
+| Registry has divergent entity | Retried for the configured budget, then dead-lettered; there is no update/delete reconciliation path, so it stays quarantined until the divergence is resolved, then the sweep clears it. |
+| Feed row cannot be applied | Same policy with `FEED_DEAD_LETTER_BIT`: retried for the configured budget, dead-lettered, retried by the feed sweep. |
+| Dead-lettered row reorg-removed before resolving | Registry sweep releases it (nothing left to materialize); pruning takes the row. |
 | Projector cursor not advanced | Pruning cannot delete rows past the minimum projector cursor. |

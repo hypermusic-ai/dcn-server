@@ -52,6 +52,51 @@ namespace dcn::events
         return sqlite3_bind_text(stmt, index, value->c_str(), static_cast<int>(value->size()), SQLITE_TRANSIENT);
     }
 
+    static bool _columnExists(sqlite3 * db, const char * table, const char * column)
+    {
+        storage::sqlite::Statement stmt(db, std::format("PRAGMA table_info({});", table).c_str());
+        int rc = SQLITE_OK;
+        while ((rc = stmt.step()) == SQLITE_ROW)
+        {
+            const unsigned char * name = sqlite3_column_text(stmt.get(), 1);
+            if (name != nullptr && std::string_view(reinterpret_cast<const char *>(name)) == column)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Column list shared by readChangesSince / readDeadLetters; must stay in sync
+    // with _changeRecordFromRow below.
+    constexpr const char * CHANGE_RECORD_COLUMNS =
+        "n.chain_id, n.block_hash, n.log_index, n.change_seq, n.event_type, n.state, "
+        "n.name, n.owner, r.data_hex, r.topic0, r.topic1, r.topic2, r.topic3, n.block_number, n.tx_index, "
+        "n.tx_hash, n.block_time ";
+
+    static ChangeRecord _changeRecordFromRow(sqlite3_stmt * stmt)
+    {
+        ChangeRecord rec{};
+        rec.chain_id = sqlite3_column_int(stmt, 0);
+        rec.block_hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        rec.log_index = static_cast<std::int64_t>(sqlite3_column_int64(stmt, 2));
+        rec.change_seq = static_cast<std::int64_t>(sqlite3_column_int64(stmt, 3));
+        rec.event_type = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+        rec.state = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        rec.name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
+        rec.owner = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7));
+        rec.data_hex = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8));
+        rec.topics[0] = _columnTextOptional(stmt, 9);
+        rec.topics[1] = _columnTextOptional(stmt, 10);
+        rec.topics[2] = _columnTextOptional(stmt, 11);
+        rec.topics[3] = _columnTextOptional(stmt, 12);
+        rec.block_number = static_cast<std::int64_t>(sqlite3_column_int64(stmt, 13));
+        rec.tx_index = static_cast<std::int64_t>(sqlite3_column_int64(stmt, 14));
+        rec.tx_hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 15));
+        rec.block_time = _columnInt64Optional(stmt, 16);
+        return rec;
+    }
+
     struct EventKey
     {
         std::string block_hash;
@@ -1154,6 +1199,7 @@ namespace dcn::events
                 "SELECT chain_id, block_hash, log_index "
                 "FROM normalized_events_hot "
                 "WHERE change_seq <= ?1 AND state IN ('finalized','removed') AND block_number <= ?2 "
+                "AND dead_letter=0 "
                 "LIMIT ?3;");
 
             while (true)
@@ -1320,6 +1366,7 @@ namespace dcn::events
                     "seen_at_ms INTEGER NOT NULL,"
                     "updated_at_ms INTEGER NOT NULL,"
                      "change_seq INTEGER NOT NULL DEFAULT 0,"
+                     "dead_letter INTEGER NOT NULL DEFAULT 0,"
                      "PRIMARY KEY(chain_id, block_hash, log_index)"
                      ");") &&
                storage::sqlite::exec(_write_db,
@@ -1390,6 +1437,28 @@ namespace dcn::events
             return false;
         }
 
+        // dead_letter is declared in the CREATE TABLE for fresh databases; databases
+        // whose normalized_events_hot predates the column need it added here.
+        if (!_columnExists(_write_db, "normalized_events_hot", "dead_letter"))
+        {
+            if (!storage::sqlite::exec(
+                    _write_db,
+                    "ALTER TABLE normalized_events_hot ADD COLUMN dead_letter INTEGER NOT NULL DEFAULT 0;"))
+            {
+                return false;
+            }
+        }
+
+        // Partial index so the periodic dead-letter sweep never scans the full hot table.
+        // Created after the column is guaranteed to exist.
+        if (!storage::sqlite::exec(
+                _write_db,
+                "CREATE INDEX IF NOT EXISTS idx_norm_dead_letter "
+                "ON normalized_events_hot(change_seq) WHERE dead_letter<>0;"))
+        {
+            return false;
+        }
+
         return true;
     }
 
@@ -1418,12 +1487,12 @@ namespace dcn::events
     {
         storage::sqlite::Statement stmt(
             _read_db,
-            "SELECT n.chain_id, n.block_hash, n.log_index, n.change_seq, n.event_type, n.state, "
-            "n.name, n.owner, r.data_hex, r.topic0, r.topic1, r.topic2, r.topic3, n.block_number, n.tx_index, "
-            "n.tx_hash, n.block_time "
-            "FROM normalized_events_hot n "
-            "JOIN raw_events_hot r ON r.chain_id=n.chain_id AND r.block_hash=n.block_hash AND r.log_index=n.log_index "
-            "WHERE n.change_seq > ?1 ORDER BY n.change_seq ASC LIMIT ?2;");
+            std::format(
+                "SELECT {}"
+                "FROM normalized_events_hot n "
+                "JOIN raw_events_hot r ON r.chain_id=n.chain_id AND r.block_hash=n.block_hash AND r.log_index=n.log_index "
+                "WHERE n.change_seq > ?1 ORDER BY n.change_seq ASC LIMIT ?2;",
+                CHANGE_RECORD_COLUMNS).c_str());
 
         sqlite3_bind_int64(stmt.get(), 1, static_cast<sqlite3_int64>(after_change_seq));
         sqlite3_bind_int64(stmt.get(), 2, static_cast<sqlite3_int64>(limit));
@@ -1434,25 +1503,7 @@ namespace dcn::events
         int rc = SQLITE_OK;
         while ((rc = stmt.step()) == SQLITE_ROW)
         {
-            ChangeRecord rec{};
-            rec.chain_id = sqlite3_column_int(stmt.get(), 0);
-            rec.block_hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 1));
-            rec.log_index = static_cast<std::int64_t>(sqlite3_column_int64(stmt.get(), 2));
-            rec.change_seq = static_cast<std::int64_t>(sqlite3_column_int64(stmt.get(), 3));
-            rec.event_type = reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 4));
-            rec.state = reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 5));
-            rec.name = reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 6));
-            rec.owner = reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 7));
-            rec.data_hex = reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 8));
-            rec.topics[0] = _columnTextOptional(stmt.get(), 9);
-            rec.topics[1] = _columnTextOptional(stmt.get(), 10);
-            rec.topics[2] = _columnTextOptional(stmt.get(), 11);
-            rec.topics[3] = _columnTextOptional(stmt.get(), 12);
-            rec.block_number = static_cast<std::int64_t>(sqlite3_column_int64(stmt.get(), 13));
-            rec.tx_index = static_cast<std::int64_t>(sqlite3_column_int64(stmt.get(), 14));
-            rec.tx_hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt.get(), 15));
-            rec.block_time = _columnInt64Optional(stmt.get(), 16);
-            records.push_back(std::move(rec));
+            records.push_back(_changeRecordFromRow(stmt.get()));
         }
         if (rc != SQLITE_DONE)
         {
@@ -1462,5 +1513,106 @@ namespace dcn::events
         return records;
     }
 
+    std::vector<ChangeRecord> SQLiteHotStore::readDeadLetters(
+        const int projector_bit,
+        const std::size_t limit) const
+    {
+        // The dead_letter<>0 predicate lets the partial index idx_norm_dead_letter
+        // serve this query, so the sweep never scans the full hot table.
+        storage::sqlite::Statement stmt(
+            _read_db,
+            std::format(
+                "SELECT {}"
+                "FROM normalized_events_hot n "
+                "JOIN raw_events_hot r ON r.chain_id=n.chain_id AND r.block_hash=n.block_hash AND r.log_index=n.log_index "
+                "WHERE n.dead_letter<>0 AND (n.dead_letter & ?1)<>0 "
+                "ORDER BY n.change_seq ASC LIMIT ?2;",
+                CHANGE_RECORD_COLUMNS).c_str());
+
+        sqlite3_bind_int(stmt.get(), 1, projector_bit);
+        sqlite3_bind_int64(stmt.get(), 2, static_cast<sqlite3_int64>(limit));
+
+        std::vector<ChangeRecord> records;
+
+        int rc = SQLITE_OK;
+        while ((rc = stmt.step()) == SQLITE_ROW)
+        {
+            records.push_back(_changeRecordFromRow(stmt.get()));
+        }
+        if (rc != SQLITE_DONE)
+        {
+            throw std::runtime_error(sqlite3_errmsg(_read_db));
+        }
+
+        return records;
+    }
+
+    bool SQLiteHotStore::markDeadLetter(
+        const int projector_bit,
+        const int chain_id,
+        const std::string & block_hash,
+        const std::int64_t log_index)
+    {
+        try
+        {
+            storage::sqlite::Statement stmt(
+                _write_db,
+                "UPDATE normalized_events_hot SET dead_letter = dead_letter | ?1 "
+                "WHERE chain_id=?2 AND block_hash=?3 AND log_index=?4;");
+
+            sqlite3_bind_int(stmt.get(), 1, projector_bit);
+            sqlite3_bind_int(stmt.get(), 2, chain_id);
+            sqlite3_bind_text(stmt.get(), 3, block_hash.c_str(), static_cast<int>(block_hash.size()), SQLITE_TRANSIENT);
+            sqlite3_bind_int64(stmt.get(), 4, static_cast<sqlite3_int64>(log_index));
+
+            if (stmt.step() != SQLITE_DONE)
+            {
+                spdlog::error("Events markDeadLetter failed: {}", sqlite3_errmsg(_write_db));
+                return false;
+            }
+
+            // Zero changed rows means the key does not exist; the caller must not
+            // advance past a row it could not quarantine.
+            return sqlite3_changes(_write_db) > 0;
+        }
+        catch (const std::exception & e)
+        {
+            spdlog::error("Events markDeadLetter failed: {}", e.what());
+            return false;
+        }
+    }
+
+    bool SQLiteHotStore::clearDeadLetter(
+        const int projector_bit,
+        const int chain_id,
+        const std::string & block_hash,
+        const std::int64_t log_index)
+    {
+        try
+        {
+            storage::sqlite::Statement stmt(
+                _write_db,
+                "UPDATE normalized_events_hot SET dead_letter = dead_letter & ~?1 "
+                "WHERE chain_id=?2 AND block_hash=?3 AND log_index=?4;");
+
+            sqlite3_bind_int(stmt.get(), 1, projector_bit);
+            sqlite3_bind_int(stmt.get(), 2, chain_id);
+            sqlite3_bind_text(stmt.get(), 3, block_hash.c_str(), static_cast<int>(block_hash.size()), SQLITE_TRANSIENT);
+            sqlite3_bind_int64(stmt.get(), 4, static_cast<sqlite3_int64>(log_index));
+
+            if (stmt.step() != SQLITE_DONE)
+            {
+                spdlog::error("Events clearDeadLetter failed: {}", sqlite3_errmsg(_write_db));
+                return false;
+            }
+
+            return true;
+        }
+        catch (const std::exception & e)
+        {
+            spdlog::error("Events clearDeadLetter failed: {}", e.what());
+            return false;
+        }
+    }
 
 } // namespace dcn::events

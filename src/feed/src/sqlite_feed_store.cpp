@@ -1481,8 +1481,15 @@ namespace dcn::feed
 
     std::int64_t SqliteFeedStore::getFeedCursor() const
     {
+        // Reads from _write_db, not _read_db: _read_db is shared with concurrent
+        // query-side callers (getFeedPage/getStreamPage) on other threads. A
+        // still-open read transaction on that connection pins its snapshot, so a
+        // cursor read interleaved on the same handle can observe a stale
+        // pre-commit value and cause the projector to reprocess already-applied
+        // rows. _write_db is only ever touched by the serialized write path, so
+        // reading the cursor there always reflects the writer's own commits.
         storage::sqlite::Statement stmt(
-            _read_db,
+            _write_db,
             "SELECT last_change_seq FROM feed_cursor WHERE singleton=1;");
 
         if (stmt.step() == SQLITE_ROW)

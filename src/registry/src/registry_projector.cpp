@@ -19,10 +19,12 @@ namespace dcn::registry
     RegistryProjector::RegistryProjector(
         events::SQLiteHotStore & store,
         Registry & registry,
-        const asio::strand<asio::io_context::executor_type> & write_strand)
+        const asio::strand<asio::io_context::executor_type> & write_strand,
+        events::ProjectorRetryConfig retry)
         : _store(store)
         , _registry(registry)
         , _write_strand(write_strand)
+        , _retry(retry)
     {
         // Load the persisted cursor so we resume from the right position after restart.
         _cursor = _registry.getMaterializationCursor();
@@ -35,8 +37,6 @@ namespace dcn::registry
 
     asio::awaitable<std::size_t> RegistryProjector::projectBatch(std::size_t limit, std::int64_t now_ms)
     {
-        (void)now_ms;
-
         // Serialize the hot-store read on the write strand, as FeedProjector does.
         co_await async::ensureOnStrand(_write_strand);
         const auto rows = _store.readChangesSince(_cursor, limit);
@@ -71,19 +71,33 @@ namespace dcn::registry
                     _failure_count = 1;
                 }
 
-                if(_failure_count < MAX_MATERIALIZE_ATTEMPTS)
+                if(_failure_count < _retry.max_attempts)
                 {
                     // Leave the cursor before this row so it is retried next pass;
                     // transient failures (e.g. busy registry DB) heal across passes.
                     break;
                 }
 
-                // Poison row: skip it rather than wedge the pipeline. A permanently
-                // parked cursor also freezes the prune watermark for every projector,
-                // growing the hot store without bound. The error logs emitted by
-                // _materializeOne carry the block/log identifiers as evidence.
-                spdlog::error("[RegistryProjector] poison-skipping change_seq={} "
-                    "(block={} log_index={} event_type='{}') after {} failed attempts",
+                // Retry budget exhausted: dead-letter the row and advance past it rather
+                // than wedge the pipeline (a permanently parked cursor freezes the prune
+                // watermark for every projector, growing the hot store without bound).
+                // The dead-letter bit exempts the row from pruning, so the raw chain
+                // evidence is retained and the idle-time sweep keeps retrying it — no
+                // chain event data is lost.
+                co_await async::ensureOnStrand(_write_strand);
+                if(!_store.markDeadLetter(
+                    events::REGISTRY_DEAD_LETTER_BIT, row.chain_id, row.block_hash, row.log_index))
+                {
+                    // The quarantine could not be made durable; advancing now would let
+                    // pruning delete the row, so keep the cursor parked and retry.
+                    spdlog::error("[RegistryProjector] failed to dead-letter change_seq={} — "
+                        "cursor stays parked", row.change_seq);
+                    break;
+                }
+
+                spdlog::error("[RegistryProjector] dead-lettered change_seq={} "
+                    "(block={} log_index={} event_type='{}') after {} failed attempts; "
+                    "row is retained in the hot store and retried by the sweep",
                     row.change_seq, row.block_number, row.log_index, row.event_type,
                     _failure_count);
                 _failing_seq = 0;
@@ -115,7 +129,52 @@ namespace dcn::registry
             }
         }
 
+        // Retry dead-lettered rows only when the main changelog is drained, so the
+        // sweep never competes with live projection.
+        if(rows.empty())
+        {
+            done += co_await _sweepDeadLetters(limit, now_ms);
+        }
+
         co_return done;
+    }
+
+    asio::awaitable<std::size_t> RegistryProjector::_sweepDeadLetters(std::size_t limit, std::int64_t now_ms)
+    {
+        if(now_ms - _last_sweep_ms < _retry.sweep_interval_ms)
+        {
+            co_return 0;
+        }
+        _last_sweep_ms = now_ms;
+
+        co_await async::ensureOnStrand(_write_strand);
+        const auto rows = _store.readDeadLetters(events::REGISTRY_DEAD_LETTER_BIT, limit);
+
+        std::size_t resolved = 0;
+        for(const auto & row : rows)
+        {
+            // A row reorg-removed after being dead-lettered has nothing left to
+            // materialize; releasing it lets pruning take the row.
+            const bool ok = (row.state != events::FINALIZED_STATE) || co_await _materializeOne(row);
+            if(!ok)
+            {
+                // Still failing (e.g. unresolved divergence); the bit stays set, the
+                // row stays retained, and the next sweep retries it.
+                continue;
+            }
+
+            co_await async::ensureOnStrand(_write_strand);
+            if(_store.clearDeadLetter(
+                events::REGISTRY_DEAD_LETTER_BIT, row.chain_id, row.block_hash, row.log_index))
+            {
+                spdlog::info("[RegistryProjector] dead-lettered change_seq={} resolved "
+                    "(block={} log_index={} event_type='{}')",
+                    row.change_seq, row.block_number, row.log_index, row.event_type);
+                ++resolved;
+            }
+        }
+
+        co_return resolved;
     }
 
     asio::awaitable<bool> RegistryProjector::_materializeOne(const events::ChangeRecord & row)

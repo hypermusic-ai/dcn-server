@@ -46,5 +46,7 @@ namespace dcn::config
         unsigned int events_archive_interval_ms = 30000;
         unsigned int events_reorg_window_blocks = 2048;
         unsigned int events_outbox_retention_days = 7;
+        unsigned int events_projector_retry_attempts = 5;
+        unsigned int events_dead_letter_sweep_ms = 60000;
     };
 }
